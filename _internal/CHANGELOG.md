@@ -1,3 +1,27 @@
+## v40.38 (2026-06-28)
+
+### 變更內容
+- OCR 失敗後的選項 UI 重新設計：改用獨立 `#fscan-retry-bar`（display 切換），不再覆寫 `#fscan-bar` innerHTML
+- 「重新對準」修正為具名函式 `_fscanRetryRescan()`，正確還原 fscan-bar 顯示並重設按鈕狀態（closure 失效問題修正）
+- 新增「返回」按鈕（`fscanCancel()`），可完全離開取景框
+- 三選項改兩列排版：「重新對準（主色）/ 拍照 OCR」+ 「手動輸入 / 返回」
+- 按鈕全數套用 `#fscan-retry-bar button` CSS（有 border、active 縮放動效）
+- `fscanStop()` 加入 retry bar 狀態重置，避免下次開啟殘留
+
+### 影響檔案
+- index.html
+- GameVault_v40_38_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-38
+
+### 對應備份
+- _internal/old/v40_37/
+
 ## v40.37 (2026-06-28)
 
 ### 變更內容
@@ -42,25 +66,4 @@
 
 ### 對應備份
 - _internal/old/v40_35/
-
-## v40.38 (2026-06-28)
-
-### 變更內容
-- 建檔／編輯頁掃描邏輯調整：
-  - `barcode`（條碼、ISBN/條碼）和 `code`（書碼、產品編碼）欄位：維持 BarcodeDetector 即時掃描框
-  - `serial_no`（序號）及其他欄位：改為拍照→OCR 辨識
-
-### 影響檔案
-- `GameVault/index.html`、`GameVault/GameVault_v40_38_index.html`、`GameVault/sw.js`
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已更新為 `gamevault-v40-38`
-
-### 對應備份
-- `_internal/old/v40_37/`
-
----
 
