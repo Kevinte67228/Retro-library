@@ -1141,7 +1141,13 @@ body{
             <button class="tbtn" onclick="colRefresh()" title="從雲端同步最新">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
             </button>
-            <button class="tbtn" onclick="exportCsv()" title="匯出 CSV（目前篩選結果）">
+            <button class="tbtn" onclick="exportCsvByType()" title="匯出 CSV（按類型分榮）">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+            </button>
+            <button class="tbtn" onclick="triggerImportCsv()" title="匯入 CSV">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V10m0 0-4 4m4-4 4 4M5 5h14"/></svg>
+            </button>
+            <input type="file" id="import-csv-input" accept=".csv" multiple style="display:none" onchange="importCsv(this)">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
             </button>
             <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除">
@@ -2060,7 +2066,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.33';
+const APP_VERSION='v40.34';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9089,37 +9095,135 @@ function filterCol(){
   renderFilterSummary();
 }
 // ── 匯出目前篩選結果為 CSV（人類可讀，供保險／備份／分享）──
-function exportCsv(){
+// ── 匯出 CSV（按類型分檔）──
+function exportCsvByType(){
   var rows=filtered;
   if(!rows||!rows.length){toast('目前沒有可匯出的資料','er');return;}
-  // 依出現過的分類聯集欄位（保留順序、去重；跳過圖檔與 UUID）
-  var seen={},cols=[],catSeen={};
+  var groups={};
   rows.forEach(function(c){
-    var cat=(c.data&&c.data.category)||'遊戲';
-    if(catSeen[cat])return;catSeen[cat]=1;
-    fieldsFor(cat).forEach(function(f){
-      if(f[2]==='imgupload'||f[0]==='uuid'||seen[f[0]])return;
-      seen[f[0]]=1;cols.push(f);
-    });
+    var tp=c._type||(catInternal((c.data&&c.data.category)||'')||'game');
+    if(!groups[tp])groups[tp]=[];
+    groups[tp].push(c);
   });
+  var typeLabel={game:'遊戲',book:'書籍',console:'主機',peripheral:'週邊',hunt:'尋寶'};
+  var date=(new Date()).toISOString().slice(0,10);
+  var totalFiles=0;
   function cell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
-  var lines=[cols.map(function(f){return cell(f[1]);}).join(',')];
-  rows.forEach(function(c){
-    var d=c.data||{};
-    lines.push(cols.map(function(f){
-      var v=d[f[0]];
-      if(f[2]==='comp')v=compReadable(v);
-      else if((f[0]==='buy_date'||f[0]==='resale_date')&&v==='2099/01/01')v=''; // 佔位日期視為未填
-      return cell(v);
-    }).join(','));
-  });
-  var csv='\ufeff'+lines.join('\r\n'); // BOM 確保 Excel 中文不亂碼；CRLF 換行
-  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='GameVault_收藏清單_'+(new Date()).toISOString().slice(0,10)+'.csv';
-  a.click();URL.revokeObjectURL(url);
-  toast('已匯出 '+rows.length+' 筆 ✓','ok');
+  function downloadOne(typeRows,tp){
+    var lbl=typeLabel[tp]||tp;
+    var cols;
+    if(tp==='hunt'){
+      cols=HUNT_HDR.filter(function(k){return k!=='uuid'&&k!=='cover_img';}).map(function(k){return [k,k,'text'];});
+    } else {
+      var seen={};cols=[];
+      var sampleCat=(typeRows[0]&&typeRows[0].data&&typeRows[0].data.category)||lbl;
+      fieldsFor(sampleCat).forEach(function(f){
+        if(f[2]==='imgupload'||f[0]==='uuid'||seen[f[0]])return;
+        seen[f[0]]=1;cols.push(f);
+      });
+    }
+    var lines=[cols.map(function(f){return cell(f[1]||f[0]);}).join(',')];
+    typeRows.forEach(function(c){
+      var d=c.data||{};
+      lines.push(cols.map(function(f){
+        var v=d[f[0]];
+        if(f[2]==='comp')v=compReadable(v);
+        else if((f[0]==='buy_date'||f[0]==='resale_date')&&v==='2099/01/01')v='';
+        return cell(v);
+      }).join(','));
+    });
+    var csv='\ufeff'+lines.join('\r\n');
+    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=u;a.download='GameVault_'+lbl+'_'+date+'.csv';
+    setTimeout(function(){a.click();URL.revokeObjectURL(u);},totalFiles*450);
+    totalFiles++;
+  }
+  Object.keys(groups).forEach(function(tp){downloadOne(groups[tp],tp);});
+  var cnt=rows.length;
+  setTimeout(function(){
+    toast('已匯出 '+Object.keys(groups).length+' 個檔案，共 '+cnt+' 筆 ✓','ok',3000);
+  },300);
+}
+// 觸發匯入檔案選擇
+function triggerImportCsv(){
+  var inp=document.getElementById('import-csv-input');
+  if(inp){inp.value='';inp.click();}
+}
+// 匯入 CSV（支援多檔，自動偵測分類，UUID 去重）
+function importCsv(input){
+  var files=Array.from(input.files||[]);
+  if(!files.length)return;
+  var total=0,skip=0;
+  var existUuids={};
+  col.forEach(function(r){if(r.uid)existUuids[r.uid]=1;});
+  hunt.forEach(function(r){if(r.uid)existUuids[r.uid]=1;});
+  function parseLine(line){
+    var res=[],cur='',inQ=false;
+    for(var i=0;i<line.length;i++){
+      var ch=line[i];
+      if(inQ){
+        if(ch==='"'&&line[i+1]==='"'){cur+='"';i++;}
+        else if(ch==='"'){inQ=false;}
+        else{cur+=ch;}
+      } else {
+        if(ch==='"'){inQ=true;}
+        else if(ch===','){res.push(cur);cur='';}
+        else{cur+=ch;}
+      }
+    }
+    res.push(cur);
+    return res;
+  }
+  function parseOneCsv(text){
+    var lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+    if(lines.length<2)return;
+    var headerLine=lines[0].replace(/^\ufeff/,'');
+    var headers=parseLine(headerLine);
+    var catIdx=headers.indexOf('category');
+    var uuidIdx=headers.indexOf('uuid');
+    for(var i=1;i<lines.length;i++){
+      var line=lines[i].trim();
+      if(!line)continue;
+      var vals=parseLine(line);
+      if(vals.length<2)continue;
+      var obj={};
+      headers.forEach(function(h,hi){obj[h]=(vals[hi]||'').trim();});
+      var cat=catIdx>=0?obj['category']:'';
+      var isHunt=catInternal(cat)==='狩獵';
+      var uid=uuidIdx>=0?obj['uuid']:'';
+      if(uid&&existUuids[uid]){skip++;continue;}
+      if(!uid){uid=_genUuid();obj['uuid']=uid;}
+      if(uid)existUuids[uid]=1;
+      if(!obj['buy_date'])obj['buy_date']='2099/01/01';
+      var newRec={rowNum:null,uid:uid,data:obj};
+      if(isHunt){hunt.push(newRec);}
+      else{col.push(newRec);}
+      total++;
+    }
+  }
+  function readNext(idx){
+    if(idx>=files.length){
+      if(total>0){
+        localforage.setItem('gv_col',col).catch(function(){});
+        localforage.setItem('gv_hunt',hunt).catch(function(){});
+        updateStats();renderColList();
+        toast('匯入完成：'+total+' 筆（跳過重複 '+skip+' 筆）✓','ok',4000);
+      } else {
+        toast('沒有新資料匯入（全部重複或格式錯誤）','er');
+      }
+      return;
+    }
+    var reader=new FileReader();
+    reader.onload=function(e){
+      try{parseOneCsv(e.target.result);}
+      catch(err){toast('檔案 '+files[idx].name+' 解析失敗','er');}
+      readNext(idx+1);
+    };
+    reader.readAsText(files[idx],'UTF-8');
+  }
+  readNext(0);
 }
 // 解析日期為可比較的時間戳；未填、2099 佔位、無法解析 → NaN（視為空值）
 function _sortTs(v){
