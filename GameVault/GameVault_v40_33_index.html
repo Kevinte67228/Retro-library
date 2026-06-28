@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="GameVault">
 <meta name="application-name" content="GameVault">
 <meta name="theme-color" content="#080c18">
-<link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/icon-192.png">
-<link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/icon-144.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/icons/icon-144.png">
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>GameVault</title>
@@ -23,7 +23,7 @@
 html{height:100%}
 body{
   height:100%;
-  background:#080c18 url('https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/bg.webp') center top/cover fixed;
+  background:#080c18 url('https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/bg.webp') center top/cover fixed;
   color:#e8eaf6;
   font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
   font-size:14px;
@@ -9588,7 +9588,7 @@ function marketJpQuery(d){
   return (d.jp_name||d.primary_name||d.zh_name||d.en_name||'').trim();
 }
 // 靜態圖檔改由 GitHub 提供（Retro-library/main 根目錄）；未來換 host 只需改此處
-var GH_ASSET_BASE='https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/';
+var GH_ASSET_BASE='https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/';
 // v40.31：注入市場參考後呼叫，偵測 grid 是否水平溢出，溢出才顯示右側漸變提示
 function markScrollableRefs(root){
   var scope=root||document;
@@ -9627,19 +9627,19 @@ function marketReferenceHtml(d){
   if(tw){
     var eqt=encodeURIComponent(tw);
     sites=sites.concat([
-      {n:'露天',ic:'mkt-ruten.webp',u:'https://www.ruten.com.tw/find/?q='+eqt},
-      {n:'Yahoo拍賣',ic:'mkt-yahootw.webp',u:'https://tw.bid.yahoo.com/search/auction/product?p='+eqt},
-      {n:'蝦皮',ic:'mkt-shopee.webp',u:'https://shopee.tw/search?keyword='+eqt},
-      {n:'旋轉拍賣',ic:'mkt-carousell.jpg',u:'https://tw.carousell.com/search/'+eqt}
+      {n:'露天',ic:'icons/mkt-ruten.webp',u:'https://www.ruten.com.tw/find/?q='+eqt},
+      {n:'Yahoo拍賣',ic:'icons/mkt-yahootw.webp',u:'https://tw.bid.yahoo.com/search/auction/product?p='+eqt},
+      {n:'蝦皮',ic:'icons/mkt-shopee.webp',u:'https://shopee.tw/search?keyword='+eqt},
+      {n:'旋轉拍賣',ic:'icons/mkt-carousell.jpg',u:'https://tw.carousell.com/search/'+eqt}
     ]);
   }
   if(jp){
     var eqj=encodeURIComponent(jp);
     sites=sites.concat([
-      {n:'Mercari',ic:'mkt-mercari.webp',u:'https://jp.mercari.com/search?keyword='+eqj},
-      {n:'ヤフオク',ic:'mkt-yahoojp.webp',u:'https://auctions.yahoo.co.jp/search/search?p='+eqj},
-      {n:'Buyee',ic:'mkt-buyee.webp',u:'https://buyee.jp/item/search/query/'+eqj},
-      {n:'日本樂天',ic:'mkt-rakuten.jpg',u:'https://search.rakuten.co.jp/search/mall/'+eqj+'/'}
+      {n:'Mercari',ic:'icons/mkt-mercari.webp',u:'https://jp.mercari.com/search?keyword='+eqj},
+      {n:'ヤフオク',ic:'icons/mkt-yahoojp.webp',u:'https://auctions.yahoo.co.jp/search/search?p='+eqj},
+      {n:'Buyee',ic:'icons/mkt-buyee.webp',u:'https://buyee.jp/item/search/query/'+eqj},
+      {n:'日本樂天',ic:'icons/mkt-rakuten.jpg',u:'https://search.rakuten.co.jp/search/mall/'+eqj+'/'}
     ]);
   }
   // v40.31：附加使用者自訂市場（存於 cfg.customMarkets）。
