@@ -2079,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.35';
+const APP_VERSION='v40.36';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4138,6 +4138,45 @@ function callGemini(parts){
 // 與 scanStep3AI 第二階段同一套，但「不」用 hasCover 閘——純條碼/純編碼等無圖模式也要補全，消弭模式間落差。
 // 呼叫端通常先 showForm()，再呼叫本函式；完成後重繪表單。cb(n) 回報補了幾欄。
 // AI 回傳值強韌字串化：避免陣列／物件被 '' + v 轉成 "[object Object]"
+// ── Gemini OCR 純文字模式（編碼辨識專用）──
+// 不使用 responseSchema，讓 Gemini 直接回傳純文字編碼，避免 schema 欄位干擾辨識結果。
+function callGeminiOCR(parts){
+  if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
+  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
+  var genCfg={temperature:0.1,maxOutputTokens:64};
+  if(mdl.indexOf('2.5')>=0){genCfg.thinkingConfig={thinkingBudget:0};}
+  var ctrl=new AbortController();
+  _aiAbortCtrl=ctrl;
+  var timeoutId=setTimeout(function(){ctrl.abort();},25000);
+  return fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    signal:ctrl.signal,
+    body:JSON.stringify({
+      contents:[{role:'user',parts:parts}],
+      generationConfig:genCfg
+    })
+  }).then(function(r){
+    clearTimeout(timeoutId);
+    if(!r.ok)return r.json().then(function(e){throw new Error(translateGeminiError(r.status,e.error&&e.error.message||''));});
+    return r.json();
+  }).then(function(d){
+    var cand=d.candidates&&d.candidates[0];
+    if(!cand)throw new Error('AI 沒有回應，請重試');
+    if(cand.finishReason==='SAFETY')throw new Error('內容被安全過濾，請更換圖片');
+    var txt=(cand.content&&cand.content.parts||[]).filter(function(p){return !p.thought&&p.text;}).map(function(p){return p.text;}).join('').trim();
+    return txt;
+  }).catch(function(e){
+    clearTimeout(timeoutId);
+    if(e.name==='AbortError'){
+      if(ctrl._userCancelled)throw Object.assign(new Error('已取消 AI 辨識'),{cancelled:true});
+      throw new Error('AI 伺服器回應超時（25 秒），請重試');
+    }
+    throw e;
+  });
+}
+
 function _aiStr(v){
   if(v==null)return '';
   if(Array.isArray(v))return v.map(_aiStr).filter(Boolean).join('、');
@@ -4638,13 +4677,13 @@ function _gcodeOCRShared(input,o){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-      compressImg(prepped,300,0.5,function(comp){
-        callGemini([
+      compressImg(prepped,600,0.75,function(comp){
+        callGeminiOCR([
           {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
           {text:o.prompt}
-        ]).then(function(res){
+        ]).then(function(rawTxt){
           noLoad();
-          var rawTxt=(res&&(res.code||res.primary_name||Object.values(res)[0])||'').trim();
+          rawTxt=(rawTxt||'').trim();
           var cat=_selectedType||'遊戲';
           var cleaned=cleanOCRByCategory(rawTxt,cat);
           var code=cleaned?cleaned.toUpperCase():'';         // 清洗失敗不回填 AI 原文，改走未識別提示
@@ -6664,13 +6703,13 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
   var _cx=c.getContext('2d');
   _cx.drawImage(v, sx,sy,sw,sh, 0,0,c.width,c.height);
   if(cfg.ocrEnhance)_ocrEnhanceCanvas(_cx,c.width,c.height); // v25.02：可選前處理（灰階＋對比拉伸）
-  compressImg(c.toDataURL('image/jpeg',0.85),300,0.5,function(comp){
-    callGemini([
+  compressImg(c.toDataURL('image/jpeg',0.85),600,0.75,function(comp){
+    callGeminiOCR([
       {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
       {text:_fscanOpt.prompt||'請從圖片中找出並回傳產品編碼（如 CUSA-00001、SLUS-00001、HAC-001）。只回傳編碼本身，找不到回傳空字串。'}
-    ]).then(function(res){
+    ]).then(function(rawTxt){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
-      var rawTxt=(res&&(res.code||res.primary_name||Object.values(res)[0])||'').trim();
+      rawTxt=(rawTxt||'').trim();
       var code;
       if(_fscanOpt.ocrClean){                                  // v25.02：編碼/型號/ISBN 才做分類清洗（序號不清洗）
         var cat=_selectedType||'遊戲';
