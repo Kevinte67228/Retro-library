@@ -1,5 +1,33 @@
 # GameVault 更新紀錄
 
+每次版本更新自動記錄，保留最近 3 筆。
+
+---
+
+## v40.34 (2026-06-28)
+
+### 變更內容
+- 收藏頁匯出改為按類型分檔：每個分類（遊戲／書籍／主機／週邊／尋寶）各產生一個 CSV，檔名含類型與日期
+- 新增匯入功能：支援多檔同時匯入，自動偵測 category 欄位分類，UUID 去重避免重複匯入
+
+### 影響檔案
+- `GameVault/index.html`
+- `GameVault/GameVault_v40_34_index.html`
+- `GameVault/sw.js`（CACHE_NAME: gamevault-v40-34）
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已更新為 `gamevault-v40-34`
+
+### 對應備份
+- `_internal/old/v40_33/`
+
+---
+
+# GameVault 更新紀錄
+
 每次版本更新自動記錄，保留最近 3 筆。對應備份位於 `GameVault/old/` 資料夾。
 
 ---
