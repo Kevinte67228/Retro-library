@@ -1,8 +1,23 @@
-# GameVault 更新紀錄
+## v40.36 (2026-06-28)
 
-每次版本更新自動記錄，保留最近 3 筆。
+### 變更內容
+- OCR 編碼辨識改用 `callGeminiOCR`（純文字模式）取代 `callGemini`（responseSchema 結構化輸出），避免 schema 欄位干擾辨識結果
+- OCR 影像壓縮品質從 300px/0.5 提升至 600px/0.75，改善細字辨識率
+- 影響範圍：`fscanCapture`（取景框即時拍攝）、`_gcodeOCRShared`（舊版相機拍照路徑）
 
----
+### 影響檔案
+- index.html
+- GameVault_v40_36_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-36
+
+### 對應備份
+- _internal/old/v40_35/
 
 ## v40.38 (2026-06-28)
 
@@ -44,20 +59,3 @@
 
 ---
 
-## v40.36 (2026-06-28)
-
-### 變更內容
-- 收藏頁視圖切換按鈕改為「圖示 + 文字」膠囊樣式（卡片 / 書架）
-- 修正選中狀態亮色背景未填滿按鈕的問題（改用完整 inline style 控制高度）
-
-### 影響檔案
-- `GameVault/index.html`、`GameVault/GameVault_v40_36_index.html`、`GameVault/sw.js`
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已更新為 `gamevault-v40-36`
-
-### 對應備份
-- `_internal/old/v40_35/`
