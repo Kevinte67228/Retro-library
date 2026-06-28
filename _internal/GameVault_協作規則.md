@@ -310,6 +310,29 @@ const STATIC_ASSETS = [
 
 ---
 
+## GitHub 檔案直接讀取
+
+需要查看或修改現有程式碼時，Claude 直接從 GitHub 讀取最新版本，不需要使用者每次提供 URL。
+
+| 檔案 | Raw URL |
+|------|---------|
+| `index.html` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/index.html` |
+| `sw.js` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/sw.js` |
+| `manifest.json` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/manifest.json` |
+| `GameVault_AppsScript.gs` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/GameVault_AppsScript.gs` |
+| `CHANGELOG.md` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/_internal/CHANGELOG.md` |
+| `GameVault_協作規則.md`（最新） | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/_internal/GameVault_%E5%8D%94%E4%BD%9C%E8%A6%8F%E5%89%87.md` |
+
+**使用時機：**
+- 修改 `index.html` 前，先用 `web_fetch` 讀取確認目前程式碼狀態。
+- 需要參考目前 `sw.js` 的 `CACHE_NAME` 或預先快取清單時。
+- 對話開始時若需要確認目前版本號，讀取 `index.html` 搜尋 `APP_VERSION`。
+- 查看最新 CHANGELOG 確認上一版改動內容。
+
+**注意：** `web_fetch` 讀取的是 GitHub 上的已 commit 版本，不是 Claude 容器內正在修改的暫存版本。修改進行中以容器內的檔案為準，完成後 push 到 GitHub 才會更新。
+
+---
+
 ## 回覆與協作方式
 
 協作時使用繁體中文。
