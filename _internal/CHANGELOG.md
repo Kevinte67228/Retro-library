@@ -4,6 +4,27 @@
 
 ---
 
+## v40.38 (2026-06-28)
+
+### 變更內容
+- 建檔／編輯頁掃描邏輯調整：
+  - `barcode`（條碼、ISBN/條碼）和 `code`（書碼、產品編碼）欄位：維持 BarcodeDetector 即時掃描框
+  - `serial_no`（序號）及其他欄位：改為拍照→OCR 辨識
+
+### 影響檔案
+- `GameVault/index.html`、`GameVault/GameVault_v40_38_index.html`、`GameVault/sw.js`
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已更新為 `gamevault-v40-38`
+
+### 對應備份
+- `_internal/old/v40_37/`
+
+---
+
 ## v40.37 (2026-06-28)
 
 ### 變更內容
@@ -40,24 +61,3 @@
 
 ### 對應備份
 - `_internal/old/v40_35/`
-
----
-
-## v40.35 (2026-06-28)
-
-### 變更內容
-- 收藏頁右上角工具列重構：視圖切換按鈕放大（44px），移除殭屍按鈕
-- 同步、匯出 CSV、匯入 CSV 三個功能收進「⋯」浮層選單，點外部自動關閉
-- 大量刪除按鈕保留在工具列（常用操作直接可見）
-
-### 影響檔案
-- `GameVault/index.html`、`GameVault/GameVault_v40_35_index.html`、`GameVault/sw.js`
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已更新為 `gamevault-v40-35`
-
-### 對應備份
-- `_internal/old/v40_34/`
