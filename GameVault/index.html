@@ -2079,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.36';
+const APP_VERSION='v40.37';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6718,14 +6718,22 @@ function openCodeScanFor(inputId,fallbackId){
 // 表單（建檔／編輯共用）編碼/條碼欄位的 OCR 鈕
 function fieldScan(k){
   if(k==='barcode'){
-    openFieldScanner({mode:'barcode',inputId:'fld-'+k,onResult:function(val){onFld(k,val);}});
+    // 條碼欄改用拍照 OCR 辨識（BarcodeDetector 即時揁描框辨識率差）
+    openFieldScanner({mode:'ocr',inputId:'fld-'+k,ocrClean:true,
+      title:'拍攝條碼',
+      subtitle:'對準條碼後按下拍攝，AI 自動辨識數字',
+      readyText:'相機已開啟，對準條碼後按「拍攝並辨識」',
+      busyText:'AI 正在辨識條碼',
+      shotLabel:'📷 拍攝並辨識',
+      prompt:'請從圖片中找出並回傳條碼數字（EAN-13、JAN、ISBN 等，通常是 8～13 位數字）。只回傳數字本身，不含空格或連字號；如果看不清楚或找不到，請回傳空字串。',
+      onResult:function(val){onFld(k,val);}});
   }else if(k==='serial_no'){
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,
       prompt:'請從圖片中找出並回傳主機機身序號（serial number，一串英數字，常標示為 S/N、SN 或「序號」）。只回傳序號本身，找不到回傳空字串。',
       onResult:function(val){onFld(k,val);}});
   }else{
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,normalize:(k==='code'),ocrClean:true,
-      prompt:'請從圖片中找出並回傳產品編碼（如 CUSA-00001、SLUS-00001、HAC-001）。只回傳編碼本身；如果看不清楚或找不到，請回傳空字串。不要回傳「遊戲」、分類名稱、說明文字或猜測結果。',
+      prompt:'請從圖片中找出並回傳產品編碼（如 CUSA-00001、SLUS-00001、HAC-001）。只回傳編碼本身；如果看不清楚或找不到，請回傳空字串。不要回傳「遂戲」、分類名稱、說明文字或猜測結果。',
       onResult:function(val){onFld(k,val);}});
   }
 }
