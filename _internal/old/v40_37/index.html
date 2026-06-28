@@ -1134,13 +1134,13 @@ body{
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="ht">我的收藏</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <!-- 視圖切換（圖示+文字膠囊）-->
-            <div style="display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow:hidden;height:40px">
-              <button id="vbtn-card" onclick="setView('card')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0 14px;height:40px;border:none;cursor:pointer;transition:all .15s;background:#00e5ff;color:#001018;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap" title="卡片模式">
-                <svg viewBox="0 0 18 18" width="15" height="15" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>卡片
+            <!-- 視圖切換（放大版）-->
+            <div class="vtoggle" style="height:40px">
+              <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018;width:44px" title="卡片模式">
+                <svg viewBox="0 0 18 18" width="18" height="18" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
               </button>
-              <button id="vbtn-shelf" onclick="setView('shelf')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0 14px;height:40px;border:none;cursor:pointer;transition:all .15s;background:transparent;color:#7986cb;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap" title="書架模式">
-                <svg viewBox="0 0 18 18" width="15" height="15" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>書架
+              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb;width:44px" title="書架模式">
+                <svg viewBox="0 0 18 18" width="18" height="18" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
               </button>
             </div>
             <!-- 大量刪除 -->
@@ -4138,6 +4138,45 @@ function callGemini(parts){
 // 與 scanStep3AI 第二階段同一套，但「不」用 hasCover 閘——純條碼/純編碼等無圖模式也要補全，消弭模式間落差。
 // 呼叫端通常先 showForm()，再呼叫本函式；完成後重繪表單。cb(n) 回報補了幾欄。
 // AI 回傳值強韌字串化：避免陣列／物件被 '' + v 轉成 "[object Object]"
+// ── Gemini OCR 純文字模式（編碼辨識專用）──
+// 不使用 responseSchema，讓 Gemini 直接回傳純文字編碼，避免 schema 欄位干擾辨識結果。
+function callGeminiOCR(parts){
+  if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
+  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
+  var genCfg={temperature:0.1,maxOutputTokens:64};
+  if(mdl.indexOf('2.5')>=0){genCfg.thinkingConfig={thinkingBudget:0};}
+  var ctrl=new AbortController();
+  _aiAbortCtrl=ctrl;
+  var timeoutId=setTimeout(function(){ctrl.abort();},25000);
+  return fetch(url,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    signal:ctrl.signal,
+    body:JSON.stringify({
+      contents:[{role:'user',parts:parts}],
+      generationConfig:genCfg
+    })
+  }).then(function(r){
+    clearTimeout(timeoutId);
+    if(!r.ok)return r.json().then(function(e){throw new Error(translateGeminiError(r.status,e.error&&e.error.message||''));});
+    return r.json();
+  }).then(function(d){
+    var cand=d.candidates&&d.candidates[0];
+    if(!cand)throw new Error('AI 沒有回應，請重試');
+    if(cand.finishReason==='SAFETY')throw new Error('內容被安全過濾，請更換圖片');
+    var txt=(cand.content&&cand.content.parts||[]).filter(function(p){return !p.thought&&p.text;}).map(function(p){return p.text;}).join('').trim();
+    return txt;
+  }).catch(function(e){
+    clearTimeout(timeoutId);
+    if(e.name==='AbortError'){
+      if(ctrl._userCancelled)throw Object.assign(new Error('已取消 AI 辨識'),{cancelled:true});
+      throw new Error('AI 伺服器回應超時（25 秒），請重試');
+    }
+    throw e;
+  });
+}
+
 function _aiStr(v){
   if(v==null)return '';
   if(Array.isArray(v))return v.map(_aiStr).filter(Boolean).join('、');
@@ -4638,13 +4677,13 @@ function _gcodeOCRShared(input,o){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-      compressImg(prepped,300,0.5,function(comp){
-        callGemini([
+      compressImg(prepped,600,0.75,function(comp){
+        callGeminiOCR([
           {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
           {text:o.prompt}
-        ]).then(function(res){
+        ]).then(function(rawTxt){
           noLoad();
-          var rawTxt=(res&&(res.code||res.primary_name||Object.values(res)[0])||'').trim();
+          rawTxt=(rawTxt||'').trim();
           var cat=_selectedType||'遊戲';
           var cleaned=cleanOCRByCategory(rawTxt,cat);
           var code=cleaned?cleaned.toUpperCase():'';         // 清洗失敗不回填 AI 原文，改走未識別提示
@@ -6664,13 +6703,13 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
   var _cx=c.getContext('2d');
   _cx.drawImage(v, sx,sy,sw,sh, 0,0,c.width,c.height);
   if(cfg.ocrEnhance)_ocrEnhanceCanvas(_cx,c.width,c.height); // v25.02：可選前處理（灰階＋對比拉伸）
-  compressImg(c.toDataURL('image/jpeg',0.85),300,0.5,function(comp){
-    callGemini([
+  compressImg(c.toDataURL('image/jpeg',0.85),600,0.75,function(comp){
+    callGeminiOCR([
       {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
       {text:_fscanOpt.prompt||'請從圖片中找出並回傳產品編碼（如 CUSA-00001、SLUS-00001、HAC-001）。只回傳編碼本身，找不到回傳空字串。'}
-    ]).then(function(res){
+    ]).then(function(rawTxt){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
-      var rawTxt=(res&&(res.code||res.primary_name||Object.values(res)[0])||'').trim();
+      rawTxt=(rawTxt||'').trim();
       var code;
       if(_fscanOpt.ocrClean){                                  // v25.02：編碼/型號/ISBN 才做分類清洗（序號不清洗）
         var cat=_selectedType||'遊戲';
@@ -6682,10 +6721,7 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
         if(_fscanOpt.normalize)code=normalizeGameCode(code);
       }
       if(code){fscanFill(code);}
-      else{
-        if(st)st.textContent='未識別到有效編碼，請對準產品代碼再拍一次，或改用手動輸入';
-        toast('未識別到有效編碼，請重拍或手動輸入','',3000);
-      }
+      else{_fscanShowRetryOptions();}
     }).catch(function(e){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
       if(st)st.textContent=(e&&e.cancelled)?'已取消':'辨識失敗，請重試';
@@ -6701,6 +6737,46 @@ function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉
   toast(okMsg,'ok',2500);
   fscanClose();
 }
+// -- OCR 辨識失敗後的三選項 UI --
+function _fscanShowRetryOptions(){
+  var st=$('fscan-status');
+  if(st)st.textContent='未識別到有效編碼，請選擇下一步';
+  var bar=$('fscan-bar');
+  if(!bar)return;
+  var origHtml=bar.innerHTML;
+  function restore(){bar.innerHTML=origHtml;}
+  bar.innerHTML=
+    '<button style="font-size:13px;padding:12px 4px" onclick="('+(restore.toString())+')()">重新對準</button>'+
+    '<button style="font-size:13px;padding:12px 4px" onclick="_fscanTriggerPhoto()">拍照 OCR</button>'+
+    '<button style="font-size:13px;padding:12px 4px" onclick="_fscanManualInput()">手動輸入</button>';
+}
+function _fscanTriggerPhoto(){
+  var fi=$('fscan-photo-inp');if(fi)fi.click();
+}
+function fscanPhotoFallback(input){
+  fscanClose();
+  var opt=_fscanOpt||{};
+  var cat=_selectedType||'遂戲';
+  var promptMap={
+    '攻略':'請從圖片中找出 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），不要其他文字。如找不到，回傳空字串。',
+    '主機':'請從圖片中找出主機型號（格式如 SCPH-10000、CFI-1000A、HAC-001 等）。只回傳型號本身，不要其他文字。如找不到，回傳空字串。',
+    '週邊':'請從圖片中找出週邊型號（格式如 SCEH-0004、HAC-013 等）。只回傳型號本身，不要其他文字。如找不到，回傳空字串。'
+  };
+  var prompt=opt.prompt||(promptMap[cat]||'請從圖片中找出遣戲產品編碼（格式如 CUSA-00001、SLUS-00001、SLPM-12345、HAC-001 等）。只回傳編碼本身，不要其他文字。如果看不清楚或找不到，回傳空字串；不要回傳「遣戲」、分類名稱或猜測結果。');
+  _gcodeOCRShared(input,{
+    inputId:opt.inputId,
+    prompt:prompt,
+    normalize:!!opt.normalize,
+    onEnd:null
+  });
+}
+function _fscanManualInput(){
+  var inputId=_fscanOpt&&_fscanOpt.inputId;
+  fscanClose();
+  if(inputId){var el=$(inputId);if(el){el.focus();el.scrollIntoView({block:'center',behavior:'smooth'});}}
+  toast('請直接輸入編碼','',2000);
+}
+
 // 商品編碼建檔模式：開 OCR 取景框帶入目標欄位（失敗回退原生相機）
 function openCodeScanFor(inputId,fallbackId){
   var isCombo=inputId==='gcode-combo-inp';
@@ -6718,22 +6794,14 @@ function openCodeScanFor(inputId,fallbackId){
 // 表單（建檔／編輯共用）編碼/條碼欄位的 OCR 鈕
 function fieldScan(k){
   if(k==='barcode'){
-    // 條碼欄改用拍照 OCR 辨識（BarcodeDetector 即時揁描框辨識率差）
-    openFieldScanner({mode:'ocr',inputId:'fld-'+k,ocrClean:true,
-      title:'拍攝條碼',
-      subtitle:'對準條碼後按下拍攝，AI 自動辨識數字',
-      readyText:'相機已開啟，對準條碼後按「拍攝並辨識」',
-      busyText:'AI 正在辨識條碼',
-      shotLabel:'📷 拍攝並辨識',
-      prompt:'請從圖片中找出並回傳條碼數字（EAN-13、JAN、ISBN 等，通常是 8～13 位數字）。只回傳數字本身，不含空格或連字號；如果看不清楚或找不到，請回傳空字串。',
-      onResult:function(val){onFld(k,val);}});
+    openFieldScanner({mode:'barcode',inputId:'fld-'+k,onResult:function(val){onFld(k,val);}});
   }else if(k==='serial_no'){
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,
       prompt:'請從圖片中找出並回傳主機機身序號（serial number，一串英數字，常標示為 S/N、SN 或「序號」）。只回傳序號本身，找不到回傳空字串。',
       onResult:function(val){onFld(k,val);}});
   }else{
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,normalize:(k==='code'),ocrClean:true,
-      prompt:'請從圖片中找出並回傳產品編碼（如 CUSA-00001、SLUS-00001、HAC-001）。只回傳編碼本身；如果看不清楚或找不到，請回傳空字串。不要回傳「遂戲」、分類名稱、說明文字或猜測結果。',
+      prompt:'請從圖片中找出並回傳產品編碼（如 CUSA-00001、SLUS-00001、HAC-001）。只回傳編碼本身；如果看不清楚或找不到，請回傳空字串。不要回傳「遊戲」、分類名稱、說明文字或猜測結果。',
       onResult:function(val){onFld(k,val);}});
   }
 }
@@ -8755,16 +8823,8 @@ function nextSpineColor(platform){
 function setView(mode){
   currentView=mode;
   var card=$('vbtn-card'),shelf=$('vbtn-shelf');
-  if(card){
-    var on=mode==='card';
-    card.style.background=on?'#00e5ff':'transparent';
-    card.style.color=on?'#001018':'#7986cb';
-  }
-  if(shelf){
-    var on=mode==='shelf';
-    shelf.style.background=on?'#00e5ff':'transparent';
-    shelf.style.color=on?'#001018':'#7986cb';
-  }
+  if(card){card.style.background=mode==='card'?'#00e5ff':'transparent';card.style.color=mode==='card'?'#000':'#7986cb';}
+  if(shelf){shelf.style.background=mode==='shelf'?'#00e5ff':'transparent';shelf.style.color=mode==='shelf'?'#000':'#7986cb';}
   var gl=$('glist'),sv=$('shelf-view');
   if(gl)gl.style.display=mode==='card'?'block':'none';
   if(sv)sv.style.display=mode==='shelf'?'block':'none';
@@ -11816,6 +11876,7 @@ function _imgToB64(src){
       <button onclick="fscanCancel()">取消</button>
       <button id="fscan-shot" class="cp" onclick="fscanCapture()">📷 拍攝並辨識</button>
     </div>
+    <input type="file" accept="image/*" capture="environment" style="display:none" id="fscan-photo-inp" onchange="fscanPhotoFallback(this)">
   </div>
 </div>
 <!-- API 申請說明 Modal -->
