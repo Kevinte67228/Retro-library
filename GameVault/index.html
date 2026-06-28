@@ -109,6 +109,11 @@ body{
 .tbtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;color:#7986cb;cursor:pointer;transition:all .15s;padding:0}
 .tbtn:hover{border-color:#2a3a5c;color:#aeb8d8}
 .tbtn:active{transform:scale(.94)}
+/* ── 收藏頁 ⋯⋯ 選單 ── */
+.col-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;background:none;border:none;color:#e8eaf6;font-family:inherit;font-size:14px;cursor:pointer;border-radius:10px;text-align:left;white-space:nowrap}
+.col-menu-item:hover,.col-menu-item:active{background:rgba(0,229,255,.08);color:#00e5ff}
+.col-menu-item svg{flex-shrink:0;color:#7986cb}
+.col-menu-item:hover svg,.col-menu-item:active svg{color:#00e5ff}
 .tbtn.on{background:#00e5ff;border-color:#00e5ff;color:#001018}
 .vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:10px;overflow:hidden}
 .vtoggle>button{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:none;cursor:pointer;transition:all .15s}
@@ -1129,30 +1134,38 @@ body{
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div class="ht">我的收藏</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <!-- 視圖切換 -->
-            <div class="vtoggle">
-              <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018" title="卡片模式">
-                <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
+            <!-- 視圖切換（放大版）-->
+            <div class="vtoggle" style="height:40px">
+              <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018;width:44px" title="卡片模式">
+                <svg viewBox="0 0 18 18" width="18" height="18" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
               </button>
-              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb" title="書架模式">
-                <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
+              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb;width:44px" title="書架模式">
+                <svg viewBox="0 0 18 18" width="18" height="18" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
               </button>
             </div>
-            <button class="tbtn" onclick="colRefresh()" title="從雲端同步最新">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
+            <!-- 大量刪除 -->
+            <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除" style="width:40px;height:40px">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
             </button>
-            <button class="tbtn" onclick="exportCsvByType()" title="匯出 CSV（按類型分榮）">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
-            </button>
-            <button class="tbtn" onclick="triggerImportCsv()" title="匯入 CSV">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V10m0 0-4 4m4-4 4 4M5 5h14"/></svg>
-            </button>
+            <!-- ⋯⋯ 更多選單 -->
+            <div style="position:relative">
+              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px">⋯</button>
+              <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <button class="col-menu-item" onclick="colRefresh();closeColMenu()">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
+                  從雲端同步
+                </button>
+                <button class="col-menu-item" onclick="exportCsvByType();closeColMenu()">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+                  匯出 CSV
+                </button>
+                <button class="col-menu-item" onclick="triggerImportCsv();closeColMenu()">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V10m0 0-4 4m4-4 4 4M5 5h14"/></svg>
+                  匯入 CSV
+                </button>
+              </div>
+            </div>
             <input type="file" id="import-csv-input" accept=".csv" multiple style="display:none" onchange="importCsv(this)">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
-            </button>
-            <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除">
-              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
-            </button>
           </div>
         </div>
         <div id="stats">
@@ -2066,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.34';
+const APP_VERSION='v40.35';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9095,6 +9108,30 @@ function filterCol(){
   renderFilterSummary();
 }
 // ── 匯出目前篩選結果為 CSV（人類可讀，供保險／備份／分享）──
+// ── 收藏頁 ⋯⋯ 選單開關 ──
+function toggleColMenu(){
+  var p=document.getElementById('col-menu-panel');
+  if(!p)return;
+  var open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+  if(!open){
+    // 點外部關閉
+    setTimeout(function(){
+      document.addEventListener('click',_colMenuOutside,{once:true});
+    },0);
+  }
+}
+function _colMenuOutside(e){
+  var btn=document.getElementById('col-menu-btn');
+  var panel=document.getElementById('col-menu-panel');
+  if(panel&&btn&&!panel.contains(e.target)&&!btn.contains(e.target)){
+    panel.style.display='none';
+  }
+}
+function closeColMenu(){
+  var p=document.getElementById('col-menu-panel');
+  if(p)p.style.display='none';
+}
 // ── 匯出 CSV（按類型分檔）──
 function exportCsvByType(){
   var rows=filtered;
