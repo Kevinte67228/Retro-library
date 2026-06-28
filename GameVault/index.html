@@ -2079,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.36';
+const APP_VERSION='v40.37';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6721,10 +6721,7 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
         if(_fscanOpt.normalize)code=normalizeGameCode(code);
       }
       if(code){fscanFill(code);}
-      else{
-        if(st)st.textContent='未識別到有效編碼，請對準產品代碼再拍一次，或改用手動輸入';
-        toast('未識別到有效編碼，請重拍或手動輸入','',3000);
-      }
+      else{_fscanShowRetryOptions();}
     }).catch(function(e){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
       if(st)st.textContent=(e&&e.cancelled)?'已取消':'辨識失敗，請重試';
@@ -6740,6 +6737,46 @@ function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉
   toast(okMsg,'ok',2500);
   fscanClose();
 }
+// -- OCR 辨識失敗後的三選項 UI --
+function _fscanShowRetryOptions(){
+  var st=$('fscan-status');
+  if(st)st.textContent='未識別到有效編碼，請選擇下一步';
+  var bar=$('fscan-bar');
+  if(!bar)return;
+  var origHtml=bar.innerHTML;
+  function restore(){bar.innerHTML=origHtml;}
+  bar.innerHTML=
+    '<button style="font-size:13px;padding:12px 4px" onclick="('+(restore.toString())+')()">重新對準</button>'+
+    '<button style="font-size:13px;padding:12px 4px" onclick="_fscanTriggerPhoto()">拍照 OCR</button>'+
+    '<button style="font-size:13px;padding:12px 4px" onclick="_fscanManualInput()">手動輸入</button>';
+}
+function _fscanTriggerPhoto(){
+  var fi=$('fscan-photo-inp');if(fi)fi.click();
+}
+function fscanPhotoFallback(input){
+  fscanClose();
+  var opt=_fscanOpt||{};
+  var cat=_selectedType||'遂戲';
+  var promptMap={
+    '攻略':'請從圖片中找出 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），不要其他文字。如找不到，回傳空字串。',
+    '主機':'請從圖片中找出主機型號（格式如 SCPH-10000、CFI-1000A、HAC-001 等）。只回傳型號本身，不要其他文字。如找不到，回傳空字串。',
+    '週邊':'請從圖片中找出週邊型號（格式如 SCEH-0004、HAC-013 等）。只回傳型號本身，不要其他文字。如找不到，回傳空字串。'
+  };
+  var prompt=opt.prompt||(promptMap[cat]||'請從圖片中找出遣戲產品編碼（格式如 CUSA-00001、SLUS-00001、SLPM-12345、HAC-001 等）。只回傳編碼本身，不要其他文字。如果看不清楚或找不到，回傳空字串；不要回傳「遣戲」、分類名稱或猜測結果。');
+  _gcodeOCRShared(input,{
+    inputId:opt.inputId,
+    prompt:prompt,
+    normalize:!!opt.normalize,
+    onEnd:null
+  });
+}
+function _fscanManualInput(){
+  var inputId=_fscanOpt&&_fscanOpt.inputId;
+  fscanClose();
+  if(inputId){var el=$(inputId);if(el){el.focus();el.scrollIntoView({block:'center',behavior:'smooth'});}}
+  toast('請直接輸入編碼','',2000);
+}
+
 // 商品編碼建檔模式：開 OCR 取景框帶入目標欄位（失敗回退原生相機）
 function openCodeScanFor(inputId,fallbackId){
   var isCombo=inputId==='gcode-combo-inp';
@@ -11839,6 +11876,7 @@ function _imgToB64(src){
       <button onclick="fscanCancel()">取消</button>
       <button id="fscan-shot" class="cp" onclick="fscanCapture()">📷 拍攝並辨識</button>
     </div>
+    <input type="file" accept="image/*" capture="environment" style="display:none" id="fscan-photo-inp" onchange="fscanPhotoFallback(this)">
   </div>
 </div>
 <!-- API 申請說明 Modal -->
