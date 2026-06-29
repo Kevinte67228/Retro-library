@@ -2087,7 +2087,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.39';
+const APP_VERSION='v40.40';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4655,23 +4655,26 @@ function _ocrInlineStatus(el,base){
 function cleanOCRByCategory(raw,cat){
   if(!raw)return '';
   var lines=(''+raw).split(/[\r\n]+/);
+  var firstNonEmpty='';
   for(var i=0;i<lines.length;i++){
-    var line=lines[i]; if(!line)continue;
-    if(cat==='攻略'){                                    // ISBN：數字＋大寫X＋-；去-後須 10 或 13 碼
-      var s=line.toUpperCase().replace(/[^0-9X\-]/g,'');
-      var core=s.replace(/-/g,'');
-      if((core.length===10||core.length===13)&&/^[0-9]+X?$/.test(core))return s;
-    }else if(cat==='主機'||cat==='週邊'){                // 型號：英數＋-（SCPH-10000/CFI-1000A/HAC-001）；長度 4–20
-      var s2=line.toUpperCase().replace(/[^A-Z0-9\-]/g,'');
-      if(s2.replace(/-/g,'').length>=4&&s2.length<=20&&/[A-Z]/.test(s2)&&/\d/.test(s2))return s2;
-    }else{                                               // 遊戲：純數字條碼 8–13，或含字母遊戲編號（SLPS-01234）
-      var s3=line.toUpperCase().replace(/[^A-Z0-9\-]/g,'');
-      var c3=s3.replace(/-/g,'');
-      if(/^[0-9]{8,13}$/.test(c3))return s3;
-      if(/[A-Z]/.test(s3)&&/\d/.test(s3)&&c3.length>=4&&s3.length<=20)return s3;
+    var line=lines[i].trim(); if(!line)continue;
+    if(!firstNonEmpty)firstNonEmpty=line;
+    var up=line.toUpperCase();
+    if(cat==='攻略'){
+      var m=up.match(/(?:97[89]-?)?[0-9]{1,5}-?[0-9]{1,7}-?[0-9]{1,6}-?[0-9X]/g)||[];
+      for(var j=0;j<m.length;j++){var core=m[j].replace(/-/g,'');if((core.length===10||core.length===13)&&/^[0-9]+X?$/.test(core))return m[j];}
+    }else if(cat==='主機'||cat==='週邊'){
+      var ms=up.match(/[A-Z][A-Z0-9]{1,6}-[A-Z0-9]{2,10}(?:-[A-Z0-9]{1,6})*/g)||[];
+      for(var j=0;j<ms.length;j++){var seg=ms[j];if(seg.replace(/-/g,'').length>=4&&seg.length<=20)return seg;}
+    }else{
+      var mb=up.match(/[0-9]{8,13}/);
+      if(mb)return mb[0];
+      var mg=up.match(/[A-Z]{2,6}-?[0-9]{4,6}/g)||[];
+      for(var j=0;j<mg.length;j++){var seg2=mg[j];if(seg2.replace(/-/g,'').length>=4&&seg2.length<=20)return seg2;}
     }
   }
-  return '';
+  // fallback: 所有行都沒有符合格式的片段，回傳第一行前 25 字附加 '?' 前缀供呼叫方判斷
+  return firstNonEmpty?'?'+firstNonEmpty.slice(0,25).trim():'';
 }
 // ── 遊戲編碼 OCR（純編碼／編碼+照片 兩模式共用核心）──
 // o:{inputId 目標輸入框, prompt 提示詞, normalize 是否做 normalizeGameCode, onStart/onEnd 狀態顯示}
@@ -4692,14 +4695,21 @@ function _gcodeOCRShared(input,o){
         ]).then(function(rawTxt){
           noLoad();
           rawTxt=(rawTxt||'').trim();
-          var cat=_selectedType||'遊戲';
+          var cat=_selectedType||'遂戲';
           var cleaned=cleanOCRByCategory(rawTxt,cat);
-          var code=cleaned?cleaned.toUpperCase():'';         // 清洗失敗不回填 AI 原文，改走未識別提示
-          if(o.normalize&&cat==='遊戲')code=normalizeGameCode(code);
+          var isFb=cleaned&&cleaned.charAt(0)==='?';
+          if(isFb)cleaned=cleaned.slice(1);
+          var code=cleaned?cleaned.toUpperCase():'';
+          if(!isFb&&o.normalize&&cat==='遂戲')code=normalizeGameCode(code);
           if(code){
             var inp=$(o.inputId);if(inp)inp.value=code;
-            if(stopInline)stopInline('已帶入：'+code);
-            toast('✓ 識別編碼：'+code,'ok',3000);
+            if(isFb){
+              if(stopInline)stopInline('可能是：'+code+'（AI 不確定，請手動確認）',true);
+              toast('已帶入 AI 卿測結果，請手動確認','',3500);
+            }else{
+              if(stopInline)stopInline('已帶入：'+code);
+              toast('✓ 識別編碼：'+code,'ok',3000);
+            }
           }else{
             if(stopInline)stopInline('未識別到編碼，請重拍或手動輸入',true);
             toast('未識別到編碼，請手動輸入','',3000);
@@ -6723,16 +6733,24 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
       rawTxt=(rawTxt||'').trim();
       var code;
-      if(_fscanOpt.ocrClean){                                  // v25.02：編碼/型號/ISBN 才做分類清洗（序號不清洗）
-        var cat=_selectedType||'遊戲';
+      var isFallback=false;
+      if(_fscanOpt.ocrClean){
+        var cat=_selectedType||'遂戲';
         var cleaned=cleanOCRByCategory(rawTxt,cat);
-        code=cleaned?cleaned.toUpperCase():'';                 // 不符格式就提示重拍，不回填 AI 原文
-        if(_fscanOpt.normalize&&cat==='遊戲')code=normalizeGameCode(code);
+        if(cleaned&&cleaned.charAt(0)==='?'){isFallback=true;cleaned=cleaned.slice(1);}
+        code=cleaned?cleaned.toUpperCase():'';
+        if(!isFallback&&_fscanOpt.normalize&&cat==='遂戲')code=normalizeGameCode(code);
       }else{
         code=rawTxt.toUpperCase();
         if(_fscanOpt.normalize)code=normalizeGameCode(code);
       }
-      if(code){fscanFill(code);}
+      if(code&&!isFallback){fscanFill(code);}
+      else if(code&&isFallback){
+        fscanFill(code);
+        var st2=$('fscan-status');
+        if(st2)st2.textContent='可能是：'+code+'（AI 不確定，請手動確認）';
+        toast('已帶入 AI 卿測結果，請手動確認','',3500);
+      }
       else{_fscanShowRetryOptions();}
     }).catch(function(e){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
