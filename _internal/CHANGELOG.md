@@ -1,3 +1,26 @@
+## v40.46 (2026-06-29)
+
+### 變更內容
+- 修正 Switch 含地區碼編碼被截斷的問題（LA-H-A585C-CHT 只帶入 LA-H-A585C）
+- `_matchGCode` 的 Nintendo 光碟 regex 加入可選尾端地區碼：`(?:-[A-Z]{2,4})?`
+- 影響格式：LA-H-XXXXX-CHT / LA-H-XXXXX-JPN 等 Switch 亞洲版四段碼
+- 長度上限從 20 調整為 22（容納地區碼段）
+- 11/11 測試通過
+
+### 影響檔案
+- index.html
+- GameVault_v40_46_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-46
+
+### 對應備份
+- _internal/old/v40_45/
+
 ## v40.45 (2026-06-29)
 
 ### 變更內容
@@ -48,29 +71,4 @@
 
 ### 對應備份
 - _internal/old/v40_43/
-
-## v40.43 (2026-06-29)
-
-### 變更內容
-- `cleanOCRByCategory` 遊戲分支格式大幅擴充（21/21 測試通過）：
-  - 新增 Nintendo 卡帶 ROM 格式：AGB-AXPJ-JPN、NTR-AXXJ-JPN（字母-英數-地區）
-  - 新增 Nintendo 光碟格式：CTR-P-ARXJ、RVL-P-RMCJ、HAC-P-AAAA（字母-單字母-英數）
-  - 新增 Sega 第三方格式：T-00001G（T- 開頭加數字）
-  - PS/Sega 標準格式 regex 精確化，避免過寬誤判
-- 遊戲 OCR prompt 同步更新，列出各平台代表性格式讓 Gemini 更準確辨識
-- 涵蓋平台：PS1/2/3/4/5、PSP、PSVita、GBA、NDS、3DS、Wii、WiiU、Switch、Sega MD/SS/DC、EAN/UPC 條碼
-
-### 影響檔案
-- index.html
-- GameVault_v40_43_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-43
-
-### 對應備份
-- _internal/old/v40_42/
 
