@@ -2079,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.45';
+const APP_VERSION='v40.46';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4649,7 +4649,7 @@ function _ocrInlineStatus(el,base){
 function _matchGCode(up){
   var mb=up.match(/\b[0-9]{8,13}\b/);if(mb)return mb[0];
   var nc=up.match(/[A-Z]{2,4}-[A-Z0-9]{4,6}-[A-Z]{2,4}/g)||[];for(var j=0;j<nc.length;j++){if(nc[j].length<=20)return nc[j];}
-  var nd=up.match(/[A-Z]{2,4}-[A-Z]-[A-Z0-9]{2,8}/g)||[];for(var j=0;j<nd.length;j++){if(nd[j].length<=20)return nd[j];}
+  var nd=up.match(/[A-Z]{2,4}-[A-Z]-[A-Z0-9]{2,8}(?:-[A-Z]{2,4})?/g)||[];for(var j=0;j<nd.length;j++){if(nd[j].length<=22)return nd[j];}
   var ps=up.match(/[A-Z]{2,4}-[0-9]{4,6}/g)||[];for(var j=0;j<ps.length;j++){if(ps[j].length<=16)return ps[j];}
   var sg=up.match(/\bT-[0-9]{4,6}[A-Z]?\b/g)||[];for(var j=0;j<sg.length;j++)return sg[j];
   var gx=up.match(/\bG-[0-9]{3,6}\b/g)||[];for(var j=0;j<gx.length;j++)return gx[j];
