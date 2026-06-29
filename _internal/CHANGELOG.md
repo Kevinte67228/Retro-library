@@ -1,3 +1,30 @@
+## v40.47 (2026-06-29)
+
+### 變更內容
+- 新增 Switch 2 卡帶格式支援：LN-BQ2ZZB-JPN-O（2字母-英數5-7-地區2-4-可選版本碼）
+- 遊戲編碼驗證改為統一寬鬆白名單（`_isValidGCode`），取代多個零散 regex：
+  - A: 純數字 5-13 碼（條碼/Xbox）
+  - B: 含連字號 + 含字母 + 全英數連字號組合，3-25 字元
+  - C: 字母開頭英數混合無連字號，4-12 碼
+- 抽出 `_extractGCode`（單行擷取）, `_isValidGCode`（白名單驗證）兩個 helper
+- `_matchGCode` 簡化為包裝層（純數字條碼優先，再走 `_extractGCode`）
+- 遊戲「商品編碼」與「拍攝編碼＋照片」模式各加紅字提醒：⚠️ 請先選擇正確「平台」與「區域」
+- 20/20 回歸測試通過
+
+### 影響檔案
+- index.html
+- GameVault_v40_47_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-47
+
+### 對應備份
+- _internal/old/v40_46/
+
 ## v40.46 (2026-06-29)
 
 ### 變更內容
@@ -45,30 +72,4 @@
 
 ### 對應備份
 - _internal/old/v40_44/
-
-## v40.44 (2026-06-29)
-
-### 變更內容
-- `cleanOCRByCategory` 遊戲分支全平台覆蓋（31/31 測試通過）：
-  - 新增 FC/FDS/GB：純字母格式（HVC-NSMJ、FMC-HVC、DMG-TRAJ）
-  - 新增 Sega G-XXXX：G-4049、G-6001（Sega 自製 MD/SS/DC）
-  - 新增 Neo Geo / MSX：短數字格式（NGH-001、MSX-001）
-  - 新增 WonderSwan：字母+數字混合（SWJ-BAN001）
-  - 新增 Xbox 純數字 5-6 碼：14981、58069
-- PC 平台一勞永逸策略：偵測到 PC 平台時跳過格式驗證，直接走 fallback 回傳 AI 原文供用戶確認
-- 遊戲 OCR prompt 同步擴充，涵蓋 FC/NDS/3DS/GBA/Sega/Neo Geo/Xbox 等復古格式
-
-### 影響檔案
-- index.html
-- GameVault_v40_44_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-44
-
-### 對應備份
-- _internal/old/v40_43/
 
