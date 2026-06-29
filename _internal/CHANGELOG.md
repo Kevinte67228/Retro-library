@@ -1,3 +1,27 @@
+## v40.42 (2026-06-29)
+
+### 變更內容
+- OCR prompt 改為動態：依當前選擇的分類（遊戲/主機/週邊/攻略）給 Gemini 不同的辨識指引
+  - 主機/週邊：明確告知 P/N、Model No. 格式（含 810-010805 純數字型）也是有效編碼
+  - 攻略：明確要求 ISBN 格式
+  - 遊戲：維持現有 CUSA/SLUS/HAC 等格式提示
+- `cleanOCRByCategory` 主機/週邊分支新增純數字 P/N 格式擷取（如 810-010805）
+- 影響範圍：`openCodeScanFor`、`fieldScan`、`fscanCapture` fallback prompt
+
+### 影響檔案
+- index.html
+- GameVault_v40_42_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-42
+
+### 對應備份
+- _internal/old/v40_41/
+
 ## v40.41 (2026-06-29)
 
 ### 變更內容
@@ -46,27 +70,4 @@
 
 ### 對應備份
 - _internal/old/v40_39/
-
-## v40.39 (2026-06-29)
-
-### 變更內容
-- retry bar 四顆按鈕加入選中狀態（`.sel`）：點哪顆哪顆高亮（亮藍邊框＋輕背景）
-- 切回取景框重新對準後，retry bar 重新顯示時保留上次選擇的高亮狀態
-- 「返回」改為 `_fscanBack()`：先顯示選中效果 120ms 後再關閉，讓用戶感知點擊
-- 新開取景框（`fscanStop`）時清除所有 `.sel`，不保留跨 session 狀態
-- 加入 `_fscanSelBtn()` 共用 helper 管理選中狀態
-
-### 影響檔案
-- index.html
-- GameVault_v40_39_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-39
-
-### 對應備份
-- _internal/old/v40_38/
 
