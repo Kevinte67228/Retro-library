@@ -1,3 +1,27 @@
+## v40.41 (2026-06-29)
+
+### 變更內容
+- 以 v40.35 為基底重建，移除 v40.37–40.40 的 retry bar UI（四顆選項按鈕）
+- 新增 `callGeminiOCR`：純文字模式（不用 responseSchema），遇 429/503 自動等 5 秒重試一次
+- OCR 壓縮品質升級：300px/0.5 → 600px/0.75
+- `cleanOCRByCategory` 改為子字串擷取（而非整行驗證），Gemini 回傳含說明文字也能找到編碼
+- 失敗原因細分：圖片無符合格式編碼 / 無法讀取文字 / API 錯誤（含錯誤訊息），各給不同提示
+- fallback 機制：Gemini 有回傳但格式不符時帶入並提示「AI 不確定，請手動確認」
+
+### 影響檔案
+- index.html
+- GameVault_v40_41_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-41
+
+### 對應備份
+- _internal/old/v40_41d/（備份 debug 版本）
+
 ## v40.40 (2026-06-29)
 
 ### 變更內容
@@ -45,28 +69,4 @@
 
 ### 對應備份
 - _internal/old/v40_38/
-
-## v40.38 (2026-06-28)
-
-### 變更內容
-- OCR 失敗後的選項 UI 重新設計：改用獨立 `#fscan-retry-bar`（display 切換），不再覆寫 `#fscan-bar` innerHTML
-- 「重新對準」修正為具名函式 `_fscanRetryRescan()`，正確還原 fscan-bar 顯示並重設按鈕狀態（closure 失效問題修正）
-- 新增「返回」按鈕（`fscanCancel()`），可完全離開取景框
-- 三選項改兩列排版：「重新對準（主色）/ 拍照 OCR」+ 「手動輸入 / 返回」
-- 按鈕全數套用 `#fscan-retry-bar button` CSS（有 border、active 縮放動效）
-- `fscanStop()` 加入 retry bar 狀態重置，避免下次開啟殘留
-
-### 影響檔案
-- index.html
-- GameVault_v40_38_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-38
-
-### 對應備份
-- _internal/old/v40_37/
 
