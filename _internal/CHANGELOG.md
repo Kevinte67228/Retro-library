@@ -1,3 +1,28 @@
+## v40.48 (2026-06-29)
+
+### 變更內容
+- 完整研究所有建檔平台（PS/Nintendo/Sega/Xbox/PCE/Neo Geo/WonderSwan 等）各地區編碼格式
+- `_isValidGCode` 白名單更新（37/37 測試通過）：
+  - A: 純數字 4-13 碼（原 5-13），新增支援 Sega Master System 短碼（7015、1228 等）
+  - B2: 新增純數字連字號格式（610-6272-50、610-6275 等 Sega 日本地區碼）
+  - B1 + C: 維持原有廣域覆蓋
+- 覆蓋率從 104/109（95.4%）提升至 109/109（100%）
+  - 補上：Sega MD 610 系列、Sega Saturn 610 系列、Sega CD 610 系列、Sega MS 純數字短碼
+
+### 影響檔案
+- index.html
+- GameVault_v40_48_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-48
+
+### 對應備份
+- _internal/old/v40_47/
+
 ## v40.47 (2026-06-29)
 
 ### 變更內容
@@ -47,29 +72,4 @@
 
 ### 對應備份
 - _internal/old/v40_45/
-
-## v40.45 (2026-06-29)
-
-### 變更內容
-- `cleanOCRByCategory` 支援兩行印刷編碼（如 ECJS / 00052 分兩行）
-  - 掃描前先嘗試「純字母行 + 數字行」相鄰拼接（加連字號或直接合併）
-  - 例：ECJS + 00052 → ECJS-00052；CUSA + 00001 → CUSA-00001
-  - 三行情境（中間夾說明文字）也正確處理
-- 抽出 `_matchGCode()` helper 供單行與兩行拼接共用，邏輯不重複
-- 遊戲 OCR prompt 加說明「編碼可能分兩行印刷，請合併後回傳」
-- 15/15 測試全通過（含兩行、單行、多行、fallback）
-
-### 影響檔案
-- index.html
-- GameVault_v40_45_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-45
-
-### 對應備份
-- _internal/old/v40_44/
 
