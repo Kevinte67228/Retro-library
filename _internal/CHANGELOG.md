@@ -1,3 +1,28 @@
+## v40.40 (2026-06-29)
+
+### 變更內容
+- `cleanOCRByCategory` 從「整行格式驗證」改為「子字串擷取」：Gemini 就算多回傳說明文字，也能從行內找出符合格式的編碼/型號/ISBN
+  - 主機/週邊：regex 擷取 `英字母開頭-英數` 格式片段（SCPH-10000、CUH-2000A、HAC-001）
+  - 遊戲：擷取純數字條碼或 `XX-數字` 格式（SLPM-62300、CUSA-00001）
+  - 攻略：擷取 10/13 碼 ISBN
+- 新增 fallback 機制：所有行都沒有符合格式的片段時，回傳第一行前 25 字（`?` 前綴），帶入欄位並提示「AI 不確定，請手動確認」，不再直接顯示失敗
+- 同樣修正適用於 `fscanCapture`（取景框）與 `_gcodeOCRShared`（靜態拍照 OCR）兩條路徑
+- 8/8 單元測試通過
+
+### 影響檔案
+- index.html
+- GameVault_v40_40_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-40
+
+### 對應備份
+- _internal/old/v40_39/
+
 ## v40.39 (2026-06-29)
 
 ### 變更內容
@@ -44,28 +69,4 @@
 
 ### 對應備份
 - _internal/old/v40_37/
-
-## v40.37 (2026-06-28)
-
-### 變更內容
-- OCR 辨識失敗後，取景框底部按鈕列動態切換為三選項：「重新對準」／「拍照 OCR」／「手動輸入」
-- 選「重新對準」：還原原始按鈕，直接在取景框中重拍
-- 選「拍照 OCR」：關閉取景框，觸發原生相機靜態拍照，走 _gcodeOCRShared 路徑辨識
-- 選「手動輸入」：關閉取景框，對目標輸入欄位 focus + scrollIntoView
-- 新增 _fscanShowRetryOptions / _fscanTriggerPhoto / fscanPhotoFallback / _fscanManualInput
-- 新增 #fscan-photo-inp（hidden file input，供拍照 OCR 觸發）
-
-### 影響檔案
-- index.html
-- GameVault_v40_37_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-37
-
-### 對應備份
-- _internal/old/v40_36/
 
