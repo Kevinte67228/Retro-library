@@ -2079,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.43';
+const APP_VERSION='v40.44';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4662,6 +4662,10 @@ function cleanOCRByCategory(raw,cat){
       var mp=up.match(/\b[0-9]{2,6}-[0-9]{4,8}(?:-[0-9]{1,6})*\b/g)||[];
       for(var j=0;j<mp.length;j++){if(mp[j].length<=20)return mp[j];}
     }else{
+      // 特殊平台豐免：PC 沒有統一編碼格式，直接走 fallback
+      if(_selectedPlatform==='PC'||_selectedType==='PC'){
+        return firstNonEmpty?'?'+firstNonEmpty.slice(0,30).trim():'';
+      }
       // 1. 純數字條碼 EAN/UPC
       var mb=up.match(/\b[0-9]{8,13}\b/);
       if(mb)return mb[0];
@@ -4677,6 +4681,21 @@ function cleanOCRByCategory(raw,cat){
       // 5. Sega 第三方（T-00001G）
       var sg=up.match(/\bT-[0-9]{4,6}[A-Z]?\b/g)||[];
       for(var j=0;j<sg.length;j++)return sg[j];
+      // 6. Sega G-XXXX / 純字母（G-4049、G-6001）
+      var gx=up.match(/\bG-[0-9]{3,6}\b/g)||[];
+      for(var j=0;j<gx.length;j++)return gx[j];
+      // 7. Neo Geo（NGH-001、NGM-001）及 MSX（MSX-001）——字母-短數字
+      var ng=up.match(/\b[A-Z]{2,4}-[0-9]{2,4}\b/g)||[];
+      for(var j=0;j<ng.length;j++){if(ng[j].length<=10)return ng[j];}
+      // 8. WonderSwan（SWJ-BAN001、SWC-BAN001）——字母-字母+數字
+      var ws=up.match(/\b[A-Z]{2,3}-[A-Z]{2,4}[0-9]{2,4}\b/g)||[];
+      for(var j=0;j<ws.length;j++){if(ws[j].length<=12)return ws[j];}
+      // 9. FC/FDS/純字母型（HVC-NSMJ、FMC-HVC、DMG-TRAJ）
+      var al=up.match(/\b[A-Z]{2,4}-[A-Z]{2,5}\b/g)||[];
+      for(var j=0;j<al.length;j++){if(al[j].length<=12)return al[j];}
+      // 10. Xbox 純數字 5-6 碼（5-6碼，避免誤判到短數字）
+      var xb=up.match(/\b[0-9]{5,6}\b/g)||[];
+      for(var j=0;j<xb.length;j++)return xb[j];
     }
   }
   return firstNonEmpty?'?'+firstNonEmpty.slice(0,25).trim():'';
@@ -6792,7 +6811,7 @@ function openCodeScanFor(inputId,fallbackId){
       var cat=_selectedType||'遂戲';
       if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、說明文字或猜測結果。';
       if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），找不到回傳空字串。';
-      return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA、RVL-P-RMCJ）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。';
+      return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo光碟（CTR-P-ARXJ、RVL-P-RMCJ、WUP-P-ARPJ、HAC-P-AAAA）、Nintendo卡帶（AGB-AXPJ-JPN、NTR-AXXJ-JPN、DMG-TRAJ-JPN、HVC-NSMJ）、Sega（T-00001G、MK-1234、G-4049）、Neo Geo（NGH-001）、WonderSwan（SWJ-BAN001）、Xbox（FKW-00001）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。PC 遂戲請直接回傳標籤上的任何編碼。';
     })(),
     fallback:function(){var fi=$(fallbackId||'gcode-cam-inp');if(fi)fi.click();}});
 }
