@@ -2085,7 +2085,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.48';
+const APP_VERSION='v40.49';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4832,6 +4832,54 @@ function gcodeSearch(){
       showForm('書籍編碼建檔');
       aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
     }).catch(function(){noLoad();showForm('書籍編碼建檔');});
+  }else if(_selectedType==='主機'||_selectedType==='週邊'){
+    // 主機/週邊：不走遲戲資料庫路徑，改用 AI 直接根據型號填欄（+ScreenScraper 試查）
+    entry.code=code;
+    var _hwType=_selectedType;
+    var _hwLabel=_hwType==='主機'?'主機型號':'週邊型號';
+    loadingTimed('AI 辨識'+_hwLabel+'中…');
+    // 1. ScreenScraper 試查（用型號當名稱查）
+    var ssP=(cfg.ssid&&cfg.sspass&&cfg.url)?
+      ssSearch(code,'').then(function(r){return r&&r.primary_name?{src:'screenscraper',data:r}:null;}).catch(function(){return null;})
+      :Promise.resolve(null);
+    // 2. AI 直接用型號填欄（不需要 primary_name 已存在）
+    var aiP=aiKnowledgeFill(code,_selectedPlatform||'',
+      _checkFieldsFor(_hwType),_hwType,_region);
+    Promise.all([ssP,aiP]).then(function(res){
+      noLoad();
+      var ssResult=res[0],aiResult=res[1];
+      // SS 有結果就將所有欄位帶入
+      if(ssResult&&ssResult.data){
+        Object.keys(ssResult.data).forEach(function(k){
+          if(ssResult.data[k]&&!entry[k])entry[k]=ssResult.data[k];
+        });
+        entry._src=entry._src||{};entry._src._db='screenscraper';
+      }
+      // AI 結果覆蓋空缺欄位
+      var filled=0;
+      if(aiResult&&typeof aiResult==='object'){
+        normalizeLanguageFields(aiResult);
+        _checkFieldsFor(_hwType).forEach(function(k){
+          var v=_aiStr(aiResult[k]);
+          if(v&&v!=='無'&&v!=='未知'&&!entry[k]){
+            if(k==='genre')v=matchGenreMulti(v);
+            entry[k]=v;entry._src=entry._src||{};entry._src[k]='ai';filled++;
+          }
+        });
+      }
+      // 如果 AI 有回傳 primary_name，更新 entry
+      if(aiResult&&aiResult.primary_name&&!entry.primary_name){
+        entry.primary_name=aiResult.primary_name;
+      }
+      showForm('商品編碼建檔');
+      var msg=ssResult?'✓ SS+AI 填欄 '+filled+' 欄':'✓ AI 填欄 '+filled+' 欄';
+      if(filled>0)toast(msg,'ok',2500);
+      else toast('查不到資料，請手動填寫','',3000);
+    }).catch(function(){
+      noLoad();
+      showForm('商品編碼建檔');
+      toast('查詢失敗，請手動填寫','er',3000);
+    });
   }else{
     code=normalizeGameCode(code);
     entry.code=code;
