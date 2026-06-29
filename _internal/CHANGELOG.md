@@ -1,3 +1,29 @@
+## v40.44 (2026-06-29)
+
+### 變更內容
+- `cleanOCRByCategory` 遊戲分支全平台覆蓋（31/31 測試通過）：
+  - 新增 FC/FDS/GB：純字母格式（HVC-NSMJ、FMC-HVC、DMG-TRAJ）
+  - 新增 Sega G-XXXX：G-4049、G-6001（Sega 自製 MD/SS/DC）
+  - 新增 Neo Geo / MSX：短數字格式（NGH-001、MSX-001）
+  - 新增 WonderSwan：字母+數字混合（SWJ-BAN001）
+  - 新增 Xbox 純數字 5-6 碼：14981、58069
+- PC 平台一勞永逸策略：偵測到 PC 平台時跳過格式驗證，直接走 fallback 回傳 AI 原文供用戶確認
+- 遊戲 OCR prompt 同步擴充，涵蓋 FC/NDS/3DS/GBA/Sega/Neo Geo/Xbox 等復古格式
+
+### 影響檔案
+- index.html
+- GameVault_v40_44_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-44
+
+### 對應備份
+- _internal/old/v40_43/
+
 ## v40.43 (2026-06-29)
 
 ### 變更內容
@@ -46,28 +72,4 @@
 
 ### 對應備份
 - _internal/old/v40_41/
-
-## v40.41 (2026-06-29)
-
-### 變更內容
-- 以 v40.35 為基底重建，移除 v40.37–40.40 的 retry bar UI（四顆選項按鈕）
-- 新增 `callGeminiOCR`：純文字模式（不用 responseSchema），遇 429/503 自動等 5 秒重試一次
-- OCR 壓縮品質升級：300px/0.5 → 600px/0.75
-- `cleanOCRByCategory` 改為子字串擷取（而非整行驗證），Gemini 回傳含說明文字也能找到編碼
-- 失敗原因細分：圖片無符合格式編碼 / 無法讀取文字 / API 錯誤（含錯誤訊息），各給不同提示
-- fallback 機制：Gemini 有回傳但格式不符時帶入並提示「AI 不確定，請手動確認」
-
-### 影響檔案
-- index.html
-- GameVault_v40_41_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-41
-
-### 對應備份
-- _internal/old/v40_41d/（備份 debug 版本）
 
