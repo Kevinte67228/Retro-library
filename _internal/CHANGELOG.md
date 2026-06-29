@@ -1,3 +1,28 @@
+## v40.49 (2026-06-29)
+
+### 變更內容
+- 修正主機/週邊用商品編碼查詢後「所有資料庫均無結果」的問題
+- 根本原因：`_crossRefQuery` 的路由守衛刻意讓非遊戲分類繞過所有遊戲資料庫（正確設計），但缺少替代路徑
+- 解法：`gcodeSearch` 加入主機/週邊獨立分支，走「ScreenScraper 試查 + AI 直接填欄」並行策略：
+  - ScreenScraper：用型號當名稱查詢，有結果就帶入（需已設定 SS 帳密）
+  - AI：直接用型號 + 平台呼叫 `aiKnowledgeFill`，不再需要 primary_name 已存在才執行
+  - 兩者並行 Promise.all，SS 填主要欄位，AI 補缺漏欄位
+- 週邊的 gcode-combo 路徑（gcodeComboSearch）保持不變，已有 AI 視覺辨識涵蓋
+
+### 影響檔案
+- index.html
+- GameVault_v40_49_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-49
+
+### 對應備份
+- _internal/old/v40_48/
+
 ## v40.48 (2026-06-29)
 
 ### 變更內容
@@ -49,27 +74,4 @@
 
 ### 對應備份
 - _internal/old/v40_46/
-
-## v40.46 (2026-06-29)
-
-### 變更內容
-- 修正 Switch 含地區碼編碼被截斷的問題（LA-H-A585C-CHT 只帶入 LA-H-A585C）
-- `_matchGCode` 的 Nintendo 光碟 regex 加入可選尾端地區碼：`(?:-[A-Z]{2,4})?`
-- 影響格式：LA-H-XXXXX-CHT / LA-H-XXXXX-JPN 等 Switch 亞洲版四段碼
-- 長度上限從 20 調整為 22（容納地區碼段）
-- 11/11 測試通過
-
-### 影響檔案
-- index.html
-- GameVault_v40_46_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-46
-
-### 對應備份
-- _internal/old/v40_45/
 
