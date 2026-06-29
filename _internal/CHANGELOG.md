@@ -1,3 +1,28 @@
+## v40.43 (2026-06-29)
+
+### 變更內容
+- `cleanOCRByCategory` 遊戲分支格式大幅擴充（21/21 測試通過）：
+  - 新增 Nintendo 卡帶 ROM 格式：AGB-AXPJ-JPN、NTR-AXXJ-JPN（字母-英數-地區）
+  - 新增 Nintendo 光碟格式：CTR-P-ARXJ、RVL-P-RMCJ、HAC-P-AAAA（字母-單字母-英數）
+  - 新增 Sega 第三方格式：T-00001G（T- 開頭加數字）
+  - PS/Sega 標準格式 regex 精確化，避免過寬誤判
+- 遊戲 OCR prompt 同步更新，列出各平台代表性格式讓 Gemini 更準確辨識
+- 涵蓋平台：PS1/2/3/4/5、PSP、PSVita、GBA、NDS、3DS、Wii、WiiU、Switch、Sega MD/SS/DC、EAN/UPC 條碼
+
+### 影響檔案
+- index.html
+- GameVault_v40_43_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-43
+
+### 對應備份
+- _internal/old/v40_42/
+
 ## v40.42 (2026-06-29)
 
 ### 變更內容
@@ -45,29 +70,4 @@
 
 ### 對應備份
 - _internal/old/v40_41d/（備份 debug 版本）
-
-## v40.40 (2026-06-29)
-
-### 變更內容
-- `cleanOCRByCategory` 從「整行格式驗證」改為「子字串擷取」：Gemini 就算多回傳說明文字，也能從行內找出符合格式的編碼/型號/ISBN
-  - 主機/週邊：regex 擷取 `英字母開頭-英數` 格式片段（SCPH-10000、CUH-2000A、HAC-001）
-  - 遊戲：擷取純數字條碼或 `XX-數字` 格式（SLPM-62300、CUSA-00001）
-  - 攻略：擷取 10/13 碼 ISBN
-- 新增 fallback 機制：所有行都沒有符合格式的片段時，回傳第一行前 25 字（`?` 前綴），帶入欄位並提示「AI 不確定，請手動確認」，不再直接顯示失敗
-- 同樣修正適用於 `fscanCapture`（取景框）與 `_gcodeOCRShared`（靜態拍照 OCR）兩條路徑
-- 8/8 單元測試通過
-
-### 影響檔案
-- index.html
-- GameVault_v40_40_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-40
-
-### 對應備份
-- _internal/old/v40_39/
 
