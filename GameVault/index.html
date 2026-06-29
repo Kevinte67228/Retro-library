@@ -2087,7 +2087,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.41d';
+const APP_VERSION='v40.41d2';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4718,9 +4718,10 @@ function _gcodeOCRShared(input,o){
           if(o.onEnd)o.onEnd();
         }).catch(function(e){
           noLoad();
+          var emsg=(e&&e.message)||String(e);
+          toast('[ERR] '+emsg.slice(0,120),'er',8000);
           if(stopInline)stopInline((e&&e.cancelled)?'已取消辨識':'辨識失敗，請重試',!(e&&e.cancelled));
           if(o.onEnd)o.onEnd();
-          if(!(e&&e.cancelled))toast('OCR 失敗','er');
         });
       });
       });
@@ -6756,6 +6757,8 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
       else{_fscanShowRetryOptions();}
     }).catch(function(e){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
+      var emsg=(e&&e.message)||String(e);
+      toast('[ERR] '+emsg.slice(0,120),'er',8000);
       if(st)st.textContent=(e&&e.cancelled)?'已取消':'辨識失敗，請重試';
     });
   });
