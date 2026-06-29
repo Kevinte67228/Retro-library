@@ -1,3 +1,28 @@
+## v40.45 (2026-06-29)
+
+### 變更內容
+- `cleanOCRByCategory` 支援兩行印刷編碼（如 ECJS / 00052 分兩行）
+  - 掃描前先嘗試「純字母行 + 數字行」相鄰拼接（加連字號或直接合併）
+  - 例：ECJS + 00052 → ECJS-00052；CUSA + 00001 → CUSA-00001
+  - 三行情境（中間夾說明文字）也正確處理
+- 抽出 `_matchGCode()` helper 供單行與兩行拼接共用，邏輯不重複
+- 遊戲 OCR prompt 加說明「編碼可能分兩行印刷，請合併後回傳」
+- 15/15 測試全通過（含兩行、單行、多行、fallback）
+
+### 影響檔案
+- index.html
+- GameVault_v40_45_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v40-45
+
+### 對應備份
+- _internal/old/v40_44/
+
 ## v40.44 (2026-06-29)
 
 ### 變更內容
@@ -48,28 +73,4 @@
 
 ### 對應備份
 - _internal/old/v40_42/
-
-## v40.42 (2026-06-29)
-
-### 變更內容
-- OCR prompt 改為動態：依當前選擇的分類（遊戲/主機/週邊/攻略）給 Gemini 不同的辨識指引
-  - 主機/週邊：明確告知 P/N、Model No. 格式（含 810-010805 純數字型）也是有效編碼
-  - 攻略：明確要求 ISBN 格式
-  - 遊戲：維持現有 CUSA/SLUS/HAC 等格式提示
-- `cleanOCRByCategory` 主機/週邊分支新增純數字 P/N 格式擷取（如 810-010805）
-- 影響範圍：`openCodeScanFor`、`fieldScan`、`fscanCapture` fallback prompt
-
-### 影響檔案
-- index.html
-- GameVault_v40_42_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-42
-
-### 對應備份
-- _internal/old/v40_41/
 
