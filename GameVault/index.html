@@ -668,6 +668,8 @@ body{
 #fscan-retry-bar button:active{transform:scale(.97)}
 #fscan-retry-bar button.cp{background:linear-gradient(135deg,#00e5ff,#2979ff);border-color:transparent;color:#001018}
 #fscan-retry-bar button.back{font-size:13px;padding:12px 8px;color:#7986cb;border-color:#1e2a45}
+#fscan-retry-bar button.sel{border-color:#00e5ff;background:#0d2233;color:#00e5ff;box-shadow:0 0 0 1px #00e5ff33}
+#fscan-retry-bar button.cp.sel{background:linear-gradient(135deg,#00e5ff,#2979ff);border-color:#00e5ff;color:#001018;box-shadow:0 0 0 3px #00e5ff55}
 .ocr-status{display:none;font-size:11px;color:#00e5ff;text-align:center;margin-bottom:8px;line-height:1.5}
 /* 表單編碼/條碼欄位的 OCR 觸發鈕（取代原靜態徽章）*/
 .ocr-btn{font-size:10px;padding:2px 8px;border-radius:6px;background:rgba(0,229,255,.1);color:#00e5ff;margin-left:6px;border:1px solid rgba(0,229,255,.4);cursor:pointer;font-family:inherit;font-weight:600;vertical-align:middle;line-height:1.4}
@@ -2085,7 +2087,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.38';
+const APP_VERSION='v40.39';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6671,7 +6673,7 @@ function fscanStop(){
   // 重置 retry bar（避免下次開啟殘留狀態）
   var bar=$('fscan-bar');var rb=$('fscan-retry-bar');
   if(bar)bar.style.display='flex';
-  if(rb)rb.style.display='none';
+  if(rb){rb.style.display='none';rb.querySelectorAll('button').forEach(function(b){b.classList.remove('sel');});}
 }
 function fscanClose(){fscanStop();var ov=$('fscan-ov');if(ov)ov.classList.remove('on');}
 function fscanCancel(){
@@ -6748,15 +6750,23 @@ function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉
   fscanClose();
 }
 // -- OCR 辨識失敗後的三選項 UI --
+function _fscanSelBtn(btn){
+  // 清除所有選中狀態，再設定被點裉的按鈕
+  var rb=$('fscan-retry-bar');
+  if(!rb)return;
+  rb.querySelectorAll('button').forEach(function(b){b.classList.remove('sel');});
+  if(btn)btn.classList.add('sel');
+}
 function _fscanShowRetryOptions(){
   var st=$('fscan-status');
   if(st)st.textContent='未識別到有效編碼，請選擇下一步';
   var bar=$('fscan-bar');var rb=$('fscan-retry-bar');
   if(bar)bar.style.display='none';
   if(rb)rb.style.display='flex';
+  // 顯示 retry bar 時不清除選中狀態，保留上次選擇
 }
-function _fscanRetryRescan(){
-  // 隔離 retry bar、還原主按鈕列，相機領流不重啟（需要時再拍）
+function _fscanRetryRescan(btn){
+  _fscanSelBtn(btn);
   var bar=$('fscan-bar');var rb=$('fscan-retry-bar');
   if(rb)rb.style.display='none';
   if(bar)bar.style.display='flex';
@@ -6764,7 +6774,8 @@ function _fscanRetryRescan(){
   var st=$('fscan-status');
   if(st){st.classList.remove('busy');st.textContent=(_fscanOpt&&_fscanOpt.readyText)||'相機已開啟，對準編碼後按「拍攝並辨識」';}
 }
-function _fscanTriggerPhoto(){
+function _fscanTriggerPhoto(btn){
+  _fscanSelBtn(btn);
   var fi=$('fscan-photo-inp');if(fi)fi.click();
 }
 function fscanPhotoFallback(input){
@@ -6784,11 +6795,18 @@ function fscanPhotoFallback(input){
     onEnd:null
   });
 }
-function _fscanManualInput(){
+function _fscanManualInput(btn){
+  _fscanSelBtn(btn);
   var inputId=_fscanOpt&&_fscanOpt.inputId;
   fscanClose();
   if(inputId){var el=$(inputId);if(el){el.focus();el.scrollIntoView({block:'center',behavior:'smooth'});}}
   toast('請直接輸入編碼','',2000);
+}
+
+function _fscanBack(btn){
+  _fscanSelBtn(btn);
+  // 延遲 120ms 讓選中狀態可見，再關閉
+  setTimeout(function(){fscanCancel();},120);
 }
 
 // 商品編碼建檔模式：開 OCR 取景框帶入目標欄位（失敗回退原生相機）
@@ -11892,12 +11910,12 @@ function _imgToB64(src){
     </div>
     <div id="fscan-retry-bar" style="display:none">
       <div class="retry-row">
-        <button class="cp" onclick="_fscanRetryRescan()">重新對準</button>
-        <button onclick="_fscanTriggerPhoto()">拍照 OCR</button>
+        <button id="frb-rescan" class="cp" onclick="_fscanRetryRescan(this)">重新對準</button>
+        <button id="frb-photo" onclick="_fscanTriggerPhoto(this)">拍照 OCR</button>
       </div>
       <div class="retry-row">
-        <button onclick="_fscanManualInput()">手動輸入</button>
-        <button class="back" onclick="fscanCancel()">← 返回</button>
+        <button id="frb-manual" onclick="_fscanManualInput(this)">手動輸入</button>
+        <button id="frb-back" class="back" onclick="_fscanBack(this)">← 返回</button>
       </div>
     </div>
     <input type="file" accept="image/*" capture="environment" style="display:none" id="fscan-photo-inp" onchange="fscanPhotoFallback(this)">
