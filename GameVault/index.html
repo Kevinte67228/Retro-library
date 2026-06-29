@@ -1007,6 +1007,9 @@ body{
           <!-- 遊戲編碼模式 -->
           <div style="padding:0 16px">
             <div id="gcode-hint" style="font-size:12px;color:#7986cb;margin-bottom:6px">輸入商品編碼（碟片/卡帶上的產品代碼）</div>
+            <div style="font-size:12px;color:#ef5350;font-weight:700;margin-bottom:6px;line-height:1.6">
+              ⚠️ 請先選擇正確的「平台」與「區域」，再進行編碼辨識！
+            </div>
             <div id="gcode-examples" style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">
               例如：PS4 → CUSA-00001　PS3 → BLUS-00001<br>
               Switch → HAC-001　PS1 → SLUS-00001
@@ -1031,6 +1034,9 @@ body{
         <!-- 遊戲編碼＋照片模式 -->
         <div id="gcode-combo-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
           <div style="padding:0 16px">
+            <div style="font-size:11px;color:#ef5350;font-weight:600;margin-bottom:6px">
+              ⚠️ 請先選擇正確「平台」與「區域」
+            </div>
             <div id="gcode-combo-step1" style="font-size:12px;color:#ffb74d;font-weight:700;margin-bottom:8px">① 輸入商品編碼</div>
             <input class="fi mono" id="gcode-combo-inp" type="text" placeholder="CUSA-00001"
               style="letter-spacing:2px;font-size:15px;text-transform:uppercase;margin-bottom:6px"
@@ -2079,7 +2085,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.46';
+const APP_VERSION='v40.47';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4646,18 +4652,25 @@ function _ocrInlineStatus(el,base){
 // raw：辨識字串（容多行）；cat：_selectedType（遊戲/攻略/主機/週邊）。
 // 逐行比對，回傳第一個符合該分類格式的清洗結果；全不符回傳 ''，避免把「遊戲」等 AI 說明文字當成編碼。
 // _matchGCode: cleanOCRByCategory 遂戲分支的單行比對（侩用於單行和兩行拼接）
+function _isValidGCode(s){
+  if(!s)return false;
+  var up=s.toUpperCase().trim();
+  if(up.length<3||up.length>25)return false;
+  if(/^\d{5,13}$/.test(up))return true;
+  if(up.indexOf('-')>=0&&/^[A-Z0-9][A-Z0-9\-]+$/.test(up)&&/[A-Z]/.test(up))return true;
+  if(/^[A-Z][A-Z0-9]{3,11}$/.test(up)&&/[0-9]/.test(up))return true;
+  return false;
+}
+function _extractGCode(line){
+  var up=line.toUpperCase().trim();
+  if(_isValidGCode(up))return up;
+  var toks=up.split(/\s+/);
+  for(var i=0;i<toks.length;i++){if(_isValidGCode(toks[i]))return toks[i];}
+  return '';
+}
 function _matchGCode(up){
   var mb=up.match(/\b[0-9]{8,13}\b/);if(mb)return mb[0];
-  var nc=up.match(/[A-Z]{2,4}-[A-Z0-9]{4,6}-[A-Z]{2,4}/g)||[];for(var j=0;j<nc.length;j++){if(nc[j].length<=20)return nc[j];}
-  var nd=up.match(/[A-Z]{2,4}-[A-Z]-[A-Z0-9]{2,8}(?:-[A-Z]{2,4})?/g)||[];for(var j=0;j<nd.length;j++){if(nd[j].length<=22)return nd[j];}
-  var ps=up.match(/[A-Z]{2,4}-[0-9]{4,6}/g)||[];for(var j=0;j<ps.length;j++){if(ps[j].length<=16)return ps[j];}
-  var sg=up.match(/\bT-[0-9]{4,6}[A-Z]?\b/g)||[];for(var j=0;j<sg.length;j++)return sg[j];
-  var gx=up.match(/\bG-[0-9]{3,6}\b/g)||[];for(var j=0;j<gx.length;j++)return gx[j];
-  var ng=up.match(/\b[A-Z]{2,4}-[0-9]{2,4}\b/g)||[];for(var j=0;j<ng.length;j++){if(ng[j].length<=10)return ng[j];}
-  var ws=up.match(/\b[A-Z]{2,3}-[A-Z]{2,4}[0-9]{2,4}\b/g)||[];for(var j=0;j<ws.length;j++){if(ws[j].length<=12)return ws[j];}
-  var al=up.match(/\b[A-Z]{2,4}-[A-Z]{2,5}\b/g)||[];for(var j=0;j<al.length;j++){if(al[j].length<=12)return al[j];}
-  var xb=up.match(/\b[0-9]{5,6}\b/g)||[];for(var j=0;j<xb.length;j++)return xb[j];
-  return '';
+  return _extractGCode(up);
 }
 
 function cleanOCRByCategory(raw,cat){
@@ -4681,18 +4694,23 @@ function cleanOCRByCategory(raw,cat){
       if(_selectedPlatform==='PC'||_selectedType==='PC'){
         return firstNonEmpty?'?'+firstNonEmpty.slice(0,30).trim():'';
       }
-      // 先嘗試相鄰两行拼接（純字母行 + 數字行），處理兩行印刷編碼如 ECJS\n00052
-      var _allLines=(''+raw).split(/[\r\n]+/).map(function(l){return l.trim();}).filter(Boolean);
+      // 先嘗試相鄰兩行拼接（純字母行 + 數字/英數行）
+      var _allLines=(''+ raw).split(/[\r\n]+/).map(function(l){return l.trim();}).filter(Boolean);
       for(var _li=0;_li<_allLines.length-1;_li++){
         var _a=_allLines[_li].toUpperCase();
         var _b=_allLines[_li+1].toUpperCase();
-        if(/^[A-Z]{2,4}$/.test(_a)&&/^[0-9]/.test(_b)){
-          var _g=_matchGCode(_a+'-'+_b);if(_g)return _g;
-          var _g2=_matchGCode(_a+_b);if(_g2)return _g2;
+        if(/^[A-Z]{2,4}$/.test(_a)&&/^[0-9A-Z]/.test(_b)){
+          var _joined=_a+'-'+_b;
+          if(_isValidGCode(_joined))return _joined;
+          var _joined2=_a+_b;
+          if(_isValidGCode(_joined2))return _joined2;
         }
       }
-      // 再對目前行做單行掃描
-      var _r=_matchGCode(up);if(_r)return _r;
+      // 再逐行擷取
+      for(var _li=0;_li<_allLines.length;_li++){
+        var _got=_extractGCode(_allLines[_li]);
+        if(_got)return _got;
+      }
     }
   }
   return firstNonEmpty?'?'+firstNonEmpty.slice(0,25).trim():'';
