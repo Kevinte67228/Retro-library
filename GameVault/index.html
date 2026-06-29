@@ -2079,7 +2079,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.42';
+const APP_VERSION='v40.43';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4662,10 +4662,21 @@ function cleanOCRByCategory(raw,cat){
       var mp=up.match(/\b[0-9]{2,6}-[0-9]{4,8}(?:-[0-9]{1,6})*\b/g)||[];
       for(var j=0;j<mp.length;j++){if(mp[j].length<=20)return mp[j];}
     }else{
-      var mb=up.match(/[0-9]{8,13}/);
+      // 1. 純數字條碼 EAN/UPC
+      var mb=up.match(/\b[0-9]{8,13}\b/);
       if(mb)return mb[0];
-      var mg=up.match(/[A-Z]{2,6}-?[0-9]{4,6}/g)||[];
-      for(var j=0;j<mg.length;j++){var seg2=mg[j];if(seg2.replace(/-/g,'').length>=4&&seg2.length<=20)return seg2;}
+      // 2. Nintendo 卡帶 ROM（AGB-AXPJ-JPN、NTR-AXXJ-JPN）
+      var nc=up.match(/[A-Z]{2,4}-[A-Z0-9]{4,6}-[A-Z]{2,4}/g)||[];
+      for(var j=0;j<nc.length;j++){if(nc[j].length<=20)return nc[j];}
+      // 3. Nintendo 光碟（CTR-P-ARXJ、RVL-P-RMCJ、HAC-P-AAAA）
+      var nd=up.match(/[A-Z]{2,4}-[A-Z]-[A-Z0-9]{2,8}/g)||[];
+      for(var j=0;j<nd.length;j++){if(nd[j].length<=20)return nd[j];}
+      // 4. PS / Sega 標準（CUSA-00001、SLPS-01234、BCJS-30000、MK-1234）
+      var ps=up.match(/[A-Z]{2,4}-[0-9]{4,6}/g)||[];
+      for(var j=0;j<ps.length;j++){if(ps[j].length<=16)return ps[j];}
+      // 5. Sega 第三方（T-00001G）
+      var sg=up.match(/\bT-[0-9]{4,6}[A-Z]?\b/g)||[];
+      for(var j=0;j<sg.length;j++)return sg[j];
     }
   }
   return firstNonEmpty?'?'+firstNonEmpty.slice(0,25).trim():'';
@@ -6723,7 +6734,7 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
         var cat=_selectedType||'遂戲';
         if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遂戲產品編碼（格式如 CUSA-00001、SLUS-00001、HAC-001 等）。只回傳編碼本身，找不到回傳空字串。';
+        return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
       })()}
     ]).then(function(rawTxt){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
@@ -6781,7 +6792,7 @@ function openCodeScanFor(inputId,fallbackId){
       var cat=_selectedType||'遂戲';
       if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、說明文字或猜測結果。';
       if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），找不到回傳空字串。';
-      return '請從圖片中找出並回傳遂戲產品編碼（格式如 CUSA-00001、SLUS-00001、SLPM-12345、HAC-001 等）。只回傳編碼本身，找不到回傳空字串。不要回傳「遂戲」、分類名稱、說明文字或猜測結果。';
+      return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA、RVL-P-RMCJ）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。';
     })(),
     fallback:function(){var fi=$(fallbackId||'gcode-cam-inp');if(fi)fi.click();}});
 }
@@ -6799,7 +6810,7 @@ function fieldScan(k){
         var cat=_selectedType||'遂戲';
         if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遂戲產品編碼（格式如 CUSA-00001、SLUS-00001、HAC-001 等）。只回傳編碼本身，找不到回傳空字串。不要回傳「遂戲」、分類名稱、說明文字或猜測結果。';
+        return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
       })(),
       onResult:function(val){onFld(k,val);}});
   }
