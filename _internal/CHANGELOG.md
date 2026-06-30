@@ -1,3 +1,24 @@
+## v41.04 (2026-06-30)
+
+### 變更內容
+- `gcodeSearch` 純編碼查詢分支：`normalizeGameCode` 正規化後，同步把結果寫回輸入框（`gcode-inp`）
+- 例：輸入 `ECJS00052` 查詢後，輸入框會顯示為正規化後的 `ECJS-00052`，避免使用者誤以為輸入有誤
+- 純視覺一致性修正，不影響查詢與存檔邏輯（正規化早已在內部生效）
+
+### 影響檔案
+- index.html
+- GameVault_v41_04_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v41-04
+
+### 對應備份
+- _internal/old/v41_03/
+
 ## v41.03 (2026-06-30)
 
 ### 變更內容
@@ -100,29 +121,4 @@
 
 ### 對應備份
 - _internal/old/v40_48/
-
-## v40.48 (2026-06-29)
-
-### 變更內容
-- 完整研究所有建檔平台（PS/Nintendo/Sega/Xbox/PCE/Neo Geo/WonderSwan 等）各地區編碼格式
-- `_isValidGCode` 白名單更新（37/37 測試通過）：
-  - A: 純數字 4-13 碼（原 5-13），新增支援 Sega Master System 短碼（7015、1228 等）
-  - B2: 新增純數字連字號格式（610-6272-50、610-6275 等 Sega 日本地區碼）
-  - B1 + C: 維持原有廣域覆蓋
-- 覆蓋率從 104/109（95.4%）提升至 109/109（100%）
-  - 補上：Sega MD 610 系列、Sega Saturn 610 系列、Sega CD 610 系列、Sega MS 純數字短碼
-
-### 影響檔案
-- index.html
-- GameVault_v40_48_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-48
-
-### 對應備份
-- _internal/old/v40_47/
 
