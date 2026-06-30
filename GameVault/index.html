@@ -2097,7 +2097,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v41.02d';
+const APP_VERSION='v41.03';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4904,7 +4904,6 @@ function gcodeSearch(){
     crossRefLookup(code,null,function(result){
       noLoad();
       applyMultiDbResult(result,code,null);
-      alert('[DEBUG2] entry.cover_img='+(entry.cover_img?entry.cover_img.slice(0,80):'(空)')+'\nentry.primary_name='+(entry.primary_name||'(空)'));
       showForm('商品編碼建檔');
       aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
     });
@@ -5442,6 +5441,7 @@ function extractField(src,data,field){
 
 // 套用多資料庫結果到 entry
 function applyMultiDbResult(dbResult,code,aiResult){
+  toast('[DEBUG] cover_url='+(dbResult&&dbResult.cover_url?dbResult.cover_url.slice(0,50):'(空)')+' keys='+(dbResult?Object.keys(dbResult).join(','):'null'),'',8000);
   var type=_selectedType||'遊戲';
   // 基底：AI 結果（若有）
   if(aiResult&&aiResult.primary_name){
@@ -7832,8 +7832,9 @@ function renderFld(f){
   var v=(entry[k]!==undefined&&entry[k]!==null)?entry[k]:((window._CUR_DEFAULTS||DEFAULTS)[k]||'');
   // 防護：非圖片欄位若含 base64 資料，強制清空
   if(v&&typeof v==='string'&&v.startsWith('data:image')&&k!=='cover_img'&&k!=='back_img'&&k!=='spine_img')v='';
-  // 防護：price/date 欄位若含 URL，清空
-  if(v&&typeof v==='string'&&v.startsWith('http')&&k!=='ref_link')v='';
+  // 防護：price/date 欄位若含 URL，清空（圖片欄位與參考連結不受影響，URL 是合法內容）
+  var _urlOkKeys={ref_link:1,cover_img:1,back_img:1,spine_img:1};
+  if(v&&typeof v==='string'&&v.startsWith('http')&&!_urlOkKeys[k])v='';
   // 防護：所有價格欄位只允許數字、分隔符與幣別
   if(type==='price'&&v&&!/^[\d.,\s]*(JPY|TWD|USD)?$/i.test(v))v='';
   var isE=edited.has(k);
