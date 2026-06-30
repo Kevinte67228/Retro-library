@@ -1,3 +1,34 @@
+## v41.01 (2026-06-30)
+
+### 變更內容
+**GAS 後端（v41）：**
+- 新增 `google_image_search` action：透過 Google Custom Search API 搜尋圖片，回傳第一張結果 URL
+- IGDB proxy `fields` 加入 `cover.url`，回傳封面圖 URL（`t_cover_big` 尺寸）
+
+**前端（v41.01）：**
+- 設定頁新增「Google 圖片搜尋」區塊：API Key（gcsekey）+ Search Engine ID（gcxid）+ 測試按鈕
+- `extractField` IGDB case 加入 `cover_url` 提取
+- `mergeMultiDbResults` 封面優先序：ScreenScraper → IGDB → 楽天
+- 新增 `_autoFetchCover()`：所有查詢/AI填欄完成後，若 cover_img 仍空且已設定 CSE 金鑰，自動以名稱+平台搜尋第一張圖片帶入
+- `applyMultiDbResult` 末尾呼叫 `_autoFetchCover()`（延遲 500ms，讓 GameTDB 先完成）
+- 主機/週邊 AI 填欄路徑（gcodeSearch）完成後也呼叫 `_autoFetchCover()`
+- 新增 `testGCSE()` 測試函式
+
+### 影響檔案
+- index.html
+- GameVault_v41_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（v41）
+
+### GS 版本
+- v41：新增 google_image_search + IGDB cover
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v41-01
+
+### 對應備份
+- _internal/old/v40_49/
+
 ## v40.49 (2026-06-29)
 
 ### 變更內容
@@ -47,31 +78,4 @@
 
 ### 對應備份
 - _internal/old/v40_47/
-
-## v40.47 (2026-06-29)
-
-### 變更內容
-- 新增 Switch 2 卡帶格式支援：LN-BQ2ZZB-JPN-O（2字母-英數5-7-地區2-4-可選版本碼）
-- 遊戲編碼驗證改為統一寬鬆白名單（`_isValidGCode`），取代多個零散 regex：
-  - A: 純數字 5-13 碼（條碼/Xbox）
-  - B: 含連字號 + 含字母 + 全英數連字號組合，3-25 字元
-  - C: 字母開頭英數混合無連字號，4-12 碼
-- 抽出 `_extractGCode`（單行擷取）, `_isValidGCode`（白名單驗證）兩個 helper
-- `_matchGCode` 簡化為包裝層（純數字條碼優先，再走 `_extractGCode`）
-- 遊戲「商品編碼」與「拍攝編碼＋照片」模式各加紅字提醒：⚠️ 請先選擇正確「平台」與「區域」
-- 20/20 回歸測試通過
-
-### 影響檔案
-- index.html
-- GameVault_v40_47_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v40-47
-
-### 對應備份
-- _internal/old/v40_46/
 
