@@ -23,17 +23,21 @@ jobs:
         run: npm install -g @google/clasp
 
       - name: Restore clasp credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
         run: |
           mkdir -p ~/.clasprc
-          echo "${{ secrets.CLASPRC_JSON }}" > ~/.clasprc.json
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          node -e "JSON.parse(require('fs').readFileSync(process.env.HOME + '/.clasprc.json','utf8')); console.log('clasprc.json JSON 格式正確')"
 
       - name: Prepare clasp project
+        env:
+          GAS_SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
         run: |
           mkdir -p clasp_deploy
           cp GameVault/GameVault_AppsScript.gs clasp_deploy/Code.gs
-          cat > clasp_deploy/.clasp.json << CLASPEOF
-          {"scriptId":"${{ secrets.GAS_SCRIPT_ID }}","rootDir":"."}
-          CLASPEOF
+          printf '{"scriptId":"%s","rootDir":"."}' "$GAS_SCRIPT_ID" > clasp_deploy/.clasp.json
+          node -e "JSON.parse(require('fs').readFileSync('clasp_deploy/.clasp.json','utf8')); console.log('.clasp.json JSON 格式正確')"
 
       - name: Push to Apps Script
         working-directory: clasp_deploy
