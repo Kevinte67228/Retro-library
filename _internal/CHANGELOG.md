@@ -1,3 +1,29 @@
+## v42.02 (2026-06-30)
+
+### 變更內容
+- 遊戲類分區順序調整：「版本規格」與「遊戲規格」互換位置（版本規格在前）
+- 展開白名單擴充：四種類型統一加入「編碼條碼」「補充資訊」預設展開
+  - 遊戲：圖片紀錄／識別資訊／版本規格／遊戲規格／編碼條碼／補充資訊
+  - 書籍：圖片紀錄／書籍資訊／出版資訊／編碼條碼／補充資訊
+  - 主機：圖片紀錄／主機資訊／硬體規格／編碼條碼／補充資訊
+  - 週邊：圖片紀錄／週邊資訊／規格／編碼條碼／補充資訊
+- 「廠商發行」分類全面改名為「發行廠商」（FIELDS 定義、GROUPS、GCOL 共 6 處同步更新）
+- 確認建檔與編輯兩種入口皆共用同一份 `groupsFor()`／展開邏輯（`showForm()`／`renderForm()` 唯一實作，無需分別處理）
+
+### 影響檔案
+- index.html
+- GameVault_v42_02_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v42-02
+
+### 對應備份
+- _internal/old/v42_01/
+
 ## v42.01 (2026-06-30)
 
 ### 變更內容
@@ -113,35 +139,4 @@
 
 ### 對應備份
 - _internal/old/v41_01/
-
-## v41.01 (2026-06-30)
-
-### 變更內容
-**GAS 後端（v41）：**
-- 新增 `google_image_search` action：透過 Google Custom Search API 搜尋圖片，回傳第一張結果 URL
-- IGDB proxy `fields` 加入 `cover.url`，回傳封面圖 URL（`t_cover_big` 尺寸）
-
-**前端（v41.01）：**
-- 設定頁新增「Google 圖片搜尋」區塊：API Key（gcsekey）+ Search Engine ID（gcxid）+ 測試按鈕
-- `extractField` IGDB case 加入 `cover_url` 提取
-- `mergeMultiDbResults` 封面優先序：ScreenScraper → IGDB → 楽天
-- 新增 `_autoFetchCover()`：所有查詢/AI填欄完成後，若 cover_img 仍空且已設定 CSE 金鑰，自動以名稱+平台搜尋第一張圖片帶入
-- `applyMultiDbResult` 末尾呼叫 `_autoFetchCover()`（延遲 500ms，讓 GameTDB 先完成）
-- 主機/週邊 AI 填欄路徑（gcodeSearch）完成後也呼叫 `_autoFetchCover()`
-- 新增 `testGCSE()` 測試函式
-
-### 影響檔案
-- index.html
-- GameVault_v41_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（v41）
-
-### GS 版本
-- v41：新增 google_image_search + IGDB cover
-
-### PWA 快取
-- CACHE_NAME 已遞增：gamevault-v41-01
-
-### 對應備份
-- _internal/old/v40_49/
 
