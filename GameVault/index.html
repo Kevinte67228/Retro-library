@@ -2071,7 +2071,7 @@ const BOOK_SELECTS={
   binding:['平裝','精裝','騎馬釘','盒裝','其他'],
   market_value_confidence:['N/A','高','中','低'],
 };
-const BOOK_GROUPS=['書籍資訊','出版資訊','編碼條碼','收藏狀態','品相完整度','圖片紀錄','關聯商品','補充資訊'];
+const BOOK_GROUPS=['圖片紀錄','書籍資訊','出版資訊','編碼條碼','收藏狀態','品相完整度','關聯商品','補充資訊'];
 const BOOK_DEFAULTS={
   category:'攻略',collect_status:'收藏中',
   bundle:'書本',buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',buy_source:'全新購入',
@@ -2097,8 +2097,8 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v41.04';
-const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
+const APP_VERSION='v42.01';
+const GROUPS=['圖片紀錄','識別資訊','遊戲規格','版本規格','編碼條碼','廠商發行','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
 const OCR_TEXT_F=new Set(['developer','publisher','model_no']);
@@ -2162,7 +2162,7 @@ const CONSOLE_SELECTS={
   warranty_status:['N/A','保固中','已過保','無保固','不明'],
   market_value_confidence:['N/A','高','中','低'],
 };
-const CONSOLE_GROUPS=['主機資訊','硬體規格','編碼條碼','收藏狀態','品相完整度','運作狀態','圖片紀錄','關聯商品','補充資訊'];
+const CONSOLE_GROUPS=['圖片紀錄','主機資訊','硬體規格','編碼條碼','收藏狀態','品相完整度','運作狀態','關聯商品','補充資訊'];
 const CONSOLE_DEFAULTS={
   category:'主機',collect_status:'收藏中',
   bundle:'主機本體',buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',buy_source:'全新購入',
@@ -2232,7 +2232,7 @@ const PERIPH_SELECTS={
   warranty_status:['N/A','保固中','已過保','無保固','不明'],
   market_value_confidence:['N/A','高','中','低'],
 };
-const PERIPH_GROUPS=['週邊資訊','規格','編碼條碼','收藏狀態','品相完整度','運作狀態','圖片紀錄','關聯商品','補充資訊'];
+const PERIPH_GROUPS=['圖片紀錄','週邊資訊','規格','編碼條碼','收藏狀態','品相完整度','運作狀態','關聯商品','補充資訊'];
 const PERIPH_DEFAULTS={
   category:'週邊',collect_status:'收藏中',
   bundle:'週邊本體',buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',buy_source:'全新購入',
@@ -4234,6 +4234,10 @@ function aiCompleteMissing(cb){
         }
       });
     }
+    if(!entry.zh_name){
+      var _zf2=entry.jp_name||entry.primary_name||'';
+      if(_zf2){entry.zh_name=_zf2;entry._src=entry._src||{};entry._src.zh_name='fallback';}
+    }
     if(entry.primary_name){entry.ref_link=googleRefLink(entry.primary_name,entry.platform);entry._src=entry._src||{};entry._src.ref_link='ai';}
     if(typeof _applyBuyDateFromRelease==='function')_applyBuyDateFromRelease();
     if(typeof renderForm==='function')renderForm();
@@ -5367,8 +5371,13 @@ function extractField(src,data,field){
       };
       return gbMap[field]||'';
     case 'rakuten':
-      // 楽天商品名常帶【中古】等行銷標記 → 去除後僅供 primary_name／jp_name 使用
-      var rkName=(''+(data.item_name||'')).replace(/【[^】]*】/g,'').trim();
+      // 樂天商品名常帶行銷標記、發行商前綴、編碼平台中括號、版本標示等雜訊，逐層清理後僅供 primary_name／jp_name 使用
+      var rkName=(''+(data.item_name||''));
+      rkName=rkName.replace(/【[^】]*】/g,'');
+      rkName=rkName.replace(/\[[^\]]*\]/g,'');
+      rkName=rkName.replace(/^(ソニー・インタラクティブエンタテインメント|任天堂|スクウェア・エニックス|セガ|バンダイナムコ|カプコン|コナミ)\s*/,'');
+      rkName=rkName.replace(/[（(][^）)]*(版|Edition|エディション)[）)]/g,'');
+      rkName=rkName.replace(/\s+/g,' ').trim();
       return (field==='primary_name'||field==='jp_name')?rkName:'';
     case 'mobygames':
       var mbMap={
@@ -5501,7 +5510,7 @@ function applyMultiDbResult(dbResult,code,aiResult){
   if(entry.genre){ entry.genre=matchGenreMulti(entry.genre)||entry.genre; }
   if(code){entry.code=normalizeGameCode(code);entry._src=entry._src||{};entry._src.code=dbTrusted?'db':'user';}
   // 中文名稱必補：AI/資料庫流程後若仍空，回填日文原名（再無則主名）
-  if(!entry.zh_name){var _zf=entry.jp_name||entry.primary_name||'';if(_zf){entry.zh_name=_zf;entry._src=entry._src||{};entry._src.zh_name=entry._src.zh_name||'ai';}}
+  // zh_name 不在這裡提前塑值，改留空給 aiCompleteMissing 真正翻譯
   if(!entry.ref_link&&entry.primary_name)
     entry.ref_link=googleRefLink(entry.primary_name,entry.platform);
   _gametdbTryCover(); // GameTDB 封面補全（v18.01）：非同步，僅任天堂編碼且無封面時動作
@@ -5645,7 +5654,7 @@ function ssSearch(q, serialnum){
   var systemeid=SS_SYSID[_selectedPlatform]||'';  // 有對應才帶平台，否則查全平台
   var params=new URLSearchParams({
     action:'ss_search',q:q||'',ssid:cfg.ssid,sspass:cfg.sspass,serialnum:serialnum||'',systemeid:systemeid,
-    ssdevid:cfg.ssdevid||'',ssdevpass:cfg.ssdevpass||''
+    ssdevid:cfg.ssdevid||'',ssdevpass:cfg.ssdevpass||'',region:_region||''  // 帶入使用者選擇的區域，讓封面優先序依實際區域動態調整（非固定日版優先）
   });
   return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
     .then(function(r){return r.ok?r.json():null;})
@@ -7381,9 +7390,9 @@ function renderForm(){
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
-    // 預設折疊低頻維護區塊；建檔時常用的收藏狀態、品相完整度與運作狀態維持展開
-    var collapseByDefault=['廠商發行','個人記錄','圖片紀錄','補充資訊','關聯商品'];
-    var isCollapsed=collapseByDefault.indexOf(g)>=0;
+    // 預設展開前四個主要區塊（圖片紀錄、識別/主要資訊、規格類、版本規格），其餘全部預設折疊
+    var expandByDefault=['圖片紀錄','識別資訊','遂戲規格','版本規格','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
+    var isCollapsed=expandByDefault.indexOf(g)<0;
     div.innerHTML='<div class="sh2" onclick="togSec(this)">'+
       '<div class="sl"><span class="dot" style="background:'+gcolor+'"></span>'+g+'</div>'+
       '<span class="sc'+(isCollapsed?'':' op')+'">▾</span></div>'+
