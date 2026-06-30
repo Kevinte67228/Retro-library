@@ -1626,6 +1626,18 @@ body{
         </div>
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="srl" style="margin:0">🖼️ Google 圖片搜尋（自動補封面）</div>
+          </div>
+          <input class="fi" id="c-gcsekey" type="password" placeholder="Google API Key">
+          <input class="fi" id="c-gcxid" type="text" placeholder="Search Engine ID (cx)" style="margin-top:8px">
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn bo bw bs" style="flex:1" onclick="testGCSE()">測試</button>
+          </div>
+          <a href="https://programmablesearchengine.google.com/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Google Programmable Search Engine ↗</a>
+          <div class="shlp" style="margin-top:8px">Google Cloud → 啟用 Custom Search API → 建立 API Key。再到 Programmable Search Engine 建立搜尋引擎（勾選「搜尋全網」）取得 cx ID。免費額度：每日 100 次。無封面時自動以名稱+平台搜尋圖片帶入。</div>
+        </div>
+        <div class="srow" style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🗺 Google 地圖 — 報價縮圖（選填）</div>
             <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('googlemaps')">❓ 說明</button>
           </div>
@@ -2085,7 +2097,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v40.49';
+const APP_VERSION='v41.01';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2997,6 +3009,8 @@ function loadCfg(){
   if($('c-ssdevpass')&&cfg.ssdevpass)$('c-ssdevpass').value=cfg.ssdevpass;
   if($('c-iid')&&cfg.iid)$('c-iid').value=cfg.iid;
   if($('c-isec')&&cfg.isec)$('c-isec').value=cfg.isec;
+  if($('c-gcsekey')&&cfg.gcsekey)$('c-gcsekey').value=cfg.gcsekey;
+  if($('c-gcxid')&&cfg.gcxid)$('c-gcxid').value=cfg.gcxid;
   if($('c-gmapskey')&&cfg.gmapskey)$('c-gmapskey').value=cfg.gmapskey;
   // 尋寶匯率（v25.10）：預設參考值，可按「同步即時匯率」覆寫
   if(!cfg.fx||typeof cfg.fx!=='object')cfg.fx={JPY:0.21,USD:32};
@@ -3376,6 +3390,8 @@ function saveCfg(){
     iid:($('c-iid').value||'').trim(),
     isec:($('c-isec').value||'').trim(),
     region:_region, // v23.03
+    gcsekey:($('c-gcsekey')&&$('c-gcsekey').value||'').trim(),
+    gcxid:($('c-gcxid')&&$('c-gcxid').value||'').trim(),
     gmapskey:($('c-gmapskey')&&$('c-gmapskey').value||'').trim(),
   });
   localStorage.setItem('gv_cfg',JSON.stringify(cfg));
@@ -4875,6 +4891,7 @@ function gcodeSearch(){
       var msg=ssResult?'✓ SS+AI 填欄 '+filled+' 欄':'✓ AI 填欄 '+filled+' 欄';
       if(filled>0)toast(msg,'ok',2500);
       else toast('查不到資料，請手動填寫','',3000);
+      setTimeout(function(){_autoFetchCover();},500);
     }).catch(function(){
       noLoad();
       showForm('商品編碼建檔');
@@ -5317,14 +5334,14 @@ function mergeMultiDbResults(results){
     }
   })();
 
-  // ScreenScraper 專有：封面/書背/背面圖 URL（其他資料庫不提供，不走優先序）→ 直接帶入
+  // ScreenScraper 專有：封面/書背/背面圖 URL
   if(srcMap['screenscraper']){
     var _ss=srcMap['screenscraper'];
     if(_ss.cover_url)merged.cover_url=_ss.cover_url;
     if(_ss.spine_url)merged.spine_url=_ss.spine_url;
     if(_ss.back_url)merged.back_url=_ss.back_url;
   }
-  // 楽天（v18.01）：SS 無封面時，用楽天商品圖補位
+  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
   if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
   // F：完全沒有拉丁/中文主名時，用日文名回填 primary_name 避免空白
   if(!merged.primary_name&&merged.jp_name)merged.primary_name=merged.jp_name;
@@ -5385,7 +5402,8 @@ function extractField(src,data,field){
         release_date:(data.first_release_date?new Date(data.first_release_date*1000).toISOString().slice(0,10):'')||'',
         genre:(data.genres&&data.genres.map(function(g){return g.name;}).join(', '))||'',
         summary:data.summary||'',
-        ref_link:data.url||''
+        ref_link:data.url||'',
+        cover_url:data.cover_url||''
       };
       return igMap[field]||'';
     case 'barcode_lookup':
@@ -5482,6 +5500,7 @@ function applyMultiDbResult(dbResult,code,aiResult){
   if(!entry.ref_link&&entry.primary_name)
     entry.ref_link=googleRefLink(entry.primary_name,entry.platform);
   _gametdbTryCover(); // GameTDB 封面補全（v18.01）：非同步，僅任天堂編碼且無封面時動作
+  setTimeout(function(){_autoFetchCover();},500);
 }
 
 // ════ 各資料庫查詢函數（透過 Apps Script proxy）════
@@ -5682,6 +5701,44 @@ function testGiantBomb(){
       noLoad();
       toast('Giant Bomb 連線失敗：'+_friendlyError(e.message)+'（請重新部署 Apps Script）','er',7000);
     });
+}
+
+function testGCSE(){
+  var key=($('c-gcsekey')&&$('c-gcsekey').value||'').trim();
+  var cx=($('c-gcxid')&&$('c-gcxid').value||'').trim();
+  if(!key||!cx){toast('請先填入 API Key 與 Search Engine ID','er');return;}
+  if(!cfg.url){toast('請先填入 Apps Script 網址','er');return;}
+  cfg.gcsekey=key;cfg.gcxid=cx;
+  loading('測試 Google 圖片搜尋...');
+  var params=new URLSearchParams({action:'google_image_search',q:'Super Mario Bros Nintendo',gcsekey:key,gcxid:cx,num:'1'});
+  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      noLoad();
+      if(d&&d.ok&&d.imageUrl){toast('✓ Google 圖片搜尋正常','ok',4000);}
+      else if(d&&d.error){toast('Google CSE：'+d.error,'er',5000);}
+      else{toast('無回應，請確認 Apps Script 已重新部署','er',5000);}
+    }).catch(function(e){noLoad();toast('Google CSE 錯誤：'+_friendlyError(e.message),'er',5000);});
+}
+function _autoFetchCover(cb){
+  if(entry.cover_img){if(cb)cb(false);return;}
+  if(!cfg.gcsekey||!cfg.gcxid||!cfg.url){if(cb)cb(false);return;}
+  var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.code||'';
+  if(!name){if(cb)cb(false);return;}
+  var platform=entry.platform||_selectedPlatform||'';
+  var q=name+(platform?' '+platform:'');
+  var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:'1'});
+  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(d&&d.ok&&d.imageUrl&&!entry.cover_img){
+        entry.cover_img=d.imageUrl;
+        entry._src=entry._src||{};entry._src.cover_img='google_cse';
+        if(typeof renderForm==='function')renderForm();
+        toast('已自動補入封面圖片','ok',2500);
+        if(cb)cb(true);
+      }else{if(cb)cb(false);}
+    }).catch(function(){if(cb)cb(false);});
 }
 
 function testIGDB(){
