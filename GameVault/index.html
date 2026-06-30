@@ -1836,10 +1836,10 @@ const FIELDS=[
   ['age_rating','年齡分級','txt','版本規格'],
   ['code','遊戲編碼','txt','編碼條碼'],
   ['barcode','條碼 Barcode','txt','編碼條碼'],
-  ['developer','開發商','txt','廠商發行'],
-  ['publisher','發行商','txt','廠商發行'],
-  ['release_date','發行時間','dateq','廠商發行'],
-  ['suggest_price','建議售價','price','廠商發行'],
+  ['developer','開發商','txt','發行廠商'],
+  ['publisher','發行商','txt','發行廠商'],
+  ['release_date','發行時間','dateq','發行廠商'],
+  ['suggest_price','建議售價','price','發行廠商'],
   ['genre','遊戲類型','genresel','遊戲規格'],
   ['players','遊戲人數','playersel','遊戲規格'],
   ['features','主要支援功能','txt','遊戲規格'],
@@ -2097,9 +2097,9 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.01';
-const GROUPS=['圖片紀錄','識別資訊','遊戲規格','版本規格','編碼條碼','廠商發行','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const APP_VERSION='v42.02';
+const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
 const OCR_TEXT_F=new Set(['developer','publisher','model_no']);
 
@@ -7391,7 +7391,7 @@ function renderForm(){
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
     // 預設展開前四個主要區塊（圖片紀錄、識別/主要資訊、規格類、版本規格），其餘全部預設折疊
-    var expandByDefault=['圖片紀錄','識別資訊','遂戲規格','版本規格','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
+    var expandByDefault=['圖片紀錄','識別資訊','版本規格','遂戲規格','編碼條碼','補充資訊','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
     var isCollapsed=expandByDefault.indexOf(g)<0;
     div.innerHTML='<div class="sh2" onclick="togSec(this)">'+
       '<div class="sl"><span class="dot" style="background:'+gcolor+'"></span>'+g+'</div>'+
