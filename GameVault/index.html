@@ -2097,7 +2097,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v41.01d2';
+const APP_VERSION='v41.02';
 const GROUPS=['識別資訊','版本規格','編碼條碼','廠商發行','遊戲規格','收藏狀態','品相完整度','個人記錄','圖片紀錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','廠商發行':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5441,7 +5441,6 @@ function extractField(src,data,field){
 
 // 套用多資料庫結果到 entry
 function applyMultiDbResult(dbResult,code,aiResult){
-  alert('[DEBUG] dbResult keys='+(dbResult?Object.keys(dbResult).join(','):'null')+'\ncover_url='+(dbResult&&dbResult.cover_url||'(空)')+'\nprimary_name='+(dbResult&&dbResult.primary_name||'(空)')+'\n_sources='+(dbResult&&dbResult._sources?dbResult._sources.join(','):'(無)'));
   toast('[DEBUG] cover_url='+(dbResult&&dbResult.cover_url?dbResult.cover_url.slice(0,50):'(空)')+' keys='+(dbResult?Object.keys(dbResult).join(','):'null'),'',8000);
   var type=_selectedType||'遊戲';
   // 基底：AI 結果（若有）
@@ -5463,7 +5462,10 @@ function applyMultiDbResult(dbResult,code,aiResult){
     var dbNames=[dbResult.primary_name,dbResult.jp_name].filter(Boolean);
     if(cands.length&&dbNames.length){
       dbTrusted=cands.some(function(c){return dbNames.some(function(d){return _namesMatch(d,c);});});
-    }else if(!cands.length){ dbTrusted=(dbResult._confidence==='high'); } // 無名稱可比對時，僅高信心才信
+    }else if(!cands.length){
+      // 無 AI 名稱可比對（純編碼查詢）：編碼本身就是查詢鍵，只要有任一資料庫回傳結果即信任（不要求多庫共識）
+      dbTrusted=true;
+    }
   }
 
   if(dbResult&&Object.keys(dbResult).length&&dbTrusted){
