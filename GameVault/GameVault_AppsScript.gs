@@ -370,7 +370,7 @@ function doGet(e) {
         result = barcodeLookupProxy(p.barcode || '', p.blkey || '');
         break;
       case 'ss_search':
-        result = screenScraperProxy(p.q || '', p.ssid || '', p.sspass || '', p.systemeid || '', p.serialnum || '', p.ssdevid || '', p.ssdevpass || '');
+        result = screenScraperProxy(p.q || '', p.ssid || '', p.sspass || '', p.systemeid || '', p.serialnum || '', p.ssdevid || '', p.ssdevpass || '', p.region || '');
         break;
       case 'rakuten_search':
         result = rakutenProxy(p.q || '', p.rakuten_appid || '', p.rakuten_accesskey || '');
@@ -1542,7 +1542,7 @@ const DISC_SYSIDS = {
 // API 文件：https://www.screenscraper.fr/api2.php
 // 查詢端點：jeuInfos.php（支援序號、名稱查詢）
 // 開發者帳號：https://www.screenscraper.fr/forumsujets.php?frub=12
-function screenScraperProxy(q, ssid, sspass, systemeid, serialnum, devid, devpass) {
+function screenScraperProxy(q, ssid, sspass, systemeid, serialnum, devid, devpass, region) {
   if (!q && !serialnum) return { error: 'missing query', game: null };
   if (!ssid || !sspass) return { error: 'missing ScreenScraper credentials', game: null };
  
@@ -1692,7 +1692,18 @@ function parseSSGame(jeu, authQS) {
   function getMediaUrl(medias, type) {
     if (!medias || !medias.jeuMedias) return '';
     const list = medias.jeuMedias.filter(m => m.type === type);
-    const pref = ['jp','asi','wor','us','eu',''];
+    // 依使用者選擇的區域動態調整優先序；未指定或未匹配時退回預設順序
+    let pref = ['jp','asi','wor','us','eu',''];
+    if (region) {
+      const rg = String(region).toLowerCase();
+      let primary = '';
+      if (rg.indexOf('jp') >= 0 || rg.indexOf('japan') >= 0) primary = 'jp';
+      else if (rg.indexOf('us') >= 0 || rg.indexOf('usa') >= 0 || rg.indexOf('america') >= 0) primary = 'us';
+      else if (rg.indexOf('eu') >= 0 || rg.indexOf('europe') >= 0) primary = 'eu';
+      else if (rg.indexOf('asi') >= 0 || rg.indexOf('taiwan') >= 0 || rg.indexOf('hong') >= 0) primary = 'asi';
+      else if (rg.indexOf('multi') >= 0 || rg.indexOf('world') >= 0) primary = 'wor';
+      if (primary) pref = [primary].concat(pref.filter(p => p !== primary));
+    }
     for (const r of pref) {
       const found = list.find(c => (c.region === r) || (r === '' && !c.region));
       if (found) return authMedia(found.url || '');
