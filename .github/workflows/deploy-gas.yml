@@ -1,0 +1,44 @@
+name: Deploy GameVault Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'GameVault/GameVault_AppsScript.gs'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Restore clasp credentials
+        run: |
+          mkdir -p ~/.clasprc
+          echo "${{ secrets.CLASPRC_JSON }}" > ~/.clasprc.json
+
+      - name: Prepare clasp project
+        run: |
+          mkdir -p clasp_deploy
+          cp GameVault/GameVault_AppsScript.gs clasp_deploy/Code.gs
+          cat > clasp_deploy/.clasp.json << CLASPEOF
+          {"scriptId":"${{ secrets.GAS_SCRIPT_ID }}","rootDir":"."}
+          CLASPEOF
+
+      - name: Push to Apps Script
+        working-directory: clasp_deploy
+        run: clasp push --force
+
+      - name: Create new deployment version
+        working-directory: clasp_deploy
+        run: clasp deploy --description "Auto-deploy $(date '+%Y-%m-%d %H:%M:%S')"
