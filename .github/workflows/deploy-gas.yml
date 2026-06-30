@@ -36,6 +36,7 @@ jobs:
         run: |
           mkdir -p clasp_deploy
           cp GameVault/GameVault_AppsScript.gs clasp_deploy/Code.gs
+          cp GameVault/appsscript.json clasp_deploy/appsscript.json
           printf '{"scriptId":"%s","rootDir":"."}' "$GAS_SCRIPT_ID" > clasp_deploy/.clasp.json
           node -e "JSON.parse(require('fs').readFileSync('clasp_deploy/.clasp.json','utf8')); console.log('.clasp.json JSON 格式正確')"
 
