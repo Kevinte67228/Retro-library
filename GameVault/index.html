@@ -1026,7 +1026,7 @@ body{
             <div id="gcode-ocr-status" class="ocr-status">辨識中...</div>
             <div style="display:flex;gap:10px;margin-top:4px">
               <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
-              <button id="gcode-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeSearch()">🔍 查詢遂戲資料庫</button>
+              <button id="gcode-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeSearch()">🔍 查詢遊戲資料庫</button>
             </div>
           </div>
         </div>
@@ -2097,7 +2097,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.02';
+const APP_VERSION='v42.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4671,7 +4671,7 @@ function _ocrInlineStatus(el,base){
 // ── OCR 結果分類清洗／驗證（v25.02）──
 // raw：辨識字串（容多行）；cat：_selectedType（遊戲/攻略/主機/週邊）。
 // 逐行比對，回傳第一個符合該分類格式的清洗結果；全不符回傳 ''，避免把「遊戲」等 AI 說明文字當成編碼。
-// _matchGCode: cleanOCRByCategory 遂戲分支的單行比對（侩用於單行和兩行拼接）
+// _matchGCode: cleanOCRByCategory 遊戲分支的單行比對（供用於單行和兩行拼接）
 function _isValidGCode(s){
   if(!s)return false;
   var up=s.toUpperCase().trim();
@@ -4759,17 +4759,17 @@ function _gcodeOCRShared(input,o){
         ]).then(function(rawTxt){
           noLoad();
           rawTxt=(rawTxt||'').trim();
-          var cat=_selectedType||'遂戲';
+          var cat=_selectedType||'遊戲';
           var cleaned=cleanOCRByCategory(rawTxt,cat);
           var isFb=cleaned&&cleaned.charAt(0)==='?';
           if(isFb)cleaned=cleaned.slice(1);
           var code=cleaned?cleaned.toUpperCase():'';
-          if(!isFb&&o.normalize&&cat==='遂戲')code=normalizeGameCode(code);
+          if(!isFb&&o.normalize&&cat==='遊戲')code=normalizeGameCode(code);
           if(code){
             var inp=$(o.inputId);if(inp)inp.value=code;
             if(isFb){
               if(stopInline)stopInline('可能是：'+code+'（AI 不確定，請手動確認）',true);
-              toast('已帶入 AI 卿測結果，請手動確認','',3500);
+              toast('已帶入 AI 猜測結果，請手動確認','',3500);
             }else{
               if(stopInline)stopInline('已帶入：'+code);
               toast('✓ 識別編碼：'+code,'ok',3000);
@@ -6889,21 +6889,21 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
     callGeminiOCR([
       {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
       {text:_fscanOpt.prompt||(function(){
-        var cat=_selectedType||'遂戲';
+        var cat=_selectedType||'遊戲';
         if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
+        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
       })()}
     ]).then(function(rawTxt){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
       rawTxt=(rawTxt||'').trim();
       var code; var isFb=false;
       if(_fscanOpt.ocrClean){
-        var cat=_selectedType||'遂戲';
+        var cat=_selectedType||'遊戲';
         var cleaned=cleanOCRByCategory(rawTxt,cat);
         if(cleaned&&cleaned.charAt(0)==='?'){isFb=true;cleaned=cleaned.slice(1);}
         code=cleaned?cleaned.toUpperCase():'';
-        if(!isFb&&_fscanOpt.normalize&&cat==='遂戲')code=normalizeGameCode(code);
+        if(!isFb&&_fscanOpt.normalize&&cat==='遊戲')code=normalizeGameCode(code);
       }else{
         code=rawTxt.toUpperCase();
         if(_fscanOpt.normalize)code=normalizeGameCode(code);
@@ -6912,7 +6912,7 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
       else if(code&&isFb){
         fscanFill(code);
         if(st)st.textContent='可能是：'+code+'（AI 不確定，請手動確認）';
-        toast('已帶入 AI 卿測結果，請手動確認','',3500);
+        toast('已帶入 AI 猜測結果，請手動確認','',3500);
       }else{
         var hint=rawTxt?'圖片中沒有符合格式的編碼，請對準編碼再拍':'無法從圖片讀取文字，請確認對準後重拍';
         if(st)st.textContent=hint;
@@ -6947,10 +6947,10 @@ function openCodeScanFor(inputId,fallbackId){
     shotLabel:'📷 拍攝並辨識',
     resultToast:function(v){return (isCombo?'已帶入商品編碼：':'已帶入編碼：')+v;},
     prompt:(function(){
-      var cat=_selectedType||'遂戲';
+      var cat=_selectedType||'遊戲';
       if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、說明文字或猜測結果。';
       if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），找不到回傳空字串。';
-      return '請從圖片中找出並回傳遂戲產品編碼（編碼可能分兩行印刷，請將字母與數字合並後回傳）。常見格式：PS系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo光碟（CTR-P-ARXJ、RVL-P-RMCJ、WUP-P-ARPJ、HAC-P-AAAA）、Nintendo卡帶（AGB-AXPJ-JPN、NTR-AXXJ-JPN、DMG-TRAJ-JPN、HVC-NSMJ）、Sega（T-00001G、MK-1234、G-4049）、Neo Geo（NGH-001）、WonderSwan（SWJ-BAN001）、Xbox（FKW-00001）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。PC 遂戲請直接回傳標籤上的任何編碼。';
+      return '請從圖片中找出並回傳遊戲產品編碼（編碼可能分兩行印刷，請將字母與數字合並後回傳）。常見格式：PS系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo光碟（CTR-P-ARXJ、RVL-P-RMCJ、WUP-P-ARPJ、HAC-P-AAAA）、Nintendo卡帶（AGB-AXPJ-JPN、NTR-AXXJ-JPN、DMG-TRAJ-JPN、HVC-NSMJ）、Sega（T-00001G、MK-1234、G-4049）、Neo Geo（NGH-001）、WonderSwan（SWJ-BAN001）、Xbox（FKW-00001）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。PC 遊戲請直接回傳標籤上的任何編碼。';
     })(),
     fallback:function(){var fi=$(fallbackId||'gcode-cam-inp');if(fi)fi.click();}});
 }
@@ -6965,10 +6965,10 @@ function fieldScan(k){
   }else{
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,normalize:(k==='code'),ocrClean:true,
       prompt:(function(){
-        var cat=_selectedType||'遂戲';
+        var cat=_selectedType||'遊戲';
         if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遂戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
+        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
       })(),
       onResult:function(val){onFld(k,val);}});
   }
@@ -7391,7 +7391,7 @@ function renderForm(){
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
     // 預設展開前四個主要區塊（圖片紀錄、識別/主要資訊、規格類、版本規格），其餘全部預設折疊
-    var expandByDefault=['圖片紀錄','識別資訊','版本規格','遂戲規格','編碼條碼','補充資訊','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
+    var expandByDefault=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','補充資訊','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
     var isCollapsed=expandByDefault.indexOf(g)<0;
     div.innerHTML='<div class="sh2" onclick="togSec(this)">'+
       '<div class="sl"><span class="dot" style="background:'+gcolor+'"></span>'+g+'</div>'+
