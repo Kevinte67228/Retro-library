@@ -1,3 +1,28 @@
+## v41.03 (2026-06-30)
+
+### 變更內容
+- **找到真正的根本原因**：`renderFld()` 內的 URL 防護機制
+  ```js
+  if(v&&typeof v==='string'&&v.startsWith('http')&&k!=='ref_link')v='';
+  ```
+  這段是為了防止「價格／日期欄位被誤填網址」，但白名單只排除了 `ref_link`，**沒有把 `cover_img`／`back_img`／`spine_img` 排除**。導致只要封面圖來源是外部 URL（楽天、IGDB、ScreenScraper 等），渲染表單時就會被這段防護直接清空成空字串——資料層 `entry.cover_img` 在賦值當下完全正常，但每次重繪表單（`renderForm`→`renderFld`）都會被這段防護清掉，畫面上連預覽圖的 `<img>` 標籤都不會渲染（因為 `hasImgVal('')===false`）
+- 修正：URL 防護加入圖片欄位白名單（`cover_img`、`back_img`、`spine_img`），讓外部圖片 URL 合法顯示
+- 這個 bug 影響範圍極廣：所有資料庫（ScreenScraper／IGDB／楽天）回傳的封面網址，過去只要沒有先被存檔流程下載成 Drive ID，**畫面上都不會顯示封面**，使用者誤以為查詢沒有抓到圖片
+
+### 影響檔案
+- index.html
+- GameVault_v41_03_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME 已遞增：gamevault-v41-03
+
+### 對應備份
+- _internal/old/v41_02/
+
 ## v41.02 (2026-06-30)
 
 ### 變更內容
