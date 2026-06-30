@@ -390,6 +390,9 @@ function doGet(e) {
       case 'resolve_map':
         result = resolveMapLink(p.url || '');
         break;
+      case 'google_image_search':
+        result = googleImageSearchProxy(p.q || '', p.gcsekey || '', p.gcxid || '', parseInt(p.num||'1'));
+        break;
       default:
         result = { ok: false, error: '不支援的 action: ' + action };
     }
@@ -672,6 +675,31 @@ function deleteManyRows(keys, defType, keepImg) {
 }
  
 // ── IGDB 代理 ─────────────────────────────────────
+// ── Google Custom Search Image Proxy ─────────────────────────
+// 用 Google Custom Search API 搜圖，回傳第一張圖片 URL
+// 需要：Google Cloud API Key + Programmable Search Engine ID（cx）
+function googleImageSearchProxy(q, gcsekey, gcxid, num) {
+  if (!q || !gcsekey || !gcxid) return { ok: false, error: 'missing params', imageUrl: '' };
+  const n = Math.min(Math.max(parseInt(num) || 1, 1), 3);
+  const url = 'https://www.googleapis.com/customsearch/v1' +
+    '?key=' + encodeURIComponent(gcsekey) +
+    '&cx=' + encodeURIComponent(gcxid) +
+    '&searchType=image' +
+    '&num=' + n +
+    '&q=' + encodeURIComponent(q);
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const code = res.getResponseCode();
+    if (code !== 200) return { ok: false, error: 'Google CSE HTTP ' + code, imageUrl: '' };
+    const data = JSON.parse(res.getContentText());
+    if (!data.items || !data.items.length) return { ok: false, error: '查無圖片結果', imageUrl: '' };
+    return { ok: true, imageUrl: data.items[0].link, items: data.items.map(i => i.link) };
+  } catch (e) {
+    return { ok: false, error: e.message, imageUrl: '' };
+  }
+}
+
+
 function igdbProxy(query, clientId, clientSecret) {
   if (!query || !clientId || !clientSecret)
     return { ok: false, error: 'missing params', games: [] };
@@ -699,7 +727,7 @@ function igdbProxy(query, clientId, clientSecret) {
       'search "' + query.replace(/"/g, '') + '";',
       'fields name,alternative_names.name,platforms.name,genres.name,',
       'involved_companies.company.name,involved_companies.developer,',
-      'involved_companies.publisher,first_release_date,summary;',
+      'involved_companies.publisher,first_release_date,summary,cover.url;',
       'limit 8;'
     ].join(''),
     muteHttpExceptions: true
@@ -717,6 +745,9 @@ function igdbProxy(query, clientId, clientSecret) {
     const releaseDate = g.first_release_date
       ? new Date(g.first_release_date * 1000).toISOString().slice(0, 10).replace(/-/g, '/')
       : '';
+    const coverUrl = g.cover && g.cover.url
+      ? 'https:' + g.cover.url.replace('t_thumb', 't_cover_big')
+      : '';
     return {
       name:         g.name || '',
       zh_name:      '',
@@ -727,6 +758,7 @@ function igdbProxy(query, clientId, clientSecret) {
       publisher:    pubC ? pubC.company.name : '',
       release_date: releaseDate,
       summary:      g.summary || '',
+      cover_url:    coverUrl,
       meta:         [platforms, releaseDate ? releaseDate.slice(0, 4) : ''].filter(Boolean).join(' · ')
     };
   });
