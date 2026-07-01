@@ -2099,7 +2099,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.09';
+const APP_VERSION='v42.10';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4298,15 +4298,21 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region){
     if(!cfg.gkey)return Promise.reject(new Error('無 Gemini key'));
     var mdl=cfg.gmdl||'gemini-2.5-flash';
     var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
-    var useGround=!!cfg.grounding;
-    var genCfg={temperature:0.1,maxOutputTokens:2048};
-    if(!useGround)genCfg.responseMimeType='application/json'; // grounding 與 JSON 強制輸出不相容
-    if(mdl.indexOf('2.5')>=0)genCfg.thinkingConfig={thinkingBudget:0};
-    var _body={contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:genCfg};
-    if(useGround)_body.tools=[mdl.indexOf('1.5')>=0?{google_search_retrieval:{}}:{google_search:{}}];
-    return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(_body)})
-      .then(function(r){return r.json();})
+    function run(useGround){
+      var genCfg={temperature:0.1,maxOutputTokens:2048};
+      if(!useGround)genCfg.responseMimeType='application/json'; // grounding 與 JSON 強制輸出不相容
+      if(mdl.indexOf('2.5')>=0)genCfg.thinkingConfig={thinkingBudget:0};
+      var _body={contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:genCfg};
+      if(useGround)_body.tools=[mdl.indexOf('1.5')>=0?{google_search_retrieval:{}}:{google_search:{}}];
+      return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(_body)})
+      .then(function(r){
+        if(!r.ok)return r.json().then(function(e){
+          var err=new Error((e&&e.error&&e.error.message)||('HTTP '+r.status));
+          err.status=r.status;err.grounding=useGround;throw err;
+        });
+        return r.json();
+      })
       .then(function(d){
         var c=d.candidates&&d.candidates[0];
         var parts=c&&c.content&&c.content.parts||[];
@@ -4314,6 +4320,11 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region){
         var res;try{res=JSON.parse(txt);}catch(e){res=extractJson(txt);}
         return res||{};
       });
+    }
+    return run(!!cfg.grounding).catch(function(e){
+      if(e&&e.grounding)return run(false);
+      throw e;
+    });
   }
   function gptText(){
     if(!cfg.okey)return Promise.reject(new Error('無 OpenAI key'));
@@ -5035,9 +5046,13 @@ var DB_REGISTRY=[
    desc:'歐美書庫・英文攻略本・免金鑰',
    inputs:['barcode'],group:'west',cats:['book'],
    ready:function(){return true;}},
+  {id:'google_books',name:'Google Books',icon:'🔎',
+   desc:'海外書籍 ISBN 直查・補英文書名／作者／封面（免金鑰，經 Apps Script）',
+   inputs:['barcode'],group:'west',cats:['book'],
+   ready:function(){return !!cfg.url;}},
   {id:'barcode_lookup',name:'Barcode Lookup',icon:'📦',
-   desc:'商品條碼直查（付費方案）',
-   inputs:['barcode'],group:'west',cats:['game'],
+   desc:'商品條碼直查（付費方案）・可補主機／週邊品牌與圖片',
+   inputs:['barcode'],group:'west',cats:['game','console','peripheral'],
    ready:function(){return !!(cfg.blkey&&cfg.url);}},
   {id:'giantbomb',name:'Giant Bomb',icon:'💣',
    desc:'歐美遊戲百科',
@@ -5051,7 +5066,12 @@ function _dbInputBadges(d){
   return d.inputs.map(function(k){return '<span style="font-size:9px;border:1px solid #1e2a45;border-radius:6px;padding:1px 5px;margin-left:4px;color:#7986cb;vertical-align:1px">'+t[k]+'</span>';}).join('');
 }
 function _dbCatBadge(d){
-  return d.cats.map(function(c){var bk=c==='book';return '<span style="font-size:9px;border:1px solid '+(bk?'#ce93d8':'#00e5ff')+';border-radius:6px;padding:1px 5px;margin-left:4px;color:'+(bk?'#ce93d8':'#00e5ff')+';vertical-align:1px">'+(bk?'書籍':'遊戲')+'</span>';}).join('');
+  var labels={game:'遊戲',book:'書籍',console:'主機',peripheral:'週邊'};
+  var colors={game:'#00e5ff',book:'#ce93d8',console:'#69f0ae',peripheral:'#ffab40'};
+  return d.cats.map(function(c){
+    var clr=colors[c]||'#7986cb';
+    return '<span style="font-size:9px;border:1px solid '+clr+';border-radius:6px;padding:1px 5px;margin-left:4px;color:'+clr+';vertical-align:1px">'+(labels[c]||c)+'</span>';
+  }).join('');
 }
 function _dbSrcClose(){var ov=$('db-src-ov');if(ov)ov.style.display='none';}
 function setDbOverride(id){
@@ -5361,6 +5381,10 @@ function mergeMultiDbResults(results){
   }
   if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
   if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
+  if(!merged.cover_url&&srcMap['barcode_lookup']){
+    var _bli=extractField('barcode_lookup',srcMap['barcode_lookup'],'cover_url');
+    if(_bli)merged.cover_url=_bli;
+  }
   // F：完全沒有拉丁/中文主名時，用日文名回填 primary_name 避免空白
   if(!merged.primary_name&&merged.jp_name)merged.primary_name=merged.jp_name;
 
@@ -5430,7 +5454,17 @@ function extractField(src,data,field){
       };
       return igMap[field]||'';
     case 'barcode_lookup':
-      return {primary_name:data.product_name||data.title||'',summary:data.description||''}[field]||'';
+      var blImgs=data.images||data.image||data.product_image||'';
+      var blImg=Array.isArray(blImgs)?(blImgs[0]||''):blImgs;
+      var blStores=data.stores||[];
+      var blUrl=(blStores[0]&&(blStores[0].link||blStores[0].url))||data.url||data.product_url||'';
+      return {
+        primary_name:data.product_name||data.title||'',
+        summary:data.description||'',
+        publisher:data.manufacturer||data.brand||'',
+        ref_link:blUrl,
+        cover_url:blImg
+      }[field]||'';
     case 'screenscraper':
       // ScreenScraper 欄位（已由 parseSSGame 整理）
       var ssDate=data.release_date||'';
@@ -5554,6 +5588,174 @@ function barcodeLookupSearch(barcode){
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.products&&d.products.length?d.products[0]:null;})
     .catch(function(){return null;});
+}
+
+function _cleanProductName(s){
+  return (''+(s||''))
+    .replace(/【[^】]*】/g,'')
+    .replace(/\[[^\]]*\]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function _firstStoreUrl(stores){
+  stores=stores||[];
+  if(!Array.isArray(stores))return '';
+  for(var i=0;i<stores.length;i++){
+    var u=stores[i]&&(stores[i].link||stores[i].url||stores[i].product_url);
+    if(u)return u;
+  }
+  return '';
+}
+function _firstProductImage(data){
+  if(!data)return '';
+  var imgs=data.images||data.image||data.product_image||data.imageUrl||'';
+  if(Array.isArray(imgs))return imgs[0]||'';
+  return imgs||'';
+}
+function _inferPlatformFromText(txt){
+  var s=(''+(txt||'')).toLowerCase();
+  var rules=[
+    ['Nintendo Switch 2',/switch\s*2|nintendo switch 2|nsw2/],
+    ['Nintendo Switch',/nintendo switch|\bswitch\b|nsw/],
+    ['PlayStation 5',/\bps5\b|playstation 5|プレイステーション5/],
+    ['PlayStation 4',/\bps4\b|playstation 4|プレイステーション4/],
+    ['PlayStation 3',/\bps3\b|playstation 3/],
+    ['PlayStation 2',/\bps2\b|playstation 2/],
+    ['PlayStation',/\bps1\b|psone|playstation\b/],
+    ['PSP',/\bpsp\b|playstation portable/],
+    ['PS Vita',/\bps vita\b|\bpsvita\b|playstation vita/],
+    ['Xbox Series X|S',/xbox series|series x|series s/],
+    ['Xbox One',/xbox one/],
+    ['Xbox 360',/xbox 360/],
+    ['Xbox',/\bxbox\b/],
+    ['Nintendo 3DS',/\b3ds\b|nintendo 3ds/],
+    ['Nintendo DS',/\bnds\b|nintendo ds/],
+    ['GameCube',/gamecube|ゲームキューブ/],
+    ['Wii U',/wii u|wiiu/],
+    ['Wii',/\bwii\b/],
+    ['Game Boy Advance',/game boy advance|\bgba\b/],
+    ['Game Boy Color',/game boy color|\bgbc\b/],
+    ['Game Boy',/game boy|\bgb\b/],
+    ['Super Famicom',/super famicom|スーパーファミコン|\bsfc\b/],
+    ['Famicom',/famicom|ファミコン|\bfc\b/],
+    ['Dreamcast',/dreamcast|ドリームキャスト/],
+    ['Sega Saturn',/sega saturn|セガサターン/]
+  ];
+  for(var i=0;i<rules.length;i++){if(rules[i][1].test(s))return rules[i][0];}
+  return '';
+}
+function _inferPeripheralType(txt){
+  var s=(''+(txt||'')).toLowerCase();
+  if(/controller|gamepad|joy-?con|dualshock|dualsense|コントローラ|コントローラー|手把|控制器/.test(s))return '手把/控制器';
+  if(/memory card|メモリーカード|記憶卡|記憶體/.test(s))return '記憶卡';
+  if(/cable|hdmi|usb|ケーブル|線材|充電線/.test(s))return '線材';
+  if(/dock|stand|charging|charger|充電|座充|底座|ドック/.test(s))return '底座/座充';
+  if(/case|pouch|bag|cover|收納|保護殼|ケース|ポーチ/.test(s))return '收納';
+  if(/adapter|adaptor|converter|轉接|アダプタ/.test(s))return '轉接器';
+  if(/headset|headphone|earphone|mic|microphone|耳機|麥克風|ヘッドセット/.test(s))return '耳機麥克風';
+  return '其他';
+}
+function _inferConnection(txt){
+  var s=(''+(txt||'')).toLowerCase();
+  if(/bluetooth|藍牙|ブルートゥース/.test(s))return '藍牙';
+  if(/wireless|無線|ワイヤレス/.test(s))return '無線';
+  if(/\busb\b/.test(s))return 'USB';
+  if(/wired|有線|ケーブル/.test(s))return '有線';
+  return '';
+}
+function _normalizeBarcodeProduct(src,data,type,barcode){
+  type=catInternal(type)||'遊戲';
+  var out={category:type,barcode:barcode,_src_db:src};
+  if(src==='rakuten'){
+    var rn=_cleanProductName(extractField('rakuten',data,'primary_name')||data.item_name||'');
+    if(!rn)return null;
+    out.primary_name=rn;out.jp_name=rn;
+    out.cover_img=data.image||'';
+    out.ref_link=data.item_url||'';
+    out.notes='[楽天市場 條碼查詢補全]';
+  }else if(src==='barcode_lookup'){
+    var name=_cleanProductName(data.product_name||data.title||'');
+    if(!name)return null;
+    var brand=(data.brand||data.manufacturer||data.publisher||'').trim();
+    var desc=(data.description||'').trim();
+    var img=_firstProductImage(data);
+    var url=_firstStoreUrl(data.stores)||data.url||data.product_url||'';
+    out.primary_name=name;
+    out.en_name=name;
+    if(brand){
+      if(type==='遊戲')out.publisher=brand;
+      else out.brand=brand;
+    }
+    if(type==='主機'||type==='週邊'){
+      out.model_no=data.model||data.mpn||data.part_number||data.asin||'';
+    }else if(type==='遊戲'){
+      out.code=data.mpn||data.model||'';
+    }
+    out.summary=desc;
+    out.cover_img=img;
+    out.ref_link=url;
+    out.notes='[Barcode Lookup 條碼查詢補全]'+(data.category?' '+data.category:'');
+  }
+  var text=[out.primary_name,out.jp_name,out.en_name,out.summary,out.notes].join(' ');
+  var plat=_inferPlatformFromText(text);
+  if(plat){
+    if(type==='遊戲')out.platform=plat;
+    if(type==='主機')out.platform_family=plat;
+    if(type==='週邊')out.compat_platform=plat;
+    if(type==='攻略')out.applicable_platform=plat;
+  }
+  if(type==='週邊'){
+    out.peripheral_type=_inferPeripheralType(text);
+    var conn=_inferConnection(text);if(conn)out.connection=conn;
+  }
+  return out;
+}
+function _mergeBarcodeProducts(list,type,barcode){
+  var valid=(list||[]).filter(Boolean);
+  if(!valid.length)return {};
+  var order=(_region==='jp'||_region==='asia')?['rakuten','barcode_lookup']:['barcode_lookup','rakuten'];
+  valid.sort(function(a,b){return order.indexOf(a._src_db)-order.indexOf(b._src_db);});
+  var out={},srcs=[];
+  valid.forEach(function(x){
+    srcs.push(x._src_db);
+    Object.keys(x).forEach(function(k){
+      if(k==='_src_db')return;
+      if((out[k]===undefined||out[k]===''||out[k]==='N/A')&&x[k])out[k]=x[k];
+    });
+  });
+  out.category=catInternal(type)||'遊戲';
+  out.barcode=barcode;
+  out._sources=srcs;
+  return out;
+}
+function productBarcodeLookupPromise(barcode,type){
+  barcode=(barcode||'').replace(/[-\s]/g,'');
+  if(!barcode)return Promise.resolve({});
+  var tasks=[];
+  if(cfg.rktid&&cfg.rktkey&&cfg.url){
+    tasks.push(shGet({action:'rakuten_search',q:barcode,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+      .then(function(r){return r&&r.item_name?_normalizeBarcodeProduct('rakuten',r,type,barcode):null;})
+      .catch(function(){return null;}));
+  }
+  if(cfg.blkey&&cfg.url){
+    tasks.push(barcodeLookupSearch(barcode)
+      .then(function(r){return r?_normalizeBarcodeProduct('barcode_lookup',r,type,barcode):null;})
+      .catch(function(){return null;}));
+  }
+  if(!tasks.length)return Promise.resolve({});
+  return Promise.all(tasks).then(function(r){return _mergeBarcodeProducts(r,type,barcode);}).catch(function(){return {};});
+}
+function applyProductBarcodeResult(prod,bc,type){
+  if(!prod||!prod.primary_name)return false;
+  type=catInternal(type)||'遊戲';
+  entry=Object.assign({},_defaultsFor(type),entry||{},prod,{category:type,barcode:bc});
+  _carrySelPlat();_carrySelRegion();
+  normalizeLanguageFields(entry);
+  if(entry.genre)entry.genre=matchGenreMulti(entry.genre)||entry.genre;
+  if(!entry.ref_link&&entry.primary_name)entry.ref_link=googleRefLink(entry.primary_name,entry.platform||entry.platform_family||entry.compat_platform||'');
+  entry._src=entry._src||{};
+  Object.keys(prod).forEach(function(k){if(k.charAt(0)!=='_'&&prod[k])entry._src[k]='db';});
+  return true;
 }
 
 // ════ 測試函數 ════
@@ -5790,6 +5992,34 @@ function olLookup(isbn){
   });
 }
 
+// ── Google Books（ISBN 直查，經 .gs proxy；補英文/海外攻略本）──
+function googleBooksLookup(isbn){
+  if(!cfg.url)return Promise.resolve(null);
+  var c=isbn.replace(/[-\s]/g,'');
+  function lang(code){
+    code=(''+(code||'')).toLowerCase();
+    if(code==='ja')return '日文';
+    if(code==='zh'||code==='zh-tw')return '繁中';
+    if(code==='zh-cn')return '簡中';
+    if(code==='en')return '英文';
+    return '';
+  }
+  return shGet({action:'google_books_search',isbn:c}).then(function(r){
+    if(!r||!r.title)return null;
+    var title=[r.title,r.subtitle].filter(Boolean).join('：');
+    var date=(r.published_date||'').replace(/-/g,'/');
+    if(/^\d{4}$/.test(date))date=date+'/01/01';
+    var o={category:'攻略',primary_name:title,zh_name:title,en_name:title,
+      publisher:r.publisher||'',developer:r.author||'',release_date:date||'',
+      barcode:isbn,code:c,genre:'N/A',players:'N/A',features:'N/A',
+      play_status:'N/A',bundle:'攻略本',summary:r.caption||'',ref_link:r.item_url||'',
+      page_count:r.page_count||'',language:lang(r.language),
+      notes:'[Google Books 查詢補全]'+(r.categories?' '+r.categories:''),_src_db:'google_books'};
+    if(r.image)o.cover_img=r.image;
+    return o;
+  }).catch(function(){return null;});
+}
+
 
 // ── openBD（日文書誌，免金鑰，前端直連）──
 function openbdLookup(isbn){
@@ -5870,6 +6100,7 @@ function bookLookupPromise(isbn){
     return id==='openbd'?openbdLookup(isbn)
       :id==='rakuten_books'?rakutenBooksLookup(isbn)
       :id==='ndl'?ndlLookup(isbn)
+      :id==='google_books'?googleBooksLookup(isbn)
       :olLookup(isbn).catch(function(){return null;});
   }
   function finish(o){
@@ -5894,14 +6125,17 @@ function _bookLookupAuto(isbn){
       if(_bookHitCount(jp)>=2)return jp;
       return olLookup(isbn).catch(function(){return null;}).then(function(ol){
         if(ol)ol._src_db='openlibrary';
-        return _mergeBookResults([jp,ol]);
+        return googleBooksLookup(isbn).then(function(gb){
+          return _mergeBookResults([jp,gb,ol]);
+        });
       });
     });
   }else{
-    // 非日本版：Open Library 優先，命中 <2 欄位才補日系三庫（可能有翻譯版書誌）
-    return olLookup(isbn).catch(function(){return null;}).then(function(ol){
+    // 非日本版：Google Books / Open Library 優先，命中 <2 欄位才補日系三庫（可能有翻譯版書誌）
+    return Promise.all([googleBooksLookup(isbn),olLookup(isbn).catch(function(){return null;})]).then(function(west){
+      var gb=west[0],ol=west[1];
       if(ol)ol._src_db='openlibrary';
-      var olRes=_mergeBookResults([ol]);
+      var olRes=_mergeBookResults([gb,ol]);
       if(_bookHitCount(olRes)>=2)return olRes;
       return Promise.all([openbdLookup(isbn),rakutenBooksLookup(isbn),ndlLookup(isbn)]).then(function(r){
         var jp=_mergeBookResults(r);
@@ -7037,8 +7271,22 @@ function barWithGB(bc,hint){
   var type=_selectedType||'遊戲';
   var q=hint||bc; // 用產品名稱或條碼查
 
-  // 使用多資料庫交叉比對（v24.04：交叉比對為遊戲庫，僅「遊戲」適用；主機/週邊/攻略直接走 AI 文字補全）
+  // 遊戲先跑遊戲庫交叉比對；其他分類跑一般商品條碼庫，不再依賴 Gemini grounding 上網查找。
   var hasDBs=cfg.gbkey||cfg.mbkey||cfg.tgdbkey||cfg.blkey||(cfg.iid&&cfg.isec)||(cfg.ssid&&cfg.sspass);
+  function productFallback(fallbackHint){
+    loading('商品條碼資料庫查詢中...');
+    productBarcodeLookupPromise(bc,type).then(function(prod){
+      noLoad();
+      if(prod&&prod.primary_name&&applyProductBarcodeResult(prod,bc,type)){
+        var src=(prod._sources||[]).join('+')||'barcode';
+        toast('✓ '+src+'：'+entry.primary_name,'ok',3000);
+        showForm('條碼資料庫建檔');
+        aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);});
+      }else{
+        barAIFill(bc,fallbackHint,false);
+      }
+    }).catch(function(){noLoad();barAIFill(bc,fallbackHint,false);});
+  }
   if(hasDBs&&type==='遊戲'){
     loading('多資料庫比對中...');
     crossRefLookupPromise(q,hint).then(function(dbResult){
@@ -7056,23 +7304,31 @@ function barWithGB(bc,hint){
         // AI 補全中文名/語言/年齡分級/summary
         barAIFill(bc,name,true);
       }else{
-        barAIFill(bc,hint,false);
+        productFallback(hint);
       }
-    }).catch(function(){barAIFill(bc,hint,false);});
+    }).catch(function(){productFallback(hint);});
   }else{
-    barAIFill(bc,hint,false);
+    productFallback(hint);
   }
 }
 
 // ── 步驟三：AI 補全（純文字，無圖片）──
 function barAIFill(bc,hint,hasGB){
+  var type=_selectedType||'遊戲';
+  if(!hint&&!hasGB){
+    entry=Object.assign({},_defaultsFor(type),entry||{},{category:type,barcode:bc,
+      notes:'條碼查無資料，需人工確認；未使用 AI 猜測商品名稱'});
+    _carrySelPlat();_carrySelRegion();
+    toast('⚠️ 條碼資料庫查無結果，已保留條碼，請拍照或手動補齊','er',5000);
+    showForm('條碼建檔');
+    return;
+  }
   if(!cfg.gkey&&!cfg.okey){
     if(hint)toast('查詢完成：'+hint,'ok',3000);
     showForm('條碼建檔');
     return;
   }
   loading('AI 補全資料...');
-  var type=_selectedType||'遊戲';
   var platHint=_selectedPlatform?('平台：'+_selectedPlatform+'。'):'';
   var typeHint=type!=='遊戲'?('建檔類型：'+type+'。'):'';
   var bcHint='條碼：'+bc+'。';
@@ -7080,20 +7336,16 @@ function barAIFill(bc,hint,hasGB){
 
   var prompt;
   if(hasGB){
-    // 已有 Giant Bomb 資料，只補全缺少的欄位（僅遊戲分類會走到此分支）
+    // 已有資料庫結果，只補全缺少的欄位（僅遊戲分類會走到此分支）
     prompt=typeHint+platHint+bcHint+nameHint+
-      '以上資料來自 Giant Bomb 資料庫。請補全以下欄位（其他欄位已填，不要重複輸出已知欄位）：'+
+      '以上資料來自遊戲資料庫。請補全以下欄位（其他欄位已填，不要重複輸出已知欄位）：'+
       'zh_name（繁體中文名）, jp_name（日文原名，如有）, voice_language（語音語言）, subtitle_language（字幕語言）, age_rating, summary（繁體中文 200 字介紹）。只輸出這幾個欄位的 JSON。';
   }else{
     prompt=typeHint+platHint+bcHint+nameHint+
-      '請直接用條碼數字「'+bc+'」本身當關鍵字上網搜尋（可嘗試純數字、數字+平台名稱等不同組合），找出至少一個明確可信的來源後，再辨識這項商品，輸出所有已知欄位 JSON。'+
-      '若不同來源給出的商品彼此矛盾，以較多來源一致、或較權威的條碼資料庫（如官方商品頁、GTIN/JAN 資料庫）為準。'+
-      '重要：本次建檔類別預設為【'+type+'】，這只是使用者掃描前的初步假設，不代表查證後一定正確——若查證結果顯示條碼實際對應的商品類型或名稱與此不符，請如實依查證結果填寫 category 與 primary_name，不要為了符合預設假設而勉強套用或編造名稱。'+
-      '鐵律：若搜尋不到明確、可信來源佐證的商品，primary_name 與其餘辨識欄位一律留空字串，並在 notes 填「條碼查無資料，需人工確認」；嚴禁使用訓練記憶臆測或憑印象猜測商品名稱，寧可留空也不可亂填。'+
-      'summary 請用繁體中文 200 字內。';
+      '以上是已由資料庫或使用者提供的商品名稱/條碼。請只根據這些已知資訊補全缺漏欄位；不確定的欄位留空，不要聲稱已上網查證，也不要猜測商品名稱。summary 請用繁體中文 200 字內。';
   }
 
-  callGemini([{text:prompt}],{allowGrounding:true})
+  callGemini([{text:prompt}],{allowGrounding:false})
     .then(function(res){
       noLoad();
       if(res&&Object.keys(res).length){
@@ -7104,27 +7356,21 @@ function barAIFill(bc,hint,hasGB){
           aiFields.forEach(function(k){if(res[k])entry[k]=res[k];});
           toast('✓ 已補全：'+entry.primary_name,'ok',3000);
         }else{
-          // v42.09：grounding 有要求但無真實搜尋來源佐證 → 不信任這次結果，無論 JSON 寫了什麼
-          var _unverified=(typeof res._groundCount==='number'&&res._groundCount===0);
           var _cleanRes=Object.assign({},res);
           delete _cleanRes._groundCount;delete _cleanRes._groundSources;
           var _savedCoverBar=entry.cover_img||'';
-          entry=Object.assign({},_defaultsFor(type),_cleanRes,{
+          entry=Object.assign({},_defaultsFor(type),entry||{},_cleanRes,{
             barcode:bc,category:type,
             platform:_selectedPlatform||_cleanRes.platform||''
           });
           _carrySelPlat();_carrySelRegion();
           if(_savedCoverBar)entry.cover_img=_savedCoverBar; // 還原封面圖
-          if(hint&&!entry.primary_name)entry.primary_name=hint;
+          if(hint)entry.primary_name=hint;
           var _noData=/條碼查無資料/.test(entry.notes||'');
-          if(_unverified&&!_noData&&!hint){
-            entry.primary_name=''; // 無真實搜尋來源佐證，清空避免誤存錯誤名稱
-            entry.notes=(entry.notes?entry.notes+'；':'')+'條碼查無資料，需人工確認（AI 未取得可信搜尋來源）';
-          }
           if(_noData||!entry.primary_name){
             toast('⚠️ 條碼查無明確資料，請手動核對包裝盒後填寫','er',5000);
           }else{
-            toast('✓ AI 識別：'+entry.primary_name+'（純條碼推測，建議核對包裝盒）','ok',4000);
+            toast('✓ AI 已依資料庫名稱補全：'+entry.primary_name,'ok',4000);
           }
         }
       }else if(hint&&!entry.primary_name){
