@@ -1,3 +1,23 @@
+## v42.11 (2026-07-01)
+
+### 變更內容
+- 修正照片被覆蓋的迴歸：applyProductBarcodeResult 合併資料庫結果時，Object.assign 順序讓資料庫商品圖（樂天/Barcode Lookup 的圖）覆蓋使用者已拍攝的封面/封底/側邊照片；改為合併前備份、合併後還原
+- barAIFill 的 AI 補全分支（非 hasGB）同樣風險：改用 allowGrounding:false 後會強制走 responseSchema，schema 內含 back_img/spine_img 欄位，模型輸出空字串會覆蓋使用者照片，一併補上還原邏輯（先前只還原 cover_img）
+- 條碼掃描畫面加上地區支援範圍提示：目前條碼資料庫查詢僅涵蓋日版（樂天）與美版（Barcode Lookup），台／港／韓／中版條碼查無資料機率高，明確告知使用者改用拍照辨識或手動輸入
+
+### 影響檔案
+- index.html / GameVault_v42_11_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-10 → gamevault-v42-11
+
+### 對應備份
+- _internal/old/v42_10/
+
 ## v42.10 (2026-07-01，使用者手動編輯)
 
 ### 變更內容
@@ -41,24 +61,3 @@
 
 ### 對應備份
 - _internal/old/v42_08/
-
-## v42.08 (2026-07-01)
-
-### 變更內容
-- grounding 模式不再強制關閉 thinking（原本統一設 thinkingBudget:0），讓模型能交叉比對搜尋結果；maxOutputTokens 拉高到 16384 避免思考吃光輸出
-- grounding 模式逾時從 25 秒延長到 45 秒，因搜尋+思考需要更長時間
-- prompt 明確要求用條碼數字本身當搜尋關鍵字、嘗試多種查詢組合，並在來源衝突時以多數/權威來源為準
-- prompt 加入分類鎖定解套敘述：system prompt 原本硬性要求「category 固定填遊戲、不要改判」，容易誘導模型硬湊遊戲名稱；新增說明此分類只是使用者掃描前的初步假設，查證結果不符時應如實回報
-
-### 影響檔案
-- index.html / GameVault_v42_08_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-07 → gamevault-v42-08
-
-### 對應備份
-- _internal/old/v42_07/
