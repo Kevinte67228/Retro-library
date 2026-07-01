@@ -1,3 +1,27 @@
+## v42.10 (2026-07-01，使用者手動編輯)
+
+### 變更內容
+- 條碼辨識架構重大調整：捨棄 Gemini grounding 自由搜尋，改用真實商品資料庫（樂天 + Barcode Lookup）直查（productBarcodeLookupPromise / applyProductBarcodeResult）
+- 純條碼查無資料時直接停用 AI 猜測，保留條碼並標記「需人工確認」，不再讓 AI 自由發想商品名稱
+- 有資料庫結果或使用者提供名稱時才呼叫 Gemini 補全欄位，且明確關閉 grounding（allowGrounding:false），prompt 禁止聲稱已上網查證
+- 新增 Google Books ISBN 直查（GS 新增 googleBooksProxy），補海外/英文攻略本資料
+- barcode_lookup 查詢結果擴充擷取 publisher／ref_link／cover_url
+- DB_REGISTRY 分類標籤擴充支援主機／週邊，各分類獨立顏色標示
+
+### 影響檔案
+- index.html / GameVault_v42_10_index.html
+- sw.js（同時修正版本化 HTML 檔名不同步的問題）
+- GameVault_AppsScript.gs（新增 google_books_search action，**需手動部署到 Apps Script**）
+
+### GS 版本
+- 新增 googleBooksProxy 函式；版本註解由使用者標為 v42.10（未依主版號慣例遞增，供参考）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-09 → gamevault-v42-10
+
+### 對應備份
+- _internal/old/v42_09/
+
 ## v42.09 (2026-07-01)
 
 ### 變更內容
@@ -38,24 +62,3 @@
 
 ### 對應備份
 - _internal/old/v42_07/
-
-## v42.07 (2026-07-01)
-
-### 變更內容
-- barAIFill 純條碼猜測 prompt 加上反腦補鐵律：查無明確可信來源時，primary_name 等欄位一律留空，notes 填「條碼查無資料，需人工確認」，禁止用訓練記憶臆測
-- 結果處理加上偵測：AI 主動回報查無資料時顯示警告 toast，不再誤報為辨識成功
-- 有辨識結果時 toast 加註「純條碼推測，建議核對包裝盒」提醒使用者覆核
-- 背景：4713014358376 條碼即使開啟 grounding 仍被誤判為蠟筆小新周邊，確認是網路搜尋結果本身不可靠、模型仍用訓練記憶自信作答，非程式邏輯錯誤
-
-### 影響檔案
-- index.html / GameVault_v42_07_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-06 → gamevault-v42-07
-
-### 對應備份
-- _internal/old/v42_06/
