@@ -954,7 +954,8 @@ body{
               ISBN-13 → 978-4-04-735985-6
             </div>
             <input class="fi mono" id="bar-inp" type="text" inputmode="numeric" placeholder="4988601009000"
-              style="letter-spacing:2px;font-size:15px;margin-bottom:10px">
+              style="letter-spacing:2px;font-size:15px;margin-bottom:6px">
+            <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 條碼資料庫查詢目前僅支援日版（樂天）與美版（Barcode Lookup）商品；台／港／韓／中版條碼可能查無資料，建議改用拍照辨識或手動輸入</div>
             <!-- 相機掃描條碼（即時取景框；回填上方欄位後按查詢）-->
             <button type="button" onclick="barScanFromBtn()"
               style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(121,134,203,.08);border:1.5px dashed rgba(121,134,203,.35);border-radius:10px;padding:10px 12px;cursor:pointer;margin-bottom:10px;color:#7986cb;font-size:13px;font-family:inherit">
@@ -2099,7 +2100,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.10';
+const APP_VERSION='v42.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5748,7 +5749,14 @@ function productBarcodeLookupPromise(barcode,type){
 function applyProductBarcodeResult(prod,bc,type){
   if(!prod||!prod.primary_name)return false;
   type=catInternal(type)||'遊戲';
+  // v42.11：備份使用者已拍攝的封面/封底/側邊圖，避免被資料庫的商品圖覆蓋掉
+  var _savedCover=entry&&entry.cover_img||'';
+  var _savedBack=entry&&entry.back_img||'';
+  var _savedSpine=entry&&entry.spine_img||'';
   entry=Object.assign({},_defaultsFor(type),entry||{},prod,{category:type,barcode:bc});
+  if(_savedCover)entry.cover_img=_savedCover;
+  if(_savedBack)entry.back_img=_savedBack;
+  if(_savedSpine)entry.spine_img=_savedSpine;
   _carrySelPlat();_carrySelRegion();
   normalizeLanguageFields(entry);
   if(entry.genre)entry.genre=matchGenreMulti(entry.genre)||entry.genre;
@@ -7359,12 +7367,15 @@ function barAIFill(bc,hint,hasGB){
           var _cleanRes=Object.assign({},res);
           delete _cleanRes._groundCount;delete _cleanRes._groundSources;
           var _savedCoverBar=entry.cover_img||'';
+          var _savedBackBar=entry.back_img||'',_savedSpineBar=entry.spine_img||'';
           entry=Object.assign({},_defaultsFor(type),entry||{},_cleanRes,{
             barcode:bc,category:type,
             platform:_selectedPlatform||_cleanRes.platform||''
           });
           _carrySelPlat();_carrySelRegion();
           if(_savedCoverBar)entry.cover_img=_savedCoverBar; // 還原封面圖
+          if(_savedBackBar)entry.back_img=_savedBackBar; // 還原封底圖
+          if(_savedSpineBar)entry.spine_img=_savedSpineBar; // 還原側邊圖
           if(hint)entry.primary_name=hint;
           var _noData=/條碼查無資料/.test(entry.notes||'');
           if(_noData||!entry.primary_name){
