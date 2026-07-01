@@ -2099,7 +2099,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.07';
+const APP_VERSION='v42.08';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4091,18 +4091,20 @@ function callGemini(parts,opts){
   };
   if(useGround){
     // grounding 模式：不設 responseSchema，改要求模型自行輸出 JSON 文字（extractJson 容錯解析）
+    genCfg.maxOutputTokens=16384; // 思考+搜尋+輸出都要吃 token，拉高上限避免截斷
   }else{
     genCfg.responseMimeType='application/json';
     genCfg.responseSchema=GEMINI_SCHEMA; // 強制結構化輸出（非 grounding 模式維持原行為）
   }
-  // 2.5 系列預設開啟 thinking 會吃掉 token 導致輸出截斷，明確關閉
-  if(mdl.indexOf('2.5')>=0){
+  // 2.5 系列預設開啟 thinking 會吃掉 token 導致輸出截斷，非 grounding 模式明確關閉；
+  // grounding 模式需要思考來交叉比對搜尋結果，保留預設（不設 thinkingBudget=0）
+  if(mdl.indexOf('2.5')>=0&&!useGround){
     genCfg.thinkingConfig={thinkingBudget:0};
   }
-// 25 秒超時保護；controller 掛到全域，讓「取消」鈕能真正中斷請求
+// 逾時保護；grounding 模式要搜尋+思考，時間拉長；controller 掛到全域，讓「取消」鈕能真正中斷請求
   var ctrl=new AbortController();
   _aiAbortCtrl=ctrl;
-  var timeoutId=setTimeout(function(){ctrl.abort();},25000);
+  var timeoutId=setTimeout(function(){ctrl.abort();},useGround?45000:25000);
   var _reqBody={
     system_instruction:{parts:[{text:buildSYS()}]}, // v23.03 動態注入區域上下文
     contents:[{role:'user',parts:(function(){
@@ -4160,7 +4162,7 @@ function callGemini(parts,opts){
     clearTimeout(timeoutId);
     if(e.name==='AbortError'){
       if(ctrl._userCancelled)throw Object.assign(new Error('已取消 AI 辨識'),{cancelled:true});
-      throw new Error('AI 伺服器回應超時（25 秒），網路不穩定或伺服器忙碌，請稍後重試或改用手動建檔');
+      throw new Error('AI 伺服器回應超時（'+(useGround?'45':'25')+' 秒），網路不穩定或伺服器忙碌，請稍後重試或改用手動建檔');
     }
     throw e;
   });
@@ -7076,7 +7078,9 @@ function barAIFill(bc,hint,hasGB){
       'zh_name（繁體中文名）, jp_name（日文原名，如有）, voice_language（語音語言）, subtitle_language（字幕語言）, age_rating, summary（繁體中文 200 字介紹）。只輸出這幾個欄位的 JSON。';
   }else{
     prompt=typeHint+platHint+bcHint+nameHint+
-      '請先實際上網搜尋這組條碼對應的確切商品，再辨識這項【'+type+'】商品，輸出所有已知欄位 JSON。'+
+      '請直接用條碼數字「'+bc+'」本身當關鍵字上網搜尋（可嘗試純數字、數字+平台名稱等不同組合），找出至少一個明確可信的來源後，再辨識這項商品，輸出所有已知欄位 JSON。'+
+      '若不同來源給出的商品彼此矛盾，以較多來源一致、或較權威的條碼資料庫（如官方商品頁、GTIN/JAN 資料庫）為準。'+
+      '重要：本次建檔類別預設為【'+type+'】，這只是使用者掃描前的初步假設，不代表查證後一定正確——若查證結果顯示條碼實際對應的商品類型或名稱與此不符，請如實依查證結果填寫 category 與 primary_name，不要為了符合預設假設而勉強套用或編造名稱。'+
       '鐵律：若搜尋不到明確、可信來源佐證的商品，primary_name 與其餘辨識欄位一律留空字串，並在 notes 填「條碼查無資料，需人工確認」；嚴禁使用訓練記憶臆測或憑印象猜測商品名稱，寧可留空也不可亂填。'+
       'summary 請用繁體中文 200 字內。';
   }
