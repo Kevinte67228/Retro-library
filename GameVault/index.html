@@ -2099,7 +2099,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.06';
+const APP_VERSION='v42.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7076,7 +7076,9 @@ function barAIFill(bc,hint,hasGB){
       'zh_name（繁體中文名）, jp_name（日文原名，如有）, voice_language（語音語言）, subtitle_language（字幕語言）, age_rating, summary（繁體中文 200 字介紹）。只輸出這幾個欄位的 JSON。';
   }else{
     prompt=typeHint+platHint+bcHint+nameHint+
-      '請根據以上資訊辨識這項【'+type+'】商品，輸出所有已知欄位 JSON。summary 請用繁體中文 200 字內。';
+      '請先實際上網搜尋這組條碼對應的確切商品，再辨識這項【'+type+'】商品，輸出所有已知欄位 JSON。'+
+      '鐵律：若搜尋不到明確、可信來源佐證的商品，primary_name 與其餘辨識欄位一律留空字串，並在 notes 填「條碼查無資料，需人工確認」；嚴禁使用訓練記憶臆測或憑印象猜測商品名稱，寧可留空也不可亂填。'+
+      'summary 請用繁體中文 200 字內。';
   }
 
   callGemini([{text:prompt}],{allowGrounding:true})
@@ -7098,7 +7100,12 @@ function barAIFill(bc,hint,hasGB){
           _carrySelPlat();_carrySelRegion();
           if(_savedCoverBar)entry.cover_img=_savedCoverBar; // 還原封面圖
           if(hint&&!entry.primary_name)entry.primary_name=hint;
-          toast('✓ AI 識別：'+entry.primary_name,'ok',3000);
+          var _noData=/條碼查無資料/.test(entry.notes||'');
+          if(_noData||!entry.primary_name){
+            toast('⚠️ 條碼查無明確資料，請手動核對包裝盒後填寫','er',5000);
+          }else{
+            toast('✓ AI 識別：'+entry.primary_name+'（純條碼推測，建議核對包裝盒）','ok',4000);
+          }
         }
       }else if(hint&&!entry.primary_name){
         entry.primary_name=hint;
