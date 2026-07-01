@@ -1,3 +1,24 @@
+## v42.12 (2026-07-01)
+
+### 變更內容
+- 修正條碼掃描（遊戲分類、有設定舊版資料庫金鑰時）圖片遺失問題：crossRefLookupPromise 合併結果的圖片欄位叫 cover_url/back_url/spine_url（候選網址），barWithGB 的 dbFields 合併清單完全沒做這層轉換，圖片資訊直接遺失
+- 修正方式沿用既有 applyMultiDbResult（編碼掃描流程）已有的轉換模式：cover_url→cover_img 等，且僅補使用者沒拍的空欄，不覆蓋已拍照片
+- 移除 applyMultiDbResult 裡殘留的除錯用 toast（會顯示 [DEBUG] cover_url=... 給使用者看 8 秒）
+- 背景：v42.11 只修了 productBarcodeLookupPromise/applyProductBarcodeResult 這條新路徑的封面覆蓋問題，但遊戲分類且有設定舊版資料庫金鑰時，實際走的是更早就存在的 crossRefLookupPromise/barWithGB 路徑，該路徑從未處理過圖片欄位
+
+### 影響檔案
+- index.html / GameVault_v42_12_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-11 → gamevault-v42-12
+
+### 對應備份
+- _internal/old/v42_11/
+
 ## v42.11 (2026-07-01)
 
 ### 變更內容
@@ -41,23 +62,3 @@
 
 ### 對應備份
 - _internal/old/v42_09/
-
-## v42.09 (2026-07-01)
-
-### 變更內容
-- grounding 模式改用 API 回傳的 groundingMetadata（groundingChunks）客觀驗證是否真的有網路搜尋來源，不再只信任模型自我回報「查無資料」
-- 若要求 grounding 但回應無任何真實搜尋來源（_groundCount===0），不論模型輸出什麼名稱一律強制清空 primary_name 並標記「需人工確認（AI 未取得可信搜尋來源）」
-- 背景：4713014358376 條碼即使加了搜尋策略指引、分類鎖定解套敘述，v42.08 仍給出錯誤答案（Nintendo Switch 主機），確認純靠 prompt 指令要求模型「誠實自評」不可靠，模型會用自信語氣講出編造內容，需改用可驗證的 API 資料把關
-
-### 影響檔案
-- index.html / GameVault_v42_09_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-08 → gamevault-v42-09
-
-### 對應備份
-- _internal/old/v42_08/
