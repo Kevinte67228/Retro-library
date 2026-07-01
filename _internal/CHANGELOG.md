@@ -1,3 +1,23 @@
+## v42.09 (2026-07-01)
+
+### 變更內容
+- grounding 模式改用 API 回傳的 groundingMetadata（groundingChunks）客觀驗證是否真的有網路搜尋來源，不再只信任模型自我回報「查無資料」
+- 若要求 grounding 但回應無任何真實搜尋來源（_groundCount===0），不論模型輸出什麼名稱一律強制清空 primary_name 並標記「需人工確認（AI 未取得可信搜尋來源）」
+- 背景：4713014358376 條碼即使加了搜尋策略指引、分類鎖定解套敘述，v42.08 仍給出錯誤答案（Nintendo Switch 主機），確認純靠 prompt 指令要求模型「誠實自評」不可靠，模型會用自信語氣講出編造內容，需改用可驗證的 API 資料把關
+
+### 影響檔案
+- index.html / GameVault_v42_09_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-08 → gamevault-v42-09
+
+### 對應備份
+- _internal/old/v42_08/
+
 ## v42.08 (2026-07-01)
 
 ### 變更內容
@@ -39,24 +59,3 @@
 
 ### 對應備份
 - _internal/old/v42_06/
-
-## v42.06 (2026-07-01)
-
-### 變更內容
-- 移除 UPC ItemDB 免費試用庫的自動條碼查詢（DB_REGISTRY 移除項目 + _crossRefQuery 拿掉任務）
-- 修正純條碼掃描誤配問題：該資料庫偏美版商品，對台/日 JAN 條碼常誤配到不相干商品（例：4713014358376 誤判蠟筆小新）
-- 清理相關死代碼：extractField 的 upcitemdb case、primary_name 優先順序陣列
-- 更新過時的 ponytail 註解，反映此次才是真正完成移除
-
-### 影響檔案
-- index.html / GameVault_v42_06_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-05 → gamevault-v42-06
-
-### 對應備份
-- _internal/old/v42_05/
