@@ -2099,7 +2099,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.08';
+const APP_VERSION='v42.09';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4157,6 +4157,14 @@ function callGemini(parts,opts){
     var res;
     try{res=JSON.parse(txt);}catch(e){res=extractJson(txt);}
     if(!res||typeof res!=='object')throw new Error('AI 回傳無法解析，請重試或切換模型');
+    // v42.09：grounding 模式不信任模型自我回報「有沒有查到」，改用 API 回傳的 groundingMetadata 客觀驗證
+    if(useGround){
+      var gm=cand.groundingMetadata||{};
+      var chunks=gm.groundingChunks||[];
+      res._groundCount=chunks.length;
+      res._groundSources=chunks.slice(0,3).map(function(c){return c.web&&(c.web.title||c.web.uri)||'';}).filter(Boolean);
+      window._lastAIDiag+=' | 搜尋來源數:'+chunks.length;
+    }
     return res;
   }).catch(function(e){
     clearTimeout(timeoutId);
@@ -7096,15 +7104,23 @@ function barAIFill(bc,hint,hasGB){
           aiFields.forEach(function(k){if(res[k])entry[k]=res[k];});
           toast('✓ 已補全：'+entry.primary_name,'ok',3000);
         }else{
+          // v42.09：grounding 有要求但無真實搜尋來源佐證 → 不信任這次結果，無論 JSON 寫了什麼
+          var _unverified=(typeof res._groundCount==='number'&&res._groundCount===0);
+          var _cleanRes=Object.assign({},res);
+          delete _cleanRes._groundCount;delete _cleanRes._groundSources;
           var _savedCoverBar=entry.cover_img||'';
-          entry=Object.assign({},_defaultsFor(type),res,{
+          entry=Object.assign({},_defaultsFor(type),_cleanRes,{
             barcode:bc,category:type,
-            platform:_selectedPlatform||res.platform||''
+            platform:_selectedPlatform||_cleanRes.platform||''
           });
           _carrySelPlat();_carrySelRegion();
           if(_savedCoverBar)entry.cover_img=_savedCoverBar; // 還原封面圖
           if(hint&&!entry.primary_name)entry.primary_name=hint;
           var _noData=/條碼查無資料/.test(entry.notes||'');
+          if(_unverified&&!_noData&&!hint){
+            entry.primary_name=''; // 無真實搜尋來源佐證，清空避免誤存錯誤名稱
+            entry.notes=(entry.notes?entry.notes+'；':'')+'條碼查無資料，需人工確認（AI 未取得可信搜尋來源）';
+          }
           if(_noData||!entry.primary_name){
             toast('⚠️ 條碼查無明確資料，請手動核對包裝盒後填寫','er',5000);
           }else{
