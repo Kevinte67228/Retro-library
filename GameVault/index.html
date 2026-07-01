@@ -2099,7 +2099,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.05';
+const APP_VERSION='v42.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5029,10 +5029,6 @@ var DB_REGISTRY=[
    desc:'商品條碼直查（付費方案）',
    inputs:['barcode'],group:'west',cats:['game'],
    ready:function(){return !!(cfg.blkey&&cfg.url);}},
-  {id:'upcitemdb',name:'UPC ItemDB',icon:'🏷',
-   desc:'免費條碼直查・偏美版商品',
-   inputs:['barcode'],group:'west',cats:['game'],
-   ready:function(){return true;}},
   {id:'giantbomb',name:'Giant Bomb',icon:'💣',
    desc:'歐美遊戲百科',
    inputs:['name'],group:'west',cats:['game'],suspended:true,
@@ -5205,13 +5201,8 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
   if(cfg.blkey&&cfg.url&&codeQ&&_ok('barcode_lookup')) tasks.push(
     barcodeLookupSearch(codeQ).then(function(r){return r?{src:'barcode_lookup',data:r}:null;}).catch(function(){return null;})
   );
-  // 6. UPC ItemDB — 用條碼查
-  if(codeQ&&_ok('upcitemdb')) tasks.push(
-    fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+codeQ)
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(d){return d&&d.items&&d.items.length?{src:'upcitemdb',data:d.items[0]}:null;})
-      .catch(function(){return null;})
-  );
+  // v42.06：UPC ItemDB 試用庫偏美版商品，對台/日條碼常誤配（如 471 開頭台灣碼），
+  // 依先前 ponytail 註記的決定徹底移除，不再自動查詢。
   // 7. ScreenScraper — 序號精確查 或 名稱查（不用條碼查）
   if(cfg.ssid&&cfg.sspass&&cfg.url&&_ok('screenscraper')){
     // 序號優先：q 本身是序號 > entry.code 像序號（光碟/卡帶背面常見編碼，SS 對日版最精確）
@@ -5294,7 +5285,7 @@ function mergeMultiDbResults(results){
 
   // 欄位優先來源定義
   var priority={
-    primary_name: ['igdb','screenscraper','tgdb','mobygames','giantbomb','barcode_lookup','rakuten','upcitemdb'],
+    primary_name: ['igdb','screenscraper','tgdb','mobygames','giantbomb','barcode_lookup','rakuten'],
     jp_name:      ['screenscraper','rakuten'],
     platform:     ['igdb','screenscraper','tgdb','mobygames','giantbomb'],
     developer:    ['igdb','screenscraper','mobygames','giantbomb','tgdb'],
@@ -5430,8 +5421,6 @@ function extractField(src,data,field){
       return igMap[field]||'';
     case 'barcode_lookup':
       return {primary_name:data.product_name||data.title||'',summary:data.description||''}[field]||'';
-    case 'upcitemdb':
-      return {primary_name:data.title||'',developer:data.brand||'',summary:data.description||''}[field]||'';
     case 'screenscraper':
       // ScreenScraper 欄位（已由 parseSSGame 整理）
       var ssDate=data.release_date||'';
@@ -7027,7 +7016,7 @@ function onBarcode(bc){
   }
 
   // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
-  // ponytail: upcitemdb trial plan 只含美版 UPC，日版 JAN 全數查無，移除
+  // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
   loading('條碼查詢中...');
   barWithGB(bc,'');
 }
