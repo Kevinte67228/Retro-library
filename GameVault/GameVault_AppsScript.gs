@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v40           ║
+// ║  GameVault — Google Apps Script 後端  v42.10        ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -383,6 +383,9 @@ function doGet(e) {
         break;
       case 'ndl_search':
         result = ndlProxy(p.isbn || '');
+        break;
+      case 'google_books_search':
+        result = googleBooksProxy(p.isbn || '');
         break;
       case 'fix_headers':
         result = fixSheetHeaders();
@@ -1484,6 +1487,50 @@ function ndlProxy(isbn) {
       publisher: t('publisher', dc),
       author: t('creator', dc),
       pub_date: t('issued', dcterms) || t('date', dc) || t('pubDate')
+    };
+    if (!out.title) return { notfound: true };
+    setCache(ck, out);
+    return out;
+  } catch (e) { return { error: e.message }; }
+}
+
+// ── Google Books API Proxy（ISBN 直查；免金鑰）────────────
+// 作為 Open Library / openBD / NDL 的後備來源，補英文攻略本與海外書籍的封面、作者、簡介。
+function googleBooksProxy(isbn) {
+  if (!isbn) return { error: 'missing params' };
+  isbn = String(isbn).replace(/[-\s]/g, '');
+  const ck = 'googlebooks_' + isbn;
+  const cached = getCache(ck);
+  if (cached) return cached;
+  const url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' +
+    encodeURIComponent(isbn) + '&maxResults=1&printType=books';
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const code = res.getResponseCode();
+    const text = res.getContentText('UTF-8');
+    if (code !== 200) return { error: 'Google Books HTTP ' + code };
+    const d = JSON.parse(text);
+    if (!d.items || !d.items.length) return { notfound: true };
+    const info = d.items[0].volumeInfo || {};
+    const ids = info.industryIdentifiers || [];
+    const foundIsbn = (ids.find(function(x) { return x.type === 'ISBN_13'; }) ||
+      ids.find(function(x) { return x.type === 'ISBN_10'; }) || {}).identifier || isbn;
+    const imageLinks = info.imageLinks || {};
+    const img = imageLinks.extraLarge || imageLinks.large || imageLinks.medium ||
+      imageLinks.thumbnail || imageLinks.smallThumbnail || '';
+    const out = {
+      title: info.title || '',
+      subtitle: info.subtitle || '',
+      author: (info.authors || []).join(', '),
+      publisher: info.publisher || '',
+      published_date: info.publishedDate || '',
+      isbn: foundIsbn,
+      image: img ? img.replace(/^http:/, 'https:') : '',
+      caption: info.description || '',
+      item_url: info.infoLink || info.previewLink || '',
+      page_count: info.pageCount || '',
+      language: info.language || '',
+      categories: (info.categories || []).join(', ')
     };
     if (!out.title) return { notfound: true };
     setCache(ck, out);
