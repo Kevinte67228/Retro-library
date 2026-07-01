@@ -1,3 +1,24 @@
+## v42.08 (2026-07-01)
+
+### 變更內容
+- grounding 模式不再強制關閉 thinking（原本統一設 thinkingBudget:0），讓模型能交叉比對搜尋結果；maxOutputTokens 拉高到 16384 避免思考吃光輸出
+- grounding 模式逾時從 25 秒延長到 45 秒，因搜尋+思考需要更長時間
+- prompt 明確要求用條碼數字本身當搜尋關鍵字、嘗試多種查詢組合，並在來源衝突時以多數/權威來源為準
+- prompt 加入分類鎖定解套敘述：system prompt 原本硬性要求「category 固定填遊戲、不要改判」，容易誘導模型硬湊遊戲名稱；新增說明此分類只是使用者掃描前的初步假設，查證結果不符時應如實回報
+
+### 影響檔案
+- index.html / GameVault_v42_08_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-07 → gamevault-v42-08
+
+### 對應備份
+- _internal/old/v42_07/
+
 ## v42.07 (2026-07-01)
 
 ### 變更內容
@@ -39,24 +60,3 @@
 
 ### 對應備份
 - _internal/old/v42_05/
-
-## v42.04 (2026-07-01)
-
-### 變更內容
-- 收藏頁視圖切換按鈕（卡片／書架）放大，由 34×34px 改為 56×48px
-- 改為上圖示下文字版型，加上「卡片」「書架」文字說明
-- 選中狀態高亮背景填滿整個放大後的按鈕
-- 修正 setView() 切換顏色不一致（#000 → #001018）
-
-### 影響檔案
-- index.html / GameVault_v42_04_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-03 → gamevault-v42-04
-
-### 對應備份
-- _internal/old/v42_03/
