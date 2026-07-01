@@ -1459,7 +1459,7 @@ body{
           <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Gemini API ↗</a>
           <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer">
             <input type="checkbox" id="c-grounding" style="width:18px;height:18px;flex-shrink:0">
-            <span style="font-size:13px;color:#e8eaf6">AI 上網查證發行日期（Google Search grounding）</span>
+            <span style="font-size:13px;color:#e8eaf6">AI 上網查證（發行日期／條碼辨識，Google Search grounding）</span>
           </label>
           <div class="shlp">開啟後，資料庫無共識時 AI 會實際上網查找而非憑記憶。可能計入金鑰的搜尋用量，請先確認 AI Studio 額度。僅 Gemini 適用。</div>
           <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer">
@@ -2099,7 +2099,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.04';
+const APP_VERSION='v42.05';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4078,17 +4078,23 @@ function cancelAI(){
   if(entry&&entry.primary_name)showForm('取消 AI，手動確認');
 }
 
-function callGemini(parts){
+function callGemini(parts,opts){
   if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
   var mdl=cfg.gmdl||'gemini-2.5-flash';
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
-  var useSchema=true; // 強制 responseSchema 結構化輸出（所有 Gemini 模型）
+  // v42.05：grounding 與 responseSchema 互斥（Gemini API 限制），二擇一。
+  // 僅呼叫端明確傳入 allowGrounding 且使用者開啟「AI 上網查證」時才切換為 grounding 模式。
+  var useGround=!!(opts&&opts.allowGrounding&&cfg.grounding);
   var genCfg={
     temperature:0.1,
-    maxOutputTokens:8192,
-    responseMimeType:'application/json'
+    maxOutputTokens:8192
   };
-  if(useSchema)genCfg.responseSchema=GEMINI_SCHEMA;
+  if(useGround){
+    // grounding 模式：不設 responseSchema，改要求模型自行輸出 JSON 文字（extractJson 容錯解析）
+  }else{
+    genCfg.responseMimeType='application/json';
+    genCfg.responseSchema=GEMINI_SCHEMA; // 強制結構化輸出（非 grounding 模式維持原行為）
+  }
   // 2.5 系列預設開啟 thinking 會吃掉 token 導致輸出截斷，明確關閉
   if(mdl.indexOf('2.5')>=0){
     genCfg.thinkingConfig={thinkingBudget:0};
@@ -4097,19 +4103,23 @@ function callGemini(parts){
   var ctrl=new AbortController();
   _aiAbortCtrl=ctrl;
   var timeoutId=setTimeout(function(){ctrl.abort();},25000);
+  var _reqBody={
+    system_instruction:{parts:[{text:buildSYS()}]}, // v23.03 動態注入區域上下文
+    contents:[{role:'user',parts:(function(){
+      // 若 parts 已有 text part（如 combo 模式傳入的 prompt），不再重複附加
+      var hasText=parts.some(function(p){return p.text;});
+      if(hasText)return parts;
+      var tip=useGround?'請上網查證後，僅輸出 JSON 物件，不加任何說明文字或 markdown 標記。':'請辨識圖片所有可見資訊，僅輸出 JSON 物件，不加任何說明文字。';
+      return parts.concat([{text:tip+'summary 請用繁體中文，限 200 字。'}]);
+    })()}],
+    generationConfig:genCfg
+  };
+  if(useGround)_reqBody.tools=[mdl.indexOf('1.5')>=0?{google_search_retrieval:{}}:{google_search:{}}];
   return fetch(url,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     signal:ctrl.signal,
-    body:JSON.stringify({
-      system_instruction:{parts:[{text:buildSYS()}]}, // v23.03 動態注入區域上下文
-      contents:[{role:'user',parts:(function(){
-        // 若 parts 已有 text part（如 combo 模式傳入的 prompt），不再重複附加
-        var hasText=parts.some(function(p){return p.text;});
-        return hasText?parts:parts.concat([{text:'請辨識圖片所有可見資訊，僅輸出 JSON 物件，不加任何說明文字。summary 請用繁體中文，限 200 字。'}]);
-      })()}],
-      generationConfig:genCfg
-    })
+    body:JSON.stringify(_reqBody)
   }).then(function(r){
     clearTimeout(timeoutId);
     if(!r.ok)return r.json().then(function(e){
@@ -7080,7 +7090,7 @@ function barAIFill(bc,hint,hasGB){
       '請根據以上資訊辨識這項【'+type+'】商品，輸出所有已知欄位 JSON。summary 請用繁體中文 200 字內。';
   }
 
-  callGemini([{text:prompt}])
+  callGemini([{text:prompt}],{allowGrounding:true})
     .then(function(res){
       noLoad();
       if(res&&Object.keys(res).length){
