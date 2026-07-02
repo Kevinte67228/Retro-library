@@ -1,3 +1,32 @@
+## v42.14 (2026-07-02)
+
+### 變更內容
+- 新增「數位遊戲」第 5 個分類，獨立欄位架構（DIGITAL_FIELDS/SELECTS/GROUPS/GCOL/DEFAULTS），拿掉條碼/品相/保管位置等實體專屬欄位，新增商店資訊（購入商店/購入帳號/取得方式）與追加內容（額外購入的 DLC，文字記錄非狀態列舉）
+- 「購入帳號」比照保管位置清單模式，設定頁新增「🎮 數位帳號清單」可自建常用帳號，下拉選單型別 acctsel
+- 不保留「目前估值」追蹤（數位版通常不可轉售）
+- 新增建檔方式「🔗 商店連結」：貼上 PSN／Nintendo eShop／Steam／Xbox Store／Epic Games 等商店頁網址，後端擷取 Open Graph meta 標籤（標題/描述/封面圖），前端呼叫 Gemini（不開 grounding）從擷取內容判斷遊戲名稱與基本欄位並自動帶入表單
+- GS 後端新增 fetchStorePageProxy，僅擷取 meta 標籤不解析整頁 DOM；JS 動態渲染頁面（如 PSN 網頁版）可能抓不到資料，已在畫面加註提示
+- Step1 分類卡片、建檔方式卡片（依分類隱藏條碼/編碼相關卡片、顯示商店連結卡片）、收藏頁篩選、統計圖表配色等既有 4 分類寫死清單全數同步更新
+
+### 影響檔案
+- index.html / GameVault_v42_14_index.html
+- sw.js
+- GameVault_AppsScript.gs（**新增 action，需手動部署到 Apps Script**）
+
+### GS 版本
+- 新增 fetchStorePageProxy 函式與 fetch_store_page action
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-13 → gamevault-v42-14
+
+### 對應備份
+- _internal/old/v42_13/
+
+### 已知限制（下次可再優化）
+- 統計頁的分類專屬 KPI 儀表板尚未做「數位遊戲」專屬版型，目前會落到「全部」通用視圖
+- AI_CAT_SPEC（圖片辨識用）未新增數位遊戲條目，因數位分類主要走商店連結／手動建檔，非拍照辨識
+- Step1 分類卡片為 5 個在 4 欄網格中，第 5 張會單獨換行，非致命但版面不算工整
+
 ## v42.13 (2026-07-01)
 
 ### 變更內容
@@ -39,23 +68,3 @@
 
 ### 對應備份
 - _internal/old/v42_11/
-
-## v42.11 (2026-07-01)
-
-### 變更內容
-- 修正照片被覆蓋的迴歸：applyProductBarcodeResult 合併資料庫結果時，Object.assign 順序讓資料庫商品圖（樂天/Barcode Lookup 的圖）覆蓋使用者已拍攝的封面/封底/側邊照片；改為合併前備份、合併後還原
-- barAIFill 的 AI 補全分支（非 hasGB）同樣風險：改用 allowGrounding:false 後會強制走 responseSchema，schema 內含 back_img/spine_img 欄位，模型輸出空字串會覆蓋使用者照片，一併補上還原邏輯（先前只還原 cover_img）
-- 條碼掃描畫面加上地區支援範圍提示：目前條碼資料庫查詢僅涵蓋日版（樂天）與美版（Barcode Lookup），台／港／韓／中版條碼查無資料機率高，明確告知使用者改用拍照辨識或手動輸入
-
-### 影響檔案
-- index.html / GameVault_v42_11_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-10 → gamevault-v42-11
-
-### 對應備份
-- _internal/old/v42_10/
