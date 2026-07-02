@@ -198,8 +198,9 @@ body{
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
 #pg-col .col-sel-row .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-#stats{display:flex;padding:12px 12px 10px;gap:8px}
-.si2{flex:1;text-align:center;cursor:pointer;padding:6px 2px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
+#stats{display:flex;padding:12px 12px 10px;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#stats::-webkit-scrollbar{display:none}
+.si2{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
 .si2:active{transform:scale(.96)}
 .si2.on{background:#0f2330;border-color:#00e5ff}
 .si2.on .sl2{color:#00e5ff}
@@ -432,6 +433,10 @@ body{
 .bk-cat-book{color:#ff6e9c;border-color:#ff6e9c;background:rgba(255,110,156,.08)}
 .bk-cat-console{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .bk-cat-periph{color:#ffab40;border-color:#ffab40;background:rgba(255,171,64,.08)}
+.bk-cat-digital{color:#40c4ff;border-color:#40c4ff;background:rgba(64,196,255,.08)}
+.bk-cat-ost{color:#ff8a65;border-color:#ff8a65;background:rgba(255,138,101,.08)}
+.bk-cat-artbook{color:#aed581;border-color:#aed581;background:rgba(174,213,129,.08)}
+.bk-cat-figure{color:#f06292;border-color:#f06292;background:rgba(240,98,146,.08)}
 .bk-genre{color:#e1a8ff;border-color:#ce93d8;background:rgba(206,147,216,.08)}
 .bk-cond{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:11px;font-weight:700}
 .bk-state{color:#9fa8c8;border-color:#3a4b72;background:rgba(42,58,90,.18)}
@@ -1217,6 +1222,10 @@ body{
           <div class="si2" id="sf-b" onclick="setF('攻略')"><div class="sv2" id="st-b">0</div><div class="sl2">書籍</div></div>
           <div class="si2" id="sf-c" onclick="setF('主機')"><div class="sv2" id="st-c">0</div><div class="sl2">主機</div></div>
           <div class="si2" id="sf-p" onclick="setF('週邊')"><div class="sv2" id="st-p">0</div><div class="sl2">週邊</div></div>
+          <div class="si2" id="sf-d" onclick="setF('數位遊戲')"><div class="sv2" id="st-d">0</div><div class="sl2">數位</div></div>
+          <div class="si2" id="sf-o" onclick="setF('原聲帶')"><div class="sv2" id="st-o">0</div><div class="sl2">原聲帶</div></div>
+          <div class="si2" id="sf-a" onclick="setF('畫集')"><div class="sv2" id="st-a">0</div><div class="sl2">畫集</div></div>
+          <div class="si2" id="sf-f" onclick="setF('公仔')"><div class="sv2" id="st-f">0</div><div class="sl2">公仔</div></div>
         </div>
         <div class="dv2-hd-bar"></div>
       </div>
@@ -2167,7 +2176,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.15a1';
+const APP_VERSION='v42.16';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8486,6 +8495,9 @@ function _relSubOf(d){
   if(d.category==='攻略')return d.book_type||'';
   if(d.category==='主機')return d.platform_family||d.series||'';
   if(d.category==='週邊')return d.peripheral_type||'';
+  if(d.category==='原聲帶')return d.composer||d.related_work||'';
+  if(d.category==='畫集')return d.illustrator||d.related_work||'';
+  if(d.category==='公仔')return d.character||d.series||'';
   return d.platform||'';
 }
 
@@ -9907,19 +9919,23 @@ function platShort(full){
   return map[full]||full;
 }
 function updateStats(){
-  var counts={'遊戲':0,'攻略':0,'主機':0,'週邊':0};
-  col.forEach(function(c){var cat=c&&c.data&&c.data.category;if(counts[cat]!==undefined)counts[cat]++;});
+  var counts={'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0};
+  col.forEach(function(c){var cat=catInternal(c&&c.data&&c.data.category);if(counts[cat]!==undefined)counts[cat]++;});
   $('st-total').textContent=col.length;
   $('st-g').textContent=counts['遊戲'];
   $('st-b').textContent=counts['攻略'];
   $('st-c').textContent=counts['主機'];
   $('st-p').textContent=counts['週邊'];
+  $('st-d').textContent=counts['數位遊戲'];
+  $('st-o').textContent=counts['原聲帶'];
+  $('st-a').textContent=counts['畫集'];
+  $('st-f').textContent=counts['公仔'];
   _syncStatActive();
 }
 // 依目前 activeF 高亮對應的統計格（總計=全部；其餘對應分類）
 function _syncStatActive(){
-  var map={'all':'sf-total','遊戲':'sf-g','攻略':'sf-b','主機':'sf-c','週邊':'sf-p'};
-  ['sf-total','sf-g','sf-b','sf-c','sf-p'].forEach(function(id){var e=$(id);if(e)e.classList.remove('on');});
+  var map={'all':'sf-total','遊戲':'sf-g','攻略':'sf-b','主機':'sf-c','週邊':'sf-p','數位遊戲':'sf-d','原聲帶':'sf-o','畫集':'sf-a','公仔':'sf-f'};
+  ['sf-total','sf-g','sf-b','sf-c','sf-p','sf-d','sf-o','sf-a','sf-f'].forEach(function(id){var e=$(id);if(e)e.classList.remove('on');});
   var act=$(map[activeF]);if(act)act.classList.add('on');
 }
 function setF(f){activeF=f;_syncStatActive();filterCol();}
@@ -10013,7 +10029,7 @@ function _quickPass(item){
   var d=item.data;
   var q=(($('col-search')&&$('col-search').value)||'').toLowerCase();
   if(activeF!=='all'){
-    if(activeF==='遊戲'||activeF==='攻略'||activeF==='主機'||activeF==='週邊'){if(d.category!==activeF)return false;}
+    if(['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔'].indexOf(activeF)>=0){if(catInternal(d.category)!==activeF)return false;}
     else if(activeF==='未遊玩'||activeF==='進行中'||activeF==='通關'||activeF==='全成就'){if(d.play_status!==activeF)return false;}
     else{ // 其餘一律視為平台名稱（動態晶片傳入完整平台名；保留舊短碼對照以相容）
       var platMap={'PS5':'PlayStation 5','PS4':'PlayStation 4','NSW':'Nintendo Switch','PS3':'PlayStation 3','PS2':'PlayStation 2'};
@@ -10409,6 +10425,7 @@ function _genreCardChips(out,seen,genre){
 function _cardBadges(d,cond,bcCount,midParts){
   var out=[],seen=_seedChipSeen(midParts);
   var cat=catInternal(d.category)||'遊戲';
+  var isDigitalCard=(cat==='數位遊戲');
   if(cat==='攻略'){
     _addCardChip(out,seen,'書籍','bk-cat bk-cat-book');
     _addCardChip(out,seen,d.book_type,'bk-genre');
@@ -10423,10 +10440,29 @@ function _cardBadges(d,cond,bcCount,midParts){
     _addCardChip(out,seen,d.peripheral_type,'bk-state');
     _addCardChip(out,seen,d.connection,'bk-state');
     _addCardChip(out,seen,d.warranty_status&&d.warranty_status!=='N/A'?d.warranty_status:'','bk-state');
+  }else if(cat==='數位遊戲'){
+    _addCardChip(out,seen,'數位遊戲','bk-cat bk-cat-digital');
+    _addCardChip(out,seen,d.store,'bk-state');
+    _addCardChip(out,seen,d.purchase_method&&d.purchase_method!=='直接購買'?d.purchase_method:'','bk-state');
+  }else if(cat==='原聲帶'){
+    _addCardChip(out,seen,'原聲帶','bk-cat bk-cat-ost');
+    _addCardChip(out,seen,d.format,'bk-state');
+  }else if(cat==='畫集'){
+    _addCardChip(out,seen,'畫集','bk-cat bk-cat-artbook');
+    _addCardChip(out,seen,d.binding,'bk-state');
+  }else if(cat==='公仔'){
+    _addCardChip(out,seen,'公仔','bk-cat bk-cat-figure');
+    _addCardChip(out,seen,d.scale,'bk-state');
   }else{
     _addCardChip(out,seen,'遊戲','bk-cat bk-cat-game');
     _genreCardChips(out,seen,d.genre);
     _addCardChip(out,seen,d.play_status&&d.play_status!=='未遊玩'&&d.play_status!=='N/A'?d.play_status:'','bk-state');
+  }
+  if(isDigitalCard){
+    // v42.16：數位版無實體品相概念，不顯示保管位置/品相/完整度標籤
+    var bc2=(''+(d.barcode||'')).trim();
+    if(bc2&&bcCount[bc2]>1)_addCardChip(out,seen,'🔢 複數','bk-warn','', '此條碼有複數筆記錄');
+    return out.join('');
   }
   var st=compStatus(cat,d.completeness);
   _addCardChip(out,seen,d.storage_location?('保管 '+d.storage_location):'','bk-state');
@@ -10572,7 +10608,7 @@ function renderGlist(){
     var d=item.data,cond=overallCond(d.category,d.completeness);
     var cat=catInternal(d.category)||'遊戲';
     var shortPlat=platShort(d.platform||'');
-    var _icon=cat==='攻略'?'📖':(cat==='主機'?'🕹️':(cat==='週邊'?'🎧':'🎮'));
+    var _icon=cat==='攻略'?'📖':(cat==='主機'?'🕹️':(cat==='週邊'?'🎧':(cat==='數位遊戲'?'💾':(cat==='原聲帶'?'💿':(cat==='畫集'?'🖼️':(cat==='公仔'?'🎎':'🎮'))))));
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
       '<img src="'+imgUrl(d.cover_img,150)+'" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
@@ -10582,6 +10618,10 @@ function renderGlist(){
     if(cat==='攻略')midParts=[d.related_game?'《'+d.related_game+'》':'',d.publisher];
     else if(cat==='主機')midParts=[d.brand,d.platform_family||d.model_no];
     else if(cat==='週邊')midParts=[d.brand,d.compat_platform];
+    else if(cat==='數位遊戲')midParts=[d.store,shortPlat];
+    else if(cat==='原聲帶')midParts=[d.composer,d.related_work];
+    else if(cat==='畫集')midParts=[d.illustrator,d.related_work];
+    else if(cat==='公仔')midParts=[d.character,d.series];
     else midParts=[shortPlat,d.region];
     var midLine=midParts.filter(Boolean).join(' · ');
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
