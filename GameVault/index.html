@@ -2151,7 +2151,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.14a1';
+const APP_VERSION='v42.14a2';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6746,8 +6746,9 @@ function digitalLinkFetch(){
   if(st){st.style.display='block';st.textContent='抓取商店頁面中...';}
   shGet({action:'fetch_store_page',url:url}).then(function(page){
     if(!page||page.error||!page.title){
-      if(st)st.textContent='⚠️ 抓取失敗，這個頁面可能無法取得資訊，請改用手動建檔';
-      toast('抓取失敗，請改用手動建檔','er',5000);
+      var reason=[page&&page.error,page&&page.hint].filter(Boolean).join('；')||'伺服器無回應';
+      if(st)st.textContent='⚠️ 抓取失敗（'+reason+'），請改用手動建檔';
+      toast('抓取失敗：'+reason,'er',6000);
       return null;
     }
     if(st)st.textContent='AI 整理欄位中...';
