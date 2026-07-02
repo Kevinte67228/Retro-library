@@ -1549,18 +1549,64 @@ function fetchStorePageProxy(url) {
   const ck = 'storepage_' + Utilities.base64EncodeWebSafe(Utilities.newBlob(url).getBytes()).slice(0, 40);
   const cached = getCache(ck);
   if (cached) return cached;
+  // v42.15：Steam 商品頁改走官方 appdetails API，避免成人/暴力內容年齡驗證頁擋掉伺服器端請求
+  const steamMatch = url.match(/store\.steampowered\.com\/app\/(\d+)/i);
+  if (steamMatch) {
+    const out = fetchSteamAppDetails(steamMatch[1], url);
+    if (out && !out.error) { setCache(ck, out); return out; }
+    if (out && out.error) return out;
+  }
   try {
-    const res = UrlFetchApp.fetch(url, {
+    const out = fetchMetaTagsWithAgeGateRetry(url);
+    if (!out.title) return { error: 'no_meta_found', hint: '此頁面可能由 JS 動態載入內容，原始 HTML 內取不到標題' };
+    setCache(ck, out);
+    return out;
+  } catch (e) { return { error: e.message }; }
+}
+
+// Steam 官方商店 API：不需要金鑰，直接回傳結構化資料，繞開年齡驗證頁問題
+function fetchSteamAppDetails(appid, originalUrl) {
+  const url = 'https://store.steampowered.com/api/appdetails?appids=' + encodeURIComponent(appid) + '&l=tchinese';
+  try {
+    const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return { error: 'Steam API HTTP ' + res.getResponseCode() };
+    const d = JSON.parse(res.getContentText('UTF-8'));
+    const entry = d && d[appid];
+    if (!entry || !entry.success || !entry.data) return { error: 'Steam API 查無此商品，appid=' + appid };
+    const g = entry.data;
+    return {
+      title: g.name || '',
+      description: (g.short_description || '').slice(0, 500),
+      image: g.header_image || '',
+      siteName: 'Steam',
+      url: originalUrl,
+      developer: (g.developers || []).join(', '),
+      publisher: (g.publishers || []).join(', '),
+      release_date: g.release_date ? (g.release_date.date || '') : '',
+      genre: (g.genres || []).map(function(x){ return x.description; }).join(', ')
+    };
+  } catch (e) { return { error: e.message }; }
+}
+
+// 一般商店頁 meta 標籤擷取：先不帶 cookie 試一次，若標題像年齡驗證頁再帶生日/成人內容 cookie 重試一次
+function fetchMetaTagsWithAgeGateRetry(url) {
+  function doFetch(withAgeCookie) {
+    const opts = {
       muteHttpExceptions: true,
       followRedirects: true,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept-Language': 'zh-TW,zh;q=0.9,ja;q=0.8,en;q=0.7'
       }
-    });
-    const code = res.getResponseCode();
-    if (code !== 200) return { error: 'HTTP ' + code };
-    const html = res.getContentText('UTF-8');
+    };
+    if (withAgeCookie) {
+      opts.headers['Cookie'] = 'birthtime=0; lastagecheckage=1-0-1970; wants_mature_content=1; age_gate=1';
+    }
+    const res = UrlFetchApp.fetch(url, opts);
+    if (res.getResponseCode() !== 200) return { error: 'HTTP ' + res.getResponseCode() };
+    return { html: res.getContentText('UTF-8') };
+  }
+  function extract(html) {
     const pick = function(re) {
       const m = html.match(re);
       if (!m) return '';
@@ -1575,11 +1621,22 @@ function fetchStorePageProxy(url) {
     const image = pick(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
                   pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
     const siteName = pick(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i);
-    if (!title) return { error: 'no_meta_found', hint: '此頁面可能由 JS 動態載入內容，原始 HTML 內取不到標題' };
-    const out = { title: title, description: description.slice(0, 500), image: image, siteName: siteName, url: url };
-    setCache(ck, out);
-    return out;
-  } catch (e) { return { error: e.message }; }
+    return { title: title, description: description.slice(0, 500), image: image, siteName: siteName };
+  }
+  const r1 = doFetch(false);
+  if (r1.error) return { title: '' };
+  let ext = extract(r1.html);
+  // 標題疑似年齡驗證/國家選擇頁（常見字樣），帶 cookie 重試一次
+  const looksLikeGate = !ext.title || /age.?check|age.?gate|年齡|verify|welcome to steam|country/i.test(ext.title);
+  if (looksLikeGate) {
+    const r2 = doFetch(true);
+    if (!r2.error) {
+      const ext2 = extract(r2.html);
+      if (ext2.title) ext = ext2;
+    }
+  }
+  ext.url = url;
+  return ext;
 }
  
 // ── TheGamesDB API Proxy ──────────────────────────────────────
