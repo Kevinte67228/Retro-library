@@ -1,3 +1,24 @@
+## v42.13 (2026-07-01)
+
+### 變更內容
+- 欄位改名：「套組 / 附件說明」→「特典/附件說明」（遊戲/主機/週邊三個分類，書籍分類原本就是獨立文案「附件說明」不變）
+- 欄位改名＋改型別＋搬移位置：「特典碼狀態」→「DLC狀態」，固定下拉選項改為【已使用／未使用／已過期／未確認／N/A】，位置從「遊戲規格」搬到「收藏狀態」群組、緊接在「特典/附件說明」欄位後面
+- 同步更新 AI 辨識提示文字（AI_CAT_SPEC）與收藏頁篩選面板（FACETS）的標籤/選項，保持一致
+- 「保管位置」欄位新增動態下拉選單支援：設定頁新增「📋 保管位置清單」區塊，可自建常用位置清單（存 cfg.storageLocations，僅本機）；建檔表單的保管位置改為從清單選擇，既有資料若不在清單中會保留為「（自訂/未在清單中）」選項，不會被靜默清空或覆蓋
+
+### 影響檔案
+- index.html / GameVault_v42_13_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-12 → gamevault-v42-13
+
+### 對應備份
+- _internal/old/v42_12/
+
 ## v42.12 (2026-07-01)
 
 ### 變更內容
@@ -38,27 +59,3 @@
 
 ### 對應備份
 - _internal/old/v42_10/
-
-## v42.10 (2026-07-01，使用者手動編輯)
-
-### 變更內容
-- 條碼辨識架構重大調整：捨棄 Gemini grounding 自由搜尋，改用真實商品資料庫（樂天 + Barcode Lookup）直查（productBarcodeLookupPromise / applyProductBarcodeResult）
-- 純條碼查無資料時直接停用 AI 猜測，保留條碼並標記「需人工確認」，不再讓 AI 自由發想商品名稱
-- 有資料庫結果或使用者提供名稱時才呼叫 Gemini 補全欄位，且明確關閉 grounding（allowGrounding:false），prompt 禁止聲稱已上網查證
-- 新增 Google Books ISBN 直查（GS 新增 googleBooksProxy），補海外/英文攻略本資料
-- barcode_lookup 查詢結果擴充擷取 publisher／ref_link／cover_url
-- DB_REGISTRY 分類標籤擴充支援主機／週邊，各分類獨立顏色標示
-
-### 影響檔案
-- index.html / GameVault_v42_10_index.html
-- sw.js（同時修正版本化 HTML 檔名不同步的問題）
-- GameVault_AppsScript.gs（新增 google_books_search action，**需手動部署到 Apps Script**）
-
-### GS 版本
-- 新增 googleBooksProxy 函式；版本註解由使用者標為 v42.10（未依主版號慣例遞增，供参考）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-09 → gamevault-v42-10
-
-### 對應備份
-- _internal/old/v42_09/
