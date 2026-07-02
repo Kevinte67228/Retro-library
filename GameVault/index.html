@@ -1329,6 +1329,10 @@ body{
               <option value="book">書籍</option>
               <option value="console">主機</option>
               <option value="periph">週邊</option>
+              <option value="digital">數位遊戲</option>
+              <option value="ost">原聲帶</option>
+              <option value="artbook">畫集</option>
+              <option value="figure">公仔</option>
             </select>
             <button class="tbtn" onclick="dashRefresh()" title="同步資料">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
@@ -2176,7 +2180,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.16';
+const APP_VERSION='v42.17';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9057,6 +9061,71 @@ function _dashModel(cat,filtered2,catOf){
       donutLabel:'週邊類型',donutMap:buildMap(filtered2,function(c){return c.data.peripheral_type||'其他';}),
       donutColors:null,donutCenter:filtered2.length+'',
       midLabel:'連接方式',midMap:connMap,midColors:null,midTotalText:Object.keys(connMap).length+' 種'};
+  }else if(cat==='數位遊戲'){
+    var storeMap=buildMap(filtered2,function(c){return (c.data.store||'').trim();});
+    var withDlc=filtered2.filter(function(c){return (c.data.dlc_owned||'').trim();}).length;
+    var plat3=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
+    D={kpi:[
+        {label:'數位遊戲',val:filtered2.length,color:'#40c4ff',icon:'💾'},
+        {label:'商店',val:distinct(filtered2,'store'),color:'#64b5f6',icon:'🏬'},
+        {label:'帳號',val:distinct(filtered2,'account'),color:'#80deea',icon:'👤'},
+        {label:'含DLC',val:withDlc,color:'#ffd54f',icon:'🎁'}],
+      tags:[
+        {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
+        {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
+        {label:'已退款 '+statusCnt(filtered2,'collect_status','已退款'),color:'#ff5252'},
+        {label:'有封面 '+withImg,color:'#7986cb'}],
+      donutLabel:'購入商店分佈',donutMap:storeMap,
+      donutColors:null,donutCenter:filtered2.length+'',
+      midLabel:'平台分佈',midMap:plat3,midColors:null,midTotalText:Object.keys(plat3).length+' 個平台'};
+  }else if(cat==='原聲帶'){
+    var fmtMap=buildMap(filtered2,function(c){return (c.data.format||'').trim();});
+    var labelMap=buildMap(filtered2,function(c){return (c.data.label||'').trim();});
+    D={kpi:[
+        {label:'原聲帶',val:filtered2.length,color:'#ff8a65',icon:'💿'},
+        {label:'作曲家',val:distinct(filtered2,'composer'),color:'#ffab91',icon:'🎼'},
+        {label:'廠牌',val:distinct(filtered2,'label'),color:'#ffccbc',icon:'🏷️'},
+        {label:'全新品',val:condCnt(filtered2,'全新'),color:'#00e676',icon:'✨'}],
+      tags:[
+        {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
+        {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
+        {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
+        {label:'有封面 '+withImg,color:'#7986cb'}],
+      donutLabel:'媒體格式',donutMap:fmtMap,
+      donutColors:null,donutCenter:filtered2.length+'',
+      midLabel:'廠牌分佈',midMap:labelMap,midColors:null,midTotalText:Object.keys(labelMap).length+' 個廠牌'};
+  }else if(cat==='畫集'){
+    var bindMap=buildMap(filtered2,function(c){return (c.data.binding||'').trim();});
+    var pubMap2=buildMap(filtered2,function(c){return (c.data.publisher||'').trim();});
+    D={kpi:[
+        {label:'畫集',val:filtered2.length,color:'#aed581',icon:'🖼️'},
+        {label:'繪師',val:distinct(filtered2,'illustrator'),color:'#c5e1a5',icon:'✏️'},
+        {label:'出版社',val:distinct(filtered2,'publisher'),color:'#dcedc8',icon:'🏢'},
+        {label:'全新品',val:condCnt(filtered2,'全新'),color:'#00e676',icon:'✨'}],
+      tags:[
+        {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
+        {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
+        {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
+        {label:'有封面 '+withImg,color:'#7986cb'}],
+      donutLabel:'裝訂方式',donutMap:bindMap,
+      donutColors:null,donutCenter:filtered2.length+'',
+      midLabel:'出版社分佈',midMap:pubMap2,midColors:null,midTotalText:Object.keys(pubMap2).length+' 間出版社'};
+  }else if(cat==='公仔'){
+    var brandMap2=buildMap(filtered2,function(c){return (c.data.brand||'').trim();});
+    var scaleMap=buildMap(filtered2,function(c){return (c.data.scale||'').trim();});
+    D={kpi:[
+        {label:'公仔',val:filtered2.length,color:'#f06292',icon:'🎎'},
+        {label:'廠牌',val:distinct(filtered2,'brand'),color:'#f48fb1',icon:'🏷️'},
+        {label:'角色',val:distinct(filtered2,'character'),color:'#f8bbd0',icon:'🧍'},
+        {label:'全新品',val:condCnt(filtered2,'全新'),color:'#00e676',icon:'✨'}],
+      tags:[
+        {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
+        {label:'預購中 '+statusCnt(filtered2,'collect_status','預購中'),color:'#ffb300'},
+        {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
+        {label:'有封面 '+withImg,color:'#7986cb'}],
+      donutLabel:'比例分佈',donutMap:scaleMap,
+      donutColors:null,donutCenter:filtered2.length+'',
+      midLabel:'廠牌分佈',midMap:brandMap2,midColors:null,midTotalText:Object.keys(brandMap2).length+' 個廠牌'};
   }else{ // 全部
     var byCat=function(k){return filtered2.filter(function(c){return catOf(c)===k;}).length;};
     var platAll=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
@@ -9079,9 +9148,9 @@ function _dashModel(cat,filtered2,catOf){
 function dashCostSummary(items){
   // 收藏總值（購入成本）：與收藏估值同一套金額卡片視覺
   var rows={
-    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0},amount:0,twd:0,n:0},
-    USD:{name:'美金',symbol:'US$',color:'#ffab40',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0},amount:0,twd:0,n:0},
-    TWD:{name:'台幣',symbol:'NT$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0},amount:0,twd:0,n:0}
+    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
+    USD:{name:'美金',symbol:'US$',color:'#ffab40',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
+    TWD:{name:'台幣',symbol:'NT$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0}
   };
   function fmt(n){return Math.round(Number(n)||0).toLocaleString('en-US');}
   function catKey(v){var c=catInternal(v)||'遊戲';return c==='書籍'?'攻略':c;}
@@ -9134,9 +9203,9 @@ function dashCostSummary(items){
 }
 function dashMarketValueSummary(items){
   var rows={
-    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0},amount:0,twd:0,n:0},
-    USD:{name:'美金',symbol:'US$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0},amount:0,twd:0,n:0},
-    TWD:{name:'台幣',symbol:'NT$',color:'#00e5ff',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0},amount:0,twd:0,n:0}
+    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
+    USD:{name:'美金',symbol:'US$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
+    TWD:{name:'台幣',symbol:'NT$',color:'#00e5ff',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0}
   };
   function fmt(n){return Math.round(Number(n)||0).toLocaleString('en-US');}
   function catKey(v){var c=catInternal(v)||'遊戲';return c==='書籍'?'攻略':c;}
@@ -9426,9 +9495,9 @@ function dashRefresh(){
 }
 function renderDash(){
   var fv=($('dash-filter')&&$('dash-filter').value)||'all';
-  var catMap={game:'\u904a\u6232',book:'\u653b\u7565',console:'\u4e3b\u6a5f',periph:'\u9031\u908a'};
+  var catMap={game:'遊戲',book:'攻略',console:'主機',periph:'週邊',digital:'數位遊戲',ost:'原聲帶',artbook:'畫集',figure:'公仔'};
   var cat=catMap[fv]||null;
-  function catOf(c){return c.data.category||'\u904a\u6232';}
+  function catOf(c){return catInternal(c.data.category)||'遊戲';}
   var filtered2=cat?col.filter(function(c){return catOf(c)===cat;}):col;
 
   // 空白狀態
