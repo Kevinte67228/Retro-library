@@ -841,6 +841,9 @@ body{
             <div class="ec-card" id="ec-periph" data-cat="週邊" onclick="selectEntryCat('週邊')">
               <div class="eci">🎧</div><div class="ect">週邊</div><div class="ecd">Peripherals</div>
             </div>
+            <div class="ec-card" id="ec-digital" data-cat="數位遊戲" onclick="selectEntryCat('數位遊戲')">
+              <div class="eci">💾</div><div class="ect">數位遊戲</div><div class="ecd">Digital</div>
+            </div>
           </div>
           <!-- Step 2：商品區域（v23.03→卡片化 v25.07）：影響 API 路由優先序與 AI prompt；持久化進 cfg -->
           <div style="border-top:2px solid #69f0ae;padding-top:12px;margin-top:12px">
@@ -887,6 +890,10 @@ body{
               <div class="ec-card" id="mb-manual" onclick="pagePickMethod('initManualMode')">
                 <div class="mb-ico" style="background:rgba(105,240,174,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#69f0ae" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
                 <div class="ect">手動建檔</div><div class="ecd">直接填寫</div>
+              </div>
+              <div class="ec-card mb-wide" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
+                <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
+                <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上商店頁網址自動抓資料</div></div>
               </div>
               <div class="ec-card mb-wide" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
                 <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
@@ -945,6 +952,18 @@ body{
         </div>
 
         <!-- 條碼區 -->
+        <div id="digital-link-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
+          <!-- 數位遊戲：貼上商店頁網址自動抓資料（v42.14）-->
+          <div style="padding:0 16px">
+            <div style="font-size:12px;color:#7986cb;margin-bottom:6px">貼上商店頁網址（PSN／Nintendo eShop／Steam／Xbox Store／Epic Games 等商品頁）</div>
+            <div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">例如：https://store.steampowered.com/app/...</div>
+            <input class="fi" id="digital-link-inp" type="url" inputmode="url" placeholder="https://..."
+              style="font-size:14px;margin-bottom:10px">
+            <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 部分商店頁（如 PSN 網頁版）內容由 JS 動態載入，可能抓不到資料；若失敗請改用手動建檔。</div>
+            <button type="button" class="btn bp bw" onclick="digitalLinkFetch()">🔗 抓取並自動填寫</button>
+            <div id="digital-link-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:10px"></div>
+          </div>
+        </div>
         <div id="bar-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
           <!-- 商品條碼模式（v26.06）：輸入優先，版面比照「商品編碼」 -->
           <div style="padding:0 16px">
@@ -1715,6 +1734,22 @@ body{
         </div>
           </div>
         </div>
+        <div class="sgroup" data-grp="digitalacct">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('digitalacct')">
+            <span>🎮 數位帳號清單</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
+        <div class="srow">
+          <div class="srl">建立常用數位帳號</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input class="fi" id="new-digital-acct" type="text" placeholder="例如：我的 PSN、家人共用 Switch" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addDigitalAccount();}">
+            <button class="btn bp bs" style="flex-shrink:0" onclick="addDigitalAccount()">➕ 新增</button>
+          </div>
+          <div class="shlp">建立後，「數位遊戲」建檔表單的「購入帳號」欄位會變成從這份清單選擇。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
+          <div id="digital-acct-list" style="margin-top:10px"></div>
+        </div>
+          </div>
+        </div>
         <div class="sgroup" data-grp="docabout">
           <button type="button" class="sgroup-h" onclick="toggleSGroup('docabout')">
             <span>📄 說明 · 關於 · 測試樣本</span><span class="sgroup-arr">▾</span>
@@ -2013,7 +2048,7 @@ function matchPlayers(v){
 }
 
 const SELECTS={
-  category:['遊戲','書籍','主機','週邊'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'],
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
   play_status:['未遊玩','進行中','通關','全成就','放棄','N/A'],
@@ -2082,7 +2117,7 @@ const BOOK_FIELDS=[
   ['applicable_platform','適用平台','platchip','書籍資訊'],
 ];
 const BOOK_SELECTS={
-  category:['遊戲','書籍','主機','週邊'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲'],
   book_type:['系統攻略','資料設定集','美術畫冊','公式書','其他'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','願望清單'],
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
@@ -2116,7 +2151,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.13';
+const APP_VERSION='v42.14';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2174,7 +2209,7 @@ const CONSOLE_FIELDS=[
   ['created_at','建檔時間','hidden','補充資訊'],
 ];
 const CONSOLE_SELECTS={
-  category:['遊戲','書籍','主機','週邊'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'],
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
   working_status:['正常','需維修','故障','未測試'],
@@ -2242,7 +2277,7 @@ const PERIPH_FIELDS=[
   ['created_at','建檔時間','hidden','補充資訊'],
 ];
 const PERIPH_SELECTS={
-  category:['遊戲','書籍','主機','週邊'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲'],
   peripheral_type:['手把/控制器','記憶卡','線材','底座/座充','收納','轉接器','耳機麥克風','其他'],
   connection:['有線','無線','藍牙','USB','其他'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'],
@@ -2261,6 +2296,58 @@ const PERIPH_DEFAULTS={
   resale_price:'0',resale_date:'2099/01/01',cover_img:'',back_img:'',spine_img:'',ref_link:'',brand:'',series:'',
 };
 const PERIPH_GCOL={'週邊資訊':'#ffab40','規格':'#80deea','編碼條碼':'#ffee58','收藏狀態':'#69f0ae','品相完整度':'#26c6da','運作狀態':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+
+// ── 數位版遊戲（Digital）專屬欄位（v42.14）：無實體，拿掉條碼/品相/保管位置，改為商店/帳號/DLC ──
+const DIGITAL_FIELDS=[
+  ['category','資料類別','sel','識別資訊'],
+  ['primary_name','主要名稱','txt','識別資訊'],
+  ['jp_name','日文名稱','txt','識別資訊'],
+  ['zh_name','中文名稱','txt','識別資訊'],
+  ['en_name','英文名稱','txt','識別資訊'],
+  ['series','系列名稱','txt','識別資訊'],
+  ['platform','平台','platsel','版本規格'],
+  ['edition','版本說明','txt','版本規格'],
+  ['region','帳號地區','regionsel','版本規格'],
+  ['voice_language','語音語言','txt','版本規格'],
+  ['subtitle_language','字幕語言','txt','版本規格'],
+  ['store','購入商店','sel','商店資訊'],
+  ['account','購入帳號','acctsel','商店資訊'],
+  ['purchase_method','取得方式','sel','商店資訊'],
+  ['dlc_owned','額外購入的 DLC','area','追加內容'],
+  ['genre','遊戲類型','genresel','遊戲規格'],
+  ['players','遊戲人數','playersel','遊戲規格'],
+  ['features','主要支援功能','txt','遊戲規格'],
+  ['age_rating','年齡分級','txt','遊戲規格'],
+  ['developer','開發商','txt','發行廠商'],
+  ['publisher','發行商','txt','發行廠商'],
+  ['release_date','發行時間','dateq','發行廠商'],
+  ['suggest_price','建議售價','price','發行廠商'],
+  ['collect_status','收藏狀態','sel','收藏狀態'],
+  ['buy_date','購入日期','date','收藏狀態'],
+  ['buy_price','購入價格','price','收藏狀態'],
+  ['download_size','下載容量','txt','補充資訊'],
+  ['summary','遊戲簡介','area','補充資訊'],
+  ['ref_link','商店頁連結','autolink','補充資訊'],
+  ['cover_img','封面圖檔','imgupload','圖片紀錄'],
+  ['related_code','關聯商品','txt','關聯商品'],
+  ['notes','備註','area','補充資訊'],
+  ['uuid','UUID','hidden','補充資訊'],
+  ['created_at','建檔時間','hidden','補充資訊'],
+];
+const DIGITAL_SELECTS={
+  category:['遊戲','書籍','主機','週邊','數位遊戲'],
+  collect_status:['收藏中','已退款','已移除','預購中','願望清單'],
+  store:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他'],
+  purchase_method:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他'],
+};
+const DIGITAL_GROUPS=['圖片紀錄','識別資訊','版本規格','商店資訊','遊戲規格','發行廠商','追加內容','收藏狀態','關聯商品','補充資訊'];
+const DIGITAL_DEFAULTS={
+  category:'數位遊戲',collect_status:'收藏中',
+  buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',
+  store:'PSN',purchase_method:'直接購買',
+  release_date:'',cover_img:'',ref_link:'',developer:'',series:'',
+};
+const DIGITAL_GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','商店資訊':'#40c4ff','遊戲規格':'#80deea','發行廠商':'#ce93d8','追加內容':'#ffd54f','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
 // ── 媒體類型（僅遊戲，單選 highlight）──
 const MEDIA_OPTS=['光碟（CD/DVD/BD）','卡匣（ROM 卡帶）','UMD（PSP 專用）','數位版','其他'];
@@ -2290,6 +2377,7 @@ function catInternal(cat){
   var s=(''+(cat||'')).trim();
   var l=s.toLowerCase();
   if(s==='書籍'||s==='攻略'||s==='攻略本'||l==='book'||l==='books')return '攻略';
+  if(s==='數位遊戲'||l==='digital'||l==='digitalgame'||l==='digital game')return '數位遊戲';
   if(s==='遊戲'||l==='game'||l==='games')return '遊戲';
   if(s==='主機'||l==='console'||l==='consoles')return '主機';
   if(s==='週邊'||s==='周邊'||l==='peripheral'||l==='peripherals')return '週邊';
@@ -2425,6 +2513,7 @@ function fieldsFor(cat){
   if(cat==='攻略')return BOOK_FIELDS;
   if(cat==='主機')return CONSOLE_FIELDS;
   if(cat==='週邊')return PERIPH_FIELDS;
+  if(cat==='數位遊戲')return DIGITAL_FIELDS;
   return FIELDS;
 }
 function selectsFor(cat){
@@ -2432,6 +2521,7 @@ function selectsFor(cat){
   if(cat==='攻略')return BOOK_SELECTS;
   if(cat==='主機')return CONSOLE_SELECTS;
   if(cat==='週邊')return PERIPH_SELECTS;
+  if(cat==='數位遊戲')return DIGITAL_SELECTS;
   return SELECTS;
 }
 function groupsFor(cat){
@@ -2439,6 +2529,7 @@ function groupsFor(cat){
   if(cat==='攻略')return BOOK_GROUPS;
   if(cat==='主機')return CONSOLE_GROUPS;
   if(cat==='週邊')return PERIPH_GROUPS;
+  if(cat==='數位遊戲')return DIGITAL_GROUPS;
   return GROUPS;
 }
 function gcolFor(cat){
@@ -2446,6 +2537,7 @@ function gcolFor(cat){
   if(cat==='攻略')return BOOK_GCOL;
   if(cat==='主機')return CONSOLE_GCOL;
   if(cat==='週邊')return PERIPH_GCOL;
+  if(cat==='數位遊戲')return DIGITAL_GCOL;
   return GCOL;
 }
 function defaultsConstFor(cat){
@@ -2453,6 +2545,7 @@ function defaultsConstFor(cat){
   if(cat==='攻略')return BOOK_DEFAULTS;
   if(cat==='主機')return CONSOLE_DEFAULTS;
   if(cat==='週邊')return PERIPH_DEFAULTS;
+  if(cat==='數位遊戲')return DIGITAL_DEFAULTS;
   return DEFAULTS;
 }
 
@@ -3040,6 +3133,7 @@ function loadCfg(){
   _loadAppImgPrevs();
   cmRenderList(); // v40.31：渲染自訂市場列表
   slRenderList(); // v42.13：渲染保管位置清單
+  acRenderList(); // v42.14：渲染數位帳號清單
   initSGroups(); // v40.31：套用摺疊群組記憶狀態
 }
 // ── 自訂外觀圖片（登入 logo / 背景圖）：存 localforage、僅本機 ──
@@ -3319,6 +3413,43 @@ function addStorageLocation(){
   cfg.storageLocations=list;_slPersist();
   if(inp)inp.value='';
   slRenderList();
+  toast('已新增「'+val+'」','ok');
+}
+// ══ 數位帳號清單（v42.14）：存 cfg.digitalAccounts，僅本機 ══
+var AC_MAX=20;
+function _acList(){return (cfg&&Array.isArray(cfg.digitalAccounts))?cfg.digitalAccounts:[];}
+function _acPersist(){
+  cfg.digitalAccounts=_acList();
+  try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
+}
+function acRenderList(){
+  var box=$('digital-acct-list');if(!box)return;
+  var list=_acList();
+  if(!list.length){box.innerHTML='<div class="shlp" style="margin:4px 0">尚未新增任何數位帳號。</div>';return;}
+  box.innerHTML=list.map(function(a,i){
+    return '<div style="display:flex;align-items:center;gap:10px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:8px 10px;margin-bottom:6px">'+
+      '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a)+'</div>'+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="acDelete('+i+')">刪除</button>'+
+    '</div>';
+  }).join('');
+}
+function acDelete(i){
+  var list=_acList();if(i<0||i>=list.length)return;
+  if(!confirm('確定刪除「'+(list[i]||'')+'」？既有藏品若已選用此帳號，資料不會被清空，只是清單中不再有這個選項。'))return;
+  list.splice(i,1);cfg.digitalAccounts=list;_acPersist();acRenderList();
+  toast('已刪除','ok');
+}
+function addDigitalAccount(){
+  var inp=$('new-digital-acct');
+  var val=(inp&&inp.value||'').trim();
+  if(!val){toast('請輸入帳號名稱','er');return;}
+  var list=_acList();
+  if(list.indexOf(val)>=0){toast('已存在這個帳號','er');return;}
+  if(list.length>=AC_MAX){toast('最多只能新增 '+AC_MAX+' 個帳號','er');return;}
+  list.push(val);
+  cfg.digitalAccounts=list;_acPersist();
+  if(inp)inp.value='';
+  acRenderList();
   toast('已新增「'+val+'」','ok');
 }
 function exportCfg(){
@@ -6288,10 +6419,10 @@ function _saveEntryMem(){
 function selectEntryCat(cat,_noSave){
   _selectedType=cat;_entryCatChosen=true;
   // v26.07：選到分類時帶回該分類記憶的平台（不再一律清空）
-  var hasPlat=(cat==='遊戲'||cat==='主機');
+  var hasPlat=(cat==='遊戲'||cat==='主機'||cat==='數位遊戲');
   _selectedPlatform=hasPlat?_platMemGet(cat):'';
   // 卡片高亮
-  ['ec-game','ec-book','ec-console','ec-periph'].forEach(function(id){
+  ['ec-game','ec-book','ec-console','ec-periph','ec-digital'].forEach(function(id){
     var el=$(id);if(el)el.classList.toggle('on',el.dataset.cat===cat);
   });
   // Step 3 平台：僅遊戲／主機顯示，動態填入 PLATFORMS（onchange 寫入 _selectedPlatform）
@@ -6307,6 +6438,12 @@ function selectEntryCat(cat,_noSave){
   }
   // 建檔方式段編號：有平台→Step 4，無平台→Step 3
   var mn=$('step-method-num');if(mn)mn.textContent=hasPlat?'Step 4':'Step 3';
+  // v42.14：數位遊戲沒有實體條碼/封面可拍，隱藏不適用的建檔方式卡片，改顯示「商店連結」
+  var isDigital=(cat==='數位遊戲');
+  [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!isDigital],
+   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital],['mb-link',isDigital]].forEach(function(p){
+    var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
+  });
   if(!_noSave)_saveEntryMem();
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
@@ -6394,7 +6531,7 @@ function openPlatFldPicker(trigger){
 }
 // 頁面上點選建檔方式：平台已於 Step 3 寫入 _selectedPlatform，直接啟動對應模式（init*Mode）
 // v26.01：建檔方式（init*Mode）↔ 卡片短名 對照，供記憶外框還原（只上外框、不執行該模式）
-var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',initManualMode:'manual',initComboMode:'combo',initGameCodeComboMode:'gcode-combo'};
+var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',initManualMode:'manual',initComboMode:'combo',initGameCodeComboMode:'gcode-combo',initDigitalLinkMode:'link'};
 function _saveMethodMem(fn){
   try{
     cfg.entry_method=fn;
@@ -6410,7 +6547,7 @@ function pagePickMethod(fn){
 // 回到 Step 1 起始態：還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
 function resetEntryStep1(){
   var memCat=catInternal(cfg.entry_cat);
-  var mc=(['遊戲','攻略','主機','週邊'].indexOf(memCat)>=0)?memCat:'遊戲';
+  var mc=(['遊戲','攻略','主機','週邊','數位遊戲'].indexOf(memCat)>=0)?memCat:'遊戲';
   selectEntryCat(mc,true); // v26.07：selectEntryCat 內已帶回該分類記憶平台
   _saveEntryMem();
   // v26.01：還原「上次建檔方式」外框，比照分類/平台的記憶高亮；setMbActive 僅上色框、不啟動該模式
@@ -6500,7 +6637,7 @@ function cancelTypePicker(){
 
 // 隱藏所有模式的執行區（避免疊加）
 function hideAllSecs(){
-  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec'].forEach(function(id){
+  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec'].forEach(function(id){
     var el=$(id);if(el)el.style.display='none';
   });
 }
@@ -6537,8 +6674,8 @@ function backToModeSelect(){
 }
 
 function setMbActive(which){
-  var ids=['bar','img','combo','manual','gcode','gcode-combo'];
-  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4'};
+  var ids=['bar','img','combo','manual','gcode','gcode-combo','link'];
+  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',link:'#40c4ff'};
   // hexToRgb: #rrggbb → 'r,g,b'
   function hRgb(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return r+','+g+','+b;}
   ids.forEach(function(id){
@@ -6576,6 +6713,64 @@ function initManualMode(){
     entry=Object.assign({},_defaultsFor(type),{category:type,platform:platform||''});
     _carrySelPlat();_carrySelRegion();
     showForm('手動建檔');
+  });
+}
+// ── 數位遊戲：貼上商店連結自動抓資料（v42.14）──
+function initDigitalLinkMode(){
+  pickTypeAndPlatform('digital-link',function(type,platform){
+    _selectedType=type;_selectedPlatform=platform;
+    setMbActive('link');enterMode();
+    stopScanner();stopComboScanner();
+    hideAllSecs();
+    var sec=$('digital-link-sec');if(sec)sec.style.display='block';
+    var inp=$('digital-link-inp');if(inp)inp.value='';
+    var st=$('digital-link-status');if(st){st.style.display='none';st.textContent='';}
+  });
+}
+function _inferStoreFromUrl(url){
+  var h=(''+(url||'')).toLowerCase();
+  if(h.indexOf('store.playstation.com')>=0)return 'PSN';
+  if(h.indexOf('ec.nintendo.com')>=0||h.indexOf('nintendo.co.jp')>=0||h.indexOf('nintendo.com')>=0)return 'Nintendo eShop';
+  if(h.indexOf('store.steampowered.com')>=0||h.indexOf('steamcommunity.com')>=0)return 'Steam';
+  if(h.indexOf('xbox.com')>=0||h.indexOf('microsoft.com')>=0)return 'Xbox Store';
+  if(h.indexOf('epicgames.com')>=0)return 'Epic Games';
+  return '其他';
+}
+function digitalLinkFetch(){
+  var inp=$('digital-link-inp');
+  var url=(inp&&inp.value||'').trim();
+  if(!url){toast('請貼上商店頁網址','er');return;}
+  if(!/^https?:\/\//i.test(url)){toast('網址需以 http:// 或 https:// 開頭','er',4000);return;}
+  if(!cfg.url){toast('未設定試算表 URL，無法透過後端抓取網頁','er',5000);return;}
+  var st=$('digital-link-status');
+  if(st){st.style.display='block';st.textContent='抓取商店頁面中...';}
+  shGet({action:'fetch_store_page',url:url}).then(function(page){
+    if(!page||page.error||!page.title){
+      if(st)st.textContent='⚠️ 抓取失敗，這個頁面可能無法取得資訊，請改用手動建檔';
+      toast('抓取失敗，請改用手動建檔','er',5000);
+      return null;
+    }
+    if(st)st.textContent='AI 整理欄位中...';
+    var store=_inferStoreFromUrl(url);
+    var prompt='以下是一個數位遊戲商店頁面擷取到的資訊（標題／簡介），請判斷這是哪一套遊戲，並整理成 JSON。'+
+      '網頁標題：'+page.title+'\n網頁描述：'+(page.description||'')+'\n網站：'+(page.siteName||store)+'\n'+
+      '請輸出以下欄位的 JSON：primary_name（去除商店贅字如「立即購買」「數位版」等後的乾淨遊戲名稱）、jp_name、zh_name、en_name、'+
+      'developer、publisher、genre（從常見遊戲類型挑選，可多個用、分隔）、release_date（YYYY/MM/DD，不確定留空）、summary（繁體中文200字內）。'+
+      '只根據提供的文字資訊判斷，不要上網查證，不確定的欄位留空，不要編造。僅輸出 JSON 物件，不加說明文字。';
+    return callGemini([{text:prompt}],{allowGrounding:false}).then(function(res){
+      if(st)st.style.display='none';
+      var type=_selectedType||'數位遊戲';
+      entry=Object.assign({},_defaultsFor(type),res||{},{
+        category:type,platform:_selectedPlatform||'',
+        store:store,ref_link:url,cover_img:page.image||''
+      });
+      _carrySelPlat();_carrySelRegion();
+      toast('✓ 已自動填寫，請檢查並補齊帳號/取得方式等欄位','ok',4000);
+      showForm('商店連結建檔');
+    });
+  }).catch(function(e){
+    if(st)st.textContent='⚠️ 發生錯誤：'+(e&&e.message||'未知錯誤');
+    toast('抓取失敗：'+(e&&e.message||'請改用手動建檔'),'er',5000);
   });
 }
 // ══ 掃碼三步驟流程 ══
@@ -8019,7 +8214,7 @@ function _relIdOf(item){
   if(d.barcode)return (''+d.barcode).trim();
   return ''+(item.uid||item.rowNum||'');
 }
-function _relCatColor(cat){return {'遊戲':'#00e5ff','攻略':'#ce93d8','主機':'#69f0ae','週邊':'#ffab40'}[catInternal(cat)]||'#7986cb';}
+function _relCatColor(cat){return {'遊戲':'#00e5ff','攻略':'#ce93d8','主機':'#69f0ae','週邊':'#ffab40','數位遊戲':'#40c4ff'}[catInternal(cat)]||'#7986cb';}
 function _relSubOf(d){
   if(d.category==='攻略')return d.book_type||'';
   if(d.category==='主機')return d.platform_family||d.series||'';
@@ -8242,6 +8437,15 @@ function renderFld(f){
       '<div class="comp-grid" data-cat="'+esc(cat)+'">'+rows+'</div></div>';
   }
   if(type==='area'){return wrap+'<label class="fl">'+lbl+'</label><textarea class="ft" data-k="'+k+'" oninput="onFld(this.dataset.k,this.value)">'+esc(v)+'</textarea></div>';}
+  if(type==='acctsel'){
+    var acctList=(cfg.digitalAccounts||[]);
+    var aOpts=acctList.map(function(a){var s=v===a?'selected':'';return'<option value="'+esc(a)+'" '+s+'>'+esc(a)+'</option>';}).join('');
+    var _inAcctList=acctList.indexOf(v)>=0;
+    if(v&&!_inAcctList)aOpts='<option value="'+esc(v)+'" selected>'+esc(v)+'（自訂/未在清單中）</option>'+aOpts;
+    aOpts='<option value=""'+(v?'':' selected')+'>（未設定）</option>'+aOpts;
+    var _emptyHintA=!acctList.length?'<div style="font-size:11px;color:#ffb74d;margin-top:4px">尚未在設定頁建立數位帳號清單，請先至「設定 → 數位帳號清單」新增</div>':'';
+    return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+aOpts+'</select>'+_emptyHintA+'</div>';
+  }
   if(type==='storagesel'){
     var locList=(cfg.storageLocations||[]);
     var sOpts=locList.map(function(loc){var s=v===loc?'selected':'';return'<option value="'+esc(loc)+'" '+s+'>'+esc(loc)+'</option>';}).join('');
@@ -8503,7 +8707,7 @@ function _dashModel(cat,filtered2,catOf){
   function avgRating(arr){var rs=arr.map(function(c){return parseFloat(c.data.rating);}).filter(function(n){return !isNaN(n)&&n>0;});return rs.length?(rs.reduce(function(a,b){return a+b;},0)/rs.length).toFixed(1):'—';}
   function buildMap(arr,fn){var m={};arr.forEach(function(c){var k=fn(c);if(k)m[k]=(m[k]||0)+1;});return m;}
   var withImg=withImgCnt(filtered2);
-  var catColors={'遊戲':'#00e5ff','攻略':'#ce93d8','主機':'#69f0ae','週邊':'#ffab40'};
+  var catColors={'遊戲':'#00e5ff','攻略':'#ce93d8','主機':'#69f0ae','週邊':'#ffab40','數位遊戲':'#40c4ff'};
 
   // ── 各分類設定 ──
   var D; // {kpi,tags,donutLabel,donutMap,donutColors,donutCenter,midLabel,midMap,midColors,midTotalText}
@@ -8632,7 +8836,7 @@ function dashCostSummary(items){
   html+='<div class="mv-cards">'+active.map(function(c){
     var r=rows[c];
     var pct=totalTwd?Math.round(r.twd/totalTwd*100):0;
-    var chips=['遊戲','攻略','主機','週邊'].filter(function(k){return r.counts[k]>0;}).map(function(k){
+    var chips=['遊戲','攻略','主機','週邊','數位遊戲'].filter(function(k){return r.counts[k]>0;}).map(function(k){
       return '<span class="mv-chip">'+esc(catLabel(k))+' '+r.counts[k]+'</span>';
     }).join('');
     var foreignLine=(c!=='TWD')?'<div class="mv-card-foreign">'+r.symbol+fmt(r.amount)+'</div>':'';
@@ -8695,7 +8899,7 @@ function dashMarketValueSummary(items){
   html+='<div class="mv-cards">'+active.map(function(c){
     var r=rows[c];
     var pct=totalTwd?Math.round(r.twd/totalTwd*100):0;
-    var chips=['遊戲','攻略','主機','週邊'].filter(function(k){return r.counts[k]>0;}).map(function(k){
+    var chips=['遊戲','攻略','主機','週邊','數位遊戲'].filter(function(k){return r.counts[k]>0;}).map(function(k){
       return '<span class="mv-chip">'+esc(catLabel(k))+' '+r.counts[k]+'</span>';
     }).join('');
     var foreignLine=(c!=='TWD')?'<div class="mv-card-foreign">'+r.symbol+fmt(r.amount)+'</div>':'';
@@ -9456,13 +9660,16 @@ function setF(f){activeF=f;_syncStatActive();filterCol();}
 // 組內 OR、跨組 AND；選項由現有收藏動態撈出，無資料的組自動隱藏
 var colFilters={}, _pmin='', _pmax='', _mvmin='', _mvmax='';
 var FACETS=[
-  {k:'category',label:'分類',order:['遊戲','攻略','主機','週邊']},
+  {k:'category',label:'分類',order:['遊戲','攻略','主機','週邊','數位遊戲']},
   {k:'platform',label:'平台',order:PLATFORMS.map(function(p){return p.v;})},
   {k:'genre',label:'遊戲類型',multi:true,code:true,order:GENRES},
   {k:'players',label:'遊戲人數',multi:true,order:PLAYERS_OPTS},
   {k:'play_status',label:'遊玩狀態',order:['未遊玩','進行中','通關','全成就','放棄','N/A']},
   {k:'collect_status',label:'收藏狀態',order:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單']},
   {k:'storage_location',label:'保管位置'},
+  {k:'store',label:'購入商店',order:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他']},
+  {k:'account',label:'購入帳號'},
+  {k:'purchase_method',label:'取得方式',order:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他']},
   {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','未評級']},
   {k:'__complete',label:'完整度',order:['全新','完整','部分登錄','未評級']},
   {k:'__photo',label:'照片狀態',order:['有封面','有封底','有側邊','無照片']},
@@ -11854,7 +12061,7 @@ function _huntOpenPlatPicker(card){
 }
 function _huntFormFieldsHtml(e,p){
   e=e||{};
-  var catSel=['遊戲','攻略','主機','週邊'].map(function(c){
+  var catSel=['遊戲','攻略','主機','週邊','數位遊戲'].map(function(c){
     return '<option value="'+c+'"'+(c===catInternal(e.target_cat||'遊戲')?' selected':'')+'>'+catLabel(c)+'</option>';
   }).join('');
   var curRegion=mapRegion(e.region)||e.region||'';
