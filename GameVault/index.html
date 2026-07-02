@@ -2159,7 +2159,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.14a5';
+const APP_VERSION='v42.14a6';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6464,9 +6464,10 @@ function selectEntryCat(cat,_noSave){
   }
   // 建檔方式段編號：有平台→Step 4，無平台→Step 3
   var mn=$('step-method-num');if(mn)mn.textContent=hasPlat?'Step 4':'Step 3';
-  // v42.14：數位遊戲沒有實體條碼/封面可拍，隱藏不適用的建檔方式卡片，改顯示「商店連結」
+  // v42.14：數位遊戲沒有實體條碼可掃，隱藏條碼/編碼相關卡片；
+  // v42.14a6：圖片辨識改為保留（可截圖商店頁/遊戲庫讓 AI 辨識），跟手動建檔＋商店連結三張卡剛好撐滿一排，不留空
   var isDigital=(cat==='數位遊戲');
-  [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!isDigital],
+  [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',true],
    ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital],['mb-link',isDigital]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
