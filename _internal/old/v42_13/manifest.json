@@ -1,0 +1,32 @@
+{
+  "name": "GameVault",
+  "short_name": "GameVault",
+  "description": "Personal physical game collection manager powered by Google Sheets.",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080c18",
+  "theme_color": "#080c18",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
