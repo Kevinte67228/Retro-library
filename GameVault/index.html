@@ -2151,7 +2151,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.14';
+const APP_VERSION='v42.14a1';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6752,15 +6752,30 @@ function digitalLinkFetch(){
     }
     if(st)st.textContent='AI 整理欄位中...';
     var store=_inferStoreFromUrl(url);
+    // v42.15：Steam 走官方 API 時已有結構化欄位（developer/publisher/release_date/genre），
+    // 直接採用不必讓 Gemini 用文字猜，Gemini 只負責補譯名與整理簡介
+    var hasStructured=!!(page.developer||page.publisher||page.release_date||page.genre);
     var prompt='以下是一個數位遊戲商店頁面擷取到的資訊（標題／簡介），請判斷這是哪一套遊戲，並整理成 JSON。'+
       '網頁標題：'+page.title+'\n網頁描述：'+(page.description||'')+'\n網站：'+(page.siteName||store)+'\n'+
+      (hasStructured?('已知開發商：'+(page.developer||'')+'、發行商：'+(page.publisher||'')+'、發行日：'+(page.release_date||'')+'、類型：'+(page.genre||'')+'（這幾項已確定，不要更改，直接沿用）\n'):'')+
       '請輸出以下欄位的 JSON：primary_name（去除商店贅字如「立即購買」「數位版」等後的乾淨遊戲名稱）、jp_name、zh_name、en_name、'+
-      'developer、publisher、genre（從常見遊戲類型挑選，可多個用、分隔）、release_date（YYYY/MM/DD，不確定留空）、summary（繁體中文200字內）。'+
+      (hasStructured?'':'developer、publisher、genre（從常見遊戲類型挑選，可多個用、分隔）、release_date（YYYY/MM/DD，不確定留空）、')+
+      'summary（繁體中文200字內）。'+
       '只根據提供的文字資訊判斷，不要上網查證，不確定的欄位留空，不要編造。僅輸出 JSON 物件，不加說明文字。';
     return callGemini([{text:prompt}],{allowGrounding:false}).then(function(res){
       if(st)st.style.display='none';
       var type=_selectedType||'數位遊戲';
-      entry=Object.assign({},_defaultsFor(type),res||{},{
+      var merged=Object.assign({},res||{});
+      if(hasStructured){
+        merged.developer=page.developer||merged.developer||'';
+        merged.publisher=page.publisher||merged.publisher||'';
+        merged.genre=page.genre||merged.genre||'';
+        if(page.release_date){
+          var d=(''+page.release_date).match(/(\d{1,2})\s+(\w{3})[,，]?\s+(\d{4})/); // Steam 格式如 "13 Nov, 2016"
+          merged.release_date=d?(_steamMonToDate(d)):page.release_date;
+        }
+      }
+      entry=Object.assign({},_defaultsFor(type),merged,{
         category:type,platform:_selectedPlatform||'',
         store:store,ref_link:url,cover_img:page.image||''
       });
@@ -6772,6 +6787,12 @@ function digitalLinkFetch(){
     if(st)st.textContent='⚠️ 發生錯誤：'+(e&&e.message||'未知錯誤');
     toast('抓取失敗：'+(e&&e.message||'請改用手動建檔'),'er',5000);
   });
+}
+function _steamMonToDate(m){
+  var mons={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  var mm=mons[m[2]]||'';
+  if(!mm)return '';
+  return m[3]+'/'+mm+'/'+(m[1].length<2?'0'+m[1]:m[1]);
 }
 // ══ 掃碼三步驟流程 ══
 var _scanBC='';      // 步驟一鎖定的條碼
