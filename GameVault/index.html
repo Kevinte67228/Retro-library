@@ -1699,6 +1699,22 @@ body{
         </div>
           </div>
         </div>
+        <div class="sgroup" data-grp="storageloc">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('storageloc')">
+            <span>📋 保管位置清單</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
+        <div class="srow">
+          <div class="srl">建立常用保管位置</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input class="fi" id="new-storage-loc" type="text" placeholder="例如：客廳書櫃、倉庫A箱12" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addStorageLocation();}">
+            <button class="btn bp bs" style="flex-shrink:0" onclick="addStorageLocation()">➕ 新增</button>
+          </div>
+          <div class="shlp">建立後，建檔表單的「保管位置」欄位會變成從這份清單選擇，避免同一個位置打成不同的字。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
+          <div id="storage-loc-list" style="margin-top:10px"></div>
+        </div>
+          </div>
+        </div>
         <div class="sgroup" data-grp="docabout">
           <button type="button" class="sgroup-h" onclick="toggleSGroup('docabout')">
             <span>📄 說明 · 關於 · 測試樣本</span><span class="sgroup-arr">▾</span>
@@ -1846,14 +1862,14 @@ const FIELDS=[
   ['genre','遊戲類型','genresel','遊戲規格'],
   ['players','遊戲人數','playersel','遊戲規格'],
   ['features','主要支援功能','txt','遊戲規格'],
-  ['bonus_code_status','特典碼狀態','sel','遊戲規格'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
-  ['bundle','套組 / 附件說明','txt','收藏狀態'],
+  ['bundle','特典/附件說明','txt','收藏狀態'],
+  ['bonus_code_status','DLC狀態','sel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
-  ['storage_location','保管位置','txt','收藏狀態'],
+  ['storage_location','保管位置','storagesel','收藏狀態'],
   ['market_value','目前估值','price','收藏狀態'],
   ['market_value_updated_at','估值更新日','date','收藏狀態'],
   ['market_value_source','估值來源','txt','收藏狀態'],
@@ -2002,7 +2018,7 @@ const SELECTS={
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
   play_status:['未遊玩','進行中','通關','全成就','放棄','N/A'],
   rating:['N/A','1','2','3','4','5','6','7','8','9','10'],
-  bonus_code_status:['N/A','未使用','已使用','缺少','不明'],
+  bonus_code_status:['已使用','未使用','已過期','未確認','N/A'],
   market_value_confidence:['N/A','高','中','低'],
 };
 const DEFAULTS={
@@ -2043,7 +2059,7 @@ const BOOK_FIELDS=[
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
-  ['storage_location','保管位置','txt','收藏狀態'],
+  ['storage_location','保管位置','storagesel','收藏狀態'],
   ['market_value','目前估值','price','收藏狀態'],
   ['market_value_updated_at','估值更新日','date','收藏狀態'],
   ['market_value_source','估值來源','txt','收藏狀態'],
@@ -2100,7 +2116,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.12';
+const APP_VERSION='v42.13';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2128,11 +2144,11 @@ const CONSOLE_FIELDS=[
   ['suggest_price','建議售價','price','主機資訊'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
-  ['bundle','套組 / 附件說明','txt','收藏狀態'],
+  ['bundle','特典/附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
-  ['storage_location','保管位置','txt','收藏狀態'],
+  ['storage_location','保管位置','storagesel','收藏狀態'],
   ['market_value','目前估值','price','收藏狀態'],
   ['market_value_updated_at','估值更新日','date','收藏狀態'],
   ['market_value_source','估值來源','txt','收藏狀態'],
@@ -2197,11 +2213,11 @@ const PERIPH_FIELDS=[
   ['release_date','發售日期','dateq','週邊資訊'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
-  ['bundle','套組 / 附件說明','txt','收藏狀態'],
+  ['bundle','特典/附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
-  ['storage_location','保管位置','txt','收藏狀態'],
+  ['storage_location','保管位置','storagesel','收藏狀態'],
   ['market_value','目前估值','price','收藏狀態'],
   ['market_value_updated_at','估值更新日','date','收藏狀態'],
   ['market_value_source','估值來源','txt','收藏狀態'],
@@ -2509,7 +2525,7 @@ var AI_CAT_SPEC={
       series:'系列名稱',developer:'開發商',publisher:'發行商',
       release_date:'發行日期(YYYY/MM/DD)',suggest_price:'建議零售價(如 1500 JPY / 59.99 USD / 890 TWD；依區域決定幣別)',genre:'遊戲類型(可多個用、分隔，從這些選：'+GENRES.join('/')+')',
       players:'遊玩人數(如 1人、1-4人)',features:'主要支援功能',
-      age_rating:'分級(CERO/ESRB/PEGI)',bonus_code_status:'特典碼狀態（不確定留空）',summary:'遊戲簡介(繁體中文，150字內)',
+      age_rating:'分級(CERO/ESRB/PEGI)',bonus_code_status:'DLC狀態（不確定填 N/A，僅能填：已使用/未使用/已過期/未確認/N/A）',summary:'遊戲簡介(繁體中文，150字內)',
       region:'地區版本',voice_language:'語音語言（如 日文/英文；不確定留空）',subtitle_language:'字幕語言（如 繁中/日文/英文；不確定留空）',edition:'版本說明',media:'媒體格式'},
     constraint:'summary 用繁體中文。release_date 格式 YYYY/MM/DD。suggest_price 格式為「數字 幣別代碼」（如 1500 JPY），幣別依區域自動判定。'
   },
@@ -3023,6 +3039,7 @@ function loadCfg(){
   if($('c-fx-usd'))$('c-fx-usd').value=cfg.fx.USD;
   _loadAppImgPrevs();
   cmRenderList(); // v40.31：渲染自訂市場列表
+  slRenderList(); // v42.13：渲染保管位置清單
   initSGroups(); // v40.31：套用摺疊群組記憶狀態
 }
 // ── 自訂外觀圖片（登入 logo / 背景圖）：存 localforage、僅本機 ──
@@ -3266,6 +3283,43 @@ function cmSaveEditor(){
   cfg.customMarkets=list;_cmPersist();
   cmRenderList();cmCloseEditor();
   toast('已儲存自訂市場','ok');
+}
+// ══ 保管位置清單（v42.13）：存 cfg.storageLocations，僅本機 ══
+var SL_MAX=40; // 條數上限
+function _slList(){return (cfg&&Array.isArray(cfg.storageLocations))?cfg.storageLocations:[];}
+function _slPersist(){
+  cfg.storageLocations=_slList();
+  try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
+}
+function slRenderList(){
+  var box=$('storage-loc-list');if(!box)return;
+  var list=_slList();
+  if(!list.length){box.innerHTML='<div class="shlp" style="margin:4px 0">尚未新增任何保管位置。</div>';return;}
+  box.innerHTML=list.map(function(loc,i){
+    return '<div style="display:flex;align-items:center;gap:10px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:8px 10px;margin-bottom:6px">'+
+      '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(loc)+'</div>'+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="slDelete('+i+')">刪除</button>'+
+    '</div>';
+  }).join('');
+}
+function slDelete(i){
+  var list=_slList();if(i<0||i>=list.length)return;
+  if(!confirm('確定刪除「'+(list[i]||'')+'」？既有藏品若已選用此位置，資料不會被清空，只是清單中不再有這個選項。'))return;
+  list.splice(i,1);cfg.storageLocations=list;_slPersist();slRenderList();
+  toast('已刪除','ok');
+}
+function addStorageLocation(){
+  var inp=$('new-storage-loc');
+  var val=(inp&&inp.value||'').trim();
+  if(!val){toast('請輸入保管位置名稱','er');return;}
+  var list=_slList();
+  if(list.indexOf(val)>=0){toast('已存在這個保管位置','er');return;}
+  if(list.length>=SL_MAX){toast('最多只能新增 '+SL_MAX+' 個保管位置','er');return;}
+  list.push(val);
+  cfg.storageLocations=list;_slPersist();
+  if(inp)inp.value='';
+  slRenderList();
+  toast('已新增「'+val+'」','ok');
 }
 function exportCfg(){
   var data=JSON.stringify(cfg,null,2);
@@ -8188,6 +8242,15 @@ function renderFld(f){
       '<div class="comp-grid" data-cat="'+esc(cat)+'">'+rows+'</div></div>';
   }
   if(type==='area'){return wrap+'<label class="fl">'+lbl+'</label><textarea class="ft" data-k="'+k+'" oninput="onFld(this.dataset.k,this.value)">'+esc(v)+'</textarea></div>';}
+  if(type==='storagesel'){
+    var locList=(cfg.storageLocations||[]);
+    var sOpts=locList.map(function(loc){var s=v===loc?'selected':'';return'<option value="'+esc(loc)+'" '+s+'>'+esc(loc)+'</option>';}).join('');
+    var _inLocList=locList.indexOf(v)>=0;
+    if(v&&!_inLocList)sOpts='<option value="'+esc(v)+'" selected>'+esc(v)+'（自訂/未在清單中）</option>'+sOpts;
+    sOpts='<option value=""'+(v?'':' selected')+'>（未設定）</option>'+sOpts;
+    var _emptyHint=!locList.length?'<div style="font-size:11px;color:#ffb74d;margin-top:4px">尚未在設定頁建立保管位置清單，請先至「設定 → 保管位置清單」新增</div>':'';
+    return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+sOpts+'</select>'+_emptyHint+'</div>';
+  }
   if(type==='platsel'){
     var pOpts=PLATFORMS.map(function(p){var s=v===p.v||v===p.s?'selected':'';return'<option value="'+p.v+'" '+s+'>'+p.v+'</option>';}).join('');
     // 既有值不在清單中 → 保留為自訂選項，避免渲染為下拉時誤改舊資料
@@ -9418,7 +9481,7 @@ var FACETS=[
   {k:'book_type',label:'書籍類型',order:['系統攻略','資料設定集','美術畫冊','公式書','其他']},
   {k:'binding',label:'裝訂',order:['平裝','精裝','騎馬釘','盒裝','其他']},
   {k:'print_run',label:'刷次 / 版次'},
-  {k:'bonus_code_status',label:'特典碼狀態',order:['N/A','未使用','已使用','缺少','不明']},
+  {k:'bonus_code_status',label:'DLC狀態',order:['已使用','未使用','已過期','未確認','N/A']},
   {k:'brand',label:'品牌'},
   {k:'platform_family',label:'平台系列'},
   {k:'working_status',label:'運作狀態',order:['正常','需維修','故障','未測試']},
