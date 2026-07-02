@@ -2151,7 +2151,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.14a2';
+const APP_VERSION='v42.14a3';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10588,6 +10588,7 @@ function _refLinks(title,sites){
     '</div></div></div>';
 }
 function marketReferenceHtml(d){
+  if(catInternal(d.category)==='數位遊戲')return ''; // v42.16：數位版無實體轉售市場，不顯示
   var tw=marketTwQuery(d);
   var jp=marketJpQuery(d);
   var sites=[];
@@ -11163,8 +11164,9 @@ function collectStatusColor(v){
 function detailHeroHtml(d,rowNum){
   var cat=catInternal(d.category)||'遊戲';
   var catColor=_relCatColor(cat);
-  var icon=cat==='攻略'?'📖':(cat==='主機'?'🕹️':(cat==='週邊'?'🎧':'🎮'));
+  var icon=cat==='攻略'?'📖':(cat==='主機'?'🕹️':(cat==='週邊'?'🎧':(cat==='數位遊戲'?'💾':'🎮')));
   var title=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
+  var isDigital=(cat==='數位遊戲');
   var sub=cat==='攻略'
     ? [d.book_type,d.related_game,d.publisher].filter(Boolean).join(' · ')
     : (cat==='主機'
@@ -11172,32 +11174,42 @@ function detailHeroHtml(d,rowNum){
       : (cat==='週邊'
         ? [d.brand,d.peripheral_type,d.compat_platform].filter(Boolean).join(' · ')
         : [platShort(d.platform||''),d.region,d.edition].filter(Boolean).join(' · ')));
-  var st=compStatus(cat,d.completeness);
-  var cond=overallCond(cat,d.completeness)||'未評級';
-  var condColor=COND_COLORS[cond]||'#7986cb';
-  var stateColor=st.cls==='missing'?'#ff5252':(COMP_STATE_COLORS[st.state]||'#7986cb');
   var img=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,500)+'" alt="'+esc(title)+'">':icon;
   var tags='';
   tags+=_detailTag(catLabel(cat),catColor);
-  tags+=_detailTag(st.state,stateColor);
-  if(cond&&cond!==st.state)tags+=_detailTag(cond,condColor);
   var collectStatus=d.collect_status||'收藏中';
   var collectColor=collectStatusColor(collectStatus);
-  if(d.collect_status)tags+=_detailTag(d.collect_status,collectColor);
-  var value=marketValueDisplay(d);
-  var loc=d.storage_location||'未填';
+  var kpisHtml;
+  if(isDigital){
+    // v42.16：數位版沒有實體品相/完整度/保管/估值概念，改顯示商店資訊
+    if(d.collect_status)tags+=_detailTag(d.collect_status,collectColor);
+    kpisHtml=
+      _detailKpi('購入商店',d.store||'未填','#40c4ff')+
+      _detailKpi('購入帳號',d.account||'未填','#64b5f6')+
+      _detailKpi('取得方式',d.purchase_method||'未填','#ffd54f');
+  }else{
+    var st=compStatus(cat,d.completeness);
+    var cond=overallCond(cat,d.completeness)||'未評級';
+    var condColor=COND_COLORS[cond]||'#7986cb';
+    var stateColor=st.cls==='missing'?'#ff5252':(COMP_STATE_COLORS[st.state]||'#7986cb');
+    tags+=_detailTag(st.state,stateColor);
+    if(cond&&cond!==st.state)tags+=_detailTag(cond,condColor);
+    if(d.collect_status)tags+=_detailTag(d.collect_status,collectColor);
+    var value=marketValueDisplay(d);
+    var loc=d.storage_location||'未填';
+    kpisHtml=
+      _detailKpi('品相',cond,condColor)+
+      _detailKpi('完整度',st.state,stateColor)+
+      _detailKpi('保管',loc,'#64b5f6')+
+      _detailKpi('估值',value,'#ffcc02',marketConfidenceText(d));
+  }
   return '<div class="vault-hero">'+
     '<div class="vault-cover">'+img+'</div>'+
     '<div class="vault-main">'+
       '<div class="vault-name">'+esc(title)+'</div>'+
       '<div class="vault-sub">'+esc(sub||'—')+'</div>'+
       '<div class="vault-tags">'+tags+'</div>'+
-      '<div class="vault-kpis">'+
-        _detailKpi('品相',cond,condColor)+
-        _detailKpi('完整度',st.state,stateColor)+
-        _detailKpi('保管',loc,'#64b5f6')+
-        _detailKpi('估值',value,'#ffcc02',marketConfidenceText(d))+
-      '</div>'+
+      '<div class="vault-kpis">'+kpisHtml+'</div>'+
     '</div>'+
   '</div>';
 }
@@ -11227,10 +11239,11 @@ function showDetail(rowNum,keepNav){
   var _hasNext=_dIdx>=0&&_dIdx<_dTotal-1;
   var posStr=_dTotal>1?('<div class="dpos">'+(_dIdx+1)+'/'+_dTotal+'</div>'):'';
 
+  var _isDigitalDetail=(catInternal(d.category)==='數位遊戲');
 $('dact').innerHTML=
     backBtn+
-    '<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明">💡</button>'+
-    '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')">估值</button>'+
+    (_isDigitalDetail?'':'<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明">💡</button>'+
+    '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')">估值</button>')+
     '<button class="btn bo bs" onclick="editDetail()">編輯</button>'+
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')" >刪除</button>'+
     '<button class="btn bo bs" onclick="closeDetail()">✕</button>';
