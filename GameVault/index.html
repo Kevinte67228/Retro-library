@@ -1741,11 +1741,12 @@ body{
           <div class="sgroup-body">
         <div class="srow">
           <div class="srl">建立常用數位帳號</div>
+          <input class="fi" id="new-digital-acct" type="text" placeholder="例如：我的 PSN、家人共用 Switch" style="margin-top:8px" onkeydown="if(event.key==='Enter'){event.preventDefault();addDigitalAccount();}">
           <div style="display:flex;gap:8px;margin-top:8px">
-            <input class="fi" id="new-digital-acct" type="text" placeholder="例如：我的 PSN、家人共用 Switch" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addDigitalAccount();}">
+            <select class="fsel" id="new-digital-acct-plat" style="flex:1"></select>
             <button class="btn bp bs" style="flex-shrink:0" onclick="addDigitalAccount()">➕ 新增</button>
           </div>
-          <div class="shlp">建立後，「數位遊戲」建檔表單的「購入帳號」欄位會變成從這份清單選擇。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
+          <div class="shlp">選擇平台後，這個帳號只會出現在該平台的「購入帳號」選項裡；選「不限平台」則所有數位遊戲都看得到。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
           <div id="digital-acct-list" style="margin-top:10px"></div>
         </div>
           </div>
@@ -2151,7 +2152,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.14a3';
+const APP_VERSION='v42.14a4';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2607,6 +2608,10 @@ const PLATFORMS=[
 ];
 
 const CURRENCIES=['JPY','TWD','USD'];
+
+// ── 數位版遊戲平台清單（v42.17）：僅列出實際有線上商店的平台，從 PLATFORMS 篩選 ──
+const DIGITAL_PLATFORM_VALUES=['PlayStation 3','PlayStation 4','PlayStation 5','PlayStation Portable','PlayStation Vita','Nintendo 3DS','Nintendo Switch','Nintendo Switch 2','Wii','Wii U','PC','Xbox 360','Xbox One','Xbox Series X/S','其他'];
+const DIGITAL_PLATFORMS=PLATFORMS.filter(function(p){return DIGITAL_PLATFORM_VALUES.indexOf(p.v)>=0;});
 
 // ── AI 分類規格：四類的角色／項目標籤／欄位語意／限制（v24.03）──
 //   視覺辨識（buildSYS）與文字補全（aiKnowledgeFill）共用的單一事實來源。
@@ -3416,41 +3421,55 @@ function addStorageLocation(){
   toast('已新增「'+val+'」','ok');
 }
 // ══ 數位帳號清單（v42.14）：存 cfg.digitalAccounts，僅本機 ══
+// v42.17：改存 {name,platform} 物件，帳號可綁定特定平台；platform 留空＝不限平台，向下相容舊版純字串資料
 var AC_MAX=20;
 function _acList(){return (cfg&&Array.isArray(cfg.digitalAccounts))?cfg.digitalAccounts:[];}
+function _acNorm(a){return (typeof a==='string')?{name:a,platform:''}:{name:(a&&a.name)||'',platform:(a&&a.platform)||''};}
 function _acPersist(){
   cfg.digitalAccounts=_acList();
   try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
 }
 function acRenderList(){
+  var platSel=$('new-digital-acct-plat');
+  if(platSel&&!platSel.options.length){
+    platSel.innerHTML='<option value="">不限平台</option>'+DIGITAL_PLATFORMS.map(function(p){
+      return '<option value="'+esc(p.v)+'">'+esc(p.label||p.v)+'</option>';
+    }).join('');
+  }
   var box=$('digital-acct-list');if(!box)return;
   var list=_acList();
   if(!list.length){box.innerHTML='<div class="shlp" style="margin:4px 0">尚未新增任何數位帳號。</div>';return;}
-  box.innerHTML=list.map(function(a,i){
+  box.innerHTML=list.map(function(raw,i){
+    var a=_acNorm(raw);
+    var platTag=a.platform?('<span style="font-size:10px;color:#40c4ff;background:#40c4ff1a;border:1px solid #40c4ff55;border-radius:6px;padding:2px 6px;flex-shrink:0">'+esc(a.platform)+'</span>'):'<span style="font-size:10px;color:#7986cb;flex-shrink:0">不限平台</span>';
     return '<div style="display:flex;align-items:center;gap:10px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:8px 10px;margin-bottom:6px">'+
-      '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a)+'</div>'+
-      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="acDelete('+i+')">刪除</button>'+
+      '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a.name)+'</div>'+
+      platTag+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a;flex-shrink:0" onclick="acDelete('+i+')">刪除</button>'+
     '</div>';
   }).join('');
 }
 function acDelete(i){
   var list=_acList();if(i<0||i>=list.length)return;
-  if(!confirm('確定刪除「'+(list[i]||'')+'」？既有藏品若已選用此帳號，資料不會被清空，只是清單中不再有這個選項。'))return;
+  var nm=_acNorm(list[i]).name;
+  if(!confirm('確定刪除「'+nm+'」？既有藏品若已選用此帳號，資料不會被清空，只是清單中不再有這個選項。'))return;
   list.splice(i,1);cfg.digitalAccounts=list;_acPersist();acRenderList();
   toast('已刪除','ok');
 }
 function addDigitalAccount(){
   var inp=$('new-digital-acct');
+  var platSel=$('new-digital-acct-plat');
   var val=(inp&&inp.value||'').trim();
+  var plat=(platSel&&platSel.value)||'';
   if(!val){toast('請輸入帳號名稱','er');return;}
   var list=_acList();
-  if(list.indexOf(val)>=0){toast('已存在這個帳號','er');return;}
+  if(list.some(function(a){return _acNorm(a).name===val;})){toast('已存在這個帳號','er');return;}
   if(list.length>=AC_MAX){toast('最多只能新增 '+AC_MAX+' 個帳號','er');return;}
-  list.push(val);
+  list.push({name:val,platform:plat});
   cfg.digitalAccounts=list;_acPersist();
   if(inp)inp.value='';
   acRenderList();
-  toast('已新增「'+val+'」','ok');
+  toast('已新增「'+val+'」'+(plat?('（'+plat+'）'):''),'ok');
 }
 function exportCfg(){
   var data=JSON.stringify(cfg,null,2);
@@ -6470,28 +6489,29 @@ var _platPickCb=null;
 var _platPickOpts=null;
 function openPlatPicker(opt){
   opt=opt||{};_platPickCb=opt.onPick||null;_platPickOpts=opt;
-  var cur=opt.current||'',allowEmpty=!!opt.allowEmpty;
+  var cur=opt.current||'',allowEmpty=!!opt.allowEmpty,digitalOnly=!!opt.digitalOnly;
   var list=$('plat-pick-list');if(!list)return;
-  _buildPlatRows(list,cur,allowEmpty,'');
+  _buildPlatRows(list,cur,allowEmpty,'',digitalOnly);
   var srch=$('plat-pick-search');if(srch){srch.value='';setTimeout(function(){srch.focus();},120);}
   var ov=$('plat-pick-ov');ov.classList.add('on');ov.setAttribute('aria-hidden','false');
   setTimeout(function(){var el=list.querySelector('.plat-row.on');if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});},30); // 開啟時捲到已選列
 }
-// 建構（或過濾後重建）平台列表 HTML
-function _buildPlatRows(list,cur,allowEmpty,kw){
+// 建構（或過濾後重建）平台列表 HTML；digitalOnly=true 時只列出有線上商店的平台（DIGITAL_PLATFORMS）
+function _buildPlatRows(list,cur,allowEmpty,kw,digitalOnly){
   var q=(kw||'').toLowerCase().trim();
+  var src=digitalOnly?DIGITAL_PLATFORMS:PLATFORMS;
   var rows='';
   if(allowEmpty&&(!q||'不指定'.indexOf(q)>=0)){
     rows+='<div class="plat-row'+(cur===''?' on':'')+'" data-v="" onclick="platPickChoose(this)"><span>— 不指定 —</span>'+(cur===''?'<span class="pk">✓</span>':'')+'</div>';
   }
-  var inList=PLATFORMS.some(function(p){return cur===p.v||cur===p.s;});
+  var inList=src.some(function(p){return cur===p.v||cur===p.s;});
   if(cur&&!inList&&!q){
     rows+='<div class="plat-row on" data-v="'+esc(cur)+'" onclick="platPickChoose(this)"><span>'+esc(cur)+'（自訂）</span><span class="pk">✓</span></div>';
   }
-  var filtered=q?PLATFORMS.filter(function(p){
+  var filtered=q?src.filter(function(p){
     var lbl=(p.label||p.v).toLowerCase();
     return lbl.indexOf(q)>=0||p.s.toLowerCase().indexOf(q)>=0||p.v.toLowerCase().indexOf(q)>=0;
-  }):PLATFORMS;
+  }):src;
   rows+=filtered.map(function(p){
     var on=(cur===p.v||cur===p.s);
     var lbl=p.label||p.v;
@@ -6503,7 +6523,7 @@ function _buildPlatRows(list,cur,allowEmpty,kw){
 function _filterPlatRows(){
   var srch=$('plat-pick-search');if(!srch||!_platPickOpts)return;
   var list=$('plat-pick-list');if(!list)return;
-  _buildPlatRows(list,_platPickOpts.current||'',!!_platPickOpts.allowEmpty,srch.value);
+  _buildPlatRows(list,_platPickOpts.current||'',!!_platPickOpts.allowEmpty,srch.value,!!_platPickOpts.digitalOnly);
 }
 function closePlatPicker(){var ov=$('plat-pick-ov');if(ov){ov.classList.remove('on');ov.setAttribute('aria-hidden','true');}_platPickCb=null;_platPickOpts=null;}
 function platPickChoose(el){
@@ -6514,7 +6534,7 @@ function platPickChoose(el){
 // Step3 平台：開自繪選單，選後回填原生 select（值載體）並沿用既有視覺/記憶邏輯
 function openStep3PlatPicker(){
   var ps=$('step3-plat');if(!ps)return;
-  openPlatPicker({current:ps.value||'',allowEmpty:true,onPick:function(v){
+  openPlatPicker({current:ps.value||'',allowEmpty:true,digitalOnly:catInternal(_selectedType)==='數位遊戲',onPick:function(v){
     ps.value=v;_selectedPlatform=v;_applyPlatVisual();_saveEntryMem();
   }});
 }
@@ -6522,11 +6542,14 @@ function openStep3PlatPicker(){
 function openPlatFldPicker(trigger){
   var k=trigger.getAttribute('data-k');
   var sel=trigger.parentNode.querySelector('select.fsel');if(!sel)return;
-  openPlatPicker({current:sel.value||'',onPick:function(v){
+  var isDigitalForm=(catInternal(_selectedType)==='數位遊戲');
+  openPlatPicker({current:sel.value||'',digitalOnly:isDigitalForm,onPick:function(v){
     if(v&&!Array.prototype.some.call(sel.options,function(o){return o.value===v;})){
       var op=document.createElement('option');op.value=v;op.textContent=v;sel.appendChild(op);
     }
     sel.value=v;onFld(k,v);_applyFselVisual(sel);
+    // v42.17：數位遊戲換平台後，重繪表單讓「購入帳號」下拉即時依新平台重新過濾
+    if(isDigitalForm&&k==='platform')renderForm();
   }});
 }
 // 頁面上點選建檔方式：平台已於 Step 3 寫入 _selectedPlatform，直接啟動對應模式（init*Mode）
@@ -8460,12 +8483,13 @@ function renderFld(f){
   }
   if(type==='area'){return wrap+'<label class="fl">'+lbl+'</label><textarea class="ft" data-k="'+k+'" oninput="onFld(this.dataset.k,this.value)">'+esc(v)+'</textarea></div>';}
   if(type==='acctsel'){
-    var acctList=(cfg.digitalAccounts||[]);
-    var aOpts=acctList.map(function(a){var s=v===a?'selected':'';return'<option value="'+esc(a)+'" '+s+'>'+esc(a)+'</option>';}).join('');
-    var _inAcctList=acctList.indexOf(v)>=0;
+    var curPlat=entry.platform||'';
+    var acctList=(cfg.digitalAccounts||[]).map(_acNorm).filter(function(a){return !a.platform||!curPlat||a.platform===curPlat;});
+    var aOpts=acctList.map(function(a){var s=v===a.name?'selected':'';return'<option value="'+esc(a.name)+'" '+s+'>'+esc(a.name)+(a.platform?'':' （不限平台）')+'</option>';}).join('');
+    var _inAcctList=acctList.some(function(a){return a.name===v;});
     if(v&&!_inAcctList)aOpts='<option value="'+esc(v)+'" selected>'+esc(v)+'（自訂/未在清單中）</option>'+aOpts;
     aOpts='<option value=""'+(v?'':' selected')+'>（未設定）</option>'+aOpts;
-    var _emptyHintA=!acctList.length?'<div style="font-size:11px;color:#ffb74d;margin-top:4px">尚未在設定頁建立數位帳號清單，請先至「設定 → 數位帳號清單」新增</div>':'';
+    var _emptyHintA=!acctList.length?'<div style="font-size:11px;color:#ffb74d;margin-top:4px">'+(curPlat?('沒有對應「'+esc(curPlat)+'」的帳號，請先至「設定 → 數位帳號清單」新增'):'尚未在設定頁建立數位帳號清單，請先至「設定 → 數位帳號清單」新增')+'</div>':'';
     return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+aOpts+'</select>'+_emptyHintA+'</div>';
   }
   if(type==='storagesel'){
