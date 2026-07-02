@@ -696,6 +696,12 @@ body{
 /* Step4 長型卡（v26.04）：條碼＋照片／編碼＋照片橫跨 2 格，圖示左、文字右，與上排對齊 */
 .mb-wide{grid-column:span 2;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;padding:10px 14px;min-height:0;text-align:left}
 .mb-wide .mb-txt{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;text-align:center}
+/* Step1 第五張分類卡（數位遊戲）撐滿整行，避免旁邊留白破版（v42.18）*/
+.ec-card-full{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;gap:14px;padding:14px 16px;text-align:left;min-height:0}
+.ec-card-full .eci{font-size:26px;flex-shrink:0}
+.ec-card-full .ec-full-txt{display:flex;flex-direction:column;gap:2px}
+.ec-card-full .ect{font-size:14px}
+.ec-card-full .ecd{font-size:10px}
 .ec-card{min-height:84px;background:#141b30;border:1.5px solid #1e2a45;border-radius:16px;padding:12px 10px;cursor:pointer;color:#e8eaf6;transition:border-color .2s,background .2s,transform .1s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
 .ec-card:active{transform:scale(.97)}
 .ec-card .eci{font-size:24px;line-height:1}
@@ -841,8 +847,9 @@ body{
             <div class="ec-card" id="ec-periph" data-cat="週邊" onclick="selectEntryCat('週邊')">
               <div class="eci">🎧</div><div class="ect">週邊</div><div class="ecd">Peripherals</div>
             </div>
-            <div class="ec-card" id="ec-digital" data-cat="數位遊戲" onclick="selectEntryCat('數位遊戲')">
-              <div class="eci">💾</div><div class="ect">數位遊戲</div><div class="ecd">Digital</div>
+            <div class="ec-card ec-card-full" id="ec-digital" data-cat="數位遊戲" onclick="selectEntryCat('數位遊戲')">
+              <div class="eci">💾</div>
+              <div class="ec-full-txt"><div class="ect">數位遊戲 Digital</div><div class="ecd">PSN／Steam／eShop／Xbox 等線上商店購入的數位版收藏</div></div>
             </div>
           </div>
           <!-- Step 2：商品區域（v23.03→卡片化 v25.07）：影響 API 路由優先序與 AI prompt；持久化進 cfg -->
@@ -2152,7 +2159,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.14a4';
+const APP_VERSION='v42.14a5';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
