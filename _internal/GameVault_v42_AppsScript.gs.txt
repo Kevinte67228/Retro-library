@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v42.10        ║
+// ║  GameVault — Google Apps Script 後端  v42.14        ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -386,6 +386,9 @@ function doGet(e) {
         break;
       case 'google_books_search':
         result = googleBooksProxy(p.isbn || '');
+        break;
+      case 'fetch_store_page':
+        result = fetchStorePageProxy(p.url || '');
         break;
       case 'fix_headers':
         result = fixSheetHeaders();
@@ -1533,6 +1536,47 @@ function googleBooksProxy(isbn) {
       categories: (info.categories || []).join(', ')
     };
     if (!out.title) return { notfound: true };
+    setCache(ck, out);
+    return out;
+  } catch (e) { return { error: e.message }; }
+}
+
+// ── 數位遊戲：商店頁面 Meta 標籤擷取 Proxy（v42.14）──────────────
+// 只抓 Open Graph / meta 標籤，不解析整頁 DOM，避免 token 浪費；JS 動態渲染的頁面（如 PSN 網頁版）可能抓不到。
+function fetchStorePageProxy(url) {
+  if (!url) return { error: 'missing params' };
+  if (!/^https?:\/\//i.test(url)) return { error: 'invalid url' };
+  const ck = 'storepage_' + Utilities.base64EncodeWebSafe(Utilities.newBlob(url).getBytes()).slice(0, 40);
+  const cached = getCache(ck);
+  if (cached) return cached;
+  try {
+    const res = UrlFetchApp.fetch(url, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept-Language': 'zh-TW,zh;q=0.9,ja;q=0.8,en;q=0.7'
+      }
+    });
+    const code = res.getResponseCode();
+    if (code !== 200) return { error: 'HTTP ' + code };
+    const html = res.getContentText('UTF-8');
+    const pick = function(re) {
+      const m = html.match(re);
+      if (!m) return '';
+      return m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&#x27;/g, "'").trim();
+    };
+    const title = pick(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
+                  pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i) ||
+                  pick(/<title[^>]*>([^<]+)<\/title>/i);
+    const description = pick(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ||
+                         pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i) ||
+                         pick(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
+    const image = pick(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+                  pick(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+    const siteName = pick(/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i);
+    if (!title) return { error: 'no_meta_found', hint: '此頁面可能由 JS 動態載入內容，原始 HTML 內取不到標題' };
+    const out = { title: title, description: description.slice(0, 500), image: image, siteName: siteName, url: url };
     setCache(ck, out);
     return out;
   } catch (e) { return { error: e.message }; }
