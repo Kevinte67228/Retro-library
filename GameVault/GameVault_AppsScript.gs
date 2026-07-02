@@ -1549,19 +1549,22 @@ function fetchStorePageProxy(url) {
   const ck = 'storepage_' + Utilities.base64EncodeWebSafe(Utilities.newBlob(url).getBytes()).slice(0, 40);
   const cached = getCache(ck);
   if (cached) return cached;
-  // v42.15：Steam 商品頁改走官方 appdetails API，避免成人/暴力內容年齡驗證頁擋掉伺服器端請求
+  // v42.14a2：Steam 官方 API 優先，失敗（含被雲端 IP 擋掉）時退回 meta 標籤擷取當備援，不直接放棄
+  let steamErr = '';
   const steamMatch = url.match(/store\.steampowered\.com\/app\/(\d+)/i);
   if (steamMatch) {
     const out = fetchSteamAppDetails(steamMatch[1], url);
     if (out && !out.error) { setCache(ck, out); return out; }
-    if (out && out.error) return out;
+    steamErr = (out && out.error) || 'Steam API 無回應';
   }
   try {
     const out = fetchMetaTagsWithAgeGateRetry(url);
-    if (!out.title) return { error: 'no_meta_found', hint: '此頁面可能由 JS 動態載入內容，原始 HTML 內取不到標題' };
+    if (!out.title) {
+      return { error: 'no_meta_found', hint: steamErr ? ('Steam API 失敗（' + steamErr + '），meta 標籤也擷取不到') : '此頁面可能由 JS 動態載入內容，原始 HTML 內取不到標題' };
+    }
     setCache(ck, out);
     return out;
-  } catch (e) { return { error: e.message }; }
+  } catch (e) { return { error: e.message, hint: steamErr ? ('Steam API 失敗：' + steamErr) : '' }; }
 }
 
 // Steam 官方商店 API：不需要金鑰，直接回傳結構化資料，繞開年齡驗證頁問題
