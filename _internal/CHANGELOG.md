@@ -1,3 +1,6 @@
+## v42.14a2 (2026-07-02)
+- 前端錯誤訊息改顯示後端實際回傳的 error/hint，不再只顯示通用文字；GS 端 Steam API 失敗時退回 meta 標籤擷取當備援，不直接放棄（需手動部署 GS）
+
 ## v42.14a1 (2026-07-02)
 - 修正商店連結抓取：Steam 商品頁改走官方 appdetails API（繞開年齡驗證頁擋住 meta 標籤的問題），一般商店頁 meta 擷取加上年齡驗證 cookie 重試備援；GS 後端同步更新（需手動部署）
 
@@ -50,24 +53,3 @@
 
 ### 對應備份
 - _internal/old/v42_12/
-
-## v42.12 (2026-07-01)
-
-### 變更內容
-- 修正條碼掃描（遊戲分類、有設定舊版資料庫金鑰時）圖片遺失問題：crossRefLookupPromise 合併結果的圖片欄位叫 cover_url/back_url/spine_url（候選網址），barWithGB 的 dbFields 合併清單完全沒做這層轉換，圖片資訊直接遺失
-- 修正方式沿用既有 applyMultiDbResult（編碼掃描流程）已有的轉換模式：cover_url→cover_img 等，且僅補使用者沒拍的空欄，不覆蓋已拍照片
-- 移除 applyMultiDbResult 裡殘留的除錯用 toast（會顯示 [DEBUG] cover_url=... 給使用者看 8 秒）
-- 背景：v42.11 只修了 productBarcodeLookupPromise/applyProductBarcodeResult 這條新路徑的封面覆蓋問題，但遊戲分類且有設定舊版資料庫金鑰時，實際走的是更早就存在的 crossRefLookupPromise/barWithGB 路徑，該路徑從未處理過圖片欄位
-
-### 影響檔案
-- index.html / GameVault_v42_12_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-11 → gamevault-v42-12
-
-### 對應備份
-- _internal/old/v42_11/
