@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v42.14        ║
+// ║  GameVault — Google Apps Script 後端  v42.20a1      ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1546,7 +1546,11 @@ function googleBooksProxy(isbn) {
 function fetchStorePageProxy(url) {
   if (!url) return { error: 'missing params' };
   if (!/^https?:\/\//i.test(url)) return { error: 'invalid url' };
-  const ck = 'storepage_' + Utilities.base64EncodeWebSafe(Utilities.newBlob(url).getBytes()).slice(0, 40);
+  // v42.20a1：改用 MD5 雜湊整個網址產生快取鍵。舊版 base64 截斷前 40 碼的做法，
+  // 對 Steam 這種共同前綴（https://store.steampowered.com/app/）超過 30 bytes 的網址，
+  // 前 40 碼 base64 完全由前 30 bytes 決定，導致不同商品網址算出同一把快取鍵、永遠回傳第一次快取的結果。
+  const ck = 'storepage_' + Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, url)
+    .map(function(b){ return (b < 0 ? b + 256 : b).toString(16).padStart(2, '0'); }).join('');
   const cached = getCache(ck);
   if (cached) return cached;
   // v42.14a2：Steam 官方 API 優先，失敗（含被雲端 IP 擋掉）時退回 meta 標籤擷取當備援，不直接放棄
