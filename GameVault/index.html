@@ -198,7 +198,8 @@ body{
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
 #pg-col .col-sel-row .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-#stats{display:flex;padding:12px 12px 10px;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#stats{display:flex;padding:12px 12px 10px;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
+#stats.at-end{mask-image:none;-webkit-mask-image:none}
 #stats::-webkit-scrollbar{display:none}
 .si2{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
 .si2:active{transform:scale(.96)}
@@ -702,11 +703,7 @@ body{
 .mb-wide{grid-column:span 2;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;padding:10px 14px;min-height:0;text-align:left}
 .mb-wide .mb-txt{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;text-align:center}
 /* Step1 第五張分類卡（數位遊戲）撐滿整行，避免旁邊留白破版（v42.18）*/
-.ec-card-full{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;gap:14px;padding:14px 16px;text-align:left;min-height:0}
-.ec-card-full .eci{font-size:26px;flex-shrink:0}
-.ec-card-full .ec-full-txt{display:flex;flex-direction:column;gap:2px}
-.ec-card-full .ect{font-size:14px}
-.ec-card-full .ecd{font-size:10px}
+/* v42.18：ec-card-full 系列已於 v42.15 改回普通卡片後移除 */
 .ec-card{min-height:84px;background:#141b30;border:1.5px solid #1e2a45;border-radius:16px;padding:12px 10px;cursor:pointer;color:#e8eaf6;transition:border-color .2s,background .2s,transform .1s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
 .ec-card:active{transform:scale(.97)}
 .ec-card .eci{font-size:24px;line-height:1}
@@ -940,7 +937,7 @@ body{
           <div id="help-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:24px 16px 32px;max-height:70vh;overflow-y:auto;z-index:1000;-webkit-overflow-scrolling:touch">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <div style="font-size:14px;font-weight:700;color:#e8eaf6">建檔方式說明</div>
-              <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px">✕</button>
+              <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px">✕</button>
             </div>
             <div style="font-size:12px;color:#9fa8c8;line-height:1.8">
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
@@ -1216,7 +1213,7 @@ body{
             <input type="file" id="import-csv-input" accept=".csv" multiple style="display:none" onchange="importCsv(this)">
           </div>
         </div>
-        <div id="stats">
+        <div id="stats" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
           <div class="si2" id="sf-total" onclick="setF('all')"><div class="sv2" id="st-total">0</div><div class="sl2">總計</div></div>
           <div class="si2" id="sf-g" onclick="setF('遊戲')"><div class="sv2" id="st-g">0</div><div class="sl2">遊戲</div></div>
           <div class="si2" id="sf-b" onclick="setF('攻略')"><div class="sv2" id="st-b">0</div><div class="sl2">書籍</div></div>
@@ -2180,7 +2177,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.17';
+const APP_VERSION='v42.18';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2862,6 +2859,18 @@ var AI_CAT_SPEC={
       release_date:'上市日期(YYYY/MM/DD)',summary:'功能與規格簡介(繁體中文，100字內)',
       region:'發售地區',edition:'型號/版本',warranty_status:'保固狀態（僅包裝可判斷時填，不確定留空）'},
     constraint:'developer 填製造商。summary 描述週邊功能與相容平台。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  數位遊戲:{
+    role:'數位版遊戲商店資料庫專家',itemLabel:'遊戲名稱',
+    fields:{jp_name:'日文名稱',zh_name:'中文名稱(官方繁中譯名優先)',en_name:'英文名稱',
+      series:'系列名稱',developer:'開發商',publisher:'發行商',
+      store:'購入商店（從畫面判斷：PSN/Nintendo eShop/Steam/Xbox Store/Epic Games/其他；無法判斷留空）',
+      platform:'平台（如 PlayStation 5、Nintendo Switch、PC）',
+      release_date:'發行日期(YYYY/MM/DD)',suggest_price:'售價(如 1990 TWD / 7990 JPY；依畫面顯示幣別)',
+      genre:'遊戲類型(可多個用、分隔)',
+      age_rating:'分級(CERO/ESRB/PEGI)',summary:'遊戲簡介(繁體中文，150字內)',
+      voice_language:'語音語言（不確定留空）',subtitle_language:'字幕語言（不確定留空）',edition:'版本說明（標準版/豪華版等）'},
+    constraint:'此為數位版遊戲（商店頁截圖或遊戲庫畫面），無實體條碼與包裝。store 依畫面 UI 風格判斷。summary 用繁體中文。'
   },
   原聲帶:{
     role:'遊戲/動畫原聲帶與音樂商品資料庫專家',itemLabel:'專輯名稱',
@@ -3851,6 +3860,7 @@ function saveFxFromInputs(){
 }
 // 同步即時匯率（免金鑰，CORS 允許）；成功則覆寫手動值，失敗沿用手動值
 function updateFxLive(){
+  if(!_btnGuard('fxLive',null,'更新中...'))return;
   toast('更新匯率中…','',1500);
   fetch('https://open.er-api.com/v6/latest/TWD').then(function(r){return r.json();}).then(function(d){
     if(!d||d.result!=='success'||!d.rates)throw new Error('bad');
@@ -3860,15 +3870,18 @@ function updateFxLive(){
     saveFxFromInputs();
     var t=d.time_last_update_utc?(' · '+d.time_last_update_utc.slice(5,16)):'';
     toast('匯率已更新'+t,'ok',3500);
-  }).catch(function(){toast('匯率更新失敗，沿用目前手動值','er',4000);});
+    _btnRelease('fxLive');
+  }).catch(function(){toast('匯率更新失敗，沿用目前手動值','er',4000);_btnRelease('fxLive');});
 }
 function clearAll(){
   if(!confirm('確定清除所有設定與快取？'))return;
+  if(!_btnGuard('clearAll'))return;
   localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
   // 同時清空畫面上的欄位
   ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var md=document.getElementById('c-gmdl');if(md)md.value='gemini-2.5-flash';
   renderGlist();updateStats();toast('已清除所有設定與快取');
+  _btnRelease('clearAll');
 }
 
 // ── Sheets ──
@@ -4003,6 +4016,7 @@ var SAMPLE_ITEMS=[
 // ══ 樣本資料載入 ══
 function loadSamples(){
   if(!SAMPLE_ITEMS||!SAMPLE_ITEMS.length){toast('樣本資料為空','er');return;}
+  if(!_btnGuard('loadSamples',null,'匯入中...'))return;
   var imported=0;
   (SAMPLE_ITEMS||[]).forEach(function(item){
     if(!item.primary_name||(''+(item.primary_name||'')).trim().length===0){return;}
@@ -4020,6 +4034,7 @@ function loadSamples(){
   }else{
     toast('樣本資料中沒有有效的記錄','er');
   }
+  _btnRelease('loadSamples');
 }
 
 // 首次打開時檢查是否提示載入樣本
@@ -6994,12 +7009,39 @@ function _inferStoreFromUrl(url){
   if(h.indexOf('epicgames.com')>=0)return 'Epic Games';
   return '其他';
 }
+// ── 共用防連點守衛（v42.18）：非同步操作執行期間鎖定觸發按鈕，結束後還原 ──
+// 用法：在函式開頭 if(!_btnGuard(this or id))return; 完成後 _btnRelease(id)
+var _btnLocks={};
+function _btnGuard(key,btnEl,busyText){
+  if(_btnLocks[key])return false; // 已在執行中，拒絕重入
+  _btnLocks[key]=true;
+  var el=btnEl||((event&&event.target&&event.target.closest)?event.target.closest('button'):null);
+  if(el){
+    _btnLocks[key+'_el']=el;
+    _btnLocks[key+'_txt']=el.textContent;
+    el.disabled=true;
+    if(busyText)el.textContent=busyText;
+    el.style.opacity='0.55';
+  }
+  return true;
+}
+function _btnRelease(key){
+  _btnLocks[key]=false;
+  var el=_btnLocks[key+'_el'];
+  if(el){
+    el.disabled=false;
+    if(_btnLocks[key+'_txt'])el.textContent=_btnLocks[key+'_txt'];
+    el.style.opacity='';
+    _btnLocks[key+'_el']=null;
+  }
+}
 function digitalLinkFetch(){
   var inp=$('digital-link-inp');
   var url=(inp&&inp.value||'').trim();
   if(!url){toast('請貼上商店頁網址','er');return;}
   if(!/^https?:\/\//i.test(url)){toast('網址需以 http:// 或 https:// 開頭','er',4000);return;}
-  if(!cfg.url){toast('未設定試算表 URL，無法透過後端抓取網頁','er',5000);return;}
+  if(!_btnGuard('digitalLink',null,'抓取中...'))return;
+  if(!cfg.url){toast('未設定試算表 URL，無法透過後端抓取網頁','er',5000);_btnRelease('digitalLink');return;}
   var st=$('digital-link-status');
   if(st){st.style.display='block';st.textContent='抓取商店頁面中...';}
   shGet({action:'fetch_store_page',url:url}).then(function(page){
@@ -7007,6 +7049,7 @@ function digitalLinkFetch(){
       var reason=[page&&page.error,page&&page.hint].filter(Boolean).join('；')||'伺服器無回應';
       if(st)st.textContent='⚠️ 抓取失敗（'+reason+'），請改用手動建檔';
       toast('抓取失敗：'+reason,'er',6000);
+      _btnRelease('digitalLink');
       return null;
     }
     if(st)st.textContent='AI 整理欄位中...';
@@ -7040,11 +7083,13 @@ function digitalLinkFetch(){
       });
       _carrySelPlat();_carrySelRegion();
       toast('✓ 已自動填寫，請檢查並補齊帳號/取得方式等欄位','ok',4000);
+      _btnRelease('digitalLink');
       showForm('商店連結建檔');
     });
   }).catch(function(e){
     if(st)st.textContent='⚠️ 發生錯誤：'+(e&&e.message||'未知錯誤');
     toast('抓取失敗：'+(e&&e.message||'請改用手動建檔'),'er',5000);
+    _btnRelease('digitalLink');
   });
 }
 function _steamMonToDate(m){
@@ -7935,11 +7980,6 @@ function barAIFill(bc,hint,hasGB){
 }
 
 // ── 手動輸入條碼（bar-sec 模式）──
-function barShowManual(){
-  var bw=$('bar-wrap');
-  if(!bw)return;
-  bw.innerHTML=buildManualBarcodeUI({inputId:'mbar',onConfirm:'onBarcode',onBack:'barRestartScanner'});
-}
 function barRestartScanner(){
   stopScanner();
   var br=$('bar-result');if(br)br.style.display='none';
@@ -13013,7 +13053,7 @@ function _imgToB64(src){
 <div id="api-guide-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:75vh;z-index:1000;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:24px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6" id="api-guide-title">API 申請指南</div>
-    <button onclick="closeApiGuide()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">✕</button>
+    <button onclick="closeApiGuide()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">✕</button>
   </div>
   <div id="api-guide-content" style="font-size:12px;color:#9fa8c8;line-height:1.8;padding:16px;padding-bottom:32px;overflow-y:auto;flex:1"></div>
   <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">
@@ -13026,7 +13066,7 @@ function _imgToB64(src){
 <div id="cm-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:1002;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6" id="cm-editor-title">新增自訂市場</div>
-    <button onclick="cmCloseEditor()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:38px;height:38px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">✕</button>
+    <button onclick="cmCloseEditor()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">✕</button>
   </div>
   <div style="padding:16px;padding-bottom:24px;overflow-y:auto;flex:1">
     <div class="fg"><label class="fl">市場名稱<span style="color:#ff7043"> *</span></label>
