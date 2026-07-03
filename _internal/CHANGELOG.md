@@ -1,3 +1,26 @@
+## v42.18 (2026-07-03)
+
+### 變更內容
+盤點報告批次 1（H1-H3 / L1 / L2 / L4 / M1 部分）：
+- 新增共用防連點守衛 _btnGuard/_btnRelease，套用至 digitalLinkFetch（商店連結抓取）、updateFxLive（匯率更新）、clearAll（清除資料）、loadSamples（樣本匯入）四個實際有風險的按鈕；盤點清單中 saveCfg/huntLensToHunt/downloadManual/toggleHelp 經人工複核為純本地操作誤判，不需防護
+- AI_CAT_SPEC 補上「數位遊戲」條目（v42.14a6 開放圖片辨識入口後的規格缺口），數位遊戲截圖辨識欄位（store/platform 等）現在對得上
+- 收藏頁總計列加右緣 fade 遮罩提示可橫向捲動，捲到底自動消失
+- 移除死函式 barShowManual、孤兒 CSS .ec-card-full 系列
+- 3 個 <40px 觸控目標按鈕統一調至 40px
+
+### 影響檔案
+- index.html / GameVault_v42_18_index.html
+- sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-17 → gamevault-v42-18
+
+### 對應備份
+- _internal/old/v42_17/
+
 ## v42.17 (2026-07-02)
 
 ### 變更內容
@@ -50,29 +73,3 @@
 
 ## v42.15a1 (2026-07-02)
 - Step1 公仔分類卡片標題改為「公仔/模型」
-
-## v42.15 (2026-07-02)
-
-### 變更內容
-- 新增三個獨立分類：原聲帶／音樂（OST）、畫集／設定集（Artbook）、公仔／模型（Figure），各自量身設計欄位（非沿用主機/週邊舊模板）
-- 三個新分類均為實體收藏品架構：保留條碼/編碼、品相完整度分級、保管位置、估值追蹤、封面/封底/側邊三張圖片
-- OST 專屬欄位：相關作品/作曲編曲/發行廠牌/媒體格式/片數/收錄曲數
-- 畫集專屬欄位：相關作品/繪師監修/頁數/裝訂方式
-- 公仔專屬欄位：角色名稱/系列/廠牌/比例/材質
-- AI_CAT_SPEC 新增三個分類的辨識規格，_visionCatBlock 自動產生對應 prompt 區塊，三個分類均支援 AI 拍照辨識（沿用主機/週邊已驗證的通用渲染機制，無需另外改動核心辨識邏輯）
-- COMP_COMPONENTS 補上三分類的品相評級組件清單
-- Step1 分類卡片改為 8 張（2 列 × 4 排），數位遊戲改回一般卡片樣式（不再需要特殊寬版處理，8 張剛好整除 4 欄）
-- 全站硬編碼分類清單（category 下拉、篩選面板、圖表配色等）全數同步更新至 8 分類
-
-### 影響檔案
-- index.html / GameVault_v42_15_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-14a6 → gamevault-v42-15
-
-### 對應備份
-- _internal/old/v42_14/
