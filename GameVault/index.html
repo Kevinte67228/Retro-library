@@ -1032,7 +1032,7 @@ body{
               </label>
             </div>
             <div id="scan-step2-preview" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden">
-              <img id="scan-preview-img" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
+              <img id="scan-preview-img" alt="掃描預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
             </div>
             <div style="display:flex;gap:10px;margin-top:4px">
               <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
@@ -1096,7 +1096,7 @@ body{
               </label>
             </div>
             <div id="gcode-combo-preview" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden">
-              <img id="gcode-combo-img" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
+              <img id="gcode-combo-img" alt="拍攝預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
             </div>
             <div style="display:flex;gap:10px;margin-top:4px">
               <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
@@ -2177,7 +2177,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.19';
+const APP_VERSION='v42.20';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3445,10 +3445,22 @@ function initSGroups(){
 var CM_MAX=12;                 // 條數上限
 var _cmEditIdx=-1;             // -1=新增，>=0=編輯該索引
 var _cmIconData='';           // 暫存 icon（data URI 或 URL）
+// ══ cfg 持久化統一入口（v42.20）══
+// _persistCfg()：全量寫入記憶體 cfg。_persistCfgKeys({k:v})：只合併指定鍵到磁碟版（避免用過期記憶體覆蓋其他欄位）。
+function _persistCfg(){
+  try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
+}
+function _persistCfgKeys(patch){
+  try{
+    var c=JSON.parse(localStorage.getItem('gv_cfg')||'{}');
+    Object.keys(patch||{}).forEach(function(k){c[k]=patch[k];});
+    localStorage.setItem('gv_cfg',JSON.stringify(c));
+  }catch(e){}
+}
 function _cmList(){return (cfg&&Array.isArray(cfg.customMarkets))?cfg.customMarkets:[];}
 function _cmPersist(){
   cfg.customMarkets=_cmList();
-  try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
+  _persistCfg();
 }
 // 設定頁列表渲染
 function cmRenderList(){
@@ -3612,7 +3624,7 @@ var SL_MAX=40; // 條數上限
 function _slList(){return (cfg&&Array.isArray(cfg.storageLocations))?cfg.storageLocations:[];}
 function _slPersist(){
   cfg.storageLocations=_slList();
-  try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
+  _persistCfg();
 }
 function slRenderList(){
   var box=$('storage-loc-list');if(!box)return;
@@ -3651,7 +3663,7 @@ function _acList(){return (cfg&&Array.isArray(cfg.digitalAccounts))?cfg.digitalA
 function _acNorm(a){return (typeof a==='string')?{name:a,platform:''}:{name:(a&&a.name)||'',platform:(a&&a.platform)||''};}
 function _acPersist(){
   cfg.digitalAccounts=_acList();
-  try{localStorage.setItem('gv_cfg',JSON.stringify(cfg));}catch(e){}
+  _persistCfg();
 }
 function acRenderList(){
   var platSel=$('new-digital-acct-plat');
@@ -3716,7 +3728,7 @@ function importCfg(){
         // 驗證必要欄位
         if(typeof imported!=='object')throw new Error('匯入格式錯誤，請確認是從「匯出設定」產生的 JSON 檔案');
         cfg=Object.assign(cfg,imported);
-        localStorage.setItem('gv_cfg',JSON.stringify(cfg));
+        _persistCfg();
         loadCfg();
         toast('設定匯入成功 ✓','ok',4000);
       }catch(e){toast('設定匯入失敗：'+e.message,'er');}
@@ -3825,7 +3837,7 @@ function saveCfg(){
     gcxid:($('c-gcxid')&&$('c-gcxid').value||'').trim(),
     gmapskey:($('c-gmapskey')&&$('c-gmapskey').value||'').trim(),
   });
-  localStorage.setItem('gv_cfg',JSON.stringify(cfg));
+  _persistCfg();
   var ok=[];
   if(cfg.url)ok.push('試算表 URL');
   if(cfg.gkey)ok.push('Gemini 金鑰');
@@ -3837,7 +3849,7 @@ function saveFxFromInputs(){
   cfg.fx=cfg.fx||{};
   if(!isNaN(j)&&j>0)cfg.fx.JPY=j;
   if(!isNaN(u)&&u>0)cfg.fx.USD=u;
-  try{var c=JSON.parse(localStorage.getItem('gv_cfg')||'{}');c.fx=cfg.fx;localStorage.setItem('gv_cfg',JSON.stringify(c));}catch(e){}
+  _persistCfgKeys({fx:cfg.fx});
 }
 // 同步即時匯率（免金鑰，CORS 允許）；成功則覆寫手動值，失敗沿用手動值
 function updateFxLive(){
@@ -5521,7 +5533,7 @@ function setRegion(r){
   if(!_REGION_LABELS[r])return;
   _region=r;
   // 持久化
-  try{var c=JSON.parse(localStorage.getItem('gv_cfg')||'{}');c.region=r;localStorage.setItem('gv_cfg',JSON.stringify(c));}catch(e){}
+  _persistCfgKeys({region:r});
   _updateRegionBtns();
   toast('📍 區域已設為：'+_REGION_LABELS[r],'ok',2000);
 }
@@ -6660,9 +6672,7 @@ function _saveEntryMem(){
     cfg.entry_plat=_selectedPlatform||''; // 相容欄位
     cfg.entry_plat_map=cfg.entry_plat_map||{};
     if(_selectedType==='遊戲'||_selectedType==='主機')cfg.entry_plat_map[_selectedType]=_selectedPlatform||'';
-    var c=JSON.parse(localStorage.getItem('gv_cfg')||'{}');
-    c.entry_cat=_selectedType;c.entry_plat=_selectedPlatform||'';c.entry_plat_map=cfg.entry_plat_map;
-    localStorage.setItem('gv_cfg',JSON.stringify(c));
+    _persistCfgKeys({entry_cat:_selectedType,entry_plat:_selectedPlatform||'',entry_plat_map:cfg.entry_plat_map});
   }catch(e){}
 }
 function selectEntryCat(cat,_noSave){
@@ -6789,8 +6799,7 @@ var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',ini
 function _saveMethodMem(fn){
   try{
     cfg.entry_method=fn;
-    var c=JSON.parse(localStorage.getItem('gv_cfg')||'{}');
-    c.entry_method=fn;localStorage.setItem('gv_cfg',JSON.stringify(c));
+    _persistCfgKeys({entry_method:fn});
   }catch(e){}
 }
 function pagePickMethod(fn){
@@ -7028,7 +7037,7 @@ function digitalLinkFetch(){
   shGet({action:'fetch_store_page',url:url}).then(function(page){
     if(!page||page.error||!page.title){
       var reason=[page&&page.error,page&&page.hint].filter(Boolean).join('；')||'伺服器無回應';
-      if(st)st.textContent='⚠️ 抓取失敗（'+reason+'），請改用手動建檔';
+      if(st)st.innerHTML='⚠️ 抓取失敗（'+esc(reason)+'）<br><button class="btn bp bs" style="margin-top:8px" onclick="digitalLinkToManual()">✏️ 改用手動建檔（保留此網址）</button>';
       toast('抓取失敗：'+reason,'er',6000);
       _btnRelease('digitalLink');
       return null;
@@ -7072,6 +7081,22 @@ function digitalLinkFetch(){
     toast('抓取失敗：'+(e&&e.message||'請改用手動建檔'),'er',5000);
     _btnRelease('digitalLink');
   });
+}
+// v42.20：商店連結抓取失敗 → 一鍵切換手動建檔，保留已輸入的網址（ref_link）與商店推斷
+function digitalLinkToManual(){
+  var inp=$('digital-link-inp');
+  var url=(inp&&inp.value||'').trim();
+  var type=_selectedType||'數位遊戲';
+  stopScanner();stopComboScanner();
+  hideAllSecs();
+  entry=Object.assign({},_defaultsFor(type),{
+    category:type,platform:_selectedPlatform||'',
+    ref_link:url,store:url?_inferStoreFromUrl(url):''
+  });
+  _carrySelPlat();_carrySelRegion();
+  setMbActive('manual');
+  showForm('手動建檔');
+  toast('已切換手動建檔，網址已帶入商店頁連結欄','ok',3500);
 }
 function _steamMonToDate(m){
   var mons={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
@@ -8013,7 +8038,7 @@ function renderSlotThumbs(){
     var inner;
     if(has){
       var url=URL.createObjectURL(_slotImgs[s]);
-      inner='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">'+
+      inner='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover">'+
             '<button class="tslot-del" onclick="event.stopPropagation();clearSlot(\''+s+'\')">\u2715</button>';
     }else{
       inner='<div class="tslot-ph">'+lbls[s]+'</div>';
@@ -8865,7 +8890,7 @@ function renderFld(f){
   if(type==='imgupload'){
     var hasImg=hasImgVal(v);
     return wrap+'<label class="fl">'+lbl+'</label>'+
-      '<img id="prev-'+k+'" src="'+(hasImg?imgUrl(v,500):'')+'" style="width:100%;border-radius:8px;margin-bottom:6px;border:1px solid #1e2a45;display:'+(hasImg?'block':'none')+'">'+
+      '<img id="prev-'+k+'" src="'+(hasImg?imgUrl(v,500):'')+'" alt="欄位圖片預覽" style="width:100%;border-radius:8px;margin-bottom:6px;border:1px solid #1e2a45;display:'+(hasImg?'block':'none')+'">'+
       '<div style="display:flex;gap:6px;margin-bottom:6px">'+
         '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #00e5ff;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#00e5ff">'+
           '<span>📷</span><span>拍照</span>'+
@@ -10044,10 +10069,10 @@ var FACETS=[
   {k:'store',label:'購入商店',order:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他']},
   {k:'account',label:'購入帳號'},
   {k:'purchase_method',label:'取得方式',order:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他']},
-  {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','未評級']},
-  {k:'__complete',label:'完整度',order:['全新','完整','部分登錄','未評級']},
+  {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','未評級'],notCats:['數位遊戲']},
+  {k:'__complete',label:'完整度',order:['全新','完整','部分登錄','未評級'],notCats:['數位遊戲']},
   {k:'__photo',label:'照片狀態',order:['有封面','有封底','有側邊','無照片']},
-  {k:'__todo',label:'待補資料',order:['缺封面','缺條碼','缺編碼','缺購入價','缺發售日','缺品相']},
+  {k:'__todo',label:'待補資料',order:['缺封面','缺條碼','缺編碼','缺購入價','缺發售日','缺品相'],notCats:['數位遊戲']},
   {k:'buy_source',label:'入手來源',order:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他']},
   {k:'rating',label:'個人評分',order:['1','2','3','4','5','6','7','8','9','10','N/A']},
   {k:'buy_year',label:'購入年份',year:true},
@@ -10220,6 +10245,8 @@ function setFacetCat(k){_facetActiveK=k;renderFilterSheet();}
 function _facetAvail(){
   var list=[];
   FACETS.forEach(function(f){
+    // v42.20：notCats 排除清單——目前分類篩選命中排除清單時整個 facet 不顯示（處理 __condition 這類永遠有 fallback 值的虛擬 facet）
+    if(f.notCats&&f.notCats.indexOf(activeF)>=0)return;
     var base=col.filter(function(it){return _quickPass(it)&&_facetPass(it,f.k);});
     var has=false;
     for(var i=0;i<base.length;i++){if(facetVals(f,base[i].data).length){has=true;break;}}
@@ -10701,7 +10728,7 @@ function renderGlist(){
     var _icon=_catMeta(cat).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<img src="'+imgUrl(d.cover_img,150)+'" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
+      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
@@ -11643,9 +11670,9 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(hasC||hasB||hasS){
     html+='<div class="df full"><div style="display:flex;gap:6px;align-items:flex-start">';
     var mainStyle='border-radius:8px;object-fit:cover;border:1px solid #1e2a45;display:block;width:100%';
-    if(hasC)html+='<div style="flex:2;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">封面</div><img id="dimg-cover_img" src="'+imgUrl(d.cover_img,600)+'" style="'+mainStyle+'">'+_detailImgCtrls(rowNum,'cover_img')+'</div>';
-    if(hasB)html+='<div style="flex:2;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">封底</div><img id="dimg-back_img" src="'+imgUrl(d.back_img,600)+'" style="'+mainStyle+'">'+_detailImgCtrls(rowNum,'back_img')+'</div>';
-    if(hasS)html+='<div style="flex:1;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">側邊</div><img id="dimg-spine_img" src="'+imgUrl(d.spine_img,400)+'" style="'+mainStyle+';object-position:center">'+_detailImgCtrls(rowNum,'spine_img')+'</div>';
+    if(hasC)html+='<div style="flex:2;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">封面</div><img id="dimg-cover_img" src="'+imgUrl(d.cover_img,600)+'" alt="封面圖" style="'+mainStyle+'">'+_detailImgCtrls(rowNum,'cover_img')+'</div>';
+    if(hasB)html+='<div style="flex:2;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">封底</div><img id="dimg-back_img" src="'+imgUrl(d.back_img,600)+'" alt="封底圖" style="'+mainStyle+'">'+_detailImgCtrls(rowNum,'back_img')+'</div>';
+    if(hasS)html+='<div style="flex:1;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">側邊</div><img id="dimg-spine_img" src="'+imgUrl(d.spine_img,400)+'" alt="側邊圖" style="'+mainStyle+';object-position:center">'+_detailImgCtrls(rowNum,'spine_img')+'</div>';
     html+='</div></div>';
   }
   // 依 category 選用對應欄位表
@@ -11917,6 +11944,19 @@ function resetAll(){
 function registerServiceWorker(){
   if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
   navigator.serviceWorker.register('sw.js?v='+encodeURIComponent(APP_VERSION))
+    .then(function(reg){
+      // v42.20：偵測新版 SW 安裝完成（舊 SW 仍控制頁面時），提示使用者重新整理取得新版
+      if(!reg)return;
+      reg.addEventListener('updatefound',function(){
+        var nw=reg.installing;
+        if(!nw)return;
+        nw.addEventListener('statechange',function(){
+          if(nw.state==='installed'&&navigator.serviceWorker.controller){
+            toast('🔄 有新版本可用，重新整理頁面即可更新','',8000);
+          }
+        });
+      });
+    })
     .catch(function(){});
 }
 
@@ -12199,7 +12239,7 @@ function huntCardHtml(h){
   }
   return '<div '+_huntPressAttr(h.uid)+' style="display:flex;gap:12px;background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
     (_huntSel?'<div style="flex-shrink:0;align-self:center;font-size:20px;color:'+((_huntSelSet.has(h.uid))?'#ff6e9c':'#5c6b8a')+'">'+(_huntSelSet.has(h.uid)?'☑':'☐')+'</div>':'')+
-    (photo?'<img src="'+photo+'" loading="lazy" decoding="async" style="width:52px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #1e2a45">'
+    (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:52px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:52px;height:68px;border-radius:6px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div>')+
     '<div style="flex:1;min-width:0">'+
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
@@ -12293,7 +12333,7 @@ function huntPhotoPick(input){
     var r=new FileReader();
     r.onload=function(){compressImg(r.result,1000,0.8,function(out){
       _huntPhoto=out;var p=$('hunt-photo-prev');
-      if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" style="width:100%;max-height:280px;object-fit:contain">';}
+      if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:280px;object-fit:contain">';}
     });};
     r.readAsDataURL(blob);
   }).catch(function(){});
@@ -12328,7 +12368,7 @@ function huntLensPick(input){
     r.onload=function(){compressImg(r.result,1000,0.8,function(out){
       _huntPhoto=out;
       var p=$('hunt-lens-prev');
-      if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" style="width:100%;max-height:260px;object-fit:contain">';}
+      if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:260px;object-fit:contain">';}
       huntLensIdentify();
     });};
     r.readAsDataURL(blob);
@@ -12360,7 +12400,7 @@ function _huntLensNotes(d){
 function huntLensResult(d){
   d=d||{};
   var ov=_huntOv();
-  var img=_huntPhoto?'<img src="'+_huntPhoto+'" style="width:100%;max-height:240px;object-fit:contain;border-radius:12px;background:#0f1525">':'';
+  var img=_huntPhoto?'<img src="'+_huntPhoto+'" alt="尋寶照片" style="width:100%;max-height:240px;object-fit:contain;border-radius:12px;background:#0f1525">':'';
   var plat=d.platform?'<div style="font-size:13px;color:#80deea;margin-top:2px">'+esc(d.platform)+(d.genre?' · '+esc(d.genre):'')+'</div>':'';
   var meta=[];if(d.publisher)meta.push(esc(d.publisher));if(d.release_date)meta.push(esc(d.release_date));
   var metaLine=meta.length?'<div style="font-size:12px;color:#7986cb;margin-top:4px">'+meta.join(' · ')+'</div>':'';
@@ -12564,7 +12604,7 @@ function huntDetail(uid){
   var box=$('hunt-body');if(!box)return;
   var html='<div style="padding:10px 16px 6px"><button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="renderHuntList()">‹ 返回清單</button></div>';
   html+='<div class="card" style="display:flex;gap:14px">'+
-    (photo?'<img src="'+photo+'" style="width:90px;height:120px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid #1e2a45">'
+    (photo?'<img src="'+photo+'" alt="" style="width:90px;height:120px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:90px;height:120px;border-radius:8px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:28px">🎮</div>')+
     '<div style="flex:1;min-width:0">'+
       '<span style="font-size:10px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 6px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
@@ -12601,7 +12641,7 @@ function huntDetail(uid){
           '</div></div>'+
         (s.cond?'<div style="font-size:12px;color:#9fa8c8;margin-top:4px">品況：'+esc(s.cond)+'</div>':'')+
         (s.note?'<div style="font-size:12px;color:#9fa8c8;margin-top:4px">備註：'+esc(s.note)+'</div>':'')+
-        (!_huntIsOnline(s)&&huntMapThumb(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="display:block;margin-top:8px"><img src="'+esc(huntMapThumb(s))+'" loading="lazy" onerror="this.parentNode.style.display=\'none\'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1px solid #1e2a45;display:block"></a>':'')+
+        (!_huntIsOnline(s)&&huntMapThumb(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="display:block;margin-top:8px"><img src="'+esc(huntMapThumb(s))+'" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1px solid #1e2a45;display:block"></a>':'')+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
           '<div style="display:flex;align-items:center;gap:12px;min-width:0">'+
             '<span style="font-size:10px;color:#5c6b8a;flex-shrink:0">'+esc(s.date||'')+'</span>'+
