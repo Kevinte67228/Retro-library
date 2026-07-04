@@ -510,9 +510,24 @@ body{
 .vault-cover-thumb{width:100%;height:24px;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45;flex:1;min-width:0}
 .vault-cover-thumb.on{border-color:#00e5ff}
 .vault-cover-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.vault-cover-actions{display:flex;gap:3px}
-.vault-cover-actions label{flex:1;display:flex;align-items:center;justify-content:center;background:#0f1525;border-radius:4px;padding:3px 0;cursor:pointer;font-size:12px;border:1px solid #1e2a45}
 .vault-main{flex:1;min-width:0}
+/* v47.04：自訂圖片（最多5張，各自帶名稱） */
+.exti-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.exti-item{display:flex;flex-direction:column;gap:3px}
+.exti-item img{width:100%;height:70px;object-fit:cover;border-radius:6px;border:1px solid #1e2a45;cursor:pointer;background:#080c18;display:block}
+.exti-label{width:100%;background:#0f1525;border:1px solid #1e2a45;border-radius:4px;color:#e8eaf6;font-size:11px;padding:3px 4px;box-sizing:border-box}
+.exti-item button{background:#1a0f14;border:1px solid #ff5252;color:#ff5252;border-radius:4px;font-size:10px;padding:2px 0;cursor:pointer}
+/* v47.04：圖片燈箱（點縮圖/主圖彈出大圖，打叉關閉，左右箭頭換圖） */
+#img-lightbox-ov{display:none;position:fixed;inset:0;background:rgba(5,8,16,.92);z-index:9000;align-items:center;justify-content:center}
+#img-lightbox-ov.on{display:flex}
+.lb-img-wrap{position:relative;max-width:94vw;max-height:82vh;display:flex;align-items:center;justify-content:center}
+.lb-img-wrap img{max-width:94vw;max-height:82vh;object-fit:contain;border-radius:8px}
+.lb-close{position:absolute;top:-42px;right:0;width:36px;height:36px;border-radius:50%;background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(20,27,48,.85);border:1px solid #1e2a45;color:#e8eaf6;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
+.lb-arrow.prev{left:-50px}
+.lb-arrow.next{right:-50px}
+.lb-arrow.off{opacity:.25;pointer-events:none}
+.lb-caption{position:absolute;bottom:-32px;left:0;right:0;text-align:center;color:#9fa8c8;font-size:12px}
 .vault-name{font-size:15px;font-weight:700;line-height:1.35;margin-bottom:4px;overflow-wrap:anywhere}
 .vault-sub{font-size:11px;color:#9fa8c8;line-height:1.5;margin-bottom:8px}
 .vault-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
@@ -1968,6 +1983,7 @@ const FIELDS=[
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
   ['back_img','封底圖檔','imgupload','圖片紀錄'],
   ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -2157,6 +2173,7 @@ const BOOK_FIELDS=[
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
   ['back_img','封底圖檔','imgupload','圖片紀錄'],
   ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -2198,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v47.03';
+const APP_VERSION='v48.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2250,6 +2267,7 @@ const CONSOLE_FIELDS=[
   ['cover_img','正面圖檔','imgupload','圖片紀錄'],
   ['back_img','背面圖檔','imgupload','圖片紀錄'],
   ['spine_img','側面圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -2318,6 +2336,7 @@ const PERIPH_FIELDS=[
   ['cover_img','正面圖檔','imgupload','圖片紀錄'],
   ['back_img','背面圖檔','imgupload','圖片紀錄'],
   ['spine_img','側面圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -2378,6 +2397,7 @@ function _digiTail(){
     ['summary','簡介','area','補充資訊'],
     ['ref_link','商店頁連結','autolink','補充資訊'],
     ['cover_img','封面圖檔','imgupload','圖片紀錄'],
+    ['extra_images','自訂圖片','multiimg','圖片紀錄'],
     ['related_code','關聯商品','txt','關聯商品'],
     ['notes','備註','area','補充資訊'],
     ['uuid','UUID','hidden','補充資訊'],
@@ -2561,6 +2581,7 @@ const OST_FIELDS=[
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
   ['back_img','封底圖檔','imgupload','圖片紀錄'],
   ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -2621,6 +2642,7 @@ const ARTBOOK_FIELDS=[
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
   ['back_img','封底圖檔','imgupload','圖片紀錄'],
   ['spine_img','書背圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -2682,6 +2704,7 @@ const FIGURE_FIELDS=[
   ['cover_img','正面圖檔','imgupload','圖片紀錄'],
   ['back_img','背面圖檔','imgupload','圖片紀錄'],
   ['spine_img','外盒圖檔','imgupload','圖片紀錄'],
+  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
@@ -4118,6 +4141,19 @@ function fetchWithRetry(url,opts,retries){
 }
 
 // ── 儲存前壓縮圖片（保持 AI 辨識用原圖，存 Sheets 再壓縮）
+// v47.04：自訂圖片（extra_images）大小防呆，比照 cover/back/spine 的 8MB 上限，超過就捨棄該張並提示
+function _capExtraImagesSize(){
+  var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){return;}
+  if(!Array.isArray(arr)||!arr.length)return;
+  var kept=arr.filter(function(item){
+    if(item&&item.img&&item.img.length>8000000){
+      toast('⚠️ 自訂圖片「'+(item.label||'未命名')+'」過大（>8MB），此圖未存','er',4000);
+      return false;
+    }
+    return true;
+  });
+  if(kept.length!==arr.length)entry.extra_images=JSON.stringify(kept);
+}
 function _compressAndSave(afterFn){
   var imgKeys=['cover_img','back_img','spine_img'];
   var LIMIT=49000; // Sheets 單格上限約 50000，留緩衝
@@ -4474,6 +4510,7 @@ function doSave(){
       entry[k]='';
     }
   });
+  _capExtraImagesSize();
   var _SF=fieldsFor(entry.category,entry.subtype);
   // 建檔時間：以台北時間於前端寫入（即時顯示、不需刷新；後端僅在空值時補填）
   if(!entry.created_at)entry.created_at=tpeDateTime();
@@ -4486,7 +4523,10 @@ function doSave(){
     // 優先用 Apps Script 回傳的 uuid
     var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
     if(res.uuid&&!entry.uuid)entry.uuid=res.uuid; // 確保 entry 有 uuid
-    if(res.imgs)['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+    if(res.imgs){
+      ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+      if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images; // 自訂圖片陣列同步改存 Drive ID
+    }
     col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});localforage.setItem('gv_col',col).catch(function(){});updateStats();
     if(_huntConvertUid){var _hc=_huntConvertUid;_huntConvertUid=null;if(typeof huntMarkConverted==='function')huntMarkConverted(_hc);}
     // #4：連續建檔 — 「是」→ 保留第一層分類＋平台，直接重進上次的建檔模式；「否」→ 回收藏
@@ -4528,6 +4568,7 @@ function doUpdate(rowNum){
       entry[k]='';
     }
   });
+  _capExtraImagesSize();
   var _UF=fieldsFor(entry.category,entry.subtype);
   _normalizeEntryEnums();
   var row=_rowFromFields(entry,_UF);
@@ -4538,7 +4579,10 @@ function doUpdate(rowNum){
   shPost({action:'update',uuid:_updUuid,rowNum:rowNum,row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
     if(res.ok){
       var i=col.findIndex(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
-      if(res.imgs)['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+      if(res.imgs){
+        ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+        if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images; // 自訂圖片陣列同步改存 Drive ID
+      }
       if(i>=0)col[i].data=Object.assign({},entry);
       localforage.setItem('gv_col',col).catch(function(){});
       updateStats();filterCol();toast('已更新 ✓','ok');closeDetailSilent();resetAll();showPg('col');
@@ -8950,6 +8994,47 @@ function clearImg(k){
   var lbl2=document.getElementById('lbl-'+k);if(lbl2)lbl2.textContent='點擊上傳圖片';
   var cb=document.getElementById('clr-'+k);if(cb)cb.style.display='none';
 }
+// v47.04：自訂圖片（extra_images，最多5張，各自帶名稱）新增/移除/命名
+function addExtraImg(input){
+  var f=input&&input.files&&input.files[0];if(!f)return;
+  input.value='';
+  var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr))arr=[];
+  if(arr.length>=5){toast('最多只能新增 5 張自訂圖片','er');return;}
+  cropImageFile(f).then(function(blob){
+    var r=new FileReader();
+    r.onload=function(){
+      compressImg(r.result,1000,0.85,function(compressed){
+        arr.push({label:'',img:compressed});
+        onFld('extra_images',JSON.stringify(arr));
+        renderForm();_bindFormFocusScroll();
+      });
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){});
+}
+function removeExtraImg(idx){
+  var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr))return;
+  arr.splice(idx,1);
+  onFld('extra_images',JSON.stringify(arr));
+  renderForm();_bindFormFocusScroll();
+}
+function onExtraImgLabel(idx,val){
+  var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr)||!arr[idx])return;
+  arr[idx].label=val;
+  entry.extra_images=JSON.stringify(arr); // 直接寫入避免整表重繪打斷輸入焦點
+  edited.add('extra_images');
+}
+// 編輯表單內點自訂圖片縮圖 → 開燈箱瀏覽（清單只含自訂圖片本身，跟 hero 的全圖清單分開）
+function openExtraImgLightbox(idx){
+  var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr)||!arr.length)return;
+  window._heroLbImages=arr.filter(function(item){return item&&hasImgVal(item.img);})
+    .map(function(item){return {url:imgUrl(item.img,1000),label:item.label||'自訂圖片'};});
+  openImgLightbox(idx);
+}
 function onPriceChange(k,el){
   var wrap=el.parentNode;
   var amt=(wrap.querySelector('input[type=number]').value)||'';
@@ -9173,6 +9258,34 @@ function renderFld(f){
       '<div id="lbl-'+k+'" style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:4px;display:'+(hasImg?'block':'none')+'">'+
         (hasImg?'已上傳':'')+'</div>'+
       '<button id="clr-'+k+'" class="btn bo bs" style="width:100%;color:#ff5252;border-color:#ff5252;display:'+(hasImg?'block':'none')+'" data-k="'+k+'" onclick="clearImg(this.dataset.k)">✕ 移除圖片</button></div>';
+  }
+  if(type==='multiimg'){
+    var _exArr=[];try{_exArr=JSON.parse(v||'[]');}catch(e){_exArr=[];}
+    if(!Array.isArray(_exArr))_exArr=[];
+    var _exItems=_exArr.map(function(item,idx){
+      var eurl=hasImgVal(item&&item.img)?imgUrl(item.img,300):'';
+      return '<div class="exti-item">'+
+        '<img src="'+eurl+'" alt="" onclick="openExtraImgLightbox('+idx+')">'+
+        '<input type="text" class="exti-label" placeholder="圖片名稱" value="'+esc((item&&item.label)||'')+'" oninput="onExtraImgLabel('+idx+',this.value)">'+
+        '<button type="button" onclick="removeExtraImg('+idx+')">✕ 移除</button>'+
+      '</div>';
+    }).join('');
+    var _exCanAdd=_exArr.length<5;
+    return wrap+'<label class="fl">'+lbl+'（最多5張，目前 '+_exArr.length+'/5）</label>'+
+      (_exItems?'<div class="exti-grid">'+_exItems+'</div>':'')+
+      (_exCanAdd?(
+        '<div style="display:flex;gap:6px">'+
+          '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #00e5ff;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#00e5ff">'+
+            '<span>📷</span><span>拍照新增</span>'+
+            '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="addExtraImg(this)">'+
+          '</label>'+
+          '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#7986cb">'+
+            '<span>🖼</span><span>相簿新增</span>'+
+            '<input type="file" accept="image/*" style="display:none" onchange="addExtraImg(this)">'+
+          '</label>'+
+        '</div>'
+      ):'<div style="font-size:11px;color:#7986cb;text-align:center;padding:6px">已達 5 張上限，如需新增請先移除其他圖片</div>')+
+    '</div>';
   }
   var isM=MONO_F.has(k);
   var _NAME_OCR={zh_name:'zh',jp_name:'jp',en_name:'en'};
@@ -11038,70 +11151,31 @@ function renderGlist(){
 // ── Detail ──
 // 詳細頁照片替換控制（拍照／相簿），rowNum 與既有 onclick 慣例一致內嵌
 // v47.03：縮圖列點擊切換大圖 + 重繪目前這張圖的操作按鈕（一次只管一張，取代原本三張各自都有按鈕）
-function switchDetailImg(el){
-  if(!el)return;
-  var gallery=$('dimg-gallery');if(!gallery)return;
-  var k=el.getAttribute('data-k'),url=el.getAttribute('data-full'),rowNum=gallery.getAttribute('data-rownum');
-  gallery.setAttribute('data-active-k',k);
-  var mainImg=$('dimg-main');if(mainImg&&url)mainImg.src=url;
-  var thumbs=gallery.querySelectorAll('.vault-cover-thumb');
-  for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('on',thumbs[i]===el);}
-  var ctrls=$('dimg-main-ctrls');if(ctrls)ctrls.innerHTML=_detailImgCtrlsCompact(rowNum,k);
+// ══ v47.04：圖片燈箱 ══ 點主圖/縮圖彈出，打叉關閉，左右箭頭在 window._heroLbImages 清單內切換
+var _lbIndex=0;
+function openImgLightbox(idx){
+  var list=window._heroLbImages||[];if(!list.length)return;
+  _lbIndex=Math.max(0,Math.min(idx||0,list.length-1));
+  _lbRender();
+  var ov=$('img-lightbox-ov');if(ov){ov.classList.add('on');ov.setAttribute('aria-hidden','false');}
 }
-// v47.03：整合進 hero 封面區後空間極窄（86px），改用純圖示、無文字標籤的緊湊按鈕
-function _detailImgCtrlsCompact(rowNum,k){
-  var cam='<label title="拍照" style="border-color:#00e5ff;color:#00e5ff">📷'+
-    '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="replaceDetailImg(\''+rowNum+'\',\''+k+'\',this)"></label>';
-  var alb='<label title="相簿" style="color:#7986cb">🖼️'+
-    '<input type="file" accept="image/*" style="display:none" onchange="replaceDetailImg(\''+rowNum+'\',\''+k+'\',this)"></label>';
-  return cam+alb;
+function closeImgLightbox(){
+  var ov=$('img-lightbox-ov');if(ov){ov.classList.remove('on');ov.setAttribute('aria-hidden','true');}
 }
-// 詳細頁直接替換某張照片：壓縮 → 以既有 update 流程回寫 → 原地更新顯示（不重開詳細頁，避免重複 history）
-function replaceDetailImg(rowNum,k,input){
-  var f=input&&input.files&&input.files[0];if(!f)return;
-  if(!cfg||!cfg.url){toast('請先在設定填入試算表 URL','er',4000);return;}
-  var item=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
-  if(!item){toast('找不到此記錄','er');return;}
-  var hint=k==='spine_img'?'spine':(k==='cover_img'?'cover':'back');
-  var maxPx=k==='spine_img'?250:1000; // v23.06：與建檔表單補充照片拉齊（原420）
-  // 先進裁切器（與建檔表單一致），取消則不變更
-  cropImageFile(f).then(function(blob){
-  var r=new FileReader();
-  r.onload=function(){
-    compressImg(r.result,maxPx,0.85,function(compressed){
-      var data=Object.assign({},item.data);
-      data[k]=compressed;
-      var _UF=fieldsFor(data.category,data.subtype);
-      var row=_rowFromFields(data,_UF);
-      var _updUuid=(data.uuid&&data.uuid.length>=30)?data.uuid:
-                   ((item.uid&&typeof item.uid==='string'&&item.uid.length>=30&&item.uid.indexOf('-')>0)?item.uid:null);
-      loading('更新照片中...');
-      shPost({action:'update',uuid:_updUuid,rowNum:item.rowNum,row:row,fields:_entryFields(data),category:catInternal(data.category)||'遊戲'}).then(function(res){
-        if(!res.ok)throw new Error(res.error||'未知');
-        // 圖片改存 Drive ID（後端回傳）；本地 col 用回傳值持久化
-        if(res.imgs)['cover_img','back_img','spine_img'].forEach(function(ik){if(res.imgs[ik]!==undefined)data[ik]=res.imgs[ik];});
-        item.data=data;
-        localforage.setItem('gv_col',col).catch(function(){});
-        updateStats();filterCol();
-        // 原地更新顯示：直接以剛壓縮的圖即時呈現（避免 Drive 縮圖延遲造成破圖）
-        // v47.03：新版為大圖＋縮圖列結構，只有目前選中的那張才更新大圖，縮圖一律同步更新
-        var gallery=document.getElementById('dimg-gallery');
-        if(gallery){
-          if(gallery.getAttribute('data-active-k')===k){
-            var im=document.getElementById('dimg-main');if(im)im.src=compressed;
-          }
-          var thumb=gallery.querySelector('.vault-cover-thumb[data-k="'+k+'"]');
-          if(thumb){
-            thumb.setAttribute('data-full',compressed);
-            var timg=thumb.querySelector('img');if(timg)timg.src=compressed;
-          }
-        }
-        toast('照片已更新 ✓','ok');
-      }).catch(function(e){toast('照片更新失敗，請確認網路後重試','er',5000);}).finally(noLoad);
-    },hint);
-  };
-  r.readAsDataURL(blob);
-  }).catch(function(){ /* 取消裁切：不變更 */ });
+function lbNav(delta){
+  var list=window._heroLbImages||[];if(!list.length)return;
+  var next=_lbIndex+delta;
+  if(next<0||next>=list.length)return; // 首尾不循環，箭頭到底會變灰
+  _lbIndex=next;_lbRender();
+}
+function _lbRender(){
+  var list=window._heroLbImages||[];
+  var item=list[_lbIndex];if(!item)return;
+  var img=$('lb-img');if(img)img.src=item.url;
+  var cap=$('lb-caption');if(cap)cap.textContent=item.label||'';
+  var prev=$('lb-prev'),next=$('lb-next');
+  if(prev)prev.classList.toggle('off',_lbIndex<=0);
+  if(next)next.classList.toggle('off',_lbIndex>=list.length-1);
 }
 // ── #4 長按呼出動作選單（收藏卡片／書背）──
 // ── 長按手勢 + 動作選單（col / hunt 共用工廠）──────────
@@ -11873,22 +11947,30 @@ function detailHeroHtml(d,rowNum){
   var title=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
   var isDigital=(cat==='數位下載版');
   var sub=_cm.sub(d).filter(Boolean).join(' · ');
-  // v47.03：hero 封面區改為「主圖 + 迷你縮圖列 + 拍照/相簿」，整合原本 hero 右側留白與獨立大圖區塊，不再重複顯示
+  // v47.04：hero 封面區不再提供快速拍照/相簿按鈕，所有圖片修改一律從「編輯」進入；
+  // 點主圖／縮圖改為彈出燈箱瀏覽（含自訂圖片），燈箱有打叉關閉與左右箭頭換圖
   var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img);
   var _imgDefs=[];
-  if(hasC)_imgDefs.push({k:'cover_img',lbl:'封面',url:imgUrl(d.cover_img,300),thumb:imgUrl(d.cover_img,80)});
-  if(hasB)_imgDefs.push({k:'back_img',lbl:'封底',url:imgUrl(d.back_img,300),thumb:imgUrl(d.back_img,80)});
-  if(hasS)_imgDefs.push({k:'spine_img',lbl:'側邊',url:imgUrl(d.spine_img,300),thumb:imgUrl(d.spine_img,80)});
+  if(hasC)_imgDefs.push({lbl:'封面',url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
+  if(hasB)_imgDefs.push({lbl:'封底',url:imgUrl(d.back_img,300),full:imgUrl(d.back_img,1000),thumb:imgUrl(d.back_img,80)});
+  if(hasS)_imgDefs.push({lbl:'側邊',url:imgUrl(d.spine_img,300),full:imgUrl(d.spine_img,1000),thumb:imgUrl(d.spine_img,80)});
+  var _extraArr=[];try{_extraArr=JSON.parse(d.extra_images||'[]');}catch(e){_extraArr=[];}
+  if(Array.isArray(_extraArr)){
+    _extraArr.forEach(function(item){
+      if(item&&hasImgVal(item.img)){
+        _imgDefs.push({lbl:item.label||'自訂圖片',url:imgUrl(item.img,300),full:imgUrl(item.img,1000),thumb:imgUrl(item.img,80)});
+      }
+    });
+  }
   var _mainDef=_imgDefs[0];
-  var coverHtml='<div class="vault-cover" id="dimg-gallery" data-rownum="'+rowNum+'" data-active-k="'+(_mainDef?_mainDef.k:'')+'">'+
-    '<div class="vault-cover-main">'+(_mainDef?('<img id="dimg-main" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
+  window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
+  var coverHtml='<div class="vault-cover">'+
+    '<div class="vault-cover-main"'+(_mainDef?' onclick="openImgLightbox(0)"':'')+' style="'+(_mainDef?'cursor:pointer':'')+'">'+
+    (_mainDef?('<img src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
-      return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-k="'+im.k+'" data-full="'+im.url+'" onclick="switchDetailImg(this)" title="'+im.lbl+'"><img src="'+im.thumb+'" alt="'+im.lbl+'"></div>';
+      return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" onclick="openImgLightbox('+i+')" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
     }).join('')+'</div>';
-  }
-  if(_imgDefs.length){
-    coverHtml+='<div id="dimg-main-ctrls" class="vault-cover-actions">'+_detailImgCtrlsCompact(rowNum,_mainDef.k)+'</div>';
   }
   coverHtml+='</div>';
   var tags='';
@@ -13327,6 +13409,17 @@ function _imgToB64(src){
   });
 }
 </script>
+<!-- ══ 圖片燈箱 overlay（v47.04：點縮圖/主圖彈出大圖，打叉關閉，左右箭頭換圖）══ -->
+<div id="img-lightbox-ov" onclick="if(event.target===this)closeImgLightbox()">
+  <div class="lb-img-wrap">
+    <img id="lb-img" src="" alt="">
+    <div class="lb-close" onclick="closeImgLightbox()">✕</div>
+    <div class="lb-arrow prev" id="lb-prev" onclick="lbNav(-1)">‹</div>
+    <div class="lb-arrow next" id="lb-next" onclick="lbNav(1)">›</div>
+    <div class="lb-caption" id="lb-caption"></div>
+  </div>
+</div>
+
 <!-- ══ 圖片裁切器 overlay ══ -->
 
 <!-- ══ 自繪平台選擇器（v25.12）══ -->
