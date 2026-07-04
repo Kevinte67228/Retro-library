@@ -1,3 +1,21 @@
+## v42.20a1-revert (2026-07-03)
+
+### 變更內容
+使用者要求回滾 v42.21（移除原聲帶/畫集/公仔分類、數位遊戲與電子書改為第7種建檔方式）。前端還原至 v42.20a1 狀態（8 分類架構、數位遊戲為 Step1 獨立分類）。GS 後端完全未受 v42.21 影響，快取碰撞修正（v42.20a1）維持有效，不需重新部署 GS。v42.21 的完整程式碼已備份於 _internal/old/v42_21/，若之後想拿回來可還原。
+
+### 影響檔案
+- index.html / GameVault_v42_20_index.html
+- sw.js
+
+### GS 版本
+- 無變動（v42.20a1 的 MD5 快取修正持續有效）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-21 → gamevault-v42-20a1
+
+### 對應備份
+- _internal/old/v42_21/（回滾前的 v42.21 完整備份）
+
 ## v42.21 (2026-07-03)
 
 ### 變更內容
@@ -49,26 +67,3 @@
 
 ### 對應備份
 - _internal/old/v42_19/
-
-## v42.19 (2026-07-03)
-
-### 變更內容
-盤點報告批次 2（M2+M3，投資報酬率最高的重構）：
-- 建立 CAT_META 分類中繼資料單一事實來源：8 分類的欄位五件套（fields/selects/groups/gcol/defaults）、配色、圖示、詳情副標欄位全部一處註冊
-- fieldsFor/selectsFor/groupsFor/gcolFor/defaultsConstFor 五個分派函式從 if-chain 改為查表（各 9 行 → 1 行）
-- _relCatColor、儀表板 catColors、detailHeroHtml 七層巢狀三元圖示/副標、收藏卡片圖示鏈全部改查 CAT_META
-- 分類 if-chain 判斷從 113 處降至 58 處；剩餘為各分類邏輯真正不同的合理分支（儀表板模型/卡片標籤/AI prompt），刻意保留不硬塞查表
-- 根治 v42.15~17 連續三版「新增分類後某處漏更新」的系統性問題：未來新增分類只需在 CAT_META 註冊一筆＋定義五件套常數
-
-### 影響檔案
-- index.html / GameVault_v42_19_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-18 → gamevault-v42-19
-
-### 對應備份
-- _internal/old/v42_18/
