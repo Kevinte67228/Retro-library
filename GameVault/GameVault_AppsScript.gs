@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v44.01         ║
+// ║  GameVault — Google Apps Script 後端  v45.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -147,13 +147,14 @@ const ARTBOOK_HEADERS = [
   'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
 ];
 
-// ── 公仔／模型欄位（v43.01 新增，比照前端 FIGURE_FIELDS）──
+// ── 公仔／模型欄位（v43.01 新增，v45.01 擴充立體收藏專屬欄位，比照前端 FIGURE_FIELDS）──
 const FIGURE_HEADERS = [
-  'category','primary_name','jp_name','zh_name','en_name',
-  'character','series','brand','scale','material',
+  'category','subtype','series','primary_name','character','jp_name','zh_name','en_name',
+  'brand','sculptor','scale','material','dimensions',
   'manufacturer','release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','completeness','storage_location',
-  'buy_date','buy_source','buy_price','market_value','market_value_confidence',
+  'barcode','code','collect_status','box_condition','condition','completeness','storage_location',
+  'buy_date','purchase_channel','buy_source','buy_price','local_cost',
+  'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
 ];
  
