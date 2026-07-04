@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v47.01         ║
+// ║  GameVault — Google Apps Script 後端  v48.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -56,7 +56,7 @@ const GAME_HEADERS = [
   'collect_status','completeness','bundle',
   'buy_date','buy_price','buy_source',
   'play_status','rating',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at',
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
   'storage_location','market_value','resale_price','resale_date','dlc_status','bonus_code_status',
   'voice_language','subtitle_language',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
@@ -73,7 +73,7 @@ const BOOK_HEADERS = [
   'collect_status','completeness','bundle',
   'buy_date','buy_price','buy_source',
   'rating',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at',
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
   'applicable_platform',
   'storage_location','market_value','resale_price','resale_date',
   'page_count','book_size','binding','print_run',
@@ -90,7 +90,7 @@ const CONSOLE_HEADERS = [
   'collect_status','completeness','bundle',
   'buy_date','buy_price','buy_source',
   'working_status','firmware',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at',
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
   'storage_location','market_value','resale_price','resale_date',
   'warranty_status','test_date','fault_notes',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
@@ -106,7 +106,7 @@ const PERIPH_HEADERS = [
   'collect_status','completeness','bundle',
   'buy_date','buy_price','buy_source',
   'working_status',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at',
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
   'code',
   'storage_location','market_value','resale_price','resale_date',
   'warranty_status','test_date','fault_notes',
@@ -136,7 +136,7 @@ const _DIGI_TAIL = [
   'file_format','download_size','file_storage_location',
   'release_date','suggest_price','region','edition',
   'collect_status','buy_date','buy_price','redemption_key',
-  'summary','ref_link','cover_img','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','extra_images','related_code','notes','uuid','created_at'
 ];
 // 1. 下載版遊戲
 const DIGIGAME_HEADERS = _DIGI_HEAD.concat([
@@ -180,7 +180,7 @@ const OST_HEADERS = [
   'barcode','code','collect_status','obi_status','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost','bonus_items',
   'market_value','market_value_confidence',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
 ];
 
 // ── 動漫/美術設定集欄位（v43.01 新增，比照前端 ARTBOOK_FIELDS）──
@@ -191,7 +191,7 @@ const ARTBOOK_HEADERS = [
   'barcode','code','collect_status','condition','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
 ];
 
 // ── 公仔／模型欄位（v43.01 新增，v45.01 擴充立體收藏專屬欄位，比照前端 FIGURE_FIELDS）──
@@ -202,7 +202,7 @@ const FIGURE_HEADERS = [
   'barcode','code','collect_status','box_condition','condition','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
-  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
 ];
  
 // ── 取得/建立工作表 ────────────────────────────────
@@ -348,6 +348,33 @@ function resolveType(category, subtype) {
 // 圖片改存 Google Drive，工作表格子只存 file ID（避免 base64 撐爆儲存與傳輸）
 const IMG_FOLDER_NAME = 'GameVault_Images';
 const IMG_COLS = ['cover_img', 'back_img', 'spine_img'];
+// v47.04：5 張自訂圖片欄位，存成 JSON 陣列 [{label,img}]，img 可能是 base64(新上傳)或 Drive ID(已存在)，
+// 跟 IMG_COLS 的單一 base64 欄位不同格式，需要另外處理，不能塞進 IMG_COLS 迴圈
+const EXTRA_IMG_COL = 'extra_images';
+// 處理 extra_images 欄位：陣列內每張圖各自呼叫 saveImgToDrive，回傳新 JSON 字串與目前有效的 ID 清單
+function processExtraImages(jsonStr) {
+  if (!jsonStr) return { json: '', ids: [] };
+  let arr;
+  try { arr = JSON.parse(jsonStr); } catch (e) { return { json: jsonStr, ids: [] }; }
+  if (!Array.isArray(arr)) return { json: jsonStr, ids: [] };
+  const ids = [];
+  arr.forEach(function(item) {
+    if (item && typeof item === 'object') {
+      item.img = saveImgToDrive(item.img || '');
+      if (isDriveId(item.img)) ids.push(item.img);
+    }
+  });
+  return { json: JSON.stringify(arr), ids: ids };
+}
+// 從 extra_images JSON 字串取出目前所有 Drive ID（不上傳，供刪除/孤兒檔比對用）
+function extractExtraImageIds(jsonStr) {
+  if (!jsonStr) return [];
+  try {
+    const arr = JSON.parse(jsonStr);
+    if (!Array.isArray(arr)) return [];
+    return arr.map(function(item) { return item && item.img; }).filter(function(v) { return isDriveId(v); });
+  } catch (e) { return []; }
+}
  
 // 取得/建立圖片資料夾，ID 快取於指令碼屬性；並確保資料夾維持私人（只做一次）
 function getImgFolder() {
@@ -445,10 +472,12 @@ function collectUsedImgIds_() {
     if (!sheet || sheet.getLastRow() < 2) return;
     const headers = def[1];
     const idxs = IMG_COLS.map(function(c) { return headers.indexOf(c); }).filter(function(i) { return i >= 0; });
-    if (!idxs.length) return;
+    const eiIdxCollect = headers.indexOf(EXTRA_IMG_COL);
+    if (!idxs.length && eiIdxCollect < 0) return;
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
     data.forEach(function(row) {
       idxs.forEach(function(i) { if (isDriveId(row[i])) used[row[i]] = true; });
+      if (eiIdxCollect >= 0) extractExtraImageIds(row[eiIdxCollect]).forEach(function(id) { used[id] = true; });
     });
   });
   return used;
@@ -706,6 +735,13 @@ function addRow(row, type, fields) {
     const idx = headers.indexOf(col);
     if (idx >= 0) { padded[idx] = saveImgToDrive(padded[idx]); imgs[col] = padded[idx]; }
   });
+  // v47.04：extra_images 是 JSON 陣列欄位，個別處理陣列內每張圖，不走上面的單欄位迴圈
+  const eiIdxAdd = headers.indexOf(EXTRA_IMG_COL);
+  if (eiIdxAdd >= 0) {
+    const processedAdd = processExtraImages(padded[eiIdxAdd]);
+    padded[eiIdxAdd] = processedAdd.json;
+    imgs[EXTRA_IMG_COL] = processedAdd.json;
+  }
   sheet.appendRow(padded);
   const newRow = sheet.getLastRow();
   // created_at 防呆（E1）：強制該格為純文字格式並以字串重寫，避免 Sheets 自動把
@@ -763,6 +799,17 @@ function updateRow(rowNum, row, type, fields) {
     imgs[col] = newVal;
     if (isDriveId(oldVal) && oldVal !== newVal) trashImg(oldVal); // 舊檔被換掉或清空
   });
+  // v47.04：extra_images 是 JSON 陣列欄位，比對舊/新陣列的 ID 差異，被移除的圖才回收
+  const eiIdxUpd = headers.indexOf(EXTRA_IMG_COL);
+  if (eiIdxUpd >= 0) {
+    const oldExtraIds = extractExtraImageIds(oldRow[eiIdxUpd]);
+    const processedUpd = processExtraImages(padded[eiIdxUpd]);
+    padded[eiIdxUpd] = processedUpd.json;
+    imgs[EXTRA_IMG_COL] = processedUpd.json;
+    const newExtraIdSet = {};
+    processedUpd.ids.forEach(function(id) { newExtraIdSet[id] = 1; });
+    oldExtraIds.forEach(function(id) { if (!newExtraIdSet[id]) trashImg(id); });
+  }
   sheet.getRange(actualRow, 1, 1, headers.length).setValues([padded]);
   // created_at 防呆（E1）：與 addRow 一致，強制純文字避免回讀變 ISO
   const _caIdxU = headers.indexOf('created_at');
@@ -805,6 +852,8 @@ function deleteRow(rowNum, type, keepImg) {
       const idx = headers.indexOf(col);
       if (idx >= 0) trashImg(rowVals[idx]);
     });
+    const eiIdxDel = headers.indexOf(EXTRA_IMG_COL);
+    if (eiIdxDel >= 0) extractExtraImageIds(rowVals[eiIdxDel]).forEach(function(id) { trashImg(id); });
   }
   sheet.deleteRow(actualRow);
   return { ok: true, sheetType: resolvedType };
@@ -842,6 +891,8 @@ function deleteManyRows(keys, defType, keepImg) {
           if (!keepImg) {
             const rowVals = sheet.getRange(r, 1, 1, headers.length).getValues()[0];
             IMG_COLS.forEach(function(col) { const idx = headers.indexOf(col); if (idx >= 0) trashImg(rowVals[idx]); });
+            const eiIdxDelMany = headers.indexOf(EXTRA_IMG_COL);
+            if (eiIdxDelMany >= 0) extractExtraImageIds(rowVals[eiIdxDelMany]).forEach(function(id) { trashImg(id); });
           }
           sheet.deleteRow(r);
           deleted++;
