@@ -503,11 +503,11 @@ body{
 .df .dfv{font-size:13px;word-break:break-all}
 .df.full{grid-column:1/-1}
 .vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
-.vault-cover{width:86px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
-.vault-cover-main{width:86px;height:86px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:34px}
+.vault-cover{width:172px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
+.vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px}
 .vault-cover-main img{width:100%;height:100%;object-fit:cover;display:block}
-.vault-cover-thumbs{display:flex;gap:3px}
-.vault-cover-thumb{width:100%;height:24px;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45;flex:1;min-width:0}
+.vault-cover-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.vault-cover-thumb{aspect-ratio:1/1;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45}
 .vault-cover-thumb.on{border-color:#00e5ff}
 .vault-cover-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .vault-main{flex:1;min-width:0}
@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v48.01a1';
+const APP_VERSION='v48.01a2';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
