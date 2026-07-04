@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v45.01         ║
+// ║  GameVault — Google Apps Script 後端  v46.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -114,14 +114,16 @@ const HUNT_HEADERS = [
   'notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'
 ];
 
-// ── 數位下載版欄位（v43.01 新增，比照前端 DIGITAL_FIELDS）──
+// ── 數位下載版欄位（v43.01 新增，v46.01 擴充授權/檔案專屬欄位，比照前端 DIGITAL_FIELDS）──
 const DIGITAL_HEADERS = [
   'category','subtype','primary_name','jp_name','zh_name','en_name','series',
   'platform','edition','region','voice_language','subtitle_language',
-  'store','account','purchase_method','dlc_owned',
+  'store','account','purchase_method','digital_id','drm_status',
+  'file_format','download_size','file_storage_location',
+  'dlc_owned',
   'genre','players','features','age_rating',
   'developer','publisher','release_date','suggest_price',
-  'collect_status','buy_date','buy_price','download_size',
+  'collect_status','buy_date','buy_price','redemption_key',
   'summary','ref_link','cover_img','related_code','notes','uuid','created_at'
 ];
 
