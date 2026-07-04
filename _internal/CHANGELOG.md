@@ -1,3 +1,28 @@
+## v48.01 (2026-07-05)
+
+### 變更內容
+圖片系統大改版：燈箱瀏覽 + 5 張自訂圖片，全部 15 組分類欄位表通用：
+- **移除檢視頁快速編輯**：hero 封面區不再有拍照/相簿快速按鈕，所有圖片修改一律從「編輯」進入（編輯表單本來就有完整的拍照/更換/移除功能，不受影響）
+- **圖片燈箱**：點主圖或縮圖彈出全螢幕大圖，右上打叉關閉，左右箭頭切換（含封面/封底/側邊與自訂圖片），首尾不循環、箭頭到底會變灰
+- **新增 5 張自訂圖片**：所有分類（遊戲/書籍/主機/週邊/原聲帶/動漫美術/公仔/數位下載版8子類型）新增 `extra_images` 欄位，最多 5 張，每張可自訂名稱（作為燈箱說明文字），存成 JSON 陣列
+- 編輯表單新增對應的自訂圖片管理區塊：縮圖+名稱輸入框+移除按鈕，未滿5張時顯示拍照/相簿新增入口
+- GS 後端新增 `extra_images` 專屬處理：陣列內圖片各自上傳 Drive、更新時比對新舊差異回收被移除的圖檔、刪除整筆記錄時一併清理、孤兒檔清理掃描也涵蓋此欄位
+- 自我檢查：15 組前端欄位 100% 對應後端欄位表；Drive 上傳/回收邏輯全數驗證通過
+
+### 影響檔案
+- index.html / GameVault_v48_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
+
+### GS 版本
+- v47 → v48（新增 EXTRA_IMG_COL 常數與 processExtraImages/extractExtraImageIds 函式；addRow/updateRow/deleteRow/deleteManyRows/collectUsedImgIds_ 皆同步更新；15 張工作表欄位表新增 extra_images 欄）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v47-03 → gamevault-v48-01
+
+### 對應備份
+- _internal/old/v47_03/
+
 ## v47.03 (2026-07-04)
 
 ### 變更內容
@@ -45,30 +70,4 @@
 
 ## v47.01a2 (2026-07-04)
 - 更正 v47.01a1：改為全部 8 種頂層分類（遊戲/書籍/主機/週邊/動漫美術/公仔/原聲帶/數位下載版）建檔表單都只預設展開「圖片紀錄」與各分類的識別/主要資訊區塊，其餘一律收折（原本誤植成只有數位下載版適用）
-
-## v47.01 (2026-07-04)
-
-### 變更內容
-數位下載版整個重新規劃：捨棄單一表格硬塞 8 種子類型的設計，改為每個子類型各自獨立欄位表＋獨立工作表：
-- 新增 8 組欄位表：下載版遊戲(DIGIGAME)、追加下載內容(DIGIDLC)、電子書漫畫(DIGICOMIC)、電子書畫冊(DIGIARTBOOK)、電子書攻略(DIGIGUIDE)、電子書雜誌(DIGIMAG)、數位音源(DIGIAUDIO)、數位影音(DIGIVIDEO)，各自只保留該類型真正需要的欄位（例如電子書不再看到遊戲類型/遊戲人數，數位音源改看作曲/發行廠牌/收錄曲數，數位影音改看製作公司/集數/片長）
-- 共用「識別資訊表頭」與「商店/檔案/收藏/補充資訊表尾」（store/account/drm_status/file_format/collect_status 等），避免重複定義
-- `_catMeta(cat, subtype)` 新增子類型分派：數位下載版依目前選定或資料本身的 subtype 動態決定欄位/選項/群組/顏色/預設值，欄位表單選單改變 subtype 會即時重繪整張表單
-- Step1 平台選擇區塊改依子類型判斷是否顯示（只有下載版遊戲／追加下載內容有平台欄位）
-- GS 後端新增 DigiGame/DigiDLC/DigiComic/DigiArtbook/DigiGuide/DigiMag/DigiAudio/DigiVideo 八個獨立工作表，`resolveType()` 依 category+subtype 分派，取代原本單一 Digital 表
-- 新增一次性遷移工具 `migrateDigitalToSubtypeSheets()` / `deleteDigitalSheetAfterMigration()`，供使用者手動於 Apps Script 執行，把舊 Digital 表資料依子類型搬到 8 個新工作表
-- 自我檢查：8 組前端欄位 100% 對應各自後端欄位表；resolveType 分派邏輯全數驗證通過
-
-### 影響檔案
-- index.html / GameVault_v47_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
-
-### GS 版本
-- v46 → v47（新增 8 個數位下載版子類型獨立工作表與欄位表，resolveType/getSheet/listAll/findRowByUuid/fixSheetHeaders/backfillUuids/collectUsedImgIds_ 皆同步更新，並新增一次性遷移工具）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v46-01 → gamevault-v47-01
-
-### 對應備份
-- _internal/old/v46_01/
 
