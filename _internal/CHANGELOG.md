@@ -1,3 +1,28 @@
+## v42.22 (2026-07-04)
+
+### 變更內容
+分類架構改版：
+- 「數位遊戲」更名為「數位下載版」；新增子類型（下載版遊戲／電子書-攻略／電子書-漫畫／電子書-畫冊／電子書-美術設定／電子書-雜誌／動畫／原聲帶／其他）
+- 「畫集」更名為「動漫/美術設定集」，取代原畫集分類；新增子類型（漫畫／動畫／美術書／設定集／其他）
+- 子類型視為可獨立篩選/統計的次分類，顆粒度比照四大分類（新增 SUBTYPE_META 單一事實來源，比照 CAT_META 模式）
+- Step1 第二排分類卡片順序調整為：動漫/美術設定集 → 公仔/模型 → 原聲帶 → 數位下載版
+- 新增「選擇類型」步驟（僅上述兩分類顯示），沿用平台選擇器（openPlatPicker）bottom-sheet 元件，新增 customSrc/title 參數支援重用
+- catInternal() 新增舊分類值別名對應（數位遊戲/畫集/設定集），既有收藏資料自動歸類到新分類，不改寫試算表資料（邏輯遷移，非物理遷移）
+- 欄位表單（AI 辨識 schema 等）維持沿用現有數位遊戲/畫集規格，留待下一階段依子類型細化
+
+### 影響檔案
+- index.html / GameVault_v42_22_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端分類架構調整，不動後端與試算表資料）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-20a1 → gamevault-v42-22
+
+### 對應備份
+- _internal/old/v42_20a1/（同時作為使用者要求的永久備份，往後 5 版輪替清理時排除）
+
 ## v42.20a1-revert (2026-07-03)
 
 ### 變更內容
@@ -44,26 +69,3 @@
 ## v42.20a1 (2026-07-03)
 - 修正 GS 後端 fetchStorePageProxy 快取鍵碰撞 bug：舊版用 base64 截斷前 40 碼當快取鍵，Steam 等共同前綴超過 30 bytes 的網址會算出同一把鍵，導致貼任何 Steam 連結都回傳第一次快取的結果（使用者回報一直顯示 Watch_Dogs 2）；改用 MD5 雜湊整個網址內容，已用實際網址驗證修法有效。純 GS 修正，前端無變動，需手動部署 GS
 
-## v42.20 (2026-07-03)
-
-### 變更內容
-盤點報告批次 3（M4-M7 / L5；L3 依既有註解決策保留不移除）：
-- M7：cfg 持久化統一——新增 _persistCfg()（全量）與 _persistCfgKeys(patch)（部分合併，避免過期記憶體覆蓋其他欄位）兩個共用入口，取代 9 處分散的 localStorage 直寫（slPersist/acPersist/cmPersist/匯入設定/saveCfg/fx/region/建檔記憶）
-- M4：篩選面板 facet 依分類過濾——__condition/__complete/__todo 三個永遠有 fallback 值的虛擬 facet 加 notCats:['數位遊戲']，選數位遊戲時不再顯示無意義的品相/完整度篩選；欄位型 facet 原本就會依「範圍內有無值」自動隱藏，不需額外處理
-- M5：商店連結抓取失敗訊息加「✏️ 改用手動建檔（保留此網址）」按鈕，一鍵切換並將網址帶入 ref_link、自動推斷商店
-- M6：14 處動態產生的 <img> 補齊 alt 屬性（預覽圖補描述文字、裝飾縮圖補空 alt）
-- L5：Service Worker 註冊加 updatefound 監聽，新版本安裝完成時 toast 提示重新整理更新
-- L3：GS search action 經查程式碼已有註解標明「刻意保留供手動 GET 測試」，屬既有決策，保留不移除（避免為 Low 項目強迫手動重新部署 GS）
-
-### 影響檔案
-- index.html / GameVault_v42_20_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-19 → gamevault-v42-20
-
-### 對應備份
-- _internal/old/v42_19/
