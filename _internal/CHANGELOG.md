@@ -1,3 +1,28 @@
+## v42.21 (2026-07-03)
+
+### 變更內容
+重大架構調整：移除原聲帶/畫集/公仔三個分類；「數位遊戲」從獨立 Step1 分類降階為「遊戲」分類專屬的第 7 種建檔方式；新增「電子書」作為「書籍」分類專屬的第 7 種建檔方式
+- Step1 分類卡片改回 4 張（遊戲/書籍/主機/週邊），移除原聲帶/畫集/公仔/數位遊戲卡片
+- Step4 建檔方式：商品條碼/商品編碼/圖片辨識/手動建檔/條碼＋照片/編碼＋照片 6 種恆常顯示（不再依分類隱藏）；「數位遊戲」卡片只在選了「遊戲」分類時出現，「電子書」卡片只在選了「書籍」分類時出現，兩者皆為滿版橫幅樣式且互斥顯示，不論哪個出現都撐滿整排、對齊其餘 6 張卡片
+- 新增 ELECBOOK_FIELDS 電子書欄位五件套（作者/系列/購入平台/購入帳號/取得方式/類型/格式等），CAT_META 註冊，不含條碼/品相/保管位置/估值（比照數位遊戲無實體概念）
+- 新增電子書建檔流程：initEbookLinkMode/ebookLinkFetch/_inferBookStoreFromUrl/ebookLinkToManual，共用同一支 GS fetchStorePageProxy 後端（無需異動 GS），商店推斷涵蓋 Kindle/Kobo/BookWalker/Readmoo/Google Play 圖書/Apple Books
+- 點擊「數位遊戲」／「電子書」卡片時強制覆寫 _selectedType 為對應分類（不沿用 Step1 選的遊戲/書籍），確保實際儲存的分類正確
+- 移除三個分類的所有相關程式碼：欄位五件套、CAT_META 登記、catInternal 別名、AI_CAT_SPEC、COMP_COMPONENTS、卡片標籤 CSS/邏輯、收藏頁統計格、統計頁下拉選單與儀表板模型、FACETS 排除清單
+- 收藏頁總計列統計格數位遊戲/電子書分類正確計數；統計頁下拉選單與 catMap 同步更新
+
+### 影響檔案
+- index.html / GameVault_v42_21_index.html
+- sw.js
+
+### GS 版本
+- 無（電子書流程共用既有 fetchStorePageProxy，無需異動 GS）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-20 → gamevault-v42-21
+
+### 對應備份
+- _internal/old/v42_20/
+
 ## v42.20a1 (2026-07-03)
 - 修正 GS 後端 fetchStorePageProxy 快取鍵碰撞 bug：舊版用 base64 截斷前 40 碼當快取鍵，Steam 等共同前綴超過 30 bytes 的網址會算出同一把鍵，導致貼任何 Steam 連結都回傳第一次快取的結果（使用者回報一直顯示 Watch_Dogs 2）；改用 MD5 雜湊整個網址內容，已用實際網址驗證修法有效。純 GS 修正，前端無變動，需手動部署 GS
 
@@ -47,26 +72,3 @@
 
 ### 對應備份
 - _internal/old/v42_18/
-
-## v42.18 (2026-07-03)
-
-### 變更內容
-盤點報告批次 1（H1-H3 / L1 / L2 / L4 / M1 部分）：
-- 新增共用防連點守衛 _btnGuard/_btnRelease，套用至 digitalLinkFetch（商店連結抓取）、updateFxLive（匯率更新）、clearAll（清除資料）、loadSamples（樣本匯入）四個實際有風險的按鈕；盤點清單中 saveCfg/huntLensToHunt/downloadManual/toggleHelp 經人工複核為純本地操作誤判，不需防護
-- AI_CAT_SPEC 補上「數位遊戲」條目（v42.14a6 開放圖片辨識入口後的規格缺口），數位遊戲截圖辨識欄位（store/platform 等）現在對得上
-- 收藏頁總計列加右緣 fade 遮罩提示可橫向捲動，捲到底自動消失
-- 移除死函式 barShowManual、孤兒 CSS .ec-card-full 系列
-- 3 個 <40px 觸控目標按鈕統一調至 40px
-
-### 影響檔案
-- index.html / GameVault_v42_18_index.html
-- sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-17 → gamevault-v42-18
-
-### 對應備份
-- _internal/old/v42_17/
