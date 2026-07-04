@@ -520,14 +520,14 @@ body{
 /* v47.04：圖片燈箱（點縮圖/主圖彈出大圖，打叉關閉，左右箭頭換圖） */
 #img-lightbox-ov{display:none;position:fixed;inset:0;background:rgba(5,8,16,.92);z-index:9000;align-items:center;justify-content:center}
 #img-lightbox-ov.on{display:flex}
-.lb-img-wrap{position:relative;max-width:94vw;max-height:82vh;display:flex;align-items:center;justify-content:center}
+.lb-img-wrap{max-width:94vw;max-height:82vh;display:flex;align-items:center;justify-content:center}
 .lb-img-wrap img{max-width:94vw;max-height:82vh;object-fit:contain;border-radius:8px}
-.lb-close{position:absolute;top:-42px;right:0;width:36px;height:36px;border-radius:50%;background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(20,27,48,.85);border:1px solid #1e2a45;color:#e8eaf6;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none}
-.lb-arrow.prev{left:-50px}
-.lb-arrow.next{right:-50px}
-.lb-arrow.off{opacity:.25;pointer-events:none}
-.lb-caption{position:absolute;bottom:-32px;left:0;right:0;text-align:center;color:#9fa8c8;font-size:12px}
+.lb-close{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;width:38px;height:38px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9001;backdrop-filter:blur(3px)}
+.lb-arrow{position:fixed;top:50%;transform:translateY(-50%);width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9001;backdrop-filter:blur(3px)}
+.lb-arrow.prev{left:8px}
+.lb-arrow.next{right:8px}
+.lb-arrow.off{opacity:.2;pointer-events:none}
+.lb-caption{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:60px;right:60px;text-align:center;color:#9fa8c8;font-size:13px}
 .vault-name{font-size:15px;font-weight:700;line-height:1.35;margin-bottom:4px;overflow-wrap:anywhere}
 .vault-sub{font-size:11px;color:#9fa8c8;line-height:1.5;margin-bottom:8px}
 .vault-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v48.01';
+const APP_VERSION='v48.01a1';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11153,6 +11153,21 @@ function renderGlist(){
 // v47.03：縮圖列點擊切換大圖 + 重繪目前這張圖的操作按鈕（一次只管一張，取代原本三張各自都有按鈕）
 // ══ v47.04：圖片燈箱 ══ 點主圖/縮圖彈出，打叉關閉，左右箭頭在 window._heroLbImages 清單內切換
 var _lbIndex=0;
+// v47.05：hero 封面區——點縮圖只切換主圖預覽，不開燈箱；點主圖本身才彈出燈箱瀏覽
+function switchHeroCoverImg(el){
+  if(!el)return;
+  var gallery=$('hero-cover-gallery');if(!gallery)return;
+  var idx=el.getAttribute('data-idx'),url=el.getAttribute('data-url');
+  gallery.setAttribute('data-active-idx',idx);
+  var mainImg=$('hero-cover-main-img');if(mainImg&&url)mainImg.src=url;
+  var thumbs=gallery.querySelectorAll('.vault-cover-thumb');
+  for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('on',thumbs[i]===el);}
+}
+function openHeroLightbox(){
+  var gallery=$('hero-cover-gallery');if(!gallery)return;
+  var idx=parseInt(gallery.getAttribute('data-active-idx')||'0',10);
+  openImgLightbox(idx);
+}
 function openImgLightbox(idx){
   var list=window._heroLbImages||[];if(!list.length)return;
   _lbIndex=Math.max(0,Math.min(idx||0,list.length-1));
@@ -11964,12 +11979,12 @@ function detailHeroHtml(d,rowNum){
   }
   var _mainDef=_imgDefs[0];
   window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
-  var coverHtml='<div class="vault-cover">'+
-    '<div class="vault-cover-main"'+(_mainDef?' onclick="openImgLightbox(0)"':'')+' style="'+(_mainDef?'cursor:pointer':'')+'">'+
-    (_mainDef?('<img src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
+  var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
+    '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()"':'')+' style="'+(_mainDef?'cursor:pointer':'')+'">'+
+    (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
-      return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" onclick="openImgLightbox('+i+')" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
+      return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
     }).join('')+'</div>';
   }
   coverHtml+='</div>';
