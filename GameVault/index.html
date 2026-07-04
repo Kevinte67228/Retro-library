@@ -435,9 +435,7 @@ body{
 .bk-cat-console{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .bk-cat-periph{color:#ffab40;border-color:#ffab40;background:rgba(255,171,64,.08)}
 .bk-cat-digital{color:#40c4ff;border-color:#40c4ff;background:rgba(64,196,255,.08)}
-.bk-cat-ost{color:#ff8a65;border-color:#ff8a65;background:rgba(255,138,101,.08)}
-.bk-cat-artbook{color:#aed581;border-color:#aed581;background:rgba(174,213,129,.08)}
-.bk-cat-figure{color:#f06292;border-color:#f06292;background:rgba(240,98,146,.08)}
+.bk-cat-ebook{color:#ba68c8;border-color:#ba68c8;background:rgba(186,104,200,.08)}
 .bk-genre{color:#e1a8ff;border-color:#ce93d8;background:rgba(206,147,216,.08)}
 .bk-cond{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:11px;font-weight:700}
 .bk-state{color:#9fa8c8;border-color:#3a4b72;background:rgba(42,58,90,.18)}
@@ -701,6 +699,8 @@ body{
 .ec-grid-4 .mb-ico svg{width:17px;height:17px}
 /* Step4 長型卡（v26.04）：條碼＋照片／編碼＋照片橫跨 2 格，圖示左、文字右，與上排對齊 */
 .mb-wide{grid-column:span 2;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;padding:10px 14px;min-height:0;text-align:left}
+/* v42.21：建檔方式第7種卡片（數位遊戲/電子書）撐滿整行，兩者互斥顯示，不論哪個出現都對齊整排 */
+.mb-full{grid-column:1/-1;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;padding:12px 14px;min-height:0;text-align:left}
 .mb-wide .mb-txt{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;text-align:center}
 /* Step1 第五張分類卡（數位遊戲）撐滿整行，避免旁邊留白破版（v42.18）*/
 /* v42.18：ec-card-full 系列已於 v42.15 改回普通卡片後移除 */
@@ -849,18 +849,6 @@ body{
             <div class="ec-card" id="ec-periph" data-cat="週邊" onclick="selectEntryCat('週邊')">
               <div class="eci">🎧</div><div class="ect">週邊</div><div class="ecd">Peripherals</div>
             </div>
-            <div class="ec-card" id="ec-digital" data-cat="數位遊戲" onclick="selectEntryCat('數位遊戲')">
-              <div class="eci">💾</div><div class="ect">數位遊戲</div><div class="ecd">Digital</div>
-            </div>
-            <div class="ec-card" id="ec-ost" data-cat="原聲帶" onclick="selectEntryCat('原聲帶')">
-              <div class="eci">💿</div><div class="ect">原聲帶</div><div class="ecd">Soundtrack</div>
-            </div>
-            <div class="ec-card" id="ec-artbook" data-cat="畫集" onclick="selectEntryCat('畫集')">
-              <div class="eci">🖼️</div><div class="ect">畫集</div><div class="ecd">Artbook</div>
-            </div>
-            <div class="ec-card" id="ec-figure" data-cat="公仔" onclick="selectEntryCat('公仔')">
-              <div class="eci">🎎</div><div class="ect">公仔/模型</div><div class="ecd">Figure</div>
-            </div>
           </div>
           <!-- Step 2：商品區域（v23.03→卡片化 v25.07）：影響 API 路由優先序與 AI prompt；持久化進 cfg -->
           <div style="border-top:2px solid #69f0ae;padding-top:12px;margin-top:12px">
@@ -908,10 +896,6 @@ body{
                 <div class="mb-ico" style="background:rgba(105,240,174,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#69f0ae" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
                 <div class="ect">手動建檔</div><div class="ecd">直接填寫</div>
               </div>
-              <div class="ec-card mb-wide" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
-                <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
-                <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上商店頁網址自動抓資料</div></div>
-              </div>
               <div class="ec-card mb-wide" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
                 <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
                 <div class="mb-ico" style="background:rgba(206,147,216,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ce93d8" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/><circle cx="20" cy="5" r="2.5" fill="#ce93d8" stroke="none"/></svg></div>
@@ -920,6 +904,15 @@ body{
               <div class="ec-card mb-wide" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
                 <div class="mb-ico" style="background:rgba(128,203,196,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#80cbc4" stroke-width="1.5"><rect x="3" y="7" width="10" height="10" rx="2"/><path d="M15 8h4M15 12h4M15 16h2"/><circle cx="20" cy="8" r="1.5" fill="#80cbc4" stroke="none"/></svg></div>
                 <div class="mb-txt"><div class="ect">編碼＋照片</div><div class="ecd">精確比對</div></div>
+              </div>
+              <!-- v42.21：數位遊戲／電子書改為依 Step1 分類顯示的第 7 種建檔方式，滿版橫幅、兩者互斥顯示，不影響前 6 種對齊 -->
+              <div class="ec-card mb-full" id="mb-digital" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
+                <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
+                <div class="mb-txt"><div class="ect">💾 數位遊戲</div><div class="ecd">貼上商店頁網址自動抓資料（PSN／Steam／eShop 等）</div></div>
+              </div>
+              <div class="ec-card mb-full" id="mb-ebook" onclick="pagePickMethod('initEbookLinkMode')" style="display:none">
+                <div class="mb-ico" style="background:rgba(186,104,200,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ba68c8" stroke-width="1.5"><path d="M12 6.5C10.5 5.5 8 5 4 5v14c4 0 6.5.5 8 1.5m0-14c1.5-1 4-1.5 8-1.5v14c-4 0-6.5.5-8 1.5m0-14v14"/></svg></div>
+                <div class="mb-txt"><div class="ect">📱 電子書</div><div class="ecd">貼上商店頁網址自動抓資料（Kindle／Kobo／BookWalker 等）</div></div>
               </div>
             </div>
           </div>
@@ -979,6 +972,18 @@ body{
             <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 部分商店頁（如 PSN 網頁版）內容由 JS 動態載入，可能抓不到資料；若失敗請改用手動建檔。</div>
             <button type="button" class="btn bp bw" onclick="digitalLinkFetch()">🔗 抓取並自動填寫</button>
             <div id="digital-link-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:10px"></div>
+          </div>
+        </div>
+        <div id="ebook-link-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
+          <!-- 電子書：貼上商店頁網址自動抓資料（v42.21）-->
+          <div style="padding:0 16px">
+            <div style="font-size:12px;color:#7986cb;margin-bottom:6px">貼上商店頁網址（Kindle／Kobo／BookWalker／Readmoo／Google Play 圖書 等商品頁）</div>
+            <div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">例如：https://www.bookwalker.com.tw/product/...</div>
+            <input class="fi" id="ebook-link-inp" type="url" inputmode="url" placeholder="https://..."
+              style="font-size:14px;margin-bottom:10px">
+            <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 部分商店頁內容由 JS 動態載入，可能抓不到資料；若失敗請改用手動建檔。</div>
+            <button type="button" class="btn bp bw" onclick="ebookLinkFetch()">🔗 抓取並自動填寫</button>
+            <div id="ebook-link-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:10px"></div>
           </div>
         </div>
         <div id="bar-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
@@ -1220,9 +1225,7 @@ body{
           <div class="si2" id="sf-c" onclick="setF('主機')"><div class="sv2" id="st-c">0</div><div class="sl2">主機</div></div>
           <div class="si2" id="sf-p" onclick="setF('週邊')"><div class="sv2" id="st-p">0</div><div class="sl2">週邊</div></div>
           <div class="si2" id="sf-d" onclick="setF('數位遊戲')"><div class="sv2" id="st-d">0</div><div class="sl2">數位</div></div>
-          <div class="si2" id="sf-o" onclick="setF('原聲帶')"><div class="sv2" id="st-o">0</div><div class="sl2">原聲帶</div></div>
-          <div class="si2" id="sf-a" onclick="setF('畫集')"><div class="sv2" id="st-a">0</div><div class="sl2">畫集</div></div>
-          <div class="si2" id="sf-f" onclick="setF('公仔')"><div class="sv2" id="st-f">0</div><div class="sl2">公仔</div></div>
+          <div class="si2" id="sf-e" onclick="setF('電子書')"><div class="sv2" id="st-e">0</div><div class="sl2">電子書</div></div>
         </div>
         <div class="dv2-hd-bar"></div>
       </div>
@@ -1327,9 +1330,7 @@ body{
               <option value="console">主機</option>
               <option value="periph">週邊</option>
               <option value="digital">數位遊戲</option>
-              <option value="ost">原聲帶</option>
-              <option value="artbook">畫集</option>
-              <option value="figure">公仔</option>
+              <option value="ebook">電子書</option>
             </select>
             <button class="tbtn" onclick="dashRefresh()" title="同步資料">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
@@ -2074,7 +2075,7 @@ function matchPlayers(v){
 }
 
 const SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲','電子書'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'],
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
   play_status:['未遊玩','進行中','通關','全成就','放棄','N/A'],
@@ -2143,7 +2144,7 @@ const BOOK_FIELDS=[
   ['applicable_platform','適用平台','platchip','書籍資訊'],
 ];
 const BOOK_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲','電子書'],
   book_type:['系統攻略','資料設定集','美術畫冊','公式書','其他'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','願望清單'],
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
@@ -2177,7 +2178,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.20';
+const APP_VERSION='v42.21';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2235,7 +2236,7 @@ const CONSOLE_FIELDS=[
   ['created_at','建檔時間','hidden','補充資訊'],
 ];
 const CONSOLE_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲','電子書'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'],
   buy_source:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他'],
   working_status:['正常','需維修','故障','未測試'],
@@ -2303,7 +2304,7 @@ const PERIPH_FIELDS=[
   ['created_at','建檔時間','hidden','補充資訊'],
 ];
 const PERIPH_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲','電子書'],
   peripheral_type:['手把/控制器','記憶卡','線材','底座/座充','收納','轉接器','耳機麥克風','其他'],
   connection:['有線','無線','藍牙','USB','其他'],
   collect_status:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'],
@@ -2361,7 +2362,7 @@ const DIGITAL_FIELDS=[
   ['created_at','建檔時間','hidden','補充資訊'],
 ];
 const DIGITAL_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
+  category:['遊戲','書籍','主機','週邊','數位遊戲','電子書'],
   collect_status:['收藏中','已退款','已移除','預購中','願望清單'],
   store:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他'],
   purchase_method:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他'],
@@ -2375,159 +2376,48 @@ const DIGITAL_DEFAULTS={
 };
 const DIGITAL_GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','商店資訊':'#40c4ff','遊戲規格':'#80deea','發行廠商':'#ce93d8','追加內容':'#ffd54f','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
-// ── 原聲帶／音樂（OST，v42.20）：量身設計，非沿用主機/週邊模板 ──
-const OST_FIELDS=[
-  ['category','資料類別','sel','識別資訊'],
-  ['primary_name','專輯名稱','txt','識別資訊'],
-  ['jp_name','日文名稱','txt','識別資訊'],
-  ['zh_name','中文名稱','txt','識別資訊'],
-  ['en_name','英文名稱','txt','識別資訊'],
-  ['related_work','相關作品','txt','音樂資訊'],
-  ['composer','作曲／編曲','txt','音樂資訊'],
-  ['label','發行廠牌','txt','音樂資訊'],
-  ['format','媒體格式','sel','音樂資訊'],
-  ['disc_count','片數','txt','音樂資訊'],
-  ['track_count','收錄曲數','txt','音樂資訊'],
-  ['release_date','發行日期','dateq','發行資訊'],
-  ['suggest_price','建議售價','price','發行資訊'],
-  ['region','地區版本','regionsel','發行資訊'],
-  ['edition','版本說明','txt','發行資訊'],
-  ['barcode','條碼','txt','編碼條碼'],
-  ['code','商品編號','txt','編碼條碼'],
-  ['collect_status','收藏狀態','sel','收藏狀態'],
-  ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['buy_date','購入日期','date','收藏狀態'],
-  ['buy_source','購入來源','sel','收藏狀態'],
-  ['buy_price','購入價格','price','收藏狀態'],
-  ['market_value','目前估值','price','個人記錄'],
-  ['market_value_confidence','估值信心','sel','個人記錄'],
-  ['summary','簡介','area','補充資訊'],
-  ['ref_link','參考連結','autolink','補充資訊'],
-  ['cover_img','封面圖檔','imgupload','圖片紀錄'],
-  ['back_img','封底圖檔','imgupload','圖片紀錄'],
-  ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
-  ['related_code','關聯商品','txt','關聯商品'],
-  ['notes','備註','area','補充資訊'],
-  ['uuid','UUID','hidden','補充資訊'],
-  ['created_at','建檔時間','hidden','補充資訊'],
-];
-const OST_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
-  format:['CD','黑膠','卡帶','數位','其他'],
-  collect_status:['收藏中','已出售','借出中','遺失或損毀','願望清單'],
-  buy_source:['全新購入','二手購入','贈送','其他'],
-  market_value_confidence:['高','中','低','N/A'],
-};
-const OST_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const OST_DEFAULTS={
-  category:'原聲帶',collect_status:'收藏中',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',format:'CD',
-};
-const OST_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
-
-// ── 畫集／設定集（Artbook，v42.20）：量身設計，非沿用書籍模板 ──
-const ARTBOOK_FIELDS=[
+// ── 電子書（v42.21）：書籍分類的第 7 種建檔方式，量身設計，無實體概念 ──
+const ELECBOOK_FIELDS=[
   ['category','資料類別','sel','識別資訊'],
   ['primary_name','書名','txt','識別資訊'],
-  ['jp_name','日文名稱','txt','識別資訊'],
-  ['zh_name','中文名稱','txt','識別資訊'],
-  ['en_name','英文名稱','txt','識別資訊'],
-  ['related_work','相關作品','txt','書籍資訊'],
-  ['illustrator','繪師／監修','txt','書籍資訊'],
-  ['page_count','頁數','txt','書籍資訊'],
-  ['binding','裝訂方式','sel','書籍資訊'],
+  ['jp_name','日文書名','txt','識別資訊'],
+  ['zh_name','中文書名','txt','識別資訊'],
+  ['en_name','英文書名','txt','識別資訊'],
+  ['author','作者','txt','識別資訊'],
+  ['series','系列','txt','識別資訊'],
+  ['store','購入平台','sel','商店資訊'],
+  ['account','購入帳號','txt','商店資訊'],
+  ['purchase_method','取得方式','sel','商店資訊'],
+  ['book_genre','類型','sel','書籍規格'],
+  ['format','格式','sel','書籍規格'],
   ['publisher','出版社','txt','發行資訊'],
-  ['release_date','出版日期','dateq','發行資訊'],
+  ['release_date','發行日期','dateq','發行資訊'],
   ['suggest_price','建議售價','price','發行資訊'],
-  ['region','地區版本','regionsel','發行資訊'],
-  ['edition','版本說明','txt','發行資訊'],
-  ['barcode','ISBN／條碼','txt','編碼條碼'],
-  ['code','商品編號','txt','編碼條碼'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
-  ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','保管位置','storagesel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
-  ['buy_source','購入來源','sel','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
-  ['market_value','目前估值','price','個人記錄'],
-  ['market_value_confidence','估值信心','sel','個人記錄'],
   ['summary','簡介','area','補充資訊'],
-  ['ref_link','參考連結','autolink','補充資訊'],
+  ['ref_link','商店頁連結','autolink','補充資訊'],
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
-  ['back_img','封底圖檔','imgupload','圖片紀錄'],
-  ['spine_img','書背圖檔','imgupload','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
   ['uuid','UUID','hidden','補充資訊'],
   ['created_at','建檔時間','hidden','補充資訊'],
 ];
-const ARTBOOK_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
-  binding:['精裝','平裝','其他'],
-  collect_status:['收藏中','已出售','借出中','遺失或損毀','願望清單'],
-  buy_source:['全新購入','二手購入','贈送','其他'],
-  market_value_confidence:['高','中','低','N/A'],
+const ELECBOOK_SELECTS={
+  category:['遊戲','書籍','主機','週邊','數位遊戲','電子書'],
+  store:['Kindle','Kobo','BookWalker','Readmoo','Google Play 圖書','Apple Books','其他'],
+  purchase_method:['直接購買','訂閱服務','贈送','其他'],
+  book_genre:['小說','輕小說','漫畫','雜誌','其他'],
+  format:['EPUB','PDF','其他'],
+  collect_status:['收藏中','已退款','已移除','願望清單'],
 };
-const ARTBOOK_GROUPS=['圖片紀錄','識別資訊','書籍資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const ARTBOOK_DEFAULTS={
-  category:'畫集',collect_status:'收藏中',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',binding:'精裝',
+const ELECBOOK_GROUPS=['圖片紀錄','識別資訊','商店資訊','書籍規格','發行資訊','收藏狀態','關聯商品','補充資訊'];
+const ELECBOOK_DEFAULTS={
+  category:'電子書',collect_status:'收藏中',store:'Kindle',purchase_method:'直接購買',
+  buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',release_date:'',cover_img:'',ref_link:'',
 };
-const ARTBOOK_GCOL={'識別資訊':'#00e5ff','書籍資訊':'#aed581','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
-
-// ── 公仔／模型（Figure，v42.20）：量身設計，非沿用週邊模板 ──
-const FIGURE_FIELDS=[
-  ['category','資料類別','sel','識別資訊'],
-  ['primary_name','商品名稱','txt','識別資訊'],
-  ['jp_name','日文名稱','txt','識別資訊'],
-  ['zh_name','中文名稱','txt','識別資訊'],
-  ['en_name','英文名稱','txt','識別資訊'],
-  ['character','角色名稱','txt','模型資訊'],
-  ['series','系列／作品','txt','模型資訊'],
-  ['brand','製造廠牌','txt','模型資訊'],
-  ['scale','比例','txt','模型資訊'],
-  ['material','材質','txt','模型資訊'],
-  ['manufacturer','發售商','txt','發行資訊'],
-  ['release_date','發售日期','dateq','發行資訊'],
-  ['suggest_price','建議售價','price','發行資訊'],
-  ['region','地區版本','regionsel','發行資訊'],
-  ['edition','版本說明','txt','發行資訊'],
-  ['barcode','條碼','txt','編碼條碼'],
-  ['code','商品編號','txt','編碼條碼'],
-  ['collect_status','收藏狀態','sel','收藏狀態'],
-  ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['buy_date','購入日期','date','收藏狀態'],
-  ['buy_source','購入來源','sel','收藏狀態'],
-  ['buy_price','購入價格','price','收藏狀態'],
-  ['market_value','目前估值','price','個人記錄'],
-  ['market_value_confidence','估值信心','sel','個人記錄'],
-  ['summary','簡介','area','補充資訊'],
-  ['ref_link','參考連結','autolink','補充資訊'],
-  ['cover_img','正面圖檔','imgupload','圖片紀錄'],
-  ['back_img','背面圖檔','imgupload','圖片紀錄'],
-  ['spine_img','外盒圖檔','imgupload','圖片紀錄'],
-  ['related_code','關聯商品','txt','關聯商品'],
-  ['notes','備註','area','補充資訊'],
-  ['uuid','UUID','hidden','補充資訊'],
-  ['created_at','建檔時間','hidden','補充資訊'],
-];
-const FIGURE_SELECTS={
-  category:['遊戲','書籍','主機','週邊','數位遊戲','原聲帶','畫集','公仔'],
-  collect_status:['收藏中','已出售','借出中','遺失或損毀','願望清單','預購中'],
-  buy_source:['全新購入','二手購入','贈送','其他'],
-  market_value_confidence:['高','中','低','N/A'],
-};
-const FIGURE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const FIGURE_DEFAULTS={
-  category:'公仔',collect_status:'收藏中',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',
-};
-const FIGURE_GCOL={'識別資訊':'#00e5ff','模型資訊':'#f06292','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const ELECBOOK_GCOL={'識別資訊':'#00e5ff','商店資訊':'#ba68c8','書籍規格':'#ce93d8','發行資訊':'#f48fb1','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
 // ── 媒體類型（僅遊戲，單選 highlight）──
 const MEDIA_OPTS=['光碟（CD/DVD/BD）','卡匣（ROM 卡帶）','UMD（PSP 專用）','數位版','其他'];
@@ -2558,9 +2448,7 @@ function catInternal(cat){
   var l=s.toLowerCase();
   if(s==='書籍'||s==='攻略'||s==='攻略本'||l==='book'||l==='books')return '攻略';
   if(s==='數位遊戲'||l==='digital'||l==='digitalgame'||l==='digital game')return '數位遊戲';
-  if(s==='原聲帶'||s==='原聲帶／音樂'||l==='ost'||l==='soundtrack')return '原聲帶';
-  if(s==='畫集'||s==='設定集'||s==='畫集／設定集'||l==='artbook')return '畫集';
-  if(s==='公仔'||s==='模型'||s==='公仔／模型'||l==='figure'||l==='figures')return '公仔';
+  if(s==='電子書'||l==='ebook'||l==='e-book')return '電子書';
   if(s==='遊戲'||l==='game'||l==='games')return '遊戲';
   if(s==='主機'||l==='console'||l==='consoles')return '主機';
   if(s==='週邊'||s==='周邊'||l==='peripheral'||l==='peripherals')return '週邊';
@@ -2582,14 +2470,11 @@ const COMP_COMPONENTS={
   '主機':['外盒','本體','配件','說明書'],
   '週邊':['外盒','本體','配件','說明書'],
   '攻略':['書本體','書腰','外封','特典附錄'],
-  '原聲帶':['外盒','本體','側標','特典附錄'],
-  '畫集':['書本體','書腰','外封','特典附錄'],
-  '公仔':['外盒','本體','配件','說明書'],
 };
 const COMP_LABEL={'外封':'外封(書衣)'}; // 顯示用標籤覆寫（儲存鍵不變）
 const COND_COLORS={'全新':'#00e676','良好':'#69f0ae','普通':'#ffb300','損傷':'#ff8c00','裸卡':'#64b5f6','缺少':'#ff5252'};
 const COMP_STATE_COLORS={'全新':'#00e676','完整':'#69f0ae','缺件':'#ff5252','部分登錄':'#ffb300','未評級':'#7986cb'};
-function compBodyKey(cat){return (catInternal(cat)==='攻略'||catInternal(cat)==='畫集')?'書本體':'本體';}
+function compBodyKey(cat){return catInternal(cat)==='攻略'?'書本體':'本體';}
 // 儲存格式：只存非「無」項目，'組件:等級' 以 | 連接；自定義以使用者輸入的名稱當鍵
 function serializeComp(cat,map,customName){
   cat=catInternal(cat);
@@ -2712,15 +2597,9 @@ var CAT_META={
   '數位遊戲':{fields:function(){return DIGITAL_FIELDS;}, selects:function(){return DIGITAL_SELECTS;}, groups:function(){return DIGITAL_GROUPS;}, gcol:function(){return DIGITAL_GCOL;}, defaults:function(){return DIGITAL_DEFAULTS;},
               color:'#40c4ff',icon:'💾',
               sub:function(d){return [d.store,platShort(d.platform||''),d.edition];}},
-  '原聲帶':  {fields:function(){return OST_FIELDS;},     selects:function(){return OST_SELECTS;},     groups:function(){return OST_GROUPS;},     gcol:function(){return OST_GCOL;},     defaults:function(){return OST_DEFAULTS;},
-              color:'#ff8a65',icon:'💿',
-              sub:function(d){return [d.composer,d.related_work,d.label];}},
-  '畫集':    {fields:function(){return ARTBOOK_FIELDS;}, selects:function(){return ARTBOOK_SELECTS;}, groups:function(){return ARTBOOK_GROUPS;}, gcol:function(){return ARTBOOK_GCOL;}, defaults:function(){return ARTBOOK_DEFAULTS;},
-              color:'#aed581',icon:'🖼️',
-              sub:function(d){return [d.illustrator,d.related_work,d.publisher];}},
-  '公仔':    {fields:function(){return FIGURE_FIELDS;},  selects:function(){return FIGURE_SELECTS;},  groups:function(){return FIGURE_GROUPS;},  gcol:function(){return FIGURE_GCOL;},  defaults:function(){return FIGURE_DEFAULTS;},
-              color:'#f06292',icon:'🎎',
-              sub:function(d){return [d.character,d.series,d.brand];}},
+  '電子書':  {fields:function(){return ELECBOOK_FIELDS;}, selects:function(){return ELECBOOK_SELECTS;}, groups:function(){return ELECBOOK_GROUPS;}, gcol:function(){return ELECBOOK_GCOL;}, defaults:function(){return ELECBOOK_DEFAULTS;},
+              color:'#ba68c8',icon:'📱',
+              sub:function(d){return [d.author,d.store,d.publisher];}},
 };
 function _catMeta(cat){return CAT_META[catInternal(cat)]||CAT_META['遊戲'];}
 
@@ -2853,37 +2732,6 @@ var AI_CAT_SPEC={
       voice_language:'語音語言（不確定留空）',subtitle_language:'字幕語言（不確定留空）',edition:'版本說明（標準版/豪華版等）'},
     constraint:'此為數位版遊戲（商店頁截圖或遊戲庫畫面），無實體條碼與包裝。store 依畫面 UI 風格判斷。summary 用繁體中文。'
   },
-  原聲帶:{
-    role:'遊戲/動畫原聲帶與音樂商品資料庫專家',itemLabel:'專輯名稱',
-    fields:{jp_name:'日文專輯名稱',zh_name:'中文名稱',en_name:'英文名稱',
-      related_work:'相關作品（哪款遊戲/動畫的原聲帶，繁體中文）',composer:'作曲/編曲者',
-      label:'發行廠牌/唱片公司',format:'媒體格式(CD/黑膠/卡帶/數位/其他)',
-      disc_count:'片數（不確定留空）',track_count:'收錄曲數（不確定留空）',
-      publisher:'發行商（若與廠牌不同才填，否則留空）',suggest_price:'建議零售價(如 3000 JPY / 29.99 USD / 690 TWD；依區域決定幣別)',
-      release_date:'發行日期(YYYY/MM/DD)',summary:'專輯簡介(繁體中文，100字內)',
-      region:'發行地區',edition:'版本說明（初回限定版/通常版等）'},
-    constraint:'composer 填作曲/編曲者姓名。format 只能是 CD/黑膠/卡帶/數位/其他其中之一。suggest_price 格式為「數字 幣別代碼」。'
-  },
-  畫集:{
-    role:'遊戲/動畫畫集與設定集資料庫專家',itemLabel:'書名',
-    fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
-      related_work:'相關作品（繁體中文）',illustrator:'繪師/監修（如有）',
-      page_count:'頁數（不確定留空）',binding:'裝訂方式(精裝/平裝/其他)',
-      publisher:'出版社名稱（必填）',suggest_price:'建議零售價(如 3500 JPY / 34.99 USD / 890 TWD；依區域決定幣別)',
-      release_date:'出版日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，描述本書而非原作)',
-      region:'出版地區',edition:'版次/版本說明'},
-    constraint:'publisher 必填出版社。illustrator 填繪師或監修者。summary 描述本書內容而非原作劇情。suggest_price 格式為「數字 幣別代碼」。'
-  },
-  公仔:{
-    role:'公仔/模型玩具資料庫專家',itemLabel:'商品名稱',
-    fields:{jp_name:'日文商品名稱',zh_name:'中文名稱',en_name:'英文名稱',
-      character:'角色名稱',series:'系列/作品名稱（繁體中文）',brand:'製造廠牌',
-      scale:'比例（如 1/7、1/8、Non-scale；不確定留空）',material:'材質（如 PVC、樹脂；不確定留空）',
-      manufacturer:'發售商（若與廠牌不同才填，否則留空）',suggest_price:'建議零售價(如 18000 JPY / 159.99 USD / 3990 TWD；依區域決定幣別)',
-      release_date:'發售日期(YYYY/MM/DD)',summary:'商品簡介(繁體中文，100字內)',
-      region:'發售地區',edition:'版本說明'},
-    constraint:'character 填公仔對應的角色名稱。scale 只填比例數字或 Non-scale。suggest_price 格式為「數字 幣別代碼」。'
-  }
 };
 // v24.04：第二階段 AI 補全的「檢查欄位」改由分類動態推導（主機/週邊納入 brand/model_no 等硬體欄位），取代寫死的遊戲清單
 function _checkFieldsFor(cat){
@@ -6678,10 +6526,10 @@ function _saveEntryMem(){
 function selectEntryCat(cat,_noSave){
   _selectedType=cat;_entryCatChosen=true;
   // v26.07：選到分類時帶回該分類記憶的平台（不再一律清空）
-  var hasPlat=(cat==='遊戲'||cat==='主機'||cat==='數位遊戲');
+  var hasPlat=(cat==='遊戲'||cat==='主機');
   _selectedPlatform=hasPlat?_platMemGet(cat):'';
   // 卡片高亮
-  ['ec-game','ec-book','ec-console','ec-periph','ec-digital','ec-ost','ec-artbook','ec-figure'].forEach(function(id){
+  ['ec-game','ec-book','ec-console','ec-periph'].forEach(function(id){
     var el=$(id);if(el)el.classList.toggle('on',el.dataset.cat===cat);
   });
   // Step 3 平台：僅遊戲／主機顯示，動態填入 PLATFORMS（onchange 寫入 _selectedPlatform）
@@ -6697,11 +6545,9 @@ function selectEntryCat(cat,_noSave){
   }
   // 建檔方式段編號：有平台→Step 4，無平台→Step 3
   var mn=$('step-method-num');if(mn)mn.textContent=hasPlat?'Step 4':'Step 3';
-  // v42.14：數位遊戲沒有實體條碼可掃，隱藏條碼/編碼相關卡片；
-  // v42.14a6：圖片辨識改為保留（可截圖商店頁/遊戲庫讓 AI 辨識），跟手動建檔＋商店連結三張卡剛好撐滿一排，不留空
-  var isDigital=(cat==='數位遊戲');
-  [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',true],
-   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital],['mb-link',isDigital]].forEach(function(p){
+  // v42.21：數位遊戲／電子書改為依分類顯示的第 7 種建檔方式，不再是 Step1 分類——
+  // 遊戲分類才顯示「數位遊戲」卡片，書籍分類才顯示「電子書」卡片，主機/週邊維持原本 6 種不變
+  [['mb-digital',cat==='遊戲'],['mb-ebook',cat==='攻略']].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   if(!_noSave)_saveEntryMem();
@@ -6775,7 +6621,7 @@ function platPickChoose(el){
 // Step3 平台：開自繪選單，選後回填原生 select（值載體）並沿用既有視覺/記憶邏輯
 function openStep3PlatPicker(){
   var ps=$('step3-plat');if(!ps)return;
-  openPlatPicker({current:ps.value||'',allowEmpty:true,digitalOnly:catInternal(_selectedType)==='數位遊戲',onPick:function(v){
+  openPlatPicker({current:ps.value||'',allowEmpty:true,onPick:function(v){
     ps.value=v;_selectedPlatform=v;_applyPlatVisual();_saveEntryMem();
   }});
 }
@@ -6795,7 +6641,7 @@ function openPlatFldPicker(trigger){
 }
 // 頁面上點選建檔方式：平台已於 Step 3 寫入 _selectedPlatform，直接啟動對應模式（init*Mode）
 // v26.01：建檔方式（init*Mode）↔ 卡片短名 對照，供記憶外框還原（只上外框、不執行該模式）
-var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',initManualMode:'manual',initComboMode:'combo',initGameCodeComboMode:'gcode-combo',initDigitalLinkMode:'link'};
+var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',initManualMode:'manual',initComboMode:'combo',initGameCodeComboMode:'gcode-combo',initDigitalLinkMode:'digital',initEbookLinkMode:'ebook'};
 function _saveMethodMem(fn){
   try{
     cfg.entry_method=fn;
@@ -6810,7 +6656,7 @@ function pagePickMethod(fn){
 // 回到 Step 1 起始態：還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
 function resetEntryStep1(){
   var memCat=catInternal(cfg.entry_cat);
-  var mc=(['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔'].indexOf(memCat)>=0)?memCat:'遊戲';
+  var mc=(['遊戲','攻略','主機','週邊'].indexOf(memCat)>=0)?memCat:'遊戲';
   selectEntryCat(mc,true); // v26.07：selectEntryCat 內已帶回該分類記憶平台
   _saveEntryMem();
   // v26.01：還原「上次建檔方式」外框，比照分類/平台的記憶高亮；setMbActive 僅上色框、不啟動該模式
@@ -6900,7 +6746,7 @@ function cancelTypePicker(){
 
 // 隱藏所有模式的執行區（避免疊加）
 function hideAllSecs(){
-  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec'].forEach(function(id){
+  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec','ebook-link-sec'].forEach(function(id){
     var el=$(id);if(el)el.style.display='none';
   });
 }
@@ -6937,8 +6783,8 @@ function backToModeSelect(){
 }
 
 function setMbActive(which){
-  var ids=['bar','img','combo','manual','gcode','gcode-combo','link'];
-  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',link:'#40c4ff'};
+  var ids=['bar','img','combo','manual','gcode','gcode-combo','digital','ebook'];
+  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',digital:'#40c4ff',ebook:'#ba68c8'};
   // hexToRgb: #rrggbb → 'r,g,b'
   function hRgb(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return r+','+g+','+b;}
   ids.forEach(function(id){
@@ -6981,8 +6827,8 @@ function initManualMode(){
 // ── 數位遊戲：貼上商店連結自動抓資料（v42.14）──
 function initDigitalLinkMode(){
   pickTypeAndPlatform('digital-link',function(type,platform){
-    _selectedType=type;_selectedPlatform=platform;
-    setMbActive('link');enterMode();
+    _selectedType='數位遊戲';_selectedPlatform=platform; // v42.21：強制切換為數位遊戲分類，不沿用 Step1 的「遊戲」
+    setMbActive('digital');enterMode();
     stopScanner();stopComboScanner();
     hideAllSecs();
     var sec=$('digital-link-sec');if(sec)sec.style.display='block';
@@ -7056,7 +6902,7 @@ function digitalLinkFetch(){
       '只根據提供的文字資訊判斷，不要上網查證，不確定的欄位留空，不要編造。僅輸出 JSON 物件，不加說明文字。';
     return callGemini([{text:prompt}],{allowGrounding:false}).then(function(res){
       if(st)st.style.display='none';
-      var type=_selectedType||'數位遊戲';
+      var type='數位遊戲';
       var merged=Object.assign({},res||{});
       if(hasStructured){
         merged.developer=page.developer||merged.developer||'';
@@ -7086,7 +6932,8 @@ function digitalLinkFetch(){
 function digitalLinkToManual(){
   var inp=$('digital-link-inp');
   var url=(inp&&inp.value||'').trim();
-  var type=_selectedType||'數位遊戲';
+  var type='數位遊戲';
+  _selectedType=type;
   stopScanner();stopComboScanner();
   hideAllSecs();
   entry=Object.assign({},_defaultsFor(type),{
@@ -7103,6 +6950,86 @@ function _steamMonToDate(m){
   var mm=mons[m[2]]||'';
   if(!mm)return '';
   return m[3]+'/'+mm+'/'+(m[1].length<2?'0'+m[1]:m[1]);
+}
+// ── 電子書：書籍分類的第 7 種建檔方式（v42.21）。流程比照數位遊戲，共用同一支 GS fetchStorePageProxy ──
+function initEbookLinkMode(){
+  pickTypeAndPlatform('ebook-link',function(type,platform){
+    _selectedType='電子書'; // 強制切換為電子書分類，不沿用 Step1 的「書籍」
+    setMbActive('ebook');enterMode();
+    stopScanner();stopComboScanner();
+    hideAllSecs();
+    var sec=$('ebook-link-sec');if(sec)sec.style.display='block';
+    var inp=$('ebook-link-inp');if(inp)inp.value='';
+    var st=$('ebook-link-status');if(st){st.style.display='none';st.textContent='';}
+  });
+}
+function _inferBookStoreFromUrl(url){
+  var h=(''+(url||'')).toLowerCase();
+  if(h.indexOf('amazon.')>=0)return 'Kindle';
+  if(h.indexOf('kobo.com')>=0)return 'Kobo';
+  if(h.indexOf('bookwalker.')>=0)return 'BookWalker';
+  if(h.indexOf('readmoo.com')>=0)return 'Readmoo';
+  if(h.indexOf('play.google.com')>=0)return 'Google Play 圖書';
+  if(h.indexOf('books.apple.com')>=0||h.indexOf('itunes.apple.com')>=0)return 'Apple Books';
+  return '其他';
+}
+function ebookLinkFetch(){
+  var inp=$('ebook-link-inp');
+  var url=(inp&&inp.value||'').trim();
+  if(!url){toast('請貼上商店頁網址','er');return;}
+  if(!/^https?:\/\//i.test(url)){toast('網址需以 http:// 或 https:// 開頭','er',4000);return;}
+  if(!_btnGuard('ebookLink',null,'抓取中...'))return;
+  if(!cfg.url){toast('未設定試算表 URL，無法透過後端抓取網頁','er',5000);_btnRelease('ebookLink');return;}
+  var st=$('ebook-link-status');
+  if(st){st.style.display='block';st.textContent='抓取商店頁面中...';}
+  shGet({action:'fetch_store_page',url:url}).then(function(page){
+    if(!page||page.error||!page.title){
+      var reason=[page&&page.error,page&&page.hint].filter(Boolean).join('；')||'伺服器無回應';
+      if(st)st.innerHTML='⚠️ 抓取失敗（'+esc(reason)+'）<br><button class="btn bp bs" style="margin-top:8px" onclick="ebookLinkToManual()">✏️ 改用手動建檔（保留此網址）</button>';
+      toast('抓取失敗：'+reason,'er',6000);
+      _btnRelease('ebookLink');
+      return null;
+    }
+    if(st)st.textContent='AI 整理欄位中...';
+    var store=_inferBookStoreFromUrl(url);
+    var prompt='以下是一個電子書商店頁面擷取到的資訊（標題／簡介），請判斷這是哪一本書，並整理成 JSON。'+
+      '網頁標題：'+page.title+'\n網頁描述：'+(page.description||'')+'\n網站：'+(page.siteName||store)+'\n'+
+      '請輸出以下欄位的 JSON：primary_name（去除商店贅字如「立即購買」「電子書」等後的乾淨書名）、jp_name、zh_name、en_name、'+
+      'author（作者，若為漫畫填漫畫家）、publisher、book_genre（從 小說/輕小說/漫畫/雜誌/其他 挑一個）、'+
+      'release_date（YYYY/MM/DD，不確定留空）、summary（繁體中文150字內）。'+
+      '只根據提供的文字資訊判斷，不要上網查證，不確定的欄位留空，不要編造。僅輸出 JSON 物件，不加說明文字。';
+    return callGemini([{text:prompt}],{allowGrounding:false}).then(function(res){
+      if(st)st.style.display='none';
+      var type='電子書';
+      entry=Object.assign({},_defaultsFor(type),res||{},{
+        category:type,store:store,ref_link:url,cover_img:page.image||''
+      });
+      _carrySelRegion();
+      toast('✓ 已自動填寫，請檢查並補齊帳號/取得方式等欄位','ok',4000);
+      _btnRelease('ebookLink');
+      showForm('商店連結建檔');
+    });
+  }).catch(function(e){
+    if(st)st.textContent='⚠️ 發生錯誤：'+(e&&e.message||'未知錯誤');
+    toast('抓取失敗：'+(e&&e.message||'請改用手動建檔'),'er',5000);
+    _btnRelease('ebookLink');
+  });
+}
+// 電子書抓取失敗 → 一鍵切換手動建檔，保留已輸入的網址與商店推斷
+function ebookLinkToManual(){
+  var inp=$('ebook-link-inp');
+  var url=(inp&&inp.value||'').trim();
+  var type='電子書';
+  _selectedType=type;
+  stopScanner();stopComboScanner();
+  hideAllSecs();
+  entry=Object.assign({},_defaultsFor(type),{
+    category:type,ref_link:url,store:url?_inferBookStoreFromUrl(url):''
+  });
+  _carrySelRegion();
+  setMbActive('manual');
+  showForm('手動建檔');
+  toast('已切換手動建檔，網址已帶入商店頁連結欄','ok',3500);
 }
 // ══ 掃碼三步驟流程 ══
 var _scanBC='';      // 步驟一鎖定的條碼
@@ -8545,9 +8472,6 @@ function _relSubOf(d){
   if(d.category==='攻略')return d.book_type||'';
   if(d.category==='主機')return d.platform_family||d.series||'';
   if(d.category==='週邊')return d.peripheral_type||'';
-  if(d.category==='原聲帶')return d.composer||d.related_work||'';
-  if(d.category==='畫集')return d.illustrator||d.related_work||'';
-  if(d.category==='公仔')return d.character||d.series||'';
   return d.platform||'';
 }
 
@@ -9124,54 +9048,22 @@ function _dashModel(cat,filtered2,catOf){
       donutLabel:'購入商店分佈',donutMap:storeMap,
       donutColors:null,donutCenter:filtered2.length+'',
       midLabel:'平台分佈',midMap:plat3,midColors:null,midTotalText:Object.keys(plat3).length+' 個平台'};
-  }else if(cat==='原聲帶'){
-    var fmtMap=buildMap(filtered2,function(c){return (c.data.format||'').trim();});
-    var labelMap=buildMap(filtered2,function(c){return (c.data.label||'').trim();});
+  }else if(cat==='電子書'){
+    var bkStoreMap=buildMap(filtered2,function(c){return (c.data.store||'').trim();});
+    var authorMap=buildMap(filtered2,function(c){return (c.data.author||'').trim();});
     D={kpi:[
-        {label:'原聲帶',val:filtered2.length,color:'#ff8a65',icon:'💿'},
-        {label:'作曲家',val:distinct(filtered2,'composer'),color:'#ffab91',icon:'🎼'},
-        {label:'廠牌',val:distinct(filtered2,'label'),color:'#ffccbc',icon:'🏷️'},
-        {label:'全新品',val:condCnt(filtered2,'全新'),color:'#00e676',icon:'✨'}],
+        {label:'電子書',val:filtered2.length,color:'#ba68c8',icon:'📱'},
+        {label:'作者',val:distinct(filtered2,'author'),color:'#ce93d8',icon:'✍️'},
+        {label:'平台',val:distinct(filtered2,'store'),color:'#e1bee7',icon:'🏬'},
+        {label:'出版社',val:distinct(filtered2,'publisher'),color:'#f3e5f5',icon:'🏢'}],
       tags:[
         {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
         {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
-        {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
+        {label:'已退款 '+statusCnt(filtered2,'collect_status','已退款'),color:'#ff5252'},
         {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'媒體格式',donutMap:fmtMap,
+      donutLabel:'購入平台分佈',donutMap:bkStoreMap,
       donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'廠牌分佈',midMap:labelMap,midColors:null,midTotalText:Object.keys(labelMap).length+' 個廠牌'};
-  }else if(cat==='畫集'){
-    var bindMap=buildMap(filtered2,function(c){return (c.data.binding||'').trim();});
-    var pubMap2=buildMap(filtered2,function(c){return (c.data.publisher||'').trim();});
-    D={kpi:[
-        {label:'畫集',val:filtered2.length,color:'#aed581',icon:'🖼️'},
-        {label:'繪師',val:distinct(filtered2,'illustrator'),color:'#c5e1a5',icon:'✏️'},
-        {label:'出版社',val:distinct(filtered2,'publisher'),color:'#dcedc8',icon:'🏢'},
-        {label:'全新品',val:condCnt(filtered2,'全新'),color:'#00e676',icon:'✨'}],
-      tags:[
-        {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
-        {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
-        {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
-        {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'裝訂方式',donutMap:bindMap,
-      donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'出版社分佈',midMap:pubMap2,midColors:null,midTotalText:Object.keys(pubMap2).length+' 間出版社'};
-  }else if(cat==='公仔'){
-    var brandMap2=buildMap(filtered2,function(c){return (c.data.brand||'').trim();});
-    var scaleMap=buildMap(filtered2,function(c){return (c.data.scale||'').trim();});
-    D={kpi:[
-        {label:'公仔',val:filtered2.length,color:'#f06292',icon:'🎎'},
-        {label:'廠牌',val:distinct(filtered2,'brand'),color:'#f48fb1',icon:'🏷️'},
-        {label:'角色',val:distinct(filtered2,'character'),color:'#f8bbd0',icon:'🧍'},
-        {label:'全新品',val:condCnt(filtered2,'全新'),color:'#00e676',icon:'✨'}],
-      tags:[
-        {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
-        {label:'預購中 '+statusCnt(filtered2,'collect_status','預購中'),color:'#ffb300'},
-        {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
-        {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'比例分佈',donutMap:scaleMap,
-      donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'廠牌分佈',midMap:brandMap2,midColors:null,midTotalText:Object.keys(brandMap2).length+' 個廠牌'};
+      midLabel:'作者分佈',midMap:authorMap,midColors:null,midTotalText:Object.keys(authorMap).length+' 位作者'};
   }else{ // 全部
     var byCat=function(k){return filtered2.filter(function(c){return catOf(c)===k;}).length;};
     var platAll=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
@@ -9194,9 +9086,9 @@ function _dashModel(cat,filtered2,catOf){
 function dashCostSummary(items){
   // 收藏總值（購入成本）：與收藏估值同一套金額卡片視覺
   var rows={
-    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
-    USD:{name:'美金',symbol:'US$',color:'#ffab40',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
-    TWD:{name:'台幣',symbol:'NT$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0}
+    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0},amount:0,twd:0,n:0},
+    USD:{name:'美金',symbol:'US$',color:'#ffab40',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0},amount:0,twd:0,n:0},
+    TWD:{name:'台幣',symbol:'NT$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0},amount:0,twd:0,n:0}
   };
   function fmt(n){return Math.round(Number(n)||0).toLocaleString('en-US');}
   function catKey(v){var c=catInternal(v)||'遊戲';return c==='書籍'?'攻略':c;}
@@ -9231,7 +9123,7 @@ function dashCostSummary(items){
   html+='<div class="mv-cards">'+active.map(function(c){
     var r=rows[c];
     var pct=totalTwd?Math.round(r.twd/totalTwd*100):0;
-    var chips=['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔'].filter(function(k){return r.counts[k]>0;}).map(function(k){
+    var chips=['遊戲','攻略','主機','週邊','數位遊戲','電子書'].filter(function(k){return r.counts[k]>0;}).map(function(k){
       return '<span class="mv-chip">'+esc(catLabel(k))+' '+r.counts[k]+'</span>';
     }).join('');
     var foreignLine=(c!=='TWD')?'<div class="mv-card-foreign">'+r.symbol+fmt(r.amount)+'</div>':'';
@@ -9249,9 +9141,9 @@ function dashCostSummary(items){
 }
 function dashMarketValueSummary(items){
   var rows={
-    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
-    USD:{name:'美金',symbol:'US$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0},
-    TWD:{name:'台幣',symbol:'NT$',color:'#00e5ff',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0},amount:0,twd:0,n:0}
+    JPY:{name:'日幣',symbol:'¥',color:'#ff6e9c',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0},amount:0,twd:0,n:0},
+    USD:{name:'美金',symbol:'US$',color:'#69f0ae',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0},amount:0,twd:0,n:0},
+    TWD:{name:'台幣',symbol:'NT$',color:'#00e5ff',counts:{'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0},amount:0,twd:0,n:0}
   };
   function fmt(n){return Math.round(Number(n)||0).toLocaleString('en-US');}
   function catKey(v){var c=catInternal(v)||'遊戲';return c==='書籍'?'攻略':c;}
@@ -9294,7 +9186,7 @@ function dashMarketValueSummary(items){
   html+='<div class="mv-cards">'+active.map(function(c){
     var r=rows[c];
     var pct=totalTwd?Math.round(r.twd/totalTwd*100):0;
-    var chips=['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔'].filter(function(k){return r.counts[k]>0;}).map(function(k){
+    var chips=['遊戲','攻略','主機','週邊','數位遊戲','電子書'].filter(function(k){return r.counts[k]>0;}).map(function(k){
       return '<span class="mv-chip">'+esc(catLabel(k))+' '+r.counts[k]+'</span>';
     }).join('');
     var foreignLine=(c!=='TWD')?'<div class="mv-card-foreign">'+r.symbol+fmt(r.amount)+'</div>':'';
@@ -9541,7 +9433,7 @@ function dashRefresh(){
 }
 function renderDash(){
   var fv=($('dash-filter')&&$('dash-filter').value)||'all';
-  var catMap={game:'遊戲',book:'攻略',console:'主機',periph:'週邊',digital:'數位遊戲',ost:'原聲帶',artbook:'畫集',figure:'公仔'};
+  var catMap={game:'遊戲',book:'攻略',console:'主機',periph:'週邊',digital:'數位遊戲',ebook:'電子書'};
   var cat=catMap[fv]||null;
   function catOf(c){return catInternal(c.data.category)||'遊戲';}
   var filtered2=cat?col.filter(function(c){return catOf(c)===cat;}):col;
@@ -10034,7 +9926,7 @@ function platShort(full){
   return map[full]||full;
 }
 function updateStats(){
-  var counts={'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'原聲帶':0,'畫集':0,'公仔':0};
+  var counts={'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位遊戲':0,'電子書':0};
   col.forEach(function(c){var cat=catInternal(c&&c.data&&c.data.category);if(counts[cat]!==undefined)counts[cat]++;});
   $('st-total').textContent=col.length;
   $('st-g').textContent=counts['遊戲'];
@@ -10042,15 +9934,13 @@ function updateStats(){
   $('st-c').textContent=counts['主機'];
   $('st-p').textContent=counts['週邊'];
   $('st-d').textContent=counts['數位遊戲'];
-  $('st-o').textContent=counts['原聲帶'];
-  $('st-a').textContent=counts['畫集'];
-  $('st-f').textContent=counts['公仔'];
+  $('st-e').textContent=counts['電子書'];
   _syncStatActive();
 }
 // 依目前 activeF 高亮對應的統計格（總計=全部；其餘對應分類）
 function _syncStatActive(){
-  var map={'all':'sf-total','遊戲':'sf-g','攻略':'sf-b','主機':'sf-c','週邊':'sf-p','數位遊戲':'sf-d','原聲帶':'sf-o','畫集':'sf-a','公仔':'sf-f'};
-  ['sf-total','sf-g','sf-b','sf-c','sf-p','sf-d','sf-o','sf-a','sf-f'].forEach(function(id){var e=$(id);if(e)e.classList.remove('on');});
+  var map={'all':'sf-total','遊戲':'sf-g','攻略':'sf-b','主機':'sf-c','週邊':'sf-p','數位遊戲':'sf-d','電子書':'sf-e'};
+  ['sf-total','sf-g','sf-b','sf-c','sf-p','sf-d','sf-e'].forEach(function(id){var e=$(id);if(e)e.classList.remove('on');});
   var act=$(map[activeF]);if(act)act.classList.add('on');
 }
 function setF(f){activeF=f;_syncStatActive();filterCol();}
@@ -10059,20 +9949,22 @@ function setF(f){activeF=f;_syncStatActive();filterCol();}
 // 組內 OR、跨組 AND；選項由現有收藏動態撈出，無資料的組自動隱藏
 var colFilters={}, _pmin='', _pmax='', _mvmin='', _mvmax='';
 var FACETS=[
-  {k:'category',label:'分類',order:['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔']},
+  {k:'category',label:'分類',order:['遊戲','攻略','主機','週邊','數位遊戲','電子書']},
   {k:'platform',label:'平台',order:PLATFORMS.map(function(p){return p.v;})},
   {k:'genre',label:'遊戲類型',multi:true,code:true,order:GENRES},
   {k:'players',label:'遊戲人數',multi:true,order:PLAYERS_OPTS},
   {k:'play_status',label:'遊玩狀態',order:['未遊玩','進行中','通關','全成就','放棄','N/A']},
   {k:'collect_status',label:'收藏狀態',order:['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單']},
   {k:'storage_location',label:'保管位置'},
-  {k:'store',label:'購入商店',order:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他']},
+  {k:'store',label:'購入商店',order:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','Kindle','Kobo','BookWalker','Readmoo','Google Play 圖書','Apple Books','其他']},
+  {k:'author',label:'作者'},
+  {k:'book_genre',label:'電子書類型',order:['小說','輕小說','漫畫','雜誌','其他']},
   {k:'account',label:'購入帳號'},
   {k:'purchase_method',label:'取得方式',order:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他']},
-  {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','未評級'],notCats:['數位遊戲']},
-  {k:'__complete',label:'完整度',order:['全新','完整','部分登錄','未評級'],notCats:['數位遊戲']},
+  {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','未評級'],notCats:['數位遊戲','電子書']},
+  {k:'__complete',label:'完整度',order:['全新','完整','部分登錄','未評級'],notCats:['數位遊戲','電子書']},
   {k:'__photo',label:'照片狀態',order:['有封面','有封底','有側邊','無照片']},
-  {k:'__todo',label:'待補資料',order:['缺封面','缺條碼','缺編碼','缺購入價','缺發售日','缺品相'],notCats:['數位遊戲']},
+  {k:'__todo',label:'待補資料',order:['缺封面','缺條碼','缺編碼','缺購入價','缺發售日','缺品相'],notCats:['數位遊戲','電子書']},
   {k:'buy_source',label:'入手來源',order:['全新購入','二手購入','網路拍賣','海外代購','親友贈送','活動獲得','其他']},
   {k:'rating',label:'個人評分',order:['1','2','3','4','5','6','7','8','9','10','N/A']},
   {k:'buy_year',label:'購入年份',year:true},
@@ -10144,7 +10036,7 @@ function _quickPass(item){
   var d=item.data;
   var q=(($('col-search')&&$('col-search').value)||'').toLowerCase();
   if(activeF!=='all'){
-    if(['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔'].indexOf(activeF)>=0){if(catInternal(d.category)!==activeF)return false;}
+    if(['遊戲','攻略','主機','週邊','數位遊戲','電子書'].indexOf(activeF)>=0){if(catInternal(d.category)!==activeF)return false;}
     else if(activeF==='未遊玩'||activeF==='進行中'||activeF==='通關'||activeF==='全成就'){if(d.play_status!==activeF)return false;}
     else{ // 其餘一律視為平台名稱（動態晶片傳入完整平台名；保留舊短碼對照以相容）
       var platMap={'PS5':'PlayStation 5','PS4':'PlayStation 4','NSW':'Nintendo Switch','PS3':'PlayStation 3','PS2':'PlayStation 2'};
@@ -10542,7 +10434,7 @@ function _genreCardChips(out,seen,genre){
 function _cardBadges(d,cond,bcCount,midParts){
   var out=[],seen=_seedChipSeen(midParts);
   var cat=catInternal(d.category)||'遊戲';
-  var isDigitalCard=(cat==='數位遊戲');
+  var isDigitalCard=(cat==='數位遊戲'||cat==='電子書');
   if(cat==='攻略'){
     _addCardChip(out,seen,'書籍','bk-cat bk-cat-book');
     _addCardChip(out,seen,d.book_type,'bk-genre');
@@ -10561,15 +10453,10 @@ function _cardBadges(d,cond,bcCount,midParts){
     _addCardChip(out,seen,'數位遊戲','bk-cat bk-cat-digital');
     _addCardChip(out,seen,d.store,'bk-state');
     _addCardChip(out,seen,d.purchase_method&&d.purchase_method!=='直接購買'?d.purchase_method:'','bk-state');
-  }else if(cat==='原聲帶'){
-    _addCardChip(out,seen,'原聲帶','bk-cat bk-cat-ost');
-    _addCardChip(out,seen,d.format,'bk-state');
-  }else if(cat==='畫集'){
-    _addCardChip(out,seen,'畫集','bk-cat bk-cat-artbook');
-    _addCardChip(out,seen,d.binding,'bk-state');
-  }else if(cat==='公仔'){
-    _addCardChip(out,seen,'公仔','bk-cat bk-cat-figure');
-    _addCardChip(out,seen,d.scale,'bk-state');
+  }else if(cat==='電子書'){
+    _addCardChip(out,seen,'電子書','bk-cat bk-cat-ebook');
+    _addCardChip(out,seen,d.store,'bk-state');
+    _addCardChip(out,seen,d.book_genre,'bk-state');
   }else{
     _addCardChip(out,seen,'遊戲','bk-cat bk-cat-game');
     _genreCardChips(out,seen,d.genre);
@@ -10736,9 +10623,7 @@ function renderGlist(){
     else if(cat==='主機')midParts=[d.brand,d.platform_family||d.model_no];
     else if(cat==='週邊')midParts=[d.brand,d.compat_platform];
     else if(cat==='數位遊戲')midParts=[d.store,shortPlat];
-    else if(cat==='原聲帶')midParts=[d.composer,d.related_work];
-    else if(cat==='畫集')midParts=[d.illustrator,d.related_work];
-    else if(cat==='公仔')midParts=[d.character,d.series];
+    else if(cat==='電子書')midParts=[d.author,d.store];
     else midParts=[shortPlat,d.region];
     var midLine=midParts.filter(Boolean).join(' · ');
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
@@ -12513,7 +12398,7 @@ function _huntOpenPlatPicker(card){
 }
 function _huntFormFieldsHtml(e,p){
   e=e||{};
-  var catSel=['遊戲','攻略','主機','週邊','數位遊戲','原聲帶','畫集','公仔'].map(function(c){
+  var catSel=['遊戲','攻略','主機','週邊','數位遊戲','電子書'].map(function(c){
     return '<option value="'+c+'"'+(c===catInternal(e.target_cat||'遊戲')?' selected':'')+'>'+catLabel(c)+'</option>';
   }).join('');
   var curRegion=mapRegion(e.region)||e.region||'';
