@@ -2191,7 +2191,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v43.01';
+const APP_VERSION='v44.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2394,14 +2394,17 @@ const DIGITAL_GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','商店資
 // ── 原聲帶／音樂（OST，v42.20）：量身設計，非沿用主機/週邊模板 ──
 const OST_FIELDS=[
   ['category','資料類別','sel','識別資訊'],
+  ['subtype','類型','sel','識別資訊'],
+  ['related_work','作品／IP名稱','txt','識別資訊'],
   ['primary_name','專輯名稱','txt','識別資訊'],
   ['jp_name','日文名稱','txt','識別資訊'],
   ['zh_name','中文名稱','txt','識別資訊'],
   ['en_name','英文名稱','txt','識別資訊'],
-  ['related_work','相關作品','txt','音樂資訊'],
-  ['composer','作曲／編曲','txt','音樂資訊'],
+  ['composer','作曲／演出者','txt','音樂資訊'],
   ['label','發行廠牌','txt','音樂資訊'],
-  ['format','媒體格式','sel','音樂資訊'],
+  ['catalog_number','商品番號','txt','音樂資訊'],
+  ['format','載體格式','sel','音樂資訊'],
+  ['edition_type','版本屬性','sel','音樂資訊'],
   ['disc_count','片數','txt','音樂資訊'],
   ['track_count','收錄曲數','txt','音樂資訊'],
   ['release_date','發行日期','dateq','發行資訊'],
@@ -2411,11 +2414,15 @@ const OST_FIELDS=[
   ['barcode','條碼','txt','編碼條碼'],
   ['code','商品編號','txt','編碼條碼'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
+  ['obi_status','側標狀態','sel','收藏狀態'],
   ['completeness','品項完整度','comp','品相完整度'],
   ['storage_location','保管位置','storagesel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
-  ['buy_source','購入來源','sel','收藏狀態'],
-  ['buy_price','購入價格','price','收藏狀態'],
+  ['purchase_channel','購入管道','txt','收藏狀態'],
+  ['buy_source','取得方式','sel','收藏狀態'],
+  ['buy_price','原幣價格','price','收藏狀態'],
+  ['local_cost','台幣實付（含運費）','price','收藏狀態'],
+  ['bonus_items','特典附錄','area','收藏狀態'],
   ['market_value','目前估值','price','個人記錄'],
   ['market_value_confidence','估值信心','sel','個人記錄'],
   ['summary','簡介','area','補充資訊'],
@@ -2430,16 +2437,19 @@ const OST_FIELDS=[
 ];
 const OST_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
-  format:['CD','黑膠','卡帶','數位','其他'],
+  subtype:['原聲帶','主題曲／單曲','角色歌曲／印象集','廣播劇CD','演唱會音源／其他'],
+  format:['CD','黑膠唱片','卡帶','數位高解析音檔','其他'],
+  edition_type:['初回限定盤','通常盤','完全生產限定盤'],
+  obi_status:['有側標','無側標（遺失）','未拆封'],
   collect_status:['收藏中','已出售','借出中','遺失或損毀','願望清單'],
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
 };
 const OST_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const OST_DEFAULTS={
-  category:'原聲帶',collect_status:'收藏中',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',format:'CD',
+  category:'原聲帶',subtype:'',collect_status:'收藏中',obi_status:'',buy_source:'全新購入',
+  buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',
+  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',format:'CD',edition_type:'',
 };
 const OST_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
@@ -2755,7 +2765,8 @@ function _catMeta(cat){return CAT_META[catInternal(cat)]||CAT_META['遊戲'];}
 // 子類型本身不影響欄位表單（欄位規劃留待下一階段），先只處理選擇與統計歸戶。
 var SUBTYPE_META={
   '數位下載版':{options:['下載版遊戲','電子書-攻略','電子書-漫畫','電子書-畫冊','電子書-美術設定','電子書-雜誌','動畫','原聲帶','其他'],other:'其他'},
-  '動漫/美術設定集':{options:['漫畫／單行本','畫冊／插畫集','設定集／公式資料集','原畫集／分鏡集','雜誌／MOOK／同人誌','動畫影集','動畫電影／劇場版','周邊／其他'],other:'周邊／其他'}
+  '動漫/美術設定集':{options:['漫畫／單行本','畫冊／插畫集','設定集／公式資料集','原畫集／分鏡集','雜誌／MOOK／同人誌','動畫影集','動畫電影／劇場版','周邊／其他'],other:'周邊／其他'},
+  '原聲帶':{options:['原聲帶','主題曲／單曲','角色歌曲／印象集','廣播劇CD','演唱會音源／其他'],other:'演唱會音源／其他'}
 };
 function hasSubtype(cat){return !!SUBTYPE_META[catInternal(cat)];}
 
@@ -2891,13 +2902,14 @@ var AI_CAT_SPEC={
   原聲帶:{
     role:'遊戲/動畫原聲帶與音樂商品資料庫專家',itemLabel:'專輯名稱',
     fields:{jp_name:'日文專輯名稱',zh_name:'中文名稱',en_name:'英文名稱',
-      related_work:'相關作品（哪款遊戲/動畫的原聲帶，繁體中文）',composer:'作曲/編曲者',
-      label:'發行廠牌/唱片公司',format:'媒體格式(CD/黑膠/卡帶/數位/其他)',
+      related_work:'作品／IP名稱（哪款遊戲/動畫的原聲帶，繁體中文）',composer:'作曲／演出者（作曲家、編曲者或演唱者/聲優）',
+      label:'發行廠牌/唱片公司',catalog_number:'商品番號（唱片公司核發的編號，通常印在側標或光碟上，如 SQEX-10851）',
+      format:'載體格式(CD/黑膠唱片/卡帶/數位高解析音檔/其他)',edition_type:'版本屬性(初回限定盤/通常盤/完全生產限定盤，不確定留空)',
       disc_count:'片數（不確定留空）',track_count:'收錄曲數（不確定留空）',
       publisher:'發行商（若與廠牌不同才填，否則留空）',suggest_price:'建議零售價(如 3000 JPY / 29.99 USD / 690 TWD；依區域決定幣別)',
       release_date:'發行日期(YYYY/MM/DD)',summary:'專輯簡介(繁體中文，100字內)',
-      region:'發行地區',edition:'版本說明（初回限定版/通常版等）'},
-    constraint:'composer 填作曲/編曲者姓名。format 只能是 CD/黑膠/卡帶/數位/其他其中之一。suggest_price 格式為「數字 幣別代碼」。'
+      region:'發行地區',edition:'版本說明（初回限定版/通常版等文字備註）'},
+    constraint:'composer 填作曲/編曲者或演唱者姓名。format 只能是 CD/黑膠唱片/卡帶/數位高解析音檔/其他其中之一。catalog_number 只填包裝或光碟上實際印出的編號，沒有把握就留空，不可推測捏造。suggest_price 格式為「數字 幣別代碼」。'
   },
   '動漫/美術設定集':{
     role:'遊戲/動畫漫畫與美術設定集資料庫專家',itemLabel:'書名',
@@ -10643,6 +10655,7 @@ function _cardBadges(d,cond,bcCount,midParts){
   }else if(cat==='原聲帶'){
     _addCardChip(out,seen,'原聲帶','bk-cat bk-cat-ost');
     _addCardChip(out,seen,d.format,'bk-state');
+    if(d.obi_status)_addCardChip(out,seen,d.obi_status,'bk-state');
   }else if(cat==='動漫/美術設定集'){
     _addCardChip(out,seen,'動漫','bk-cat bk-cat-artbook');
     _addCardChip(out,seen,d.binding,'bk-state');
