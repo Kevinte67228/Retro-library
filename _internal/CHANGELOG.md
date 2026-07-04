@@ -1,3 +1,25 @@
+## v47.03 (2026-07-04)
+
+### 變更內容
+詳情頁圖片顯示整合，取消重複：
+- v47.02 新增的獨立大圖+縮圖列區塊，整合進 hero 卡片左側原本的封面小圖空間，不再另外顯示一份
+- hero 封面區改為：主圖（86x86，跟原本小封面一樣大）+ 迷你縮圖列（有多張圖才顯示）+ 拍照/相簿圖示按鈕，垂直堆疊填滿原本因四宮格比較高而留白的空間
+- 拍照/相簿按鈕改為純圖示（無文字），因應變窄的版面
+- 點縮圖切換主圖、更換照片後同步更新主圖與縮圖，邏輯與 v47.02 相同，只是外觀縮小整合進 hero
+
+### 影響檔案
+- index.html / GameVault_v47_03_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端 UI 改版）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v47-02 → gamevault-v47-03
+
+### 對應備份
+- _internal/old/v47_02/
+
 ## v47.02 (2026-07-04)
 
 ### 變更內容
@@ -49,30 +71,4 @@
 
 ### 對應備份
 - _internal/old/v46_01/
-
-## v46.01 (2026-07-04)
-
-### 變更內容
-數位下載版欄位重新設計（授權與檔案管理導向）：
-- 子類型改採「媒體大類＋內容子類」架構，捨棄硬性「電子書-」前綴，改為 8 項：下載版遊戲、追加下載內容、電子書（漫畫／單行本）、電子書（畫冊／美術設定）、電子書（攻略／公式書）、電子書（雜誌／MOOK）、數位音源、數位影音
-- 新增欄位：數位識別碼（digital_id，商店URL後綴或平台ID如Steam AppID）、版權限制（drm_status：綁定平台App/DRM-Free）、檔案格式（file_format）、存放位置（file_storage_location：雲端硬碟/本地NAS/主機內建/SD卡/未備份）、兌換碼／序號（redemption_key）
-- 新增「檔案資訊」欄位群組，「下載容量」更名「檔案大小」並移入此群組
-- 所屬平台／商店清單更新為 Nintendo eShop／PlayStation Store／Microsoft Store／Steam／Epic Games／BookWalker／DLsite／其他（取代 PSN/Xbox Store 舊稱，並新增 BookWalker/DLsite）
-- 詳情頁 KPI 新增「版權限制」顯示；收藏卡片 DRM-Free 商品會顯示綠色標籤
-- AI 辨識規格同步更新商店清單，並要求 digital_id 沒把握就留空、不可推測捏造
-- GS 後端 DIGITAL_HEADERS 同步擴充新欄位，自我檢查前端欄位 100% 對應後端
-
-### 影響檔案
-- index.html / GameVault_v46_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
-
-### GS 版本
-- v45 → v46（DIGITAL_HEADERS 新增 digital_id/drm_status/file_format/file_storage_location/redemption_key 共 5 個欄位）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v45-01 → gamevault-v46-01
-
-### 對應備份
-- _internal/old/v45_01/
 
