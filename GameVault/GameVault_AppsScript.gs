@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v46.01         ║
+// ║  GameVault — Google Apps Script 後端  v47.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -11,6 +11,8 @@
 //  OST 工作表 → 原聲帶（v43.01 新增，原混在 Games 表）
 //  Artbook 工作表 → 動漫/美術設定集（v43.01 新增，原混在 Games 表）
 //  Figures 工作表 → 公仔／模型（v43.01 新增，原混在 Games 表）
+//  DigiGame/DigiDLC/DigiComic/DigiArtbook/DigiGuide/DigiMag/DigiAudio/DigiVideo
+//    → v47.01 新增：數位下載版依 8 個子類型拆為獨立工作表，取代單一 Digital 表
 //
 //  GET  ?action=ping              → 連線測試
 //  GET  ?action=list              → 取回全部記錄（Games + Books + Consoles + Peripherals 合併）
@@ -30,7 +32,16 @@ const PERIPH_SHEET  = 'Peripherals';
 const HUNT_SHEET    = 'Hunt';
 // v43.01：數位下載版／原聲帶／動漫美術設定集／公仔 改用各自獨立工作表（原本落在 Games 表，
 // 分類專屬欄位未在 GAME_HEADERS 中會被靜默丟棄，故獨立建表＋各自完整欄位表）
-const DIGITAL_SHEET = 'Digital';
+// v47.01：數位下載版原本 8 個子類型全部擠在同一張 Digital 表，欄位互不相干、表單四不像，
+// 改為每個子類型各自獨立工作表（遊戲/DLC/電子書x4/音源/影音）
+const DIGIGAME_SHEET    = 'DigiGame';
+const DIGIDLC_SHEET     = 'DigiDLC';
+const DIGICOMIC_SHEET   = 'DigiComic';
+const DIGIARTBOOK_SHEET = 'DigiArtbook';
+const DIGIGUIDE_SHEET   = 'DigiGuide';
+const DIGIMAG_SHEET     = 'DigiMag';
+const DIGIAUDIO_SHEET   = 'DigiAudio';
+const DIGIVIDEO_SHEET   = 'DigiVideo';
 const OST_SHEET     = 'OST';
 const ARTBOOK_SHEET = 'Artbook';
 const FIGURE_SHEET  = 'Figures';
@@ -114,18 +125,52 @@ const HUNT_HEADERS = [
   'notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'
 ];
 
-// ── 數位下載版欄位（v43.01 新增，v46.01 擴充授權/檔案專屬欄位，比照前端 DIGITAL_FIELDS）──
-const DIGITAL_HEADERS = [
-  'category','subtype','primary_name','jp_name','zh_name','en_name','series',
-  'platform','edition','region','voice_language','subtitle_language',
+// ── 數位下載版（v43.01 新增，v46.01 擴充授權/檔案專屬欄位，v47.01 依子類型拆為 8 張表，比照前端 8 組 FIELDS）──
+// 共用表頭：category/subtype/primary_name/jp_name/zh_name/en_name
+// 共用表尾：store/account/purchase_method/digital_id/drm_status/file_format/download_size/file_storage_location/
+//          release_date/suggest_price/region/edition/collect_status/buy_date/buy_price/redemption_key/
+//          summary/ref_link/cover_img/related_code/notes/uuid/created_at
+const _DIGI_HEAD = ['category','subtype','primary_name','jp_name','zh_name','en_name'];
+const _DIGI_TAIL = [
   'store','account','purchase_method','digital_id','drm_status',
   'file_format','download_size','file_storage_location',
-  'dlc_owned',
-  'genre','players','features','age_rating',
-  'developer','publisher','release_date','suggest_price',
+  'release_date','suggest_price','region','edition',
   'collect_status','buy_date','buy_price','redemption_key',
   'summary','ref_link','cover_img','related_code','notes','uuid','created_at'
 ];
+// 1. 下載版遊戲
+const DIGIGAME_HEADERS = _DIGI_HEAD.concat([
+  'series','platform','voice_language','subtitle_language',
+  'genre','players','features','age_rating','developer','publisher','dlc_owned'
+]).concat(_DIGI_TAIL);
+// 2. 追加下載內容（DLC／季票／擴充包）
+const DIGIDLC_HEADERS = _DIGI_HEAD.concat([
+  'series','platform','dlc_type','developer','publisher'
+]).concat(_DIGI_TAIL);
+// 3. 電子書（漫畫／單行本）
+const DIGICOMIC_HEADERS = _DIGI_HEAD.concat([
+  'series','volume','illustrator','publisher'
+]).concat(_DIGI_TAIL);
+// 4. 電子書（畫冊／美術設定）
+const DIGIARTBOOK_HEADERS = _DIGI_HEAD.concat([
+  'series','illustrator','page_count','publisher'
+]).concat(_DIGI_TAIL);
+// 5. 電子書（攻略／公式書）
+const DIGIGUIDE_HEADERS = _DIGI_HEAD.concat([
+  'series','publisher'
+]).concat(_DIGI_TAIL);
+// 6. 電子書（雜誌／MOOK）
+const DIGIMAG_HEADERS = _DIGI_HEAD.concat([
+  'series','issue_number','publisher'
+]).concat(_DIGI_TAIL);
+// 7. 數位音源
+const DIGIAUDIO_HEADERS = _DIGI_HEAD.concat([
+  'related_work','composer','label','track_count','publisher'
+]).concat(_DIGI_TAIL);
+// 8. 數位影音
+const DIGIVIDEO_HEADERS = _DIGI_HEAD.concat([
+  'related_work','studio','episode_count','runtime','voice_language','subtitle_language','publisher'
+]).concat(_DIGI_TAIL);
 
 // ── 原聲帶欄位（v43.01 新增，v44.01 擴充音樂專屬欄位，比照前端 OST_FIELDS）──
 const OST_HEADERS = [
@@ -217,9 +262,30 @@ function getSheet(type) {
   } else if (t === 'hunt' || t === '狩獵') {
     sheetName = HUNT_SHEET;    headers = HUNT_HEADERS;
     headBg = '#2e0f1a'; headFg = '#ff6e9c';
-  } else if (t === 'digital' || t === '數位下載版') {
-    sheetName = DIGITAL_SHEET; headers = DIGITAL_HEADERS;
+  } else if (t === 'digigame') {
+    sheetName = DIGIGAME_SHEET; headers = DIGIGAME_HEADERS;
     headBg = '#001f2e'; headFg = '#00e5ff';
+  } else if (t === 'digidlc') {
+    sheetName = DIGIDLC_SHEET; headers = DIGIDLC_HEADERS;
+    headBg = '#001f2e'; headFg = '#40c4ff';
+  } else if (t === 'digicomic') {
+    sheetName = DIGICOMIC_SHEET; headers = DIGICOMIC_HEADERS;
+    headBg = '#0f2e18'; headFg = '#aed581';
+  } else if (t === 'digiartbook') {
+    sheetName = DIGIARTBOOK_SHEET; headers = DIGIARTBOOK_HEADERS;
+    headBg = '#0f2e18'; headFg = '#8bc34a';
+  } else if (t === 'digiguide') {
+    sheetName = DIGIGUIDE_SHEET; headers = DIGIGUIDE_HEADERS;
+    headBg = '#0f2e18'; headFg = '#66bb6a';
+  } else if (t === 'digimag') {
+    sheetName = DIGIMAG_SHEET; headers = DIGIMAG_HEADERS;
+    headBg = '#0f2e18'; headFg = '#9ccc65';
+  } else if (t === 'digiaudio') {
+    sheetName = DIGIAUDIO_SHEET; headers = DIGIAUDIO_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#ff8a65';
+  } else if (t === 'digivideo') {
+    sheetName = DIGIVIDEO_SHEET; headers = DIGIVIDEO_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#f06292';
   } else if (t === 'ost' || t === '原聲帶') {
     sheetName = OST_SHEET;     headers = OST_HEADERS;
     headBg = '#1a0f2e'; headFg = '#b388ff';
@@ -252,18 +318,29 @@ function getSheet(type) {
 }
  
 // ── 判斷 category 字串 ────────────────────────────
-function resolveType(category) {
+function resolveType(category, subtype) {
   if (!category) return 'game';
   const s = String(category).trim();
   if (s === '攻略' || s === '書籍' || s === 'book' || s === 'Book') return 'book';
   if (s === '主機' || s === 'console' || s === 'Console')    return 'console';
   if (s === '週邊' || s === '周邊' || s === 'peripheral' || s === 'Peripheral') return 'peripheral';
   if (s === '狩獵' || s === 'hunt' || s === 'Hunt') return 'hunt';
-  // v43.01：數位下載版／原聲帶／動漫美術設定集／公仔 改走各自獨立工作表；含舊分類值別名，向下相容既有資料
-  if (s === '數位下載版' || s === '數位遊戲' || s === 'digital' || s === 'Digital') return 'digital';
+  // v43.01：原聲帶／動漫美術設定集／公仔 改走各自獨立工作表；含舊分類值別名，向下相容既有資料
   if (s === '原聲帶' || s === 'ost' || s === 'OST') return 'ost';
   if (s === '動漫/美術設定集' || s === '畫集' || s === '設定集' || s === 'artbook' || s === 'Artbook') return 'artbook';
   if (s === '公仔' || s === '模型' || s === 'figure' || s === 'Figure') return 'figure';
+  // v47.01：數位下載版依子類型再拆到 8 個獨立工作表，不再共用一張 Digital 表
+  if (s === '數位下載版' || s === '數位遊戲' || s === 'digital' || s === 'Digital') {
+    const sub = String(subtype || '').trim();
+    if (sub === '追加下載內容') return 'digidlc';
+    if (sub === '電子書（漫畫／單行本）') return 'digicomic';
+    if (sub === '電子書（畫冊／美術設定）') return 'digiartbook';
+    if (sub === '電子書（攻略／公式書）') return 'digiguide';
+    if (sub === '電子書（雜誌／MOOK）') return 'digimag';
+    if (sub === '數位音源') return 'digiaudio';
+    if (sub === '數位影音') return 'digivideo';
+    return 'digigame'; // 含「下載版遊戲」與未選子類型時的預設
+  }
   return 'game';
 }
  
@@ -355,7 +432,11 @@ function collectUsedImgIds_() {
     [GAMES_SHEET, GAME_HEADERS], [BOOKS_SHEET, BOOK_HEADERS],
     [CONSOLE_SHEET, CONSOLE_HEADERS], [PERIPH_SHEET, PERIPH_HEADERS],
     [HUNT_SHEET, HUNT_HEADERS],
-    [DIGITAL_SHEET, DIGITAL_HEADERS], [OST_SHEET, OST_HEADERS],
+    [DIGIGAME_SHEET, DIGIGAME_HEADERS], [DIGIDLC_SHEET, DIGIDLC_HEADERS],
+    [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
+    [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
+    [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS],
+    [OST_SHEET, OST_HEADERS],
     [ARTBOOK_SHEET, ARTBOOK_HEADERS], [FIGURE_SHEET, FIGURE_HEADERS]
   ];
   const used = {};
@@ -421,7 +502,7 @@ function doGet(e) {
   try {
     switch (action) {
       case 'ping':
-        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games + Books + Consoles + Peripherals + Hunt + Digital + OST + Artbook + Figures 九工作表)' };
+        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games/Books/Consoles/Peripherals/Hunt + 數位下載版8子表 + OST/Artbook/Figures，共16工作表)' };
         break;
       case 'list':
         result = listAll(p.type || 'all');
@@ -491,7 +572,10 @@ function doPost(e) {
   let result;
   try {
     const data = JSON.parse(e.postData.contents);
-    const type = resolveType(data.category || (data.row && data.row[0]));
+    const type = resolveType(
+      data.category || (data.row && data.row[0]),
+      (data.fields && data.fields.subtype) || (data.row && data.row[1])
+    );
     switch (data.action) {
       case 'add':
         result = addRow(data.row, type, data.fields);
@@ -539,13 +623,22 @@ function listAll(type) {
   if (type === 'console')    return listSheet('console');
   if (type === 'peripheral') return listSheet('peripheral');
   if (type === 'hunt')       return listSheet('hunt');
-  if (type === 'digital')    return listSheet('digital');
+  if (type === 'digigame')   return listSheet('digigame');
+  if (type === 'digidlc')    return listSheet('digidlc');
+  if (type === 'digicomic')  return listSheet('digicomic');
+  if (type === 'digiartbook')return listSheet('digiartbook');
+  if (type === 'digiguide')  return listSheet('digiguide');
+  if (type === 'digimag')    return listSheet('digimag');
+  if (type === 'digiaudio')  return listSheet('digiaudio');
+  if (type === 'digivideo')  return listSheet('digivideo');
   if (type === 'ost')        return listSheet('ost');
   if (type === 'artbook')    return listSheet('artbook');
   if (type === 'figure')     return listSheet('figure');
 
   // 合併全部工作表，附加來源類型（不含 hunt：狩獵清單獨立，不混入收藏）
-  const types = ['game', 'book', 'console', 'peripheral', 'digital', 'ost', 'artbook', 'figure'];
+  const types = ['game', 'book', 'console', 'peripheral',
+    'digigame', 'digidlc', 'digicomic', 'digiartbook', 'digiguide', 'digimag', 'digiaudio', 'digivideo',
+    'ost', 'artbook', 'figure'];
   let allRows = [];
   types.forEach(function(tp) {
     let r;
@@ -1974,7 +2067,9 @@ function parseSSGame(jeu, authQS) {
  
 // ── UUID 搜尋函數 ──────────────────────────────────────────
 function findRowByUuid(uuid) {
-  const types = ['game', 'book', 'console', 'peripheral', 'hunt', 'digital', 'ost', 'artbook', 'figure'];
+  const types = ['game', 'book', 'console', 'peripheral', 'hunt',
+    'digigame', 'digidlc', 'digicomic', 'digiartbook', 'digiguide', 'digimag', 'digiaudio', 'digivideo',
+    'ost', 'artbook', 'figure'];
   for (const type of types) {
     try {
       const { sheet, headers } = getSheet(type);
@@ -2073,7 +2168,14 @@ function fixSheetHeaders() {
   results.consoles    = fixSheet(CONSOLE_SHEET,  CONSOLE_HEADERS);
   results.peripherals = fixSheet(PERIPH_SHEET,   PERIPH_HEADERS);
   results.hunt        = fixSheet(HUNT_SHEET,     HUNT_HEADERS);
-  results.digital     = fixSheet(DIGITAL_SHEET,  DIGITAL_HEADERS);
+  results.digigame    = fixSheet(DIGIGAME_SHEET,    DIGIGAME_HEADERS);
+  results.digidlc     = fixSheet(DIGIDLC_SHEET,     DIGIDLC_HEADERS);
+  results.digicomic   = fixSheet(DIGICOMIC_SHEET,   DIGICOMIC_HEADERS);
+  results.digiartbook = fixSheet(DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS);
+  results.digiguide   = fixSheet(DIGIGUIDE_SHEET,   DIGIGUIDE_HEADERS);
+  results.digimag     = fixSheet(DIGIMAG_SHEET,     DIGIMAG_HEADERS);
+  results.digiaudio   = fixSheet(DIGIAUDIO_SHEET,   DIGIAUDIO_HEADERS);
+  results.digivideo   = fixSheet(DIGIVIDEO_SHEET,   DIGIVIDEO_HEADERS);
   results.ost         = fixSheet(OST_SHEET,      OST_HEADERS);
   results.artbook     = fixSheet(ARTBOOK_SHEET,  ARTBOOK_HEADERS);
   results.figures     = fixSheet(FIGURE_SHEET,   FIGURE_HEADERS);
@@ -2161,10 +2263,64 @@ function deleteLegacyMigratedRowsFromGames() {
   return { ok: true, deleted: deleted };
 }
 
+// ── v47.01 一次性遷移工具：把舊的單一 Digital 表資料依子類型搬到 8 個新工作表 ──
+// 使用方式（建議先在試算表「檔案 > 建立副本」備份一份再執行）：
+//   1. 執行 migrateDigitalToSubtypeSheets，複製到 DigiGame/DigiDLC/DigiComic/... 8 個新分頁
+//   2. 到試算表檢查 8 個新分頁資料是否正確（舊 Digital 表原始資料不會被動到）
+//   3. 確認無誤後，執行 deleteDigitalSheetAfterMigration() 整張刪除舊的 Digital 表
+function migrateDigitalToSubtypeSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const oldSheet = ss.getSheetByName('Digital');
+  if (!oldSheet) return { ok: true, msg: '找不到舊的 Digital 工作表，可能本來就沒有資料或已經搬移過' };
+  const last = oldSheet.getLastRow();
+  if (last <= 1) return { ok: true, msg: 'Digital 工作表沒有資料列' };
+
+  const actualHeaders = oldSheet.getRange(1, 1, 1, oldSheet.getLastColumn()).getValues()[0];
+  const data = oldSheet.getRange(2, 1, last - 1, oldSheet.getLastColumn()).getValues();
+  const subIdx = actualHeaders.indexOf('subtype');
+
+  const routeMap = {
+    '追加下載內容': 'digidlc',
+    '電子書（漫畫／單行本）': 'digicomic',
+    '電子書（畫冊／美術設定）': 'digiartbook',
+    '電子書（攻略／公式書）': 'digiguide',
+    '電子書（雜誌／MOOK）': 'digimag',
+    '數位音源': 'digiaudio',
+    '數位影音': 'digivideo'
+  };
+  const counts = {};
+  data.forEach(function(row) {
+    const sub = subIdx >= 0 ? String(row[subIdx] || '').trim() : '';
+    const type = routeMap[sub] || 'digigame'; // 含「下載版遊戲」與空白/無法辨識的子類型
+    const destObj = getSheet(type); // 確保目的地工作表存在且表頭正確
+    const mapped = destObj.headers.map(function(h) {
+      const srcIdx = actualHeaders.indexOf(h);
+      return srcIdx >= 0 ? row[srcIdx] : '';
+    });
+    destObj.sheet.appendRow(mapped);
+    counts[type] = (counts[type] || 0) + 1;
+  });
+
+  Logger.log('migrateDigitalToSubtypeSheets: ' + JSON.stringify(counts));
+  return { ok: true, msg: '已複製到 8 個子類型工作表（原 Digital 工作表未刪除，請先核對再執行 deleteDigitalSheetAfterMigration）', counts: counts };
+}
+
+// 第二步：確認 8 個新分頁資料無誤後才執行，整張刪除舊的 Digital 工作表
+function deleteDigitalSheetAfterMigration() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const oldSheet = ss.getSheetByName('Digital');
+  if (!oldSheet) return { ok: true, msg: '找不到 Digital 工作表，可能已經刪除過' };
+  ss.deleteSheet(oldSheet);
+  Logger.log('deleteDigitalSheetAfterMigration: Digital 工作表已刪除');
+  return { ok: true, msg: '已刪除舊的 Digital 工作表' };
+}
+
 // 為舊資料（uuid 欄位為空）補全 UUID
 function backfillUuids() {
   let filled = 0;
-  for (const sheetName of [GAMES_SHEET, BOOKS_SHEET, CONSOLE_SHEET, PERIPH_SHEET, HUNT_SHEET, DIGITAL_SHEET, OST_SHEET, ARTBOOK_SHEET, FIGURE_SHEET]) {
+  for (const sheetName of [GAMES_SHEET, BOOKS_SHEET, CONSOLE_SHEET, PERIPH_SHEET, HUNT_SHEET,
+    DIGIGAME_SHEET, DIGIDLC_SHEET, DIGICOMIC_SHEET, DIGIARTBOOK_SHEET, DIGIGUIDE_SHEET, DIGIMAG_SHEET, DIGIAUDIO_SHEET, DIGIVIDEO_SHEET,
+    OST_SHEET, ARTBOOK_SHEET, FIGURE_SHEET]) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) continue;
