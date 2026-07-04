@@ -1,3 +1,26 @@
+## v47.02 (2026-07-04)
+
+### 變更內容
+詳情頁圖片區塊改版（參考 Mercari 商品頁風格）：
+- 原本封面/封底/側邊三張圖並排小圖顯示，改為「大圖 + 下方縮圖列」
+- 點縮圖切換上方大圖預覽，選中的縮圖有亮框標示
+- 拍照/相簿更換照片按鈕改為只顯示在目前選中的那張大圖下方（一次只管一張，取代原本三張各自都有按鈕）
+- 更換照片成功後，同步更新大圖（若為目前選中項）與對應縮圖，不需重新整理
+- 未套用 Mercari 的愛心/返回/選單等跟現有導覽重複的元素，僅取用大圖+縮圖列的版面概念
+
+### 影響檔案
+- index.html / GameVault_v47_02_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端 UI 改版）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v47-01a2 → gamevault-v47-02
+
+### 對應備份
+- _internal/old/v47_01a2/
+
 ## v47.01a2 (2026-07-04)
 - 更正 v47.01a1：改為全部 8 種頂層分類（遊戲/書籍/主機/週邊/動漫美術/公仔/原聲帶/數位下載版）建檔表單都只預設展開「圖片紀錄」與各分類的識別/主要資訊區塊，其餘一律收折（原本誤植成只有數位下載版適用）
 
@@ -52,30 +75,4 @@
 
 ### 對應備份
 - _internal/old/v45_01/
-
-## v45.01 (2026-07-04)
-
-### 變更內容
-公仔/模型欄位大幅擴充（立體收藏規範）：
-- 公仔子類型新增 6 項：比例模型、可動模型、黏土人／Q版、景品／一番賞、組裝模型、GK雕像
-- 新增欄位：原型師／塗裝師（sculptor）、商品尺寸（dimensions）、購入管道（purchase_channel）、台幣實付含運費（local_cost）
-- **盒況與本體狀態分開評級**：新增盒況（box_condition：全新未拆封/有壓痕微損/嚴重盒損/無盒已丟棄）與本體狀態（condition：全新未拆MISB/拆封擺設BIB/把玩有輕微痕跡/有缺件斷件）兩個獨立欄位，各自專屬色彩顯示於收藏卡片
-- series 欄位標籤改為「作品／IP名稱」，與其他分類一致；storage_location 標籤改為「存放／展示位置」
-- brand 標籤明確化為「製造商／發行商」，manufacturer（發售商）維持獨立保留，兩者概念不同不合併
-- AI 辨識規格同步新增 sculptor／dimensions 欄位引導
-- GS 後端 FIGURE_HEADERS 同步擴充新欄位，自我檢查前端欄位 100% 對應後端
-
-### 影響檔案
-- index.html / GameVault_v45_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
-
-### GS 版本
-- v44 → v45（FIGURE_HEADERS 新增 subtype/sculptor/dimensions/box_condition/condition/purchase_channel/local_cost 共 7 個欄位）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v44-01 → gamevault-v45-01
-
-### 對應備份
-- _internal/old/v44_01/
 
