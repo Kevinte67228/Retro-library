@@ -1,3 +1,29 @@
+## v47.01 (2026-07-04)
+
+### 變更內容
+數位下載版整個重新規劃：捨棄單一表格硬塞 8 種子類型的設計，改為每個子類型各自獨立欄位表＋獨立工作表：
+- 新增 8 組欄位表：下載版遊戲(DIGIGAME)、追加下載內容(DIGIDLC)、電子書漫畫(DIGICOMIC)、電子書畫冊(DIGIARTBOOK)、電子書攻略(DIGIGUIDE)、電子書雜誌(DIGIMAG)、數位音源(DIGIAUDIO)、數位影音(DIGIVIDEO)，各自只保留該類型真正需要的欄位（例如電子書不再看到遊戲類型/遊戲人數，數位音源改看作曲/發行廠牌/收錄曲數，數位影音改看製作公司/集數/片長）
+- 共用「識別資訊表頭」與「商店/檔案/收藏/補充資訊表尾」（store/account/drm_status/file_format/collect_status 等），避免重複定義
+- `_catMeta(cat, subtype)` 新增子類型分派：數位下載版依目前選定或資料本身的 subtype 動態決定欄位/選項/群組/顏色/預設值，欄位表單選單改變 subtype 會即時重繪整張表單
+- Step1 平台選擇區塊改依子類型判斷是否顯示（只有下載版遊戲／追加下載內容有平台欄位）
+- GS 後端新增 DigiGame/DigiDLC/DigiComic/DigiArtbook/DigiGuide/DigiMag/DigiAudio/DigiVideo 八個獨立工作表，`resolveType()` 依 category+subtype 分派，取代原本單一 Digital 表
+- 新增一次性遷移工具 `migrateDigitalToSubtypeSheets()` / `deleteDigitalSheetAfterMigration()`，供使用者手動於 Apps Script 執行，把舊 Digital 表資料依子類型搬到 8 個新工作表
+- 自我檢查：8 組前端欄位 100% 對應各自後端欄位表；resolveType 分派邏輯全數驗證通過
+
+### 影響檔案
+- index.html / GameVault_v47_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
+
+### GS 版本
+- v46 → v47（新增 8 個數位下載版子類型獨立工作表與欄位表，resolveType/getSheet/listAll/findRowByUuid/fixSheetHeaders/backfillUuids/collectUsedImgIds_ 皆同步更新，並新增一次性遷移工具）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v46-01 → gamevault-v47-01
+
+### 對應備份
+- _internal/old/v46_01/
+
 ## v46.01 (2026-07-04)
 
 ### 變更內容
@@ -75,31 +101,4 @@
 
 ### 對應備份
 - _internal/old/v43_01/
-
-## v43.01 (2026-07-04)
-
-### 變更內容
-動漫/美術設定集欄位大幅擴充 + GS 後端分表：
-- 動漫/美術設定集子類型改為 8 項：漫畫／單行本、畫冊／插畫集、設定集／公式資料集、原畫集／分鏡集、雜誌／MOOK／同人誌、動畫影集、動畫電影／劇場版、周邊／其他
-- 新增欄位：作品／IP名稱（沿用 related_work 改名）、集數／卷數（volume）、語言／字幕（language）、品況（condition，專屬列舉：全新未拆／近全新／良好／有瑕疵）、購入管道（purchase_channel）、台幣實付含運費（local_cost）
-- 「裝訂方式」擴大為「載體格式」（binding 欄位重新定義選項：平裝書/精裝書/Blu-ray/DVD/CD/數位版），涵蓋出版品與影音媒體
-- 購買狀態（collect_status）改為專屬列舉：願望清單／已預購／運送中／已入庫
-- 數位下載版新增「類型」（subtype）欄位進表單（v42.22 已有選擇流程，這次補進 FIELDS 讓可編輯/顯示）
-- **發現並修正資料遺失風險**：GS 後端 `resolveType()` 先前把數位下載版/原聲帶/動漫美術設定集/公仔全部路由到 Games 工作表的 `GAME_HEADERS`，分類專屬欄位（如 illustrator/binding/composer/character 等）不在該表中，儲存時會被靜默丟棄
-- GS 後端新增 Digital／OST／Artbook／Figures 四個獨立工作表與對應完整欄位表，四分類皆改用各自欄位表，欄位不再被丟棄
-- 新增一次性遷移工具 `migrateLegacyCategoriesToNewSheets()` / `deleteLegacyMigratedRowsFromGames()`，供使用者手動於 Apps Script 執行，把原本混在 Games 表的舊資料搬到新工作表（僅能救回原本有存到的欄位）
-
-### 影響檔案
-- index.html / GameVault_v43_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
-
-### GS 版本
-- v42 → v43（新增 Digital/OST/Artbook/Figures 四個工作表與欄位表，resolveType/getSheet/listAll/findRowByUuid/fixSheetHeaders/backfillUuids/collectUsedImgIds_ 皆同步更新）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-22 → gamevault-v43-01
-
-### 對應備份
-- _internal/old/v42_22/
 
