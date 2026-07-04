@@ -2191,7 +2191,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v45.01';
+const APP_VERSION='v46.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2341,7 +2341,7 @@ const PERIPH_GCOL={'週邊資訊':'#ffab40','規格':'#80deea','編碼條碼':'#
 const DIGITAL_FIELDS=[
   ['category','資料類別','sel','識別資訊'],
   ['subtype','類型','sel','識別資訊'],
-  ['primary_name','主要名稱','txt','識別資訊'],
+  ['primary_name','商品名稱','txt','識別資訊'],
   ['jp_name','日文名稱','txt','識別資訊'],
   ['zh_name','中文名稱','txt','識別資訊'],
   ['en_name','英文名稱','txt','識別資訊'],
@@ -2351,9 +2351,14 @@ const DIGITAL_FIELDS=[
   ['region','帳號地區','regionsel','版本規格'],
   ['voice_language','語音語言','txt','版本規格'],
   ['subtitle_language','字幕語言','txt','版本規格'],
-  ['store','購入商店','sel','商店資訊'],
-  ['account','購入帳號','acctsel','商店資訊'],
+  ['store','所屬平台／商店','sel','商店資訊'],
+  ['account','所屬帳號','acctsel','商店資訊'],
   ['purchase_method','取得方式','sel','商店資訊'],
+  ['digital_id','數位識別碼','txt','商店資訊'],
+  ['drm_status','版權限制','sel','商店資訊'],
+  ['file_format','檔案格式','txt','檔案資訊'],
+  ['download_size','檔案大小','txt','檔案資訊'],
+  ['file_storage_location','存放位置','sel','檔案資訊'],
   ['dlc_owned','額外購入的 DLC','area','追加內容'],
   ['genre','遊戲類型','genresel','遊戲規格'],
   ['players','遊戲人數','playersel','遊戲規格'],
@@ -2366,7 +2371,7 @@ const DIGITAL_FIELDS=[
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
-  ['download_size','下載容量','txt','補充資訊'],
+  ['redemption_key','兌換碼／序號','txt','收藏狀態'],
   ['summary','遊戲簡介','area','補充資訊'],
   ['ref_link','商店頁連結','autolink','補充資訊'],
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
@@ -2377,19 +2382,21 @@ const DIGITAL_FIELDS=[
 ];
 const DIGITAL_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
-  subtype:['下載版遊戲','電子書-攻略','電子書-漫畫','電子書-畫冊','電子書-美術設定','電子書-雜誌','動畫','原聲帶','其他'],
+  subtype:['下載版遊戲','追加下載內容','電子書（漫畫／單行本）','電子書（畫冊／美術設定）','電子書（攻略／公式書）','電子書（雜誌／MOOK）','數位音源','數位影音'],
   collect_status:['收藏中','已退款','已移除','預購中','願望清單'],
-  store:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他'],
+  store:['Nintendo eShop','PlayStation Store','Microsoft Store','Steam','Epic Games','BookWalker','DLsite','其他'],
+  drm_status:['綁定平台 App','DRM-Free（無加密）'],
+  file_storage_location:['雲端硬碟（Google Drive／Dropbox）','本地 NAS','主機內建記憶體','SD卡／記憶卡','其他／未備份'],
   purchase_method:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他'],
 };
-const DIGITAL_GROUPS=['圖片紀錄','識別資訊','版本規格','商店資訊','遊戲規格','發行廠商','追加內容','收藏狀態','關聯商品','補充資訊'];
+const DIGITAL_GROUPS=['圖片紀錄','識別資訊','版本規格','商店資訊','檔案資訊','遊戲規格','發行廠商','追加內容','收藏狀態','關聯商品','補充資訊'];
 const DIGITAL_DEFAULTS={
-  category:'數位下載版',subtype:'',collect_status:'收藏中',
+  category:'數位下載版',subtype:'',collect_status:'收藏中',drm_status:'',file_storage_location:'',
   buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',
-  store:'PSN',purchase_method:'直接購買',
+  store:'',purchase_method:'直接購買',
   release_date:'',cover_img:'',ref_link:'',developer:'',series:'',
 };
-const DIGITAL_GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','商店資訊':'#40c4ff','遊戲規格':'#80deea','發行廠商':'#ce93d8','追加內容':'#ffd54f','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const DIGITAL_GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','商店資訊':'#40c4ff','檔案資訊':'#4dd0e1','遊戲規格':'#80deea','發行廠商':'#ce93d8','追加內容':'#ffd54f','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
 // ── 原聲帶／音樂（OST，v42.20）：量身設計，非沿用主機/週邊模板 ──
 const OST_FIELDS=[
@@ -2777,7 +2784,7 @@ function _catMeta(cat){return CAT_META[catInternal(cat)]||CAT_META['遊戲'];}
 // 目前只有「數位下載版」與「動漫/美術設定集」有子類型；子類型視為可獨立篩選/統計的次分類（顆粒度比照四大分類）。
 // 子類型本身不影響欄位表單（欄位規劃留待下一階段），先只處理選擇與統計歸戶。
 var SUBTYPE_META={
-  '數位下載版':{options:['下載版遊戲','電子書-攻略','電子書-漫畫','電子書-畫冊','電子書-美術設定','電子書-雜誌','動畫','原聲帶','其他'],other:'其他'},
+  '數位下載版':{options:['下載版遊戲','追加下載內容','電子書（漫畫／單行本）','電子書（畫冊／美術設定）','電子書（攻略／公式書）','電子書（雜誌／MOOK）','數位音源','數位影音'],other:'數位影音'},
   '動漫/美術設定集':{options:['漫畫／單行本','畫冊／插畫集','設定集／公式資料集','原畫集／分鏡集','雜誌／MOOK／同人誌','動畫影集','動畫電影／劇場版','周邊／其他'],other:'周邊／其他'},
   '原聲帶':{options:['原聲帶','主題曲／單曲','角色歌曲／印象集','廣播劇CD','演唱會音源／其他'],other:'演唱會音源／其他'},
   '公仔':{options:['比例模型','可動模型','黏土人／Q版','景品／一番賞','組裝模型','GK雕像'],other:'GK雕像'}
@@ -2905,13 +2912,14 @@ var AI_CAT_SPEC={
     role:'數位版遊戲商店資料庫專家',itemLabel:'遊戲名稱',
     fields:{jp_name:'日文名稱',zh_name:'中文名稱(官方繁中譯名優先)',en_name:'英文名稱',
       series:'系列名稱',developer:'開發商',publisher:'發行商',
-      store:'購入商店（從畫面判斷：PSN/Nintendo eShop/Steam/Xbox Store/Epic Games/其他；無法判斷留空）',
+      store:'所屬平台／商店（從畫面判斷：Nintendo eShop/PlayStation Store/Microsoft Store/Steam/Epic Games/BookWalker/DLsite/其他；無法判斷留空）',
       platform:'平台（如 PlayStation 5、Nintendo Switch、PC）',
+      digital_id:'數位識別碼（商店頁 URL 後綴或平台專屬 ID，如 Steam AppID，無法判斷留空）',
       release_date:'發行日期(YYYY/MM/DD)',suggest_price:'售價(如 1990 TWD / 7990 JPY；依畫面顯示幣別)',
       genre:'遊戲類型(可多個用、分隔)',
       age_rating:'分級(CERO/ESRB/PEGI)',summary:'遊戲簡介(繁體中文，150字內)',
       voice_language:'語音語言（不確定留空）',subtitle_language:'字幕語言（不確定留空）',edition:'版本說明（標準版/豪華版等）'},
-    constraint:'此為數位版遊戲（商店頁截圖或遊戲庫畫面），無實體條碼與包裝。store 依畫面 UI 風格判斷。summary 用繁體中文。'
+    constraint:'此為數位版遊戲（商店頁截圖或遊戲庫畫面），無實體條碼與包裝。store 依畫面 UI 風格判斷。digital_id 只填畫面上實際看得到的網址後綴或 ID，看不到就留空，不可推測捏造。summary 用繁體中文。'
   },
   原聲帶:{
     role:'遊戲/動畫原聲帶與音樂商品資料庫專家',itemLabel:'專輯名稱',
@@ -10668,6 +10676,7 @@ function _cardBadges(d,cond,bcCount,midParts){
     _addCardChip(out,seen,'數位下載版','bk-cat bk-cat-digital');
     _addCardChip(out,seen,d.store,'bk-state');
     _addCardChip(out,seen,d.purchase_method&&d.purchase_method!=='直接購買'?d.purchase_method:'','bk-state');
+    if(d.drm_status==='DRM-Free（無加密）')_addCardChip(out,seen,'DRM-Free','bk-state','color:#00e676;border-color:#00e676');
   }else if(cat==='原聲帶'){
     _addCardChip(out,seen,'原聲帶','bk-cat bk-cat-ost');
     _addCardChip(out,seen,d.format,'bk-state');
@@ -11693,8 +11702,9 @@ function detailHeroHtml(d,rowNum){
     // v42.16：數位版沒有實體品相/完整度/保管/估值概念，改顯示商店資訊
     if(d.collect_status)tags+=_detailTag(d.collect_status,collectColor);
     kpisHtml=
-      _detailKpi('購入商店',d.store||'未填','#40c4ff')+
-      _detailKpi('購入帳號',d.account||'未填','#64b5f6')+
+      _detailKpi('所屬平台',d.store||'未填','#40c4ff')+
+      _detailKpi('所屬帳號',d.account||'未填','#64b5f6')+
+      _detailKpi('版權限制',d.drm_status||'未填','#00e676')+
       _detailKpi('取得方式',d.purchase_method||'未填','#ffd54f');
   }else{
     var st=compStatus(cat,d.completeness);
