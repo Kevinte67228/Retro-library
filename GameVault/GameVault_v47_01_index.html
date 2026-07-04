@@ -2191,7 +2191,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v47.01';
+const APP_VERSION='v47.01a1';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8504,12 +8504,16 @@ function renderForm(){
   var _F=window._CUR_FIELDS||FIELDS;
   var _G=window._CUR_GROUPS||GROUPS;
   var _GC=window._CUR_GCOL||GCOL;
+  var _formCat=catInternal(entry.category);
   _G.forEach(function(g){
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
     // 預設展開前四個主要區塊（圖片紀錄、識別/主要資訊、規格類、版本規格），其餘全部預設折疊
-    var expandByDefault=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','補充資訊','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
+    // v47.02：數位下載版（8 個子類型）欄位偏多、彼此差異大，只預設展開「圖片紀錄」「識別資訊」，其餘一律收折
+    var expandByDefault=(_formCat==='數位下載版')
+      ?['圖片紀錄','識別資訊']
+      :['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','補充資訊','書籍資訊','出版資訊','主機資訊','硬體規格','週邊資訊','規格'];
     var isCollapsed=expandByDefault.indexOf(g)<0;
     div.innerHTML='<div class="sh2" onclick="togSec(this)">'+
       '<div class="sl"><span class="dot" style="background:'+gcolor+'"></span>'+g+'</div>'+
