@@ -2191,7 +2191,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v42.22';
+const APP_VERSION='v43.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2340,6 +2340,7 @@ const PERIPH_GCOL={'週邊資訊':'#ffab40','規格':'#80deea','編碼條碼':'#
 // ── 數位版遊戲（Digital）專屬欄位（v42.14）：無實體，拿掉條碼/品相/保管位置，改為商店/帳號/DLC ──
 const DIGITAL_FIELDS=[
   ['category','資料類別','sel','識別資訊'],
+  ['subtype','類型','sel','識別資訊'],
   ['primary_name','主要名稱','txt','識別資訊'],
   ['jp_name','日文名稱','txt','識別資訊'],
   ['zh_name','中文名稱','txt','識別資訊'],
@@ -2376,13 +2377,14 @@ const DIGITAL_FIELDS=[
 ];
 const DIGITAL_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
+  subtype:['下載版遊戲','電子書-攻略','電子書-漫畫','電子書-畫冊','電子書-美術設定','電子書-雜誌','動畫','原聲帶','其他'],
   collect_status:['收藏中','已退款','已移除','預購中','願望清單'],
   store:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他'],
   purchase_method:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他'],
 };
 const DIGITAL_GROUPS=['圖片紀錄','識別資訊','版本規格','商店資訊','遊戲規格','發行廠商','追加內容','收藏狀態','關聯商品','補充資訊'];
 const DIGITAL_DEFAULTS={
-  category:'數位下載版',collect_status:'收藏中',
+  category:'數位下載版',subtype:'',collect_status:'收藏中',
   buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',
   store:'PSN',purchase_method:'直接購買',
   release_date:'',cover_img:'',ref_link:'',developer:'',series:'',
@@ -2441,30 +2443,36 @@ const OST_DEFAULTS={
 };
 const OST_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
-// ── 動漫/美術設定集（Artbook，v42.20，v42.22 更名）：量身設計，非沿用書籍模板 ──
+// ── 動漫/美術設定集（Artbook，v42.20，v42.22 更名，v43.01 欄位擴充）：量身設計，非沿用書籍模板 ──
 const ARTBOOK_FIELDS=[
   ['category','資料類別','sel','識別資訊'],
-  ['primary_name','書名','txt','識別資訊'],
+  ['subtype','類型','sel','識別資訊'],
+  ['related_work','作品／IP名稱','txt','識別資訊'],
+  ['primary_name','標題／書名／品名','txt','識別資訊'],
+  ['volume','集數／卷數','txt','識別資訊'],
   ['jp_name','日文名稱','txt','識別資訊'],
   ['zh_name','中文名稱','txt','識別資訊'],
   ['en_name','英文名稱','txt','識別資訊'],
-  ['related_work','相關作品','txt','書籍資訊'],
-  ['illustrator','繪師／監修','txt','書籍資訊'],
-  ['page_count','頁數','txt','書籍資訊'],
-  ['binding','裝訂方式','sel','書籍資訊'],
-  ['publisher','出版社','txt','發行資訊'],
-  ['release_date','出版日期','dateq','發行資訊'],
+  ['illustrator','作者／製作公司','txt','內容資訊'],
+  ['binding','載體格式','sel','內容資訊'],
+  ['language','語言／字幕','txt','內容資訊'],
+  ['page_count','頁數','txt','內容資訊'],
+  ['publisher','發行商／出版社','txt','發行資訊'],
+  ['release_date','發售日期','dateq','發行資訊'],
   ['suggest_price','建議售價','price','發行資訊'],
   ['region','地區版本','regionsel','發行資訊'],
   ['edition','版本說明','txt','發行資訊'],
-  ['barcode','ISBN／條碼','txt','編碼條碼'],
+  ['barcode','ISBN／JAN條碼','txt','編碼條碼'],
   ['code','商品編號','txt','編碼條碼'],
-  ['collect_status','收藏狀態','sel','收藏狀態'],
+  ['collect_status','購買狀態','sel','收藏狀態'],
+  ['condition','品況','sel','收藏狀態'],
   ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','保管位置','storagesel','收藏狀態'],
+  ['storage_location','存放位置','storagesel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
-  ['buy_source','購入來源','sel','收藏狀態'],
-  ['buy_price','購入價格','price','收藏狀態'],
+  ['purchase_channel','購入管道','txt','收藏狀態'],
+  ['buy_source','取得方式','sel','收藏狀態'],
+  ['buy_price','原幣價格','price','收藏狀態'],
+  ['local_cost','台幣實付（含運費）','price','收藏狀態'],
   ['market_value','目前估值','price','個人記錄'],
   ['market_value_confidence','估值信心','sel','個人記錄'],
   ['summary','簡介','area','補充資訊'],
@@ -2479,18 +2487,20 @@ const ARTBOOK_FIELDS=[
 ];
 const ARTBOOK_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
-  binding:['精裝','平裝','其他'],
-  collect_status:['收藏中','已出售','借出中','遺失或損毀','願望清單'],
+  subtype:['漫畫／單行本','畫冊／插畫集','設定集／公式資料集','原畫集／分鏡集','雜誌／MOOK／同人誌','動畫影集','動畫電影／劇場版','周邊／其他'],
+  binding:['平裝書','精裝書','Blu-ray','DVD','CD','數位版'],
+  collect_status:['願望清單','已預購','運送中','已入庫'],
+  condition:['全新未拆','近全新','良好','有瑕疵'],
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
 };
-const ARTBOOK_GROUPS=['圖片紀錄','識別資訊','書籍資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ARTBOOK_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ARTBOOK_DEFAULTS={
-  category:'動漫/美術設定集',collect_status:'收藏中',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',binding:'精裝',
+  category:'動漫/美術設定集',subtype:'',collect_status:'已入庫',condition:'',buy_source:'全新購入',
+  buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',
+  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',binding:'',
 };
-const ARTBOOK_GCOL={'識別資訊':'#00e5ff','書籍資訊':'#aed581','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const ARTBOOK_GCOL={'識別資訊':'#00e5ff','內容資訊':'#aed581','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
 // ── 公仔／模型（Figure，v42.20）：量身設計，非沿用週邊模板 ──
 const FIGURE_FIELDS=[
@@ -2602,6 +2612,8 @@ const COMP_COMPONENTS={
 };
 const COMP_LABEL={'外封':'外封(書衣)'}; // 顯示用標籤覆寫（儲存鍵不變）
 const COND_COLORS={'全新':'#00e676','良好':'#69f0ae','普通':'#ffb300','損傷':'#ff8c00','裸卡':'#64b5f6','缺少':'#ff5252'};
+// 動漫/美術設定集專屬「品況」列舉色彩（v43.01，獨立於全站通用 COND_COLORS，只給此分類的 condition 欄位使用）
+const ARTBOOK_COND_COLORS={'全新未拆':'#00e676','近全新':'#69f0ae','良好':'#ffb300','有瑕疵':'#ff5252'};
 const COMP_STATE_COLORS={'全新':'#00e676','完整':'#69f0ae','缺件':'#ff5252','部分登錄':'#ffb300','未評級':'#7986cb'};
 function compBodyKey(cat){return (catInternal(cat)==='攻略'||catInternal(cat)==='動漫/美術設定集')?'書本體':'本體';}
 // 儲存格式：只存非「無」項目，'組件:等級' 以 | 連接；自定義以使用者輸入的名稱當鍵
@@ -2743,7 +2755,7 @@ function _catMeta(cat){return CAT_META[catInternal(cat)]||CAT_META['遊戲'];}
 // 子類型本身不影響欄位表單（欄位規劃留待下一階段），先只處理選擇與統計歸戶。
 var SUBTYPE_META={
   '數位下載版':{options:['下載版遊戲','電子書-攻略','電子書-漫畫','電子書-畫冊','電子書-美術設定','電子書-雜誌','動畫','原聲帶','其他'],other:'其他'},
-  '動漫/美術設定集':{options:['漫畫','動畫','美術書','設定集','其他'],other:'其他'}
+  '動漫/美術設定集':{options:['漫畫／單行本','畫冊／插畫集','設定集／公式資料集','原畫集／分鏡集','雜誌／MOOK／同人誌','動畫影集','動畫電影／劇場版','周邊／其他'],other:'周邊／其他'}
 };
 function hasSubtype(cat){return !!SUBTYPE_META[catInternal(cat)];}
 
@@ -2890,12 +2902,13 @@ var AI_CAT_SPEC={
   '動漫/美術設定集':{
     role:'遊戲/動畫漫畫與美術設定集資料庫專家',itemLabel:'書名',
     fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
-      related_work:'相關作品（繁體中文）',illustrator:'繪師/監修（如有）',
-      page_count:'頁數（不確定留空）',binding:'裝訂方式(精裝/平裝/其他)',
-      publisher:'出版社名稱（必填）',suggest_price:'建議零售價(如 3500 JPY / 34.99 USD / 890 TWD；依區域決定幣別)',
-      release_date:'出版日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，描述本書而非原作)',
-      region:'出版地區',edition:'版次/版本說明'},
-    constraint:'publisher 必填出版社。illustrator 填繪師或監修者。summary 描述本書內容而非原作劇情。suggest_price 格式為「數字 幣別代碼」。'
+      related_work:'作品／IP名稱（繁體中文，如：葬送的芙莉蓮）',volume:'集數／卷數（如 01、Vol.1；單本完結留空）',
+      illustrator:'作者／製作公司（漫畫家、插畫家或動畫製作公司，如有）',
+      page_count:'頁數（不確定留空，僅出版品類適用）',binding:'載體格式(平裝書/精裝書/Blu-ray/DVD/CD/數位版)',
+      publisher:'出版社或發行商名稱（必填）',suggest_price:'建議零售價(如 3500 JPY / 34.99 USD / 890 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，描述本書/本片而非原作)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'publisher 必填出版社或發行商。illustrator 填作者、插畫家或動畫製作公司。binding 只能是 平裝書/精裝書/Blu-ray/DVD/CD/數位版其中之一。summary 描述本項目內容而非原作劇情。suggest_price 格式為「數字 幣別代碼」。'
   },
   公仔:{
     role:'公仔/模型玩具資料庫專家',itemLabel:'商品名稱',
@@ -10633,6 +10646,7 @@ function _cardBadges(d,cond,bcCount,midParts){
   }else if(cat==='動漫/美術設定集'){
     _addCardChip(out,seen,'動漫','bk-cat bk-cat-artbook');
     _addCardChip(out,seen,d.binding,'bk-state');
+    if(d.condition)_addCardChip(out,seen,d.condition,'bk-cond','color:'+(ARTBOOK_COND_COLORS[d.condition]||'#7986cb')+';border-color:'+(ARTBOOK_COND_COLORS[d.condition]||'#7986cb'));
   }else if(cat==='公仔'){
     _addCardChip(out,seen,'公仔','bk-cat bk-cat-figure');
     _addCardChip(out,seen,d.scale,'bk-state');
