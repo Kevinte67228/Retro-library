@@ -1,3 +1,29 @@
+## v45.01 (2026-07-04)
+
+### 變更內容
+公仔/模型欄位大幅擴充（立體收藏規範）：
+- 公仔子類型新增 6 項：比例模型、可動模型、黏土人／Q版、景品／一番賞、組裝模型、GK雕像
+- 新增欄位：原型師／塗裝師（sculptor）、商品尺寸（dimensions）、購入管道（purchase_channel）、台幣實付含運費（local_cost）
+- **盒況與本體狀態分開評級**：新增盒況（box_condition：全新未拆封/有壓痕微損/嚴重盒損/無盒已丟棄）與本體狀態（condition：全新未拆MISB/拆封擺設BIB/把玩有輕微痕跡/有缺件斷件）兩個獨立欄位，各自專屬色彩顯示於收藏卡片
+- series 欄位標籤改為「作品／IP名稱」，與其他分類一致；storage_location 標籤改為「存放／展示位置」
+- brand 標籤明確化為「製造商／發行商」，manufacturer（發售商）維持獨立保留，兩者概念不同不合併
+- AI 辨識規格同步新增 sculptor／dimensions 欄位引導
+- GS 後端 FIGURE_HEADERS 同步擴充新欄位，自我檢查前端欄位 100% 對應後端
+
+### 影響檔案
+- index.html / GameVault_v45_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
+
+### GS 版本
+- v44 → v45（FIGURE_HEADERS 新增 subtype/sculptor/dimensions/box_condition/condition/purchase_channel/local_cost 共 7 個欄位）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v44-01 → gamevault-v45-01
+
+### 對應備份
+- _internal/old/v44_01/
+
 ## v44.01 (2026-07-04)
 
 ### 變更內容
@@ -75,22 +101,4 @@
 
 ### 對應備份
 - _internal/old/v42_20a1/（同時作為使用者要求的永久備份，往後 5 版輪替清理時排除）
-
-## v42.20a1-revert (2026-07-03)
-
-### 變更內容
-使用者要求回滾 v42.21（移除原聲帶/畫集/公仔分類、數位遊戲與電子書改為第7種建檔方式）。前端還原至 v42.20a1 狀態（8 分類架構、數位遊戲為 Step1 獨立分類）。GS 後端完全未受 v42.21 影響，快取碰撞修正（v42.20a1）維持有效，不需重新部署 GS。v42.21 的完整程式碼已備份於 _internal/old/v42_21/，若之後想拿回來可還原。
-
-### 影響檔案
-- index.html / GameVault_v42_20_index.html
-- sw.js
-
-### GS 版本
-- 無變動（v42.20a1 的 MD5 快取修正持續有效）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-21 → gamevault-v42-20a1
-
-### 對應備份
-- _internal/old/v42_21/（回滾前的 v42.21 完整備份）
 
