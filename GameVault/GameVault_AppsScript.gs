@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v42.20a1      ║
+// ║  GameVault — Google Apps Script 後端  v43.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -7,6 +7,10 @@
 //  Books 工作表 → 書籍 / 攻略本
 //  Consoles 工作表 → 主機
 //  Peripherals 工作表 → 週邊
+//  Digital 工作表 → 數位下載版（v43.01 新增，原混在 Games 表）
+//  OST 工作表 → 原聲帶（v43.01 新增，原混在 Games 表）
+//  Artbook 工作表 → 動漫/美術設定集（v43.01 新增，原混在 Games 表）
+//  Figures 工作表 → 公仔／模型（v43.01 新增，原混在 Games 表）
 //
 //  GET  ?action=ping              → 連線測試
 //  GET  ?action=list              → 取回全部記錄（Games + Books + Consoles + Peripherals 合併）
@@ -24,6 +28,12 @@ const BOOKS_SHEET   = 'Books';
 const CONSOLE_SHEET = 'Consoles';
 const PERIPH_SHEET  = 'Peripherals';
 const HUNT_SHEET    = 'Hunt';
+// v43.01：數位下載版／原聲帶／動漫美術設定集／公仔 改用各自獨立工作表（原本落在 Games 表，
+// 分類專屬欄位未在 GAME_HEADERS 中會被靜默丟棄，故獨立建表＋各自完整欄位表）
+const DIGITAL_SHEET = 'Digital';
+const OST_SHEET     = 'OST';
+const ARTBOOK_SHEET = 'Artbook';
+const FIGURE_SHEET  = 'Figures';
  
 // ── 遊戲欄位──────────────────────────────
 const GAME_HEADERS = [
@@ -103,6 +113,48 @@ const HUNT_HEADERS = [
   'category','target_cat','primary_name','platform','barcode',
   'notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'
 ];
+
+// ── 數位下載版欄位（v43.01 新增，比照前端 DIGITAL_FIELDS）──
+const DIGITAL_HEADERS = [
+  'category','subtype','primary_name','jp_name','zh_name','en_name','series',
+  'platform','edition','region','voice_language','subtitle_language',
+  'store','account','purchase_method','dlc_owned',
+  'genre','players','features','age_rating',
+  'developer','publisher','release_date','suggest_price',
+  'collect_status','buy_date','buy_price','download_size',
+  'summary','ref_link','cover_img','related_code','notes','uuid','created_at'
+];
+
+// ── 原聲帶欄位（v43.01 新增，比照前端 OST_FIELDS）──
+const OST_HEADERS = [
+  'category','primary_name','jp_name','zh_name','en_name',
+  'related_work','composer','label','format','disc_count','track_count',
+  'release_date','suggest_price','region','edition',
+  'barcode','code','collect_status','completeness','storage_location',
+  'buy_date','buy_source','buy_price','market_value','market_value_confidence',
+  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
+];
+
+// ── 動漫/美術設定集欄位（v43.01 新增，比照前端 ARTBOOK_FIELDS）──
+const ARTBOOK_HEADERS = [
+  'category','subtype','related_work','primary_name','volume','jp_name','zh_name','en_name',
+  'illustrator','binding','language','page_count',
+  'publisher','release_date','suggest_price','region','edition',
+  'barcode','code','collect_status','condition','completeness','storage_location',
+  'buy_date','purchase_channel','buy_source','buy_price','local_cost',
+  'market_value','market_value_confidence',
+  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
+];
+
+// ── 公仔／模型欄位（v43.01 新增，比照前端 FIGURE_FIELDS）──
+const FIGURE_HEADERS = [
+  'category','primary_name','jp_name','zh_name','en_name',
+  'character','series','brand','scale','material',
+  'manufacturer','release_date','suggest_price','region','edition',
+  'barcode','code','collect_status','completeness','storage_location',
+  'buy_date','buy_source','buy_price','market_value','market_value_confidence',
+  'summary','ref_link','cover_img','back_img','spine_img','related_code','notes','uuid','created_at'
+];
  
 // ── 取得/建立工作表 ────────────────────────────────
 // ── API 查詢快取（Cache 工作表）────────────────────────────
@@ -161,6 +213,18 @@ function getSheet(type) {
   } else if (t === 'hunt' || t === '狩獵') {
     sheetName = HUNT_SHEET;    headers = HUNT_HEADERS;
     headBg = '#2e0f1a'; headFg = '#ff6e9c';
+  } else if (t === 'digital' || t === '數位下載版') {
+    sheetName = DIGITAL_SHEET; headers = DIGITAL_HEADERS;
+    headBg = '#001f2e'; headFg = '#00e5ff';
+  } else if (t === 'ost' || t === '原聲帶') {
+    sheetName = OST_SHEET;     headers = OST_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#b388ff';
+  } else if (t === 'artbook' || t === '動漫/美術設定集') {
+    sheetName = ARTBOOK_SHEET; headers = ARTBOOK_HEADERS;
+    headBg = '#0f2e18'; headFg = '#aed581';
+  } else if (t === 'figure' || t === '公仔') {
+    sheetName = FIGURE_SHEET;  headers = FIGURE_HEADERS;
+    headBg = '#2e2400'; headFg = '#ffab40';
   } else {
     sheetName = GAMES_SHEET;   headers = GAME_HEADERS;
     headBg = '#0f1525'; headFg = '#00e5ff';
@@ -191,6 +255,11 @@ function resolveType(category) {
   if (s === '主機' || s === 'console' || s === 'Console')    return 'console';
   if (s === '週邊' || s === '周邊' || s === 'peripheral' || s === 'Peripheral') return 'peripheral';
   if (s === '狩獵' || s === 'hunt' || s === 'Hunt') return 'hunt';
+  // v43.01：數位下載版／原聲帶／動漫美術設定集／公仔 改走各自獨立工作表；含舊分類值別名，向下相容既有資料
+  if (s === '數位下載版' || s === '數位遊戲' || s === 'digital' || s === 'Digital') return 'digital';
+  if (s === '原聲帶' || s === 'ost' || s === 'OST') return 'ost';
+  if (s === '動漫/美術設定集' || s === '畫集' || s === '設定集' || s === 'artbook' || s === 'Artbook') return 'artbook';
+  if (s === '公仔' || s === '模型' || s === 'figure' || s === 'Figure') return 'figure';
   return 'game';
 }
  
@@ -281,7 +350,9 @@ function collectUsedImgIds_() {
   const sheetDefs = [
     [GAMES_SHEET, GAME_HEADERS], [BOOKS_SHEET, BOOK_HEADERS],
     [CONSOLE_SHEET, CONSOLE_HEADERS], [PERIPH_SHEET, PERIPH_HEADERS],
-    [HUNT_SHEET, HUNT_HEADERS]
+    [HUNT_SHEET, HUNT_HEADERS],
+    [DIGITAL_SHEET, DIGITAL_HEADERS], [OST_SHEET, OST_HEADERS],
+    [ARTBOOK_SHEET, ARTBOOK_HEADERS], [FIGURE_SHEET, FIGURE_HEADERS]
   ];
   const used = {};
   sheetDefs.forEach(function(def) {
@@ -346,7 +417,7 @@ function doGet(e) {
   try {
     switch (action) {
       case 'ping':
-        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games + Books + Consoles + Peripherals + Hunt 五工作表)' };
+        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games + Books + Consoles + Peripherals + Hunt + Digital + OST + Artbook + Figures 九工作表)' };
         break;
       case 'list':
         result = listAll(p.type || 'all');
@@ -464,9 +535,13 @@ function listAll(type) {
   if (type === 'console')    return listSheet('console');
   if (type === 'peripheral') return listSheet('peripheral');
   if (type === 'hunt')       return listSheet('hunt');
- 
+  if (type === 'digital')    return listSheet('digital');
+  if (type === 'ost')        return listSheet('ost');
+  if (type === 'artbook')    return listSheet('artbook');
+  if (type === 'figure')     return listSheet('figure');
+
   // 合併全部工作表，附加來源類型（不含 hunt：狩獵清單獨立，不混入收藏）
-  const types = ['game', 'book', 'console', 'peripheral'];
+  const types = ['game', 'book', 'console', 'peripheral', 'digital', 'ost', 'artbook', 'figure'];
   let allRows = [];
   types.forEach(function(tp) {
     let r;
@@ -1895,7 +1970,7 @@ function parseSSGame(jeu, authQS) {
  
 // ── UUID 搜尋函數 ──────────────────────────────────────────
 function findRowByUuid(uuid) {
-  const types = ['game', 'book', 'console', 'peripheral', 'hunt'];
+  const types = ['game', 'book', 'console', 'peripheral', 'hunt', 'digital', 'ost', 'artbook', 'figure'];
   for (const type of types) {
     try {
       const { sheet, headers } = getSheet(type);
@@ -1994,16 +2069,98 @@ function fixSheetHeaders() {
   results.consoles    = fixSheet(CONSOLE_SHEET,  CONSOLE_HEADERS);
   results.peripherals = fixSheet(PERIPH_SHEET,   PERIPH_HEADERS);
   results.hunt        = fixSheet(HUNT_SHEET,     HUNT_HEADERS);
+  results.digital     = fixSheet(DIGITAL_SHEET,  DIGITAL_HEADERS);
+  results.ost         = fixSheet(OST_SHEET,      OST_HEADERS);
+  results.artbook     = fixSheet(ARTBOOK_SHEET,  ARTBOOK_HEADERS);
+  results.figures     = fixSheet(FIGURE_SHEET,   FIGURE_HEADERS);
   // 補全舊資料的 uuid（無 uuid 的列自動填入）
   results.uuids_filled = backfillUuids();
   Logger.log('fixSheetHeaders: ' + JSON.stringify(results));
   return { ok: true, results };
 }
- 
+
+// ── v43.01 一次性遷移工具：把原本混在 Games 表的四個分類搬到各自獨立工作表 ──
+// 使用方式（建議先在試算表「檔案 > 建立副本」備份一份再執行，以防萬一）：
+//   1. 在 Apps Script 編輯器上方函式下拉選單選 migrateLegacyCategoriesToNewSheets，按執行
+//   2. 到試算表檢查 Digital / OST / Artbook / Figures 四個新分頁資料是否正確
+//   3. 確認無誤後，再執行 deleteLegacyMigratedRowsFromGames() 清掉 Games 表裡的舊資料列
+//   注意：Games 表原本就沒有 illustrator/binding/composer/character 等分類專屬欄位，
+//   這些欄位的舊資料本來就沒存到，遷移只能搬「原本就有存到」的欄位，救不回本來就沒存到的部分。
+function migrateLegacyCategoriesToNewSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const gamesSheet = ss.getSheetByName(GAMES_SHEET);
+  if (!gamesSheet) return { ok: false, error: '找不到 Games 工作表' };
+  const last = gamesSheet.getLastRow();
+  if (last <= 1) return { ok: true, msg: 'Games 工作表沒有資料列' };
+
+  const gameHeaders = gamesSheet.getRange(1, 1, 1, gamesSheet.getLastColumn()).getValues()[0];
+  const catIdx = gameHeaders.indexOf('category');
+  if (catIdx < 0) return { ok: false, error: 'Games 工作表找不到 category 欄' };
+
+  const data = gamesSheet.getRange(2, 1, last - 1, gameHeaders.length).getValues();
+
+  const targets = {
+    'digital': { match: ['數位下載版', '數位遊戲'] },
+    'ost':     { match: ['原聲帶'] },
+    'artbook': { match: ['動漫/美術設定集', '畫集', '設定集'] },
+    'figure':  { match: ['公仔', '模型'] }
+  };
+
+  const counts = {};
+  Object.keys(targets).forEach(function(key) {
+    const t = targets[key];
+    const destSheetObj = getSheet(key); // 確保工作表存在且標題列正確
+    const destSheet = destSheetObj.sheet;
+    const destHeaders = destSheetObj.headers;
+    let n = 0;
+    data.forEach(function(row) {
+      const cat = String(row[catIdx] || '').trim();
+      if (t.match.indexOf(cat) < 0) return;
+      const mapped = destHeaders.map(function(h) {
+        const srcIdx = gameHeaders.indexOf(h);
+        return srcIdx >= 0 ? row[srcIdx] : '';
+      });
+      destSheet.appendRow(mapped);
+      n++;
+    });
+    counts[key] = n;
+  });
+
+  Logger.log('migrateLegacyCategoriesToNewSheets: ' + JSON.stringify(counts));
+  return { ok: true, msg: '已複製到新工作表（Games 表原始資料未刪除，請先核對再執行 deleteLegacyMigratedRowsFromGames）', counts: counts };
+}
+
+// 第二步：確認新工作表資料無誤後才執行，刪除 Games 表裡已搬移的舊分類列
+function deleteLegacyMigratedRowsFromGames() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const gamesSheet = ss.getSheetByName(GAMES_SHEET);
+  if (!gamesSheet) return { ok: false, error: '找不到 Games 工作表' };
+  const last = gamesSheet.getLastRow();
+  if (last <= 1) return { ok: true, msg: 'Games 工作表沒有資料列' };
+
+  const gameHeaders = gamesSheet.getRange(1, 1, 1, gamesSheet.getLastColumn()).getValues()[0];
+  const catIdx = gameHeaders.indexOf('category');
+  if (catIdx < 0) return { ok: false, error: 'Games 工作表找不到 category 欄' };
+
+  const matchAll = ['數位下載版', '數位遊戲', '原聲帶', '動漫/美術設定集', '畫集', '設定集', '公仔', '模型'];
+  const data = gamesSheet.getRange(2, 1, last - 1, gameHeaders.length).getValues();
+  let deleted = 0;
+  // 由下往上刪，避免刪除過程列號位移
+  for (let i = data.length - 1; i >= 0; i--) {
+    const cat = String(data[i][catIdx] || '').trim();
+    if (matchAll.indexOf(cat) >= 0) {
+      gamesSheet.deleteRow(i + 2);
+      deleted++;
+    }
+  }
+  Logger.log('deleteLegacyMigratedRowsFromGames: deleted ' + deleted + ' rows');
+  return { ok: true, deleted: deleted };
+}
+
 // 為舊資料（uuid 欄位為空）補全 UUID
 function backfillUuids() {
   let filled = 0;
-  for (const sheetName of [GAMES_SHEET, BOOKS_SHEET, CONSOLE_SHEET, PERIPH_SHEET, HUNT_SHEET]) {
+  for (const sheetName of [GAMES_SHEET, BOOKS_SHEET, CONSOLE_SHEET, PERIPH_SHEET, HUNT_SHEET, DIGITAL_SHEET, OST_SHEET, ARTBOOK_SHEET, FIGURE_SHEET]) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) continue;
