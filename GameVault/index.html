@@ -2191,7 +2191,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v47.01a2';
+const APP_VERSION='v47.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11030,6 +11030,21 @@ function renderGlist(){
 
 // ── Detail ──
 // 詳細頁照片替換控制（拍照／相簿），rowNum 與既有 onclick 慣例一致內嵌
+// v47.03：縮圖列點擊切換大圖 + 重繪目前這張圖的操作按鈕（一次只管一張，取代原本三張各自都有按鈕）
+function switchDetailImg(el){
+  if(!el)return;
+  var gallery=$('dimg-gallery');if(!gallery)return;
+  var k=el.getAttribute('data-k'),url=el.getAttribute('data-full'),rowNum=gallery.getAttribute('data-rownum');
+  gallery.setAttribute('data-active-k',k);
+  var mainImg=$('dimg-main');if(mainImg&&url)mainImg.src=url;
+  var thumbs=gallery.querySelectorAll('.dimg-thumb');
+  for(var i=0;i<thumbs.length;i++){
+    var on=thumbs[i]===el;
+    thumbs[i].classList.toggle('on',on);
+    thumbs[i].style.borderColor=on?'#00e5ff':'#1e2a45';
+  }
+  var ctrls=$('dimg-main-ctrls');if(ctrls)ctrls.innerHTML=_detailImgCtrls(rowNum,k);
+}
 function _detailImgCtrls(rowNum,k){
   var cam='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:#0f1525;border:1px solid #00e5ff;border-radius:6px;padding:5px;cursor:pointer;font-size:11px;color:#00e5ff">📷拍照'+
     '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="replaceDetailImg(\''+rowNum+'\',\''+k+'\',this)"></label>';
@@ -11065,7 +11080,18 @@ function replaceDetailImg(rowNum,k,input){
         localforage.setItem('gv_col',col).catch(function(){});
         updateStats();filterCol();
         // 原地更新顯示：直接以剛壓縮的圖即時呈現（避免 Drive 縮圖延遲造成破圖）
-        var im=document.getElementById('dimg-'+k);if(im)im.src=compressed;
+        // v47.03：新版為大圖＋縮圖列結構，只有目前選中的那張才更新大圖，縮圖一律同步更新
+        var gallery=document.getElementById('dimg-gallery');
+        if(gallery){
+          if(gallery.getAttribute('data-active-k')===k){
+            var im=document.getElementById('dimg-main');if(im)im.src=compressed;
+          }
+          var thumb=gallery.querySelector('.dimg-thumb[data-k="'+k+'"]');
+          if(thumb){
+            thumb.setAttribute('data-full',compressed);
+            var timg=thumb.querySelector('img');if(timg)timg.src=compressed;
+          }
+        }
         toast('照片已更新 ✓','ok');
       }).catch(function(e){toast('照片更新失敗，請確認網路後重試','er',5000);}).finally(noLoad);
     },hint);
@@ -11935,17 +11961,34 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   var skip={category:1,uuid:1,_src:1,market_value_currency:1,market_value_foreign_amount:1};  // 隱藏欄位不顯示
   var skipDef={collect_status:'收藏中',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',resale_price:'0',resale_date:'2099/01/01',rating:'N/A',play_status:'未遊玩',bonus_code_status:'N/A',warranty_status:'N/A'};
   var html=detailHeroHtml(d,rowNum);
-  // 圖片區塊（封面 / 封底 / 側邊）
+  // 圖片區塊（v47.03：大圖 + 下方縮圖列，取代原本三張並排小圖；操作按鈕只管目前選中的那張）
   var hasC=hasImgVal(d.cover_img);
   var hasB=hasImgVal(d.back_img);
   var hasS=hasImgVal(d.spine_img);
   if(hasC||hasB||hasS){
-    html+='<div class="df full"><div style="display:flex;gap:6px;align-items:flex-start">';
-    var mainStyle='border-radius:8px;object-fit:cover;border:1px solid #1e2a45;display:block;width:100%';
-    if(hasC)html+='<div style="flex:2;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">封面</div><img id="dimg-cover_img" src="'+imgUrl(d.cover_img,600)+'" alt="封面圖" style="'+mainStyle+'">'+_detailImgCtrls(rowNum,'cover_img')+'</div>';
-    if(hasB)html+='<div style="flex:2;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">封底</div><img id="dimg-back_img" src="'+imgUrl(d.back_img,600)+'" alt="封底圖" style="'+mainStyle+'">'+_detailImgCtrls(rowNum,'back_img')+'</div>';
-    if(hasS)html+='<div style="flex:1;min-width:0"><div style="font-size:9px;color:#7986cb;margin-bottom:3px;text-align:center">側邊</div><img id="dimg-spine_img" src="'+imgUrl(d.spine_img,400)+'" alt="側邊圖" style="'+mainStyle+';object-position:center">'+_detailImgCtrls(rowNum,'spine_img')+'</div>';
-    html+='</div></div>';
+    var _imgDefs=[];
+    if(hasC)_imgDefs.push({k:'cover_img',lbl:'封面',url:imgUrl(d.cover_img,600),thumb:imgUrl(d.cover_img,150)});
+    if(hasB)_imgDefs.push({k:'back_img',lbl:'封底',url:imgUrl(d.back_img,600),thumb:imgUrl(d.back_img,150)});
+    if(hasS)_imgDefs.push({k:'spine_img',lbl:'側邊',url:imgUrl(d.spine_img,400),thumb:imgUrl(d.spine_img,150)});
+    var _mainDef=_imgDefs[0];
+    html+='<div class="df full">'+
+      '<div id="dimg-gallery" data-rownum="'+rowNum+'" data-active-k="'+_mainDef.k+'">'+
+        '<div style="border-radius:10px;overflow:hidden;background:#0a0f1e;border:1px solid #1e2a45">'+
+          '<img id="dimg-main" src="'+_mainDef.url+'" alt="'+_mainDef.lbl+'圖" style="width:100%;display:block;object-fit:contain;max-height:420px;background:#0a0f1e">'+
+        '</div>';
+    if(_imgDefs.length>1){
+      html+='<div id="dimg-thumbs" style="display:flex;gap:8px;margin-top:8px">'+
+        _imgDefs.map(function(im,i){
+          return '<div class="dimg-thumb'+(i===0?' on':'')+'" data-k="'+im.k+'" data-full="'+im.url+'" onclick="switchDetailImg(this)" '+
+            'style="flex:1;min-width:0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid '+(i===0?'#00e5ff':'#1e2a45')+'">'+
+            '<img src="'+im.thumb+'" alt="'+im.lbl+'縮圖" style="width:100%;height:60px;object-fit:cover;display:block">'+
+            '<div style="font-size:9px;color:#7986cb;text-align:center;padding:2px 0;background:#0f1525">'+im.lbl+'</div>'+
+          '</div>';
+        }).join('')+
+      '</div>';
+    }
+    html+='<div id="dimg-main-ctrls">'+_detailImgCtrls(rowNum,_mainDef.k)+'</div>'+
+      '</div></div>';
   }
   // 依 category 選用對應欄位表
   var isBook2=catInternal(d.category)==='攻略';
