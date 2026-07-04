@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v48.01a2';
+const APP_VERSION='v48.01a3';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8967,6 +8967,7 @@ function detailNavBack(){
 
 function onImgUpload(k,input){
   var f=input.files[0];if(!f)return;
+  var isCam=input.hasAttribute('capture'); // 依觸發的 input 判斷這次用的是拍照還是相簿
   input.value='';
   var lbl2=document.getElementById('lbl-'+k);
   // 依欄位決定裁切策略和輸出大小
@@ -8983,16 +8984,30 @@ function onImgUpload(k,input){
         var kb=Math.round(compressed.length*0.75/1024);
         if(lbl2)lbl2.textContent='已上傳（'+kb+'KB，點擊更換）';
         var cb=document.getElementById('clr-'+k);if(cb)cb.style.display='block';
+        _setImgBtnActive(k,isCam);
       },hint);
     };
     r.readAsDataURL(blob);
   }).catch(function(){});
+}
+// v48.02：拍照/相簿按鈕的高亮邊框改為停留在使用者上次實際點選的那個，而非固定在拍照
+function _setImgBtnActive(k,isCam){
+  var camBtn=document.getElementById('imgbtn-cam-'+k);
+  var albBtn=document.getElementById('imgbtn-alb-'+k);
+  if(camBtn)_styleImgMethodBtn(camBtn,isCam);
+  if(albBtn)_styleImgMethodBtn(albBtn,!isCam);
+}
+function _styleImgMethodBtn(el,active){
+  el.style.borderStyle=active?'solid':'dashed';
+  el.style.borderColor=active?'#00e5ff':'#1e2a45';
+  el.style.color=active?'#00e5ff':'#7986cb';
 }
 function clearImg(k){
   onFld(k,'');
   var prev=document.getElementById('prev-'+k);if(prev){prev.src='';prev.style.display='none';}
   var lbl2=document.getElementById('lbl-'+k);if(lbl2)lbl2.textContent='點擊上傳圖片';
   var cb=document.getElementById('clr-'+k);if(cb)cb.style.display='none';
+  _setImgBtnActive(k,true); // 清除後重置高亮回預設（拍照）
 }
 // v47.04：自訂圖片（extra_images，最多5張，各自帶名稱）新增/移除/命名
 function addExtraImg(input){
@@ -9246,12 +9261,12 @@ function renderFld(f){
     return wrap+'<label class="fl">'+lbl+'</label>'+
       '<img id="prev-'+k+'" src="'+(hasImg?imgUrl(v,500):'')+'" alt="欄位圖片預覽" style="width:100%;border-radius:8px;margin-bottom:6px;border:1px solid #1e2a45;display:'+(hasImg?'block':'none')+'">'+
       '<div style="display:flex;gap:6px;margin-bottom:6px">'+
-        '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #00e5ff;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#00e5ff">'+
-          '<span>📷</span><span>拍照</span>'+
+        '<label id="imgbtn-cam-'+k+'" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #00e5ff;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#00e5ff">'+
+          '<span>📷</span><span>拍照新增</span>'+
           '<input type="file" accept="image/*" capture="environment" style="display:none" data-k="'+k+'" onchange="onImgUpload(this.dataset.k,this)">'+
         '</label>'+
-        '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#7986cb">'+
-          '<span>🖼</span><span>'+(hasImg?'更換':'相簿')+'</span>'+
+        '<label id="imgbtn-alb-'+k+'" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#7986cb">'+
+          '<span>🖼</span><span>相簿新增</span>'+
           '<input type="file" accept="image/*" style="display:none" data-k="'+k+'" onchange="onImgUpload(this.dataset.k,this)">'+
         '</label>'+
       '</div>'+
