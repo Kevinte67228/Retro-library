@@ -503,8 +503,15 @@ body{
 .df .dfv{font-size:13px;word-break:break-all}
 .df.full{grid-column:1/-1}
 .vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
-.vault-cover{width:86px;min-height:112px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:34px}
-.vault-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.vault-cover{width:86px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
+.vault-cover-main{width:86px;height:86px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:34px}
+.vault-cover-main img{width:100%;height:100%;object-fit:cover;display:block}
+.vault-cover-thumbs{display:flex;gap:3px}
+.vault-cover-thumb{width:100%;height:24px;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45;flex:1;min-width:0}
+.vault-cover-thumb.on{border-color:#00e5ff}
+.vault-cover-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vault-cover-actions{display:flex;gap:3px}
+.vault-cover-actions label{flex:1;display:flex;align-items:center;justify-content:center;background:#0f1525;border-radius:4px;padding:3px 0;cursor:pointer;font-size:12px;border:1px solid #1e2a45}
 .vault-main{flex:1;min-width:0}
 .vault-name{font-size:15px;font-weight:700;line-height:1.35;margin-bottom:4px;overflow-wrap:anywhere}
 .vault-sub{font-size:11px;color:#9fa8c8;line-height:1.5;margin-bottom:8px}
@@ -2191,7 +2198,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v47.02';
+const APP_VERSION='v47.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11037,20 +11044,17 @@ function switchDetailImg(el){
   var k=el.getAttribute('data-k'),url=el.getAttribute('data-full'),rowNum=gallery.getAttribute('data-rownum');
   gallery.setAttribute('data-active-k',k);
   var mainImg=$('dimg-main');if(mainImg&&url)mainImg.src=url;
-  var thumbs=gallery.querySelectorAll('.dimg-thumb');
-  for(var i=0;i<thumbs.length;i++){
-    var on=thumbs[i]===el;
-    thumbs[i].classList.toggle('on',on);
-    thumbs[i].style.borderColor=on?'#00e5ff':'#1e2a45';
-  }
-  var ctrls=$('dimg-main-ctrls');if(ctrls)ctrls.innerHTML=_detailImgCtrls(rowNum,k);
+  var thumbs=gallery.querySelectorAll('.vault-cover-thumb');
+  for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('on',thumbs[i]===el);}
+  var ctrls=$('dimg-main-ctrls');if(ctrls)ctrls.innerHTML=_detailImgCtrlsCompact(rowNum,k);
 }
-function _detailImgCtrls(rowNum,k){
-  var cam='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:#0f1525;border:1px solid #00e5ff;border-radius:6px;padding:5px;cursor:pointer;font-size:11px;color:#00e5ff">📷拍照'+
+// v47.03：整合進 hero 封面區後空間極窄（86px），改用純圖示、無文字標籤的緊湊按鈕
+function _detailImgCtrlsCompact(rowNum,k){
+  var cam='<label title="拍照" style="border-color:#00e5ff;color:#00e5ff">📷'+
     '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="replaceDetailImg(\''+rowNum+'\',\''+k+'\',this)"></label>';
-  var alb='<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:#0f1525;border:1px dashed #1e2a45;border-radius:6px;padding:5px;cursor:pointer;font-size:11px;color:#7986cb">🖼相簿'+
+  var alb='<label title="相簿" style="color:#7986cb">🖼️'+
     '<input type="file" accept="image/*" style="display:none" onchange="replaceDetailImg(\''+rowNum+'\',\''+k+'\',this)"></label>';
-  return '<div style="display:flex;gap:4px;margin-top:4px">'+cam+alb+'</div>';
+  return cam+alb;
 }
 // 詳細頁直接替換某張照片：壓縮 → 以既有 update 流程回寫 → 原地更新顯示（不重開詳細頁，避免重複 history）
 function replaceDetailImg(rowNum,k,input){
@@ -11086,7 +11090,7 @@ function replaceDetailImg(rowNum,k,input){
           if(gallery.getAttribute('data-active-k')===k){
             var im=document.getElementById('dimg-main');if(im)im.src=compressed;
           }
-          var thumb=gallery.querySelector('.dimg-thumb[data-k="'+k+'"]');
+          var thumb=gallery.querySelector('.vault-cover-thumb[data-k="'+k+'"]');
           if(thumb){
             thumb.setAttribute('data-full',compressed);
             var timg=thumb.querySelector('img');if(timg)timg.src=compressed;
@@ -11869,7 +11873,24 @@ function detailHeroHtml(d,rowNum){
   var title=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
   var isDigital=(cat==='數位下載版');
   var sub=_cm.sub(d).filter(Boolean).join(' · ');
-  var img=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,500)+'" alt="'+esc(title)+'">':icon;
+  // v47.03：hero 封面區改為「主圖 + 迷你縮圖列 + 拍照/相簿」，整合原本 hero 右側留白與獨立大圖區塊，不再重複顯示
+  var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img);
+  var _imgDefs=[];
+  if(hasC)_imgDefs.push({k:'cover_img',lbl:'封面',url:imgUrl(d.cover_img,300),thumb:imgUrl(d.cover_img,80)});
+  if(hasB)_imgDefs.push({k:'back_img',lbl:'封底',url:imgUrl(d.back_img,300),thumb:imgUrl(d.back_img,80)});
+  if(hasS)_imgDefs.push({k:'spine_img',lbl:'側邊',url:imgUrl(d.spine_img,300),thumb:imgUrl(d.spine_img,80)});
+  var _mainDef=_imgDefs[0];
+  var coverHtml='<div class="vault-cover" id="dimg-gallery" data-rownum="'+rowNum+'" data-active-k="'+(_mainDef?_mainDef.k:'')+'">'+
+    '<div class="vault-cover-main">'+(_mainDef?('<img id="dimg-main" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
+  if(_imgDefs.length>1){
+    coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
+      return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-k="'+im.k+'" data-full="'+im.url+'" onclick="switchDetailImg(this)" title="'+im.lbl+'"><img src="'+im.thumb+'" alt="'+im.lbl+'"></div>';
+    }).join('')+'</div>';
+  }
+  if(_imgDefs.length){
+    coverHtml+='<div id="dimg-main-ctrls" class="vault-cover-actions">'+_detailImgCtrlsCompact(rowNum,_mainDef.k)+'</div>';
+  }
+  coverHtml+='</div>';
   var tags='';
   tags+=_detailTag(catLabel(cat),catColor);
   var collectStatus=d.collect_status||'收藏中';
@@ -11900,7 +11921,7 @@ function detailHeroHtml(d,rowNum){
       _detailKpi('估值',value,'#ffcc02',marketConfidenceText(d));
   }
   return '<div class="vault-hero">'+
-    '<div class="vault-cover">'+img+'</div>'+
+    coverHtml+
     '<div class="vault-main">'+
       '<div class="vault-name">'+esc(title)+'</div>'+
       '<div class="vault-sub">'+esc(sub||'—')+'</div>'+
@@ -11961,35 +11982,8 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   var skip={category:1,uuid:1,_src:1,market_value_currency:1,market_value_foreign_amount:1};  // 隱藏欄位不顯示
   var skipDef={collect_status:'收藏中',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',resale_price:'0',resale_date:'2099/01/01',rating:'N/A',play_status:'未遊玩',bonus_code_status:'N/A',warranty_status:'N/A'};
   var html=detailHeroHtml(d,rowNum);
-  // 圖片區塊（v47.03：大圖 + 下方縮圖列，取代原本三張並排小圖；操作按鈕只管目前選中的那張）
-  var hasC=hasImgVal(d.cover_img);
-  var hasB=hasImgVal(d.back_img);
-  var hasS=hasImgVal(d.spine_img);
-  if(hasC||hasB||hasS){
-    var _imgDefs=[];
-    if(hasC)_imgDefs.push({k:'cover_img',lbl:'封面',url:imgUrl(d.cover_img,600),thumb:imgUrl(d.cover_img,150)});
-    if(hasB)_imgDefs.push({k:'back_img',lbl:'封底',url:imgUrl(d.back_img,600),thumb:imgUrl(d.back_img,150)});
-    if(hasS)_imgDefs.push({k:'spine_img',lbl:'側邊',url:imgUrl(d.spine_img,400),thumb:imgUrl(d.spine_img,150)});
-    var _mainDef=_imgDefs[0];
-    html+='<div class="df full">'+
-      '<div id="dimg-gallery" data-rownum="'+rowNum+'" data-active-k="'+_mainDef.k+'">'+
-        '<div style="border-radius:10px;overflow:hidden;background:#0a0f1e;border:1px solid #1e2a45">'+
-          '<img id="dimg-main" src="'+_mainDef.url+'" alt="'+_mainDef.lbl+'圖" style="width:100%;display:block;object-fit:contain;max-height:420px;background:#0a0f1e">'+
-        '</div>';
-    if(_imgDefs.length>1){
-      html+='<div id="dimg-thumbs" style="display:flex;gap:8px;margin-top:8px">'+
-        _imgDefs.map(function(im,i){
-          return '<div class="dimg-thumb'+(i===0?' on':'')+'" data-k="'+im.k+'" data-full="'+im.url+'" onclick="switchDetailImg(this)" '+
-            'style="flex:1;min-width:0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid '+(i===0?'#00e5ff':'#1e2a45')+'">'+
-            '<img src="'+im.thumb+'" alt="'+im.lbl+'縮圖" style="width:100%;height:60px;object-fit:cover;display:block">'+
-            '<div style="font-size:9px;color:#7986cb;text-align:center;padding:2px 0;background:#0f1525">'+im.lbl+'</div>'+
-          '</div>';
-        }).join('')+
-      '</div>';
-    }
-    html+='<div id="dimg-main-ctrls">'+_detailImgCtrls(rowNum,_mainDef.k)+'</div>'+
-      '</div></div>';
-  }
+  // v47.03：圖片顯示已整合進 detailHeroHtml 的 hero 封面區（主圖+縮圖列+拍照/相簿），
+  // 不再於此另外輸出一份大圖區塊，避免同一組圖片重複顯示兩次
   // 依 category 選用對應欄位表
   var isBook2=catInternal(d.category)==='攻略';
   var detailFields=fieldsFor(d.category,d.subtype);
