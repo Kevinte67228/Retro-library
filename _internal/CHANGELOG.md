@@ -1,3 +1,30 @@
+## v43.01 (2026-07-04)
+
+### 變更內容
+動漫/美術設定集欄位大幅擴充 + GS 後端分表：
+- 動漫/美術設定集子類型改為 8 項：漫畫／單行本、畫冊／插畫集、設定集／公式資料集、原畫集／分鏡集、雜誌／MOOK／同人誌、動畫影集、動畫電影／劇場版、周邊／其他
+- 新增欄位：作品／IP名稱（沿用 related_work 改名）、集數／卷數（volume）、語言／字幕（language）、品況（condition，專屬列舉：全新未拆／近全新／良好／有瑕疵）、購入管道（purchase_channel）、台幣實付含運費（local_cost）
+- 「裝訂方式」擴大為「載體格式」（binding 欄位重新定義選項：平裝書/精裝書/Blu-ray/DVD/CD/數位版），涵蓋出版品與影音媒體
+- 購買狀態（collect_status）改為專屬列舉：願望清單／已預購／運送中／已入庫
+- 數位下載版新增「類型」（subtype）欄位進表單（v42.22 已有選擇流程，這次補進 FIELDS 讓可編輯/顯示）
+- **發現並修正資料遺失風險**：GS 後端 `resolveType()` 先前把數位下載版/原聲帶/動漫美術設定集/公仔全部路由到 Games 工作表的 `GAME_HEADERS`，分類專屬欄位（如 illustrator/binding/composer/character 等）不在該表中，儲存時會被靜默丟棄
+- GS 後端新增 Digital／OST／Artbook／Figures 四個獨立工作表與對應完整欄位表，四分類皆改用各自欄位表，欄位不再被丟棄
+- 新增一次性遷移工具 `migrateLegacyCategoriesToNewSheets()` / `deleteLegacyMigratedRowsFromGames()`，供使用者手動於 Apps Script 執行，把原本混在 Games 表的舊資料搬到新工作表（僅能救回原本有存到的欄位）
+
+### 影響檔案
+- index.html / GameVault_v43_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
+
+### GS 版本
+- v42 → v43（新增 Digital/OST/Artbook/Figures 四個工作表與欄位表，resolveType/getSheet/listAll/findRowByUuid/fixSheetHeaders/backfillUuids/collectUsedImgIds_ 皆同步更新）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v42-22 → gamevault-v43-01
+
+### 對應備份
+- _internal/old/v42_22/
+
 ## v42.22 (2026-07-04)
 
 ### 變更內容
@@ -65,7 +92,4 @@
 
 ### 對應備份
 - _internal/old/v42_20/
-
-## v42.20a1 (2026-07-03)
-- 修正 GS 後端 fetchStorePageProxy 快取鍵碰撞 bug：舊版用 base64 截斷前 40 碼當快取鍵，Steam 等共同前綴超過 30 bytes 的網址會算出同一把鍵，導致貼任何 Steam 連結都回傳第一次快取的結果（使用者回報一直顯示 Watch_Dogs 2）；改用 MD5 雜湊整個網址內容，已用實際網址驗證修法有效。純 GS 修正，前端無變動，需手動部署 GS
 
