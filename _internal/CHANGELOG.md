@@ -1,3 +1,29 @@
+## v46.01 (2026-07-04)
+
+### 變更內容
+數位下載版欄位重新設計（授權與檔案管理導向）：
+- 子類型改採「媒體大類＋內容子類」架構，捨棄硬性「電子書-」前綴，改為 8 項：下載版遊戲、追加下載內容、電子書（漫畫／單行本）、電子書（畫冊／美術設定）、電子書（攻略／公式書）、電子書（雜誌／MOOK）、數位音源、數位影音
+- 新增欄位：數位識別碼（digital_id，商店URL後綴或平台ID如Steam AppID）、版權限制（drm_status：綁定平台App/DRM-Free）、檔案格式（file_format）、存放位置（file_storage_location：雲端硬碟/本地NAS/主機內建/SD卡/未備份）、兌換碼／序號（redemption_key）
+- 新增「檔案資訊」欄位群組，「下載容量」更名「檔案大小」並移入此群組
+- 所屬平台／商店清單更新為 Nintendo eShop／PlayStation Store／Microsoft Store／Steam／Epic Games／BookWalker／DLsite／其他（取代 PSN/Xbox Store 舊稱，並新增 BookWalker/DLsite）
+- 詳情頁 KPI 新增「版權限制」顯示；收藏卡片 DRM-Free 商品會顯示綠色標籤
+- AI 辨識規格同步更新商店清單，並要求 digital_id 沒把握就留空、不可推測捏造
+- GS 後端 DIGITAL_HEADERS 同步擴充新欄位，自我檢查前端欄位 100% 對應後端
+
+### 影響檔案
+- index.html / GameVault_v46_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
+
+### GS 版本
+- v45 → v46（DIGITAL_HEADERS 新增 digital_id/drm_status/file_format/file_storage_location/redemption_key 共 5 個欄位）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v45-01 → gamevault-v46-01
+
+### 對應備份
+- _internal/old/v45_01/
+
 ## v45.01 (2026-07-04)
 
 ### 變更內容
@@ -76,29 +102,4 @@
 
 ### 對應備份
 - _internal/old/v42_22/
-
-## v42.22 (2026-07-04)
-
-### 變更內容
-分類架構改版：
-- 「數位遊戲」更名為「數位下載版」；新增子類型（下載版遊戲／電子書-攻略／電子書-漫畫／電子書-畫冊／電子書-美術設定／電子書-雜誌／動畫／原聲帶／其他）
-- 「畫集」更名為「動漫/美術設定集」，取代原畫集分類；新增子類型（漫畫／動畫／美術書／設定集／其他）
-- 子類型視為可獨立篩選/統計的次分類，顆粒度比照四大分類（新增 SUBTYPE_META 單一事實來源，比照 CAT_META 模式）
-- Step1 第二排分類卡片順序調整為：動漫/美術設定集 → 公仔/模型 → 原聲帶 → 數位下載版
-- 新增「選擇類型」步驟（僅上述兩分類顯示），沿用平台選擇器（openPlatPicker）bottom-sheet 元件，新增 customSrc/title 參數支援重用
-- catInternal() 新增舊分類值別名對應（數位遊戲/畫集/設定集），既有收藏資料自動歸類到新分類，不改寫試算表資料（邏輯遷移，非物理遷移）
-- 欄位表單（AI 辨識 schema 等）維持沿用現有數位遊戲/畫集規格，留待下一階段依子類型細化
-
-### 影響檔案
-- index.html / GameVault_v42_22_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端分類架構調整，不動後端與試算表資料）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v42-20a1 → gamevault-v42-22
-
-### 對應備份
-- _internal/old/v42_20a1/（同時作為使用者要求的永久備份，往後 5 版輪替清理時排除）
 
