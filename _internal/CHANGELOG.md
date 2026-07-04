@@ -1,3 +1,6 @@
+## v47.01a1 (2026-07-04)
+- 數位下載版（8 個子類型）建檔表單預設只展開「圖片紀錄」「識別資訊」，其餘區塊一律預設收折（欄位偏多，避免一次全展開）
+
 ## v47.01 (2026-07-04)
 
 ### 變更內容
@@ -75,30 +78,4 @@
 
 ### 對應備份
 - _internal/old/v44_01/
-
-## v44.01 (2026-07-04)
-
-### 變更內容
-原聲帶欄位大幅擴充（Audio Vault）：
-- 原聲帶子類型新增 5 項：原聲帶、主題曲／單曲、角色歌曲／印象集、廣播劇CD、演唱會音源／其他（沿用 v42.22 已建好的子類型選擇流程）
-- 新增欄位：商品番號（catalog_number，日盤 CD 最關鍵的版本識別依據）、版本屬性（edition_type：初回限定盤/通常盤/完全生產限定盤）、側標狀態（obi_status：有側標/無側標(遺失)/未拆封）、購入管道（purchase_channel）、台幣實付含運費（local_cost）、特典附錄（bonus_items）
-- 「媒體格式」更名「載體格式」，選項更新為 CD/黑膠唱片/卡帶/數位高解析音檔/其他
-- composer 欄位標籤擴大為「作曲／演出者」，涵蓋演唱者/聲優
-- related_work 欄位標籤改為「作品／IP名稱」，與動漫/美術設定集一致
-- AI 辨識規格同步更新，並明確要求 catalog_number 沒把握時留空、不可推測捏造
-- GS 後端 OST_HEADERS 同步擴充新欄位，避免重演先前發現的欄位靜默丟棄問題（已自我檢查前端欄位 100% 對應後端）
-
-### 影響檔案
-- index.html / GameVault_v44_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
-
-### GS 版本
-- v43 → v44（OST_HEADERS 新增 subtype/catalog_number/edition_type/obi_status/purchase_channel/local_cost/bonus_items 共 7 個欄位）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v43-01 → gamevault-v44-01
-
-### 對應備份
-- _internal/old/v43_01/
 
