@@ -946,7 +946,7 @@ body{
               </div>
               <div class="ec-card" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
                 <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
-                <div class="ect">商店連結</div><div class="ecd">貼上網址抓資料</div>
+                <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上網址抓資料</div></div>
               </div>
               <div class="ec-card mb-wide" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
                 <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v49.05';
+const APP_VERSION='v49.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7409,6 +7409,9 @@ function selectEntryCat(cat,_noSave){
 // v49.04：數位下載版的 4 種電子書子類型額外顯示「商品編碼」卡（此時走 ISBN 查詢，非商品編碼），
 // 抽成獨立函式供子類型變更時（openSubtypePicker）重新呼叫
 var _DIGI_BOOK_SUBS={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
+// v49.06：下載版遊戲／追加下載內容只有「圖片辨識/手動建檔/商店連結」3張卡，4欄格線會留空格，
+// 商店連結改成1x2填滿；其餘子類型（含其他分類）的商店連結維持1x1，不受影響
+var _DIGI_LINK_WIDE_SUBS={'下載版遊戲':1,'追加下載內容':1};
 function _refreshMethodButtons(cat){
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[_selectedSubtype];
@@ -7420,6 +7423,8 @@ function _refreshMethodButtons(cat){
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
   if(t)t.textContent=showIsbn?'ISBN＋照片':'編碼＋照片';
   if(s)s.textContent=showIsbn?'電子書精確比對':'精確比對';
+  var linkEl=$('mb-link');
+  if(linkEl)linkEl.classList.toggle('mb-wide',isDigital&&_DIGI_LINK_WIDE_SUBS[_selectedSubtype]);
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
