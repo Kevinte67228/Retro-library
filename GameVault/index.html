@@ -204,6 +204,7 @@ body{
 .si2{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
 .si2:active{transform:scale(.96)}
 .si2.on{background:#0f2330;border-color:#00e5ff}
+#sf-total{position:sticky;left:0;z-index:2;background:#080c18;box-shadow:6px 0 8px -4px rgba(8,12,24,.85)}
 .si2.on .sl2{color:#00e5ff}
 .sv2{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:21px;font-weight:700;color:#00e5ff;line-height:1.1}
 .sl2{font-size:10px;color:#7986cb}
@@ -2215,7 +2216,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v50.01';
+const APP_VERSION='v50.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9902,7 +9903,7 @@ function _dashModel(cat,filtered2,catOf){
   function statusCnt(arr,key,val){return arr.filter(function(c){return c.data[key]===val;}).length;}
   function condCnt(arr,g){return arr.filter(function(c){return overallCond(c.data.category,c.data.completeness)===g;}).length;}
   function avgRating(arr){var rs=arr.map(function(c){return parseFloat(c.data.rating);}).filter(function(n){return !isNaN(n)&&n>0;});return rs.length?(rs.reduce(function(a,b){return a+b;},0)/rs.length).toFixed(1):'—';}
-  function buildMap(arr,fn){var m={};arr.forEach(function(c){var k=fn(c);if(k)m[k]=(m[k]||0)+1;});return m;}
+  function buildMap(arr,fn){var m={};arr.forEach(function(c){var k=fn(c);if(!k)k='其他';m[k]=(m[k]||0)+1;});return m;}
   var withImg=withImgCnt(filtered2);
   var catColors={};Object.keys(CAT_META).forEach(function(k){catColors[k]=CAT_META[k].color;});
 
@@ -10041,7 +10042,8 @@ function _dashModel(cat,filtered2,catOf){
       midLabel:'廠牌分佈',midMap:brandMap2,midColors:null,midTotalText:Object.keys(brandMap2).length+' 個廠牌'};
   }else{ // 全部
     var byCat=function(k){return filtered2.filter(function(c){return catOf(c)===k;}).length;};
-    var platAll=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
+    var csMap=buildMap(filtered2,function(c){return (c.data.collect_status||'').trim();});
+    var csColors={'收藏中':'#00e676','預購中':'#ffb300','願望清單':'#ce93d8','借出中':'#80deea','已出售':'#90a4ae','已退款':'#ff5252','遺失或損毀':'#ff8a65'};
     D={kpi:[
         {label:'遊戲',val:byCat('遊戲'),color:'#00e5ff',icon:'🎮'},
         {label:'書籍',val:byCat('攻略'),color:'#ce93d8',icon:'📚'},
@@ -10054,7 +10056,7 @@ function _dashModel(cat,filtered2,catOf){
         {label:'有封面 '+withImg,color:'#7986cb'}],
       donutLabel:'分類佔比',donutMap:buildMap(filtered2,function(c){return catOf(c);}),
       donutColors:catColors,donutCenter:filtered2.length+'',
-      midLabel:'平台分佈',midMap:platAll,midColors:null,midTotalText:Object.keys(platAll).length+' 個平台'};
+      midLabel:'收藏狀態分佈',midMap:csMap,midColors:csColors,midTotalText:filtered2.length+' 件'};
   }
   return D;
 }

@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v49.01         ║
+// ║  GameVault — Google Apps Script 後端  v50.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -138,7 +138,7 @@ const PERIPH_HEADERS = [
 //             [{loc,url,price,cond,date}, ...]
 //  hunt_status 追蹤中 / 已收手
 const HUNT_HEADERS = [
-  'category','target_cat','primary_name','platform','barcode',
+  'category','target_cat','primary_name','platform','subtype','barcode',
   'notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'
 ];
 
