@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v48.01         ║
+// ║  GameVault — Google Apps Script 後端  v49.01         ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -42,9 +42,26 @@ const DIGIGUIDE_SHEET   = 'DigiGuide';
 const DIGIMAG_SHEET     = 'DigiMag';
 const DIGIAUDIO_SHEET   = 'DigiAudio';
 const DIGIVIDEO_SHEET   = 'DigiVideo';
-const OST_SHEET     = 'OST';
-const ARTBOOK_SHEET = 'Artbook';
-const FIGURE_SHEET  = 'Figures';
+// v49.01：原聲帶/動漫美術設定集/公仔 原本各自只有一張表，改比照數位下載版模式依子類型拆表
+const OSTMAIN_SHEET   = 'OstMain';
+const OSTSINGLE_SHEET = 'OstSingle';
+const OSTCHAR_SHEET   = 'OstChar';
+const OSTDRAMA_SHEET  = 'OstDrama';
+const OSTLIVE_SHEET   = 'OstLive';
+const ANMANGA_SHEET    = 'AnManga';
+const ANARTBOOK_SHEET  = 'AnArtbook';
+const ANSETTING_SHEET  = 'AnSetting';
+const ANKEYFRAME_SHEET = 'AnKeyframe';
+const ANMAG_SHEET      = 'AnMag';
+const ANTV_SHEET       = 'AnTv';
+const ANMOVIE_SHEET    = 'AnMovie';
+const ANOTHER_SHEET    = 'AnOther';
+const FIGSCALE_SHEET  = 'FigScale';
+const FIGACTION_SHEET = 'FigAction';
+const FIGNENDO_SHEET  = 'FigNendo';
+const FIGPRIZE_SHEET  = 'FigPrize';
+const FIGGUNPLA_SHEET = 'FigGunpla';
+const FIGGK_SHEET     = 'FigGk';
  
 // ── 遊戲欄位──────────────────────────────
 const GAME_HEADERS = [
@@ -172,39 +189,56 @@ const DIGIVIDEO_HEADERS = _DIGI_HEAD.concat([
   'related_work','studio','episode_count','runtime','voice_language','subtitle_language','publisher'
 ]).concat(_DIGI_TAIL);
 
-// ── 原聲帶欄位（v43.01 新增，v44.01 擴充音樂專屬欄位，比照前端 OST_FIELDS）──
-const OST_HEADERS = [
-  'category','subtype','related_work','primary_name','jp_name','zh_name','en_name',
-  'composer','label','catalog_number','format','edition_type','disc_count','track_count',
+// ── 原聲帶（v43.01 新增，v44.01 擴充，v49.01 起依 5 子類型拆表，比照前端 5 組 OST FIELDS）──
+const _OS_HEAD = ['category','subtype','related_work','primary_name','jp_name','zh_name','en_name'];
+const _OS_TAIL = [
+  'label','catalog_number','format','edition_type',
   'release_date','suggest_price','region','edition',
   'barcode','code','collect_status','obi_status','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost','bonus_items',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
 ];
+const OSTMAIN_HEADERS = _OS_HEAD.concat(['composer','disc_count','track_count']).concat(_OS_TAIL);
+const OSTSINGLE_HEADERS = _OS_HEAD.concat(['artist','composer','track_count']).concat(_OS_TAIL);
+const OSTCHAR_HEADERS = _OS_HEAD.concat(['character','voice_actor','composer']).concat(_OS_TAIL);
+const OSTDRAMA_HEADERS = _OS_HEAD.concat(['cast','script_writer']).concat(_OS_TAIL);
+const OSTLIVE_HEADERS = _OS_HEAD.concat(['venue','event_date','performers']).concat(_OS_TAIL);
 
-// ── 動漫/美術設定集欄位（v43.01 新增，比照前端 ARTBOOK_FIELDS）──
-const ARTBOOK_HEADERS = [
-  'category','subtype','related_work','primary_name','volume','jp_name','zh_name','en_name',
-  'illustrator','binding','language','page_count',
+// ── 動漫/美術設定集（v43.01 新增，v49.01 起依 8 子類型拆表，比照前端 8 組 ARTBOOK FIELDS）──
+const _AN_HEAD = ['category','subtype','related_work','primary_name','jp_name','zh_name','en_name'];
+const _AN_TAIL = [
   'publisher','release_date','suggest_price','region','edition',
   'barcode','code','collect_status','condition','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
 ];
+const ANMANGA_HEADERS = _AN_HEAD.concat(['volume','illustrator','page_count']).concat(_AN_TAIL);
+const ANARTBOOK_HEADERS = _AN_HEAD.concat(['illustrator','page_count']).concat(_AN_TAIL);
+const ANSETTING_HEADERS = _AN_HEAD.concat(['illustrator','page_count']).concat(_AN_TAIL);
+const ANKEYFRAME_HEADERS = _AN_HEAD.concat(['studio','page_count']).concat(_AN_TAIL);
+const ANMAG_HEADERS = _AN_HEAD.concat(['issue_number','circle_name','page_count']).concat(_AN_TAIL);
+const ANTV_HEADERS = _AN_HEAD.concat(['studio','episode_count','disc_count','binding']).concat(_AN_TAIL);
+const ANMOVIE_HEADERS = _AN_HEAD.concat(['studio','runtime','binding']).concat(_AN_TAIL);
+const ANOTHER_HEADERS = _AN_HEAD.concat([]).concat(_AN_TAIL);
 
-// ── 公仔／模型欄位（v43.01 新增，v45.01 擴充立體收藏專屬欄位，比照前端 FIGURE_FIELDS）──
-const FIGURE_HEADERS = [
-  'category','subtype','series','primary_name','character','jp_name','zh_name','en_name',
-  'brand','sculptor','scale','material','dimensions',
-  'manufacturer','release_date','suggest_price','region','edition',
+// ── 公仔／模型（v43.01 新增，v45.01 擴充，v49.01 起依 6 子類型拆表，比照前端 6 組 FIGURE FIELDS）──
+const _FIG_HEAD = ['category','subtype','series','primary_name','character','jp_name','zh_name','en_name'];
+const _FIG_TAIL = [
+  'brand','manufacturer','release_date','suggest_price','region','edition',
   'barcode','code','collect_status','box_condition','condition','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
 ];
- 
+const FIGSCALE_HEADERS = _FIG_HEAD.concat(['scale','material','sculptor']).concat(_FIG_TAIL);
+const FIGACTION_HEADERS = _FIG_HEAD.concat(['joint_info','accessories']).concat(_FIG_TAIL);
+const FIGNENDO_HEADERS = _FIG_HEAD.concat(['accessories']).concat(_FIG_TAIL);
+const FIGPRIZE_HEADERS = _FIG_HEAD.concat(['prize_rank','event_name']).concat(_FIG_TAIL);
+const FIGGUNPLA_HEADERS = _FIG_HEAD.concat(['grade','scale']).concat(_FIG_TAIL);
+const FIGGK_HEADERS = _FIG_HEAD.concat(['material','limited_number','sculptor']).concat(_FIG_TAIL);
+
 // ── 取得/建立工作表 ────────────────────────────────
 // ── API 查詢快取（Cache 工作表）────────────────────────────
 const CACHE_SHEET = 'Cache';
@@ -286,15 +320,63 @@ function getSheet(type) {
   } else if (t === 'digivideo') {
     sheetName = DIGIVIDEO_SHEET; headers = DIGIVIDEO_HEADERS;
     headBg = '#1a0f2e'; headFg = '#f06292';
-  } else if (t === 'ost' || t === '原聲帶') {
-    sheetName = OST_SHEET;     headers = OST_HEADERS;
+  } else if (t === 'ostmain') {
+    sheetName = OSTMAIN_SHEET; headers = OSTMAIN_HEADERS;
     headBg = '#1a0f2e'; headFg = '#b388ff';
-  } else if (t === 'artbook' || t === '動漫/美術設定集') {
-    sheetName = ARTBOOK_SHEET; headers = ARTBOOK_HEADERS;
+  } else if (t === 'ostsingle') {
+    sheetName = OSTSINGLE_SHEET; headers = OSTSINGLE_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#ce93d8';
+  } else if (t === 'ostchar') {
+    sheetName = OSTCHAR_SHEET; headers = OSTCHAR_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#f48fb1';
+  } else if (t === 'ostdrama') {
+    sheetName = OSTDRAMA_SHEET; headers = OSTDRAMA_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#ff8a65';
+  } else if (t === 'ostlive') {
+    sheetName = OSTLIVE_SHEET; headers = OSTLIVE_HEADERS;
+    headBg = '#1a0f2e'; headFg = '#ffab91';
+  } else if (t === 'anmanga') {
+    sheetName = ANMANGA_SHEET; headers = ANMANGA_HEADERS;
     headBg = '#0f2e18'; headFg = '#aed581';
-  } else if (t === 'figure' || t === '公仔') {
-    sheetName = FIGURE_SHEET;  headers = FIGURE_HEADERS;
+  } else if (t === 'anartbook') {
+    sheetName = ANARTBOOK_SHEET; headers = ANARTBOOK_HEADERS;
+    headBg = '#0f2e18'; headFg = '#8bc34a';
+  } else if (t === 'ansetting') {
+    sheetName = ANSETTING_SHEET; headers = ANSETTING_HEADERS;
+    headBg = '#0f2e18'; headFg = '#66bb6a';
+  } else if (t === 'ankeyframe') {
+    sheetName = ANKEYFRAME_SHEET; headers = ANKEYFRAME_HEADERS;
+    headBg = '#0f2e18'; headFg = '#9ccc65';
+  } else if (t === 'anmag') {
+    sheetName = ANMAG_SHEET; headers = ANMAG_HEADERS;
+    headBg = '#0f2e18'; headFg = '#c5e1a5';
+  } else if (t === 'antv') {
+    sheetName = ANTV_SHEET; headers = ANTV_HEADERS;
+    headBg = '#0f2e18'; headFg = '#7cb342';
+  } else if (t === 'anmovie') {
+    sheetName = ANMOVIE_SHEET; headers = ANMOVIE_HEADERS;
+    headBg = '#0f2e18'; headFg = '#558b2f';
+  } else if (t === 'another') {
+    sheetName = ANOTHER_SHEET; headers = ANOTHER_HEADERS;
+    headBg = '#0f2e18'; headFg = '#a5d6a7';
+  } else if (t === 'figscale') {
+    sheetName = FIGSCALE_SHEET; headers = FIGSCALE_HEADERS;
     headBg = '#2e2400'; headFg = '#ffab40';
+  } else if (t === 'figaction') {
+    sheetName = FIGACTION_SHEET; headers = FIGACTION_HEADERS;
+    headBg = '#2e2400'; headFg = '#ffc107';
+  } else if (t === 'fignendo') {
+    sheetName = FIGNENDO_SHEET; headers = FIGNENDO_HEADERS;
+    headBg = '#2e2400'; headFg = '#ffd54f';
+  } else if (t === 'figprize') {
+    sheetName = FIGPRIZE_SHEET; headers = FIGPRIZE_HEADERS;
+    headBg = '#2e2400'; headFg = '#ffe082';
+  } else if (t === 'figgunpla') {
+    sheetName = FIGGUNPLA_SHEET; headers = FIGGUNPLA_HEADERS;
+    headBg = '#2e2400'; headFg = '#ffca28';
+  } else if (t === 'figgk') {
+    sheetName = FIGGK_SHEET; headers = FIGGK_HEADERS;
+    headBg = '#2e2400'; headFg = '#ff8f00';
   } else {
     sheetName = GAMES_SHEET;   headers = GAME_HEADERS;
     headBg = '#0f1525'; headFg = '#00e5ff';
@@ -325,10 +407,35 @@ function resolveType(category, subtype) {
   if (s === '主機' || s === 'console' || s === 'Console')    return 'console';
   if (s === '週邊' || s === '周邊' || s === 'peripheral' || s === 'Peripheral') return 'peripheral';
   if (s === '狩獵' || s === 'hunt' || s === 'Hunt') return 'hunt';
-  // v43.01：原聲帶／動漫美術設定集／公仔 改走各自獨立工作表；含舊分類值別名，向下相容既有資料
-  if (s === '原聲帶' || s === 'ost' || s === 'OST') return 'ost';
-  if (s === '動漫/美術設定集' || s === '畫集' || s === '設定集' || s === 'artbook' || s === 'Artbook') return 'artbook';
-  if (s === '公仔' || s === '模型' || s === 'figure' || s === 'Figure') return 'figure';
+  // v49.01：原聲帶／動漫美術設定集／公仔 依子類型再拆到各自獨立工作表，比照數位下載版模式；含舊分類值別名，向下相容既有資料
+  if (s === '原聲帶' || s === 'ost' || s === 'OST') {
+    const sub = String(subtype || '').trim();
+    if (sub === '主題曲／單曲') return 'ostsingle';
+    if (sub === '角色歌曲／印象集') return 'ostchar';
+    if (sub === '廣播劇CD') return 'ostdrama';
+    if (sub === '演唱會音源／其他') return 'ostlive';
+    return 'ostmain'; // 含「原聲帶」與未選子類型時的預設
+  }
+  if (s === '動漫/美術設定集' || s === '畫集' || s === '設定集' || s === 'artbook' || s === 'Artbook') {
+    const sub = String(subtype || '').trim();
+    if (sub === '畫冊／插畫集') return 'anartbook';
+    if (sub === '設定集／公式資料集') return 'ansetting';
+    if (sub === '原畫集／分鏡集') return 'ankeyframe';
+    if (sub === '雜誌／MOOK／同人誌') return 'anmag';
+    if (sub === '動畫影集') return 'antv';
+    if (sub === '動畫電影／劇場版') return 'anmovie';
+    if (sub === '周邊／其他') return 'another';
+    return 'anmanga'; // 含「漫畫／單行本」與未選子類型時的預設
+  }
+  if (s === '公仔' || s === '模型' || s === 'figure' || s === 'Figure') {
+    const sub = String(subtype || '').trim();
+    if (sub === '可動模型') return 'figaction';
+    if (sub === '黏土人／Q版') return 'fignendo';
+    if (sub === '景品／一番賞') return 'figprize';
+    if (sub === '組裝模型') return 'figgunpla';
+    if (sub === 'GK雕像') return 'figgk';
+    return 'figscale'; // 含「比例模型」與未選子類型時的預設
+  }
   // v47.01：數位下載版依子類型再拆到 8 個獨立工作表，不再共用一張 Digital 表
   if (s === '數位下載版' || s === '數位遊戲' || s === 'digital' || s === 'Digital') {
     const sub = String(subtype || '').trim();
@@ -463,8 +570,13 @@ function collectUsedImgIds_() {
     [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
     [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
     [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS],
-    [OST_SHEET, OST_HEADERS],
-    [ARTBOOK_SHEET, ARTBOOK_HEADERS], [FIGURE_SHEET, FIGURE_HEADERS]
+    [OSTMAIN_SHEET, OSTMAIN_HEADERS], [OSTSINGLE_SHEET, OSTSINGLE_HEADERS],
+    [OSTCHAR_SHEET, OSTCHAR_HEADERS], [OSTDRAMA_SHEET, OSTDRAMA_HEADERS], [OSTLIVE_SHEET, OSTLIVE_HEADERS],
+    [ANMANGA_SHEET, ANMANGA_HEADERS], [ANARTBOOK_SHEET, ANARTBOOK_HEADERS],
+    [ANSETTING_SHEET, ANSETTING_HEADERS], [ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS],
+    [ANMAG_SHEET, ANMAG_HEADERS], [ANTV_SHEET, ANTV_HEADERS], [ANMOVIE_SHEET, ANMOVIE_HEADERS], [ANOTHER_SHEET, ANOTHER_HEADERS],
+    [FIGSCALE_SHEET, FIGSCALE_HEADERS], [FIGACTION_SHEET, FIGACTION_HEADERS], [FIGNENDO_SHEET, FIGNENDO_HEADERS],
+    [FIGPRIZE_SHEET, FIGPRIZE_HEADERS], [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
   ];
   const used = {};
   sheetDefs.forEach(function(def) {
@@ -531,7 +643,7 @@ function doGet(e) {
   try {
     switch (action) {
       case 'ping':
-        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games/Books/Consoles/Peripherals/Hunt + 數位下載版8子表 + OST/Artbook/Figures，共16工作表)' };
+        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games/Books/Consoles/Peripherals/Hunt + 數位下載版8子表 + 原聲帶5子表 + 動漫美術8子表 + 公仔6子表，共32工作表)' };
         break;
       case 'list':
         result = listAll(p.type || 'all');
@@ -659,15 +771,33 @@ function listAll(type) {
   if (type === 'digiguide')  return listSheet('digiguide');
   if (type === 'digimag')    return listSheet('digimag');
   if (type === 'digiaudio')  return listSheet('digiaudio');
-  if (type === 'digivideo')  return listSheet('digivideo');
-  if (type === 'ost')        return listSheet('ost');
-  if (type === 'artbook')    return listSheet('artbook');
-  if (type === 'figure')     return listSheet('figure');
+  if (type === 'digivideo') return listSheet('digivideo');
+  if (type === 'ostmain')   return listSheet('ostmain');
+  if (type === 'ostsingle') return listSheet('ostsingle');
+  if (type === 'ostchar')   return listSheet('ostchar');
+  if (type === 'ostdrama')  return listSheet('ostdrama');
+  if (type === 'ostlive')   return listSheet('ostlive');
+  if (type === 'anmanga')    return listSheet('anmanga');
+  if (type === 'anartbook')  return listSheet('anartbook');
+  if (type === 'ansetting')  return listSheet('ansetting');
+  if (type === 'ankeyframe') return listSheet('ankeyframe');
+  if (type === 'anmag')      return listSheet('anmag');
+  if (type === 'antv')       return listSheet('antv');
+  if (type === 'anmovie')    return listSheet('anmovie');
+  if (type === 'another')    return listSheet('another');
+  if (type === 'figscale')  return listSheet('figscale');
+  if (type === 'figaction') return listSheet('figaction');
+  if (type === 'fignendo')  return listSheet('fignendo');
+  if (type === 'figprize')  return listSheet('figprize');
+  if (type === 'figgunpla') return listSheet('figgunpla');
+  if (type === 'figgk')     return listSheet('figgk');
 
   // 合併全部工作表，附加來源類型（不含 hunt：狩獵清單獨立，不混入收藏）
   const types = ['game', 'book', 'console', 'peripheral',
     'digigame', 'digidlc', 'digicomic', 'digiartbook', 'digiguide', 'digimag', 'digiaudio', 'digivideo',
-    'ost', 'artbook', 'figure'];
+    'ostmain', 'ostsingle', 'ostchar', 'ostdrama', 'ostlive',
+    'anmanga', 'anartbook', 'ansetting', 'ankeyframe', 'anmag', 'antv', 'anmovie', 'another',
+    'figscale', 'figaction', 'fignendo', 'figprize', 'figgunpla', 'figgk'];
   let allRows = [];
   types.forEach(function(tp) {
     let r;
@@ -2120,7 +2250,9 @@ function parseSSGame(jeu, authQS) {
 function findRowByUuid(uuid) {
   const types = ['game', 'book', 'console', 'peripheral', 'hunt',
     'digigame', 'digidlc', 'digicomic', 'digiartbook', 'digiguide', 'digimag', 'digiaudio', 'digivideo',
-    'ost', 'artbook', 'figure'];
+    'ostmain', 'ostsingle', 'ostchar', 'ostdrama', 'ostlive',
+    'anmanga', 'anartbook', 'ansetting', 'ankeyframe', 'anmag', 'antv', 'anmovie', 'another',
+    'figscale', 'figaction', 'fignendo', 'figprize', 'figgunpla', 'figgk'];
   for (const type of types) {
     try {
       const { sheet, headers } = getSheet(type);
@@ -2227,9 +2359,25 @@ function fixSheetHeaders() {
   results.digimag     = fixSheet(DIGIMAG_SHEET,     DIGIMAG_HEADERS);
   results.digiaudio   = fixSheet(DIGIAUDIO_SHEET,   DIGIAUDIO_HEADERS);
   results.digivideo   = fixSheet(DIGIVIDEO_SHEET,   DIGIVIDEO_HEADERS);
-  results.ost         = fixSheet(OST_SHEET,      OST_HEADERS);
-  results.artbook     = fixSheet(ARTBOOK_SHEET,  ARTBOOK_HEADERS);
-  results.figures     = fixSheet(FIGURE_SHEET,   FIGURE_HEADERS);
+  results.ostmain     = fixSheet(OSTMAIN_SHEET,   OSTMAIN_HEADERS);
+  results.ostsingle   = fixSheet(OSTSINGLE_SHEET, OSTSINGLE_HEADERS);
+  results.ostchar     = fixSheet(OSTCHAR_SHEET,   OSTCHAR_HEADERS);
+  results.ostdrama    = fixSheet(OSTDRAMA_SHEET,  OSTDRAMA_HEADERS);
+  results.ostlive     = fixSheet(OSTLIVE_SHEET,   OSTLIVE_HEADERS);
+  results.anmanga     = fixSheet(ANMANGA_SHEET,    ANMANGA_HEADERS);
+  results.anartbook   = fixSheet(ANARTBOOK_SHEET,  ANARTBOOK_HEADERS);
+  results.ansetting   = fixSheet(ANSETTING_SHEET,  ANSETTING_HEADERS);
+  results.ankeyframe  = fixSheet(ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS);
+  results.anmag       = fixSheet(ANMAG_SHEET,      ANMAG_HEADERS);
+  results.antv        = fixSheet(ANTV_SHEET,       ANTV_HEADERS);
+  results.anmovie     = fixSheet(ANMOVIE_SHEET,    ANMOVIE_HEADERS);
+  results.another     = fixSheet(ANOTHER_SHEET,    ANOTHER_HEADERS);
+  results.figscale    = fixSheet(FIGSCALE_SHEET,  FIGSCALE_HEADERS);
+  results.figaction   = fixSheet(FIGACTION_SHEET, FIGACTION_HEADERS);
+  results.fignendo    = fixSheet(FIGNENDO_SHEET,  FIGNENDO_HEADERS);
+  results.figprize    = fixSheet(FIGPRIZE_SHEET,  FIGPRIZE_HEADERS);
+  results.figgunpla   = fixSheet(FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS);
+  results.figgk       = fixSheet(FIGGK_SHEET,     FIGGK_HEADERS);
   // 補全舊資料的 uuid（無 uuid 的列自動填入）
   results.uuids_filled = backfillUuids();
   Logger.log('fixSheetHeaders: ' + JSON.stringify(results));
@@ -2366,12 +2514,99 @@ function deleteDigitalSheetAfterMigration() {
   return { ok: true, msg: '已刪除舊的 Digital 工作表' };
 }
 
+// ── v49.01 一次性遷移工具：原聲帶／動漫美術設定集／公仔 原本各自一張表，改依子類型搬到獨立工作表 ──
+// 使用方式（建議先在試算表「檔案 > 建立副本」備份一份再執行）：
+//   1. 依序執行 migrateOstToSubtypeSheets / migrateArtbookToSubtypeSheets / migrateFigureToSubtypeSheets
+//   2. 到試算表檢查新分頁資料是否正確（舊表原始資料不會被動到）
+//   3. 確認無誤後，再依序執行 deleteOstSheetAfterMigration / deleteArtbookSheetAfterMigration / deleteFigureSheetAfterMigration
+function _migrateSingleSheetBySubtype(oldSheetName, routeMap, defaultType) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const oldSheet = ss.getSheetByName(oldSheetName);
+  if (!oldSheet) return { ok: true, msg: '找不到舊的 ' + oldSheetName + ' 工作表，可能本來就沒有資料或已經搬移過' };
+  const last = oldSheet.getLastRow();
+  if (last <= 1) return { ok: true, msg: oldSheetName + ' 工作表沒有資料列' };
+
+  const actualHeaders = oldSheet.getRange(1, 1, 1, oldSheet.getLastColumn()).getValues()[0];
+  const data = oldSheet.getRange(2, 1, last - 1, oldSheet.getLastColumn()).getValues();
+  const subIdx = actualHeaders.indexOf('subtype');
+
+  const counts = {};
+  data.forEach(function(row) {
+    const sub = subIdx >= 0 ? String(row[subIdx] || '').trim() : '';
+    const type = routeMap[sub] || defaultType;
+    const destObj = getSheet(type); // 確保目的地工作表存在且表頭正確
+    const mapped = destObj.headers.map(function(h) {
+      const srcIdx = actualHeaders.indexOf(h);
+      return srcIdx >= 0 ? row[srcIdx] : '';
+    });
+    destObj.sheet.appendRow(mapped);
+    counts[type] = (counts[type] || 0) + 1;
+  });
+
+  Logger.log('_migrateSingleSheetBySubtype(' + oldSheetName + '): ' + JSON.stringify(counts));
+  return { ok: true, msg: '已複製到子類型工作表（原 ' + oldSheetName + ' 工作表未刪除，請先核對再刪除）', counts: counts };
+}
+
+function migrateOstToSubtypeSheets() {
+  return _migrateSingleSheetBySubtype('OST', {
+    '主題曲／單曲': 'ostsingle',
+    '角色歌曲／印象集': 'ostchar',
+    '廣播劇CD': 'ostdrama',
+    '演唱會音源／其他': 'ostlive'
+  }, 'ostmain');
+}
+function deleteOstSheetAfterMigration() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const oldSheet = ss.getSheetByName('OST');
+  if (!oldSheet) return { ok: true, msg: '找不到 OST 工作表，可能已經刪除過' };
+  ss.deleteSheet(oldSheet);
+  return { ok: true, msg: '已刪除舊的 OST 工作表' };
+}
+
+function migrateArtbookToSubtypeSheets() {
+  return _migrateSingleSheetBySubtype('Artbook', {
+    '畫冊／插畫集': 'anartbook',
+    '設定集／公式資料集': 'ansetting',
+    '原畫集／分鏡集': 'ankeyframe',
+    '雜誌／MOOK／同人誌': 'anmag',
+    '動畫影集': 'antv',
+    '動畫電影／劇場版': 'anmovie',
+    '周邊／其他': 'another'
+  }, 'anmanga');
+}
+function deleteArtbookSheetAfterMigration() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const oldSheet = ss.getSheetByName('Artbook');
+  if (!oldSheet) return { ok: true, msg: '找不到 Artbook 工作表，可能已經刪除過' };
+  ss.deleteSheet(oldSheet);
+  return { ok: true, msg: '已刪除舊的 Artbook 工作表' };
+}
+
+function migrateFigureToSubtypeSheets() {
+  return _migrateSingleSheetBySubtype('Figures', {
+    '可動模型': 'figaction',
+    '黏土人／Q版': 'fignendo',
+    '景品／一番賞': 'figprize',
+    '組裝模型': 'figgunpla',
+    'GK雕像': 'figgk'
+  }, 'figscale');
+}
+function deleteFigureSheetAfterMigration() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const oldSheet = ss.getSheetByName('Figures');
+  if (!oldSheet) return { ok: true, msg: '找不到 Figures 工作表，可能已經刪除過' };
+  ss.deleteSheet(oldSheet);
+  return { ok: true, msg: '已刪除舊的 Figures 工作表' };
+}
+
 // 為舊資料（uuid 欄位為空）補全 UUID
 function backfillUuids() {
   let filled = 0;
   for (const sheetName of [GAMES_SHEET, BOOKS_SHEET, CONSOLE_SHEET, PERIPH_SHEET, HUNT_SHEET,
     DIGIGAME_SHEET, DIGIDLC_SHEET, DIGICOMIC_SHEET, DIGIARTBOOK_SHEET, DIGIGUIDE_SHEET, DIGIMAG_SHEET, DIGIAUDIO_SHEET, DIGIVIDEO_SHEET,
-    OST_SHEET, ARTBOOK_SHEET, FIGURE_SHEET]) {
+    OSTMAIN_SHEET, OSTSINGLE_SHEET, OSTCHAR_SHEET, OSTDRAMA_SHEET, OSTLIVE_SHEET,
+    ANMANGA_SHEET, ANARTBOOK_SHEET, ANSETTING_SHEET, ANKEYFRAME_SHEET, ANMAG_SHEET, ANTV_SHEET, ANMOVIE_SHEET, ANOTHER_SHEET,
+    FIGSCALE_SHEET, FIGACTION_SHEET, FIGNENDO_SHEET, FIGPRIZE_SHEET, FIGGUNPLA_SHEET, FIGGK_SHEET]) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) continue;
