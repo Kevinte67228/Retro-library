@@ -44,6 +44,8 @@ jobs:
         working-directory: clasp_deploy
         run: clasp push --force
 
-      - name: Create new deployment version
+      - name: Update existing deployment (keeps Web App URL stable)
         working-directory: clasp_deploy
-        run: clasp deploy --description "Auto-deploy $(date '+%Y-%m-%d %H:%M:%S')"
+        env:
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: clasp deploy --deploymentId "$GAS_DEPLOYMENT_ID" --description "Auto-deploy $(date '+%Y-%m-%d %H:%M:%S')"
