@@ -944,9 +944,9 @@ body{
                 <div class="mb-ico" style="background:rgba(105,240,174,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#69f0ae" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
                 <div class="ect">手動建檔</div><div class="ecd">直接填寫</div>
               </div>
-              <div class="ec-card mb-wide" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
+              <div class="ec-card" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
                 <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
-                <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上商店頁網址自動抓資料</div></div>
+                <div class="ect">商店連結</div><div class="ecd">貼上網址抓資料</div>
               </div>
               <div class="ec-card mb-wide" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
                 <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
@@ -955,7 +955,7 @@ body{
               </div>
               <div class="ec-card mb-wide" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
                 <div class="mb-ico" style="background:rgba(128,203,196,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#80cbc4" stroke-width="1.5"><rect x="3" y="7" width="10" height="10" rx="2"/><path d="M15 8h4M15 12h4M15 16h2"/><circle cx="20" cy="8" r="1.5" fill="#80cbc4" stroke="none"/></svg></div>
-                <div class="mb-txt"><div class="ect">編碼＋照片</div><div class="ecd">精確比對</div></div>
+                <div class="mb-txt"><div class="ect" id="mb-gcode-combo-title">編碼＋照片</div><div class="ecd" id="mb-gcode-combo-sub">精確比對</div></div>
               </div>
             </div>
           </div>
@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v49.04';
+const APP_VERSION='v49.05';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6053,14 +6053,17 @@ function gcodeSearch(){
 // ════ 主查詢函數（編碼+照片模式）════
 function gcodeComboSearch(){
   var code=normalizeGameCode(($('gcode-combo-inp')&&$('gcode-combo-inp').value||'').trim().toUpperCase());
+  // v49.05：數位下載版的電子書子類型改走 ISBN 書籍資料庫查詢，取代遊戲交叉比對
+  var _digiBookSubsCombo={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
+  var isEbookCombo=(_selectedType==='數位下載版'&&_digiBookSubsCombo[_selectedSubtype]);
   // v49.03：原聲帶的商品番號寫入專屬 catalog_number 欄位，不誤填進通用 code 欄位
   if(_selectedType==='原聲帶')entry.catalog_number=code;else entry.code=code;
   var btn=$('gcode-combo-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ 查詢中...';}
-  loadingTimed('交叉比對資料庫＋AI 辨識');
+  loadingTimed(isEbookCombo?'查詢書籍資料庫＋AI 辨識':'交叉比對資料庫＋AI 辨識');
 
-  // 並行：資料庫查詢 + 圖片 AI 辨識
-  var dbP=crossRefLookupPromise(code,null);
+  // 並行：資料庫查詢（電子書走 ISBN，其餘走遊戲交叉比對）+ 圖片 AI 辨識
+  var dbP=isEbookCombo?bookLookupPromise(code.replace(/[-\s]/g,'')):crossRefLookupPromise(code,null);
   var aiP=_gcodeImg?new Promise(function(ok,ng){
     var r=new FileReader();
     r.onload=function(){
@@ -6085,8 +6088,21 @@ function gcodeComboSearch(){
     var dbResult=results[0],aiResult=results[1];
     // 合併前備份封面原圖：applyMultiDbResult 會重建 entry，會清掉 _raw_cover/cover_img
     var _savedCoverGcode=entry._raw_cover||entry.cover_img||'';
-    // 合併：資料庫為主，AI 補全，AI 圖片辨識的封面存入
-    applyMultiDbResult(dbResult,code,aiResult);
+    if(isEbookCombo){
+      // 電子書：ISBN 書籍資料庫為主，AI 圖片辨識補齊缺的欄位（不走遊戲導向的 applyMultiDbResult）
+      if(dbResult&&dbResult.primary_name)Object.assign(entry,dbResult);
+      if(aiResult&&typeof aiResult==='object'){
+        Object.keys(aiResult).forEach(function(k){
+          if(k.charAt(0)==='_')return;
+          var v=_aiStr(aiResult[k]);
+          if(v&&v!=='無'&&v!=='未知'&&!entry[k])entry[k]=v;
+        });
+      }
+      if(!dbResult&&!(aiResult&&aiResult.primary_name))toast('查無書籍資料，請手動補齊','',3000);
+    }else{
+      // 合併：資料庫為主，AI 補全，AI 圖片辨識的封面存入
+      applyMultiDbResult(dbResult,code,aiResult);
+    }
     if(_savedCoverGcode){entry._raw_cover=_savedCoverGcode;entry.cover_img=_savedCoverGcode;}
     if(_gcodeImg&&!entry.cover_img){
       var r2=new FileReader();
@@ -6096,7 +6112,7 @@ function gcodeComboSearch(){
       };
       r2.readAsDataURL(_gcodeImg);
     }
-    showForm('編碼＋照片建檔');
+    showForm(isEbookCombo?'ISBN＋照片建檔':'編碼＋照片建檔');
     aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
   }).catch(function(e){
     noLoad();
@@ -7396,10 +7412,14 @@ var _DIGI_BOOK_SUBS={'電子書（漫畫／單行本）':1,'電子書（畫冊�
 function _refreshMethodButtons(cat){
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[_selectedSubtype];
-  [['mb-bar',!isDigital],['mb-gcode',!isDigital||showIsbn],['mb-img',true],
-   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital],['mb-link',isDigital]].forEach(function(p){
+  // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
+  [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
+   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
+  var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
+  if(t)t.textContent=showIsbn?'ISBN＋照片':'編碼＋照片';
+  if(s)s.textContent=showIsbn?'電子書精確比對':'精確比對';
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
