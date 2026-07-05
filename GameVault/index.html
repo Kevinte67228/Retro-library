@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v49.02';
+const APP_VERSION='v49.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5500,6 +5500,30 @@ function _gcodeLabels(type){
         examples:'例如：ISBN-13 → 978-4-04-735985-6',
         searchBtn:'🔍 查詢書籍資料庫',step1:'① 輸入 ISBN 書號',step2:'② 拍攝封面'};
     }
+    case '公仔': {
+      // v49.03：依子類型分兩組——正規零售品有 JAN 碼/型號，景品與GK通常無標準編碼
+      var _figNoCode={'景品／一番賞':1,'GK雕像':1};
+      if(_figNoCode[_selectedSubtype]) return {
+        hint:'此類商品通常沒有標準編碼，若外盒有印才輸入，建議優先用圖片辨識或手動建檔',placeholder:'（通常無，若有再輸入）',
+        examples:'景品／GK雕像多為抽獎品或小量生產，很少有規範化編碼',
+        searchBtn:'🔍 嘗試查詢',step1:'① 輸入編碼（若有）',step2:'② 拍攝商品照片'};
+      return {
+        hint:'輸入商品編碼（外盒上的 JAN 碼或原廠型號）',placeholder:'4571245291234',
+        examples:'例如：Good Smile Company、壽屋等原廠型號或 JAN 碼',
+        searchBtn:'🔍 查詢公仔商品資料庫',step1:'① 輸入商品編碼',step2:'② 拍攝商品外盒'};
+    }
+    case '原聲帶': {
+      // v49.03：依子類型分兩組——正規發行 CD 有商品番號，演唱會音源等常無
+      var _ostNoCode={'演唱會音源／其他':1};
+      if(_ostNoCode[_selectedSubtype]) return {
+        hint:'此類商品可能沒有標準編碼，若有才輸入，建議優先用圖片辨識或手動建檔',placeholder:'（通常無，若有再輸入）',
+        examples:'會場限定販售的商品通常沒有規範化編碼',
+        searchBtn:'🔍 嘗試查詢',step1:'① 輸入編碼（若有）',step2:'② 拍攝商品照片'};
+      return {
+        hint:'輸入商品番號（側標或光碟上印的編號）',placeholder:'SQEX-10851',
+        examples:'例如：SQEX-10851　SVWC-70624',
+        searchBtn:'🔍 查詢原聲帶商品資料庫',step1:'① 輸入商品番號',step2:'② 拍攝專輯封面'};
+    }
     default: return { // 遊戲（預設）
       hint:'輸入商品編碼（碟片/卡帶上的產品代碼）',placeholder:'CUSA-00001',
       examples:'例如：PS4 → CUSA-00001　PS3 → BLUS-00001<br>Switch → HAC-001　PS1 → SLUS-00001',
@@ -5973,6 +5997,35 @@ function gcodeSearch(){
       showForm('商品編碼建檔');
       toast('查詢失敗，請手動填寫','er',3000);
     });
+  }else if(_selectedType==='動漫/美術設定集'||_selectedType==='公仔'||_selectedType==='原聲帶'){
+    // v49.03：這三個分類沒有對應的交叉比對資料庫，比照主機/週邊改用 AI 直接依編碼填欄；
+    // 原聲帶的商品番號寫入 catalog_number 專屬欄位，不誤填進通用 code 欄位
+    var _softCat=_selectedType;
+    var _codeField=(_softCat==='原聲帶')?'catalog_number':'code';
+    entry[_codeField]=code;
+    loadingTimed('AI 辨識中…');
+    aiKnowledgeFill(code,'',_checkFieldsFor(_softCat),_softCat,_region).then(function(aiResult){
+      noLoad();
+      var filled=0;
+      if(aiResult&&typeof aiResult==='object'){
+        normalizeLanguageFields(aiResult);
+        _checkFieldsFor(_softCat).forEach(function(k){
+          var v=_aiStr(aiResult[k]);
+          if(v&&v!=='無'&&v!=='未知'&&!entry[k]){
+            entry[k]=v;entry._src=entry._src||{};entry._src[k]='ai';filled++;
+          }
+        });
+      }
+      if(aiResult&&aiResult.primary_name&&!entry.primary_name)entry.primary_name=aiResult.primary_name;
+      showForm('商品編碼建檔');
+      if(filled>0)toast('✓ AI 填欄 '+filled+' 欄','ok',2500);
+      else toast('查不到資料，請手動填寫','',3000);
+      setTimeout(function(){_autoFetchCover();},500);
+    }).catch(function(){
+      noLoad();
+      showForm('商品編碼建檔');
+      toast('查詢失敗，請手動填寫','er',3000);
+    });
   }else{
     code=normalizeGameCode(code);
     entry.code=code;
@@ -5990,7 +6043,8 @@ function gcodeSearch(){
 // ════ 主查詢函數（編碼+照片模式）════
 function gcodeComboSearch(){
   var code=normalizeGameCode(($('gcode-combo-inp')&&$('gcode-combo-inp').value||'').trim().toUpperCase());
-  entry.code=code;
+  // v49.03：原聲帶的商品番號寫入專屬 catalog_number 欄位，不誤填進通用 code 欄位
+  if(_selectedType==='原聲帶')entry.catalog_number=code;else entry.code=code;
   var btn=$('gcode-combo-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ 查詢中...';}
   loadingTimed('交叉比對資料庫＋AI 辨識');
