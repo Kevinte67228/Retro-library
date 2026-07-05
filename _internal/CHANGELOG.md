@@ -1,3 +1,26 @@
+## v50.01 (2026-07-05)
+
+### 變更內容
+尋寶（Hunt）頁面套用新分類子類型，取代原本不管什麼分類都用遊戲主機平台選擇的通用邏輯：
+- 尋寶表單新增「類型」欄位，動漫/美術設定集、公仔、原聲帶、數位下載版四個分類改顯示對應 SUBTYPE_META 子類型選單，取代「平台」欄位（遊戲/攻略/主機/週邊維持原本平台選擇不變）
+- 分類下拉選單變更時，即時切換顯示「平台」或「類型」欄位並重新產生對應選項
+- 尋寶清單卡片、詳情頁、關鍵字搜尋皆同步顯示/比對子類型資訊
+- 「購入→轉入收藏庫」流程一併帶入子類型，避免轉入收藏後子類型資訊遺失
+
+### 影響檔案
+- index.html / GameVault_v50_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
+
+### GS 版本
+- v49 → v50（HUNT_HEADERS 新增 subtype 欄位）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v49-07 → gamevault-v50-01
+
+### 對應備份
+- _internal/old/v49_07/
+
 ## v49.07 (2026-07-05)
 
 ### 變更內容
@@ -60,29 +83,4 @@
 
 ### 對應備份
 - _internal/old/v49_04/
-
-## v49.04 (2026-07-05)
-
-### 變更內容
-數位下載版建檔方式全新設計，捨棄原本一律套用遊戲導向邏輯的做法，改依子類型分組：
-- **下載版遊戲、追加下載內容**（3顆）：圖片辨識、商店連結、手動建檔——維持原本遊戲導向邏輯不變
-- **電子書（漫畫/畫冊/攻略/雜誌，4種）**（4顆，新增一顆）：圖片辨識、**ISBN查詢（新）**、商店連結、手動建檔
-  - ISBN查詢借用「商品編碼」卡，直接沿用書籍分類現成的 ISBN 資料庫查詢邏輯（openBD/樂天/NDL/OpenLibrary/GoogleBooks），電子書常與紙本共用 ISBN
-- **數位音源、數位影音**（各3顆）：圖片辨識、商店連結、手動建檔
-- **修正「商店連結」的 AI prompt**：原本無論什麼子類型都問「這是哪一套遊戲」「developer/genre」，現依子類型分四組文案（遊戲/電子書/音源/影音各自的判斷語句與應填欄位）
-- **修正 `_inferStoreFromUrl`**：原本完全沒有 BookWalker、DLsite 判斷（會一律歸類「其他」），現已加入；同時將 PSN/Xbox Store 更新為 PlayStation Store/Microsoft Store，與 v46.01 的商店清單命名一致
-- 建檔方式按鈕顯示邏輯抽成 `_refreshMethodButtons()`，子類型變更時（openSubtypePicker）即時重新判斷要不要顯示 ISBN 查詢卡
-
-### 影響檔案
-- index.html / GameVault_v49_04_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端建檔流程與 AI prompt 調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v49-03 → gamevault-v49-04
-
-### 對應備份
-- _internal/old/v49_03/
 
