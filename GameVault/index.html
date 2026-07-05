@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v48.01a3';
+const APP_VERSION='v49.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2542,52 +2542,55 @@ const DIGITAL_GCOL=DIGIGAME_GCOL;
 const DIGITAL_DEFAULTS=DIGIGAME_DEFAULTS;
 
 
-// ── 原聲帶／音樂（OST，v42.20）：量身設計，非沿用主機/週邊模板 ──
-const OST_FIELDS=[
-  ['category','資料類別','sel','識別資訊'],
-  ['subtype','類型','sel','識別資訊'],
-  ['related_work','作品／IP名稱','txt','識別資訊'],
-  ['primary_name','專輯名稱','txt','識別資訊'],
-  ['jp_name','日文名稱','txt','識別資訊'],
-  ['zh_name','中文名稱','txt','識別資訊'],
-  ['en_name','英文名稱','txt','識別資訊'],
-  ['composer','作曲／演出者','txt','音樂資訊'],
-  ['label','發行廠牌','txt','音樂資訊'],
-  ['catalog_number','商品番號','txt','音樂資訊'],
-  ['format','載體格式','sel','音樂資訊'],
-  ['edition_type','版本屬性','sel','音樂資訊'],
-  ['disc_count','片數','txt','音樂資訊'],
-  ['track_count','收錄曲數','txt','音樂資訊'],
-  ['release_date','發行日期','dateq','發行資訊'],
-  ['suggest_price','建議售價','price','發行資訊'],
-  ['region','地區版本','regionsel','發行資訊'],
-  ['edition','版本說明','txt','發行資訊'],
-  ['barcode','條碼','txt','編碼條碼'],
-  ['code','商品編號','txt','編碼條碼'],
-  ['collect_status','收藏狀態','sel','收藏狀態'],
-  ['obi_status','側標狀態','sel','收藏狀態'],
-  ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['buy_date','購入日期','date','收藏狀態'],
-  ['purchase_channel','購入管道','txt','收藏狀態'],
-  ['buy_source','取得方式','sel','收藏狀態'],
-  ['buy_price','原幣價格','price','收藏狀態'],
-  ['local_cost','台幣實付（含運費）','price','收藏狀態'],
-  ['bonus_items','特典附錄','area','收藏狀態'],
-  ['market_value','目前估值','price','個人記錄'],
-  ['market_value_confidence','估值信心','sel','個人記錄'],
-  ['summary','簡介','area','補充資訊'],
-  ['ref_link','參考連結','autolink','補充資訊'],
-  ['cover_img','封面圖檔','imgupload','圖片紀錄'],
-  ['back_img','封底圖檔','imgupload','圖片紀錄'],
-  ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
-  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
-  ['related_code','關聯商品','txt','關聯商品'],
-  ['notes','備註','area','補充資訊'],
-  ['uuid','UUID','hidden','補充資訊'],
-  ['created_at','建檔時間','hidden','補充資訊'],
-];
-const OST_SELECTS={
+// ══ 原聲帶（v43.01 新增，v44.01 欄位擴充，v47.01 起比照數位下載版模式，依 5 子類型拆表量身欄位 ══
+function _osHead(){
+  return [
+    ['category','資料類別','sel','識別資訊'],
+    ['subtype','類型','sel','識別資訊'],
+    ['related_work','作品／IP名稱','txt','識別資訊'],
+    ['primary_name','專輯名稱','txt','識別資訊'],
+    ['jp_name','日文名稱','txt','識別資訊'],
+    ['zh_name','中文名稱','txt','識別資訊'],
+    ['en_name','英文名稱','txt','識別資訊'],
+  ];
+}
+function _osTail(){
+  return [
+    ['label','發行廠牌','txt','音樂資訊'],
+    ['catalog_number','商品番號','txt','音樂資訊'],
+    ['format','載體格式','sel','音樂資訊'],
+    ['edition_type','版本屬性','sel','音樂資訊'],
+    ['release_date','發行日期','dateq','發行資訊'],
+    ['suggest_price','建議售價','price','發行資訊'],
+    ['region','地區版本','regionsel','發行資訊'],
+    ['edition','版本說明','txt','發行資訊'],
+    ['barcode','條碼','txt','編碼條碼'],
+    ['code','商品編號','txt','編碼條碼'],
+    ['collect_status','收藏狀態','sel','收藏狀態'],
+    ['obi_status','側標狀態','sel','收藏狀態'],
+    ['completeness','品項完整度','comp','品相完整度'],
+    ['storage_location','保管位置','storagesel','收藏狀態'],
+    ['buy_date','購入日期','date','收藏狀態'],
+    ['purchase_channel','購入管道','txt','收藏狀態'],
+    ['buy_source','取得方式','sel','收藏狀態'],
+    ['buy_price','原幣價格','price','收藏狀態'],
+    ['local_cost','台幣實付（含運費）','price','收藏狀態'],
+    ['bonus_items','特典附錄','area','收藏狀態'],
+    ['market_value','目前估值','price','個人記錄'],
+    ['market_value_confidence','估值信心','sel','個人記錄'],
+    ['summary','簡介','area','補充資訊'],
+    ['ref_link','參考連結','autolink','補充資訊'],
+    ['cover_img','封面圖檔','imgupload','圖片紀錄'],
+    ['back_img','封底圖檔','imgupload','圖片紀錄'],
+    ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
+    ['extra_images','自訂圖片','multiimg','圖片紀錄'],
+    ['related_code','關聯商品','txt','關聯商品'],
+    ['notes','備註','area','補充資訊'],
+    ['uuid','UUID','hidden','補充資訊'],
+    ['created_at','建檔時間','hidden','補充資訊'],
+  ];
+}
+const OS_SHARED_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
   subtype:['原聲帶','主題曲／單曲','角色歌曲／印象集','廣播劇CD','演唱會音源／其他'],
   format:['CD','黑膠唱片','卡帶','數位高解析音檔','其他'],
@@ -2597,120 +2600,282 @@ const OST_SELECTS={
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
 };
-const OST_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const OST_DEFAULTS={
-  category:'原聲帶',subtype:'',collect_status:'收藏中',obi_status:'',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',format:'CD',edition_type:'',
-};
-const OST_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const OS_SHARED_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const OS_SHARED_DEFAULTS={collect_status:'收藏中',obi_status:'',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',release_date:'',cover_img:'',back_img:'',spine_img:'',format:'CD',edition_type:''};
 
-// ── 動漫/美術設定集（Artbook，v42.20，v42.22 更名，v43.01 欄位擴充）：量身設計，非沿用書籍模板 ──
-const ARTBOOK_FIELDS=[
-  ['category','資料類別','sel','識別資訊'],
-  ['subtype','類型','sel','識別資訊'],
-  ['related_work','作品／IP名稱','txt','識別資訊'],
-  ['primary_name','標題／書名／品名','txt','識別資訊'],
-  ['volume','集數／卷數','txt','識別資訊'],
-  ['jp_name','日文名稱','txt','識別資訊'],
-  ['zh_name','中文名稱','txt','識別資訊'],
-  ['en_name','英文名稱','txt','識別資訊'],
-  ['illustrator','作者／製作公司','txt','內容資訊'],
-  ['binding','載體格式','sel','內容資訊'],
-  ['language','語言／字幕','txt','內容資訊'],
-  ['page_count','頁數','txt','內容資訊'],
-  ['publisher','發行商／出版社','txt','發行資訊'],
-  ['release_date','發售日期','dateq','發行資訊'],
-  ['suggest_price','建議售價','price','發行資訊'],
-  ['region','地區版本','regionsel','發行資訊'],
-  ['edition','版本說明','txt','發行資訊'],
-  ['barcode','ISBN／JAN條碼','txt','編碼條碼'],
-  ['code','商品編號','txt','編碼條碼'],
-  ['collect_status','購買狀態','sel','收藏狀態'],
-  ['condition','品況','sel','收藏狀態'],
-  ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','存放位置','storagesel','收藏狀態'],
-  ['buy_date','購入日期','date','收藏狀態'],
-  ['purchase_channel','購入管道','txt','收藏狀態'],
-  ['buy_source','取得方式','sel','收藏狀態'],
-  ['buy_price','原幣價格','price','收藏狀態'],
-  ['local_cost','台幣實付（含運費）','price','收藏狀態'],
-  ['market_value','目前估值','price','個人記錄'],
-  ['market_value_confidence','估值信心','sel','個人記錄'],
-  ['summary','簡介','area','補充資訊'],
-  ['ref_link','參考連結','autolink','補充資訊'],
-  ['cover_img','封面圖檔','imgupload','圖片紀錄'],
-  ['back_img','封底圖檔','imgupload','圖片紀錄'],
-  ['spine_img','書背圖檔','imgupload','圖片紀錄'],
-  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
-  ['related_code','關聯商品','txt','關聯商品'],
-  ['notes','備註','area','補充資訊'],
-  ['uuid','UUID','hidden','補充資訊'],
-  ['created_at','建檔時間','hidden','補充資訊'],
-];
-const ARTBOOK_SELECTS={
+// ── 1. 原聲帶(OST) ──
+const OSTMAIN_FIELDS=_osHead().concat([
+  ['composer','作曲／編曲','txt','音樂資訊'],
+  ['disc_count','片數','txt','音樂資訊'],
+  ['track_count','收錄曲數','txt','音樂資訊'],
+]).concat(_osTail());
+const OSTMAIN_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
+const OSTMAIN_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTMAIN_GCOL=Object.assign({},OS_SHARED_GCOL,{});
+const OSTMAIN_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'原聲帶'});
+
+// ── 2. 主題曲／單曲 ──
+const OSTSINGLE_FIELDS=_osHead().concat([
+  ['artist','演唱者','txt','音樂資訊'],
+  ['composer','作曲／編曲','txt','音樂資訊'],
+  ['track_count','收錄曲數','txt','音樂資訊'],
+]).concat(_osTail());
+const OSTSINGLE_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
+const OSTSINGLE_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTSINGLE_GCOL=Object.assign({},OS_SHARED_GCOL,{});
+const OSTSINGLE_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'主題曲／單曲'});
+
+// ── 3. 角色歌曲／印象集 ──
+const OSTCHAR_FIELDS=_osHead().concat([
+  ['character','角色名稱','txt','音樂資訊'],
+  ['voice_actor','聲優','txt','音樂資訊'],
+  ['composer','作曲／編曲','txt','音樂資訊'],
+]).concat(_osTail());
+const OSTCHAR_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
+const OSTCHAR_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTCHAR_GCOL=Object.assign({},OS_SHARED_GCOL,{});
+const OSTCHAR_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'角色歌曲／印象集'});
+
+// ── 4. 廣播劇CD ──
+const OSTDRAMA_FIELDS=_osHead().concat([
+  ['cast','聲優陣容','area','音樂資訊'],
+  ['script_writer','腳本','txt','音樂資訊'],
+]).concat(_osTail());
+const OSTDRAMA_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
+const OSTDRAMA_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTDRAMA_GCOL=Object.assign({},OS_SHARED_GCOL,{});
+const OSTDRAMA_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'廣播劇CD'});
+
+// ── 5. 演唱會音源／其他 ──
+const OSTLIVE_FIELDS=_osHead().concat([
+  ['venue','會場','txt','音樂資訊'],
+  ['event_date','演出日期','date','音樂資訊'],
+  ['performers','演出者','txt','音樂資訊'],
+]).concat(_osTail());
+const OSTLIVE_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
+const OSTLIVE_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTLIVE_GCOL=Object.assign({},OS_SHARED_GCOL,{});
+const OSTLIVE_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'演唱會音源／其他'});
+
+var OST_SUBTYPE_META={
+  '原聲帶':{fields:function(){return OSTMAIN_FIELDS;},selects:function(){return OSTMAIN_SELECTS;},groups:function(){return OSTMAIN_GROUPS;},gcol:function(){return OSTMAIN_GCOL;},defaults:function(){return OSTMAIN_DEFAULTS;},sub:function(d){return [d.related_work,d.composer,d.label];}},
+  '主題曲／單曲':{fields:function(){return OSTSINGLE_FIELDS;},selects:function(){return OSTSINGLE_SELECTS;},groups:function(){return OSTSINGLE_GROUPS;},gcol:function(){return OSTSINGLE_GCOL;},defaults:function(){return OSTSINGLE_DEFAULTS;},sub:function(d){return [d.related_work,d.artist,d.composer];}},
+  '角色歌曲／印象集':{fields:function(){return OSTCHAR_FIELDS;},selects:function(){return OSTCHAR_SELECTS;},groups:function(){return OSTCHAR_GROUPS;},gcol:function(){return OSTCHAR_GCOL;},defaults:function(){return OSTCHAR_DEFAULTS;},sub:function(d){return [d.character,d.voice_actor,d.related_work];}},
+  '廣播劇CD':{fields:function(){return OSTDRAMA_FIELDS;},selects:function(){return OSTDRAMA_SELECTS;},groups:function(){return OSTDRAMA_GROUPS;},gcol:function(){return OSTDRAMA_GCOL;},defaults:function(){return OSTDRAMA_DEFAULTS;},sub:function(d){return [d.related_work,d.cast];}},
+  '演唱會音源／其他':{fields:function(){return OSTLIVE_FIELDS;},selects:function(){return OSTLIVE_SELECTS;},groups:function(){return OSTLIVE_GROUPS;},gcol:function(){return OSTLIVE_GCOL;},defaults:function(){return OSTLIVE_DEFAULTS;},sub:function(d){return [d.related_work,d.venue,d.event_date];}},
+};
+// 相容用：OST_FIELDS 等舊名稱指向「原聲帶」schema，供尚未改用子類型判斷的舊呼叫點 fallback
+const OST_FIELDS=OSTMAIN_FIELDS;
+const OST_SELECTS=OSTMAIN_SELECTS;
+const OST_GROUPS=OSTMAIN_GROUPS;
+const OST_GCOL=OSTMAIN_GCOL;
+const OST_DEFAULTS=OSTMAIN_DEFAULTS;
+
+
+// ══ 動漫/美術設定集（v42.20 新增，v43.01 更名，v47.01 起比照數位下載版模式，依 8 子類型拆表量身欄位 ══
+function _anHead(){
+  return [
+    ['category','資料類別','sel','識別資訊'],
+    ['subtype','類型','sel','識別資訊'],
+    ['related_work','作品／IP名稱','txt','識別資訊'],
+    ['primary_name','標題／書名／品名','txt','識別資訊'],
+    ['jp_name','日文名稱','txt','識別資訊'],
+    ['zh_name','中文名稱','txt','識別資訊'],
+    ['en_name','英文名稱','txt','識別資訊'],
+  ];
+}
+function _anTail(){
+  return [
+    ['publisher','發行商／出版社','txt','發行資訊'],
+    ['release_date','發售日期','dateq','發行資訊'],
+    ['suggest_price','建議售價','price','發行資訊'],
+    ['region','地區版本','regionsel','發行資訊'],
+    ['edition','版本說明','txt','發行資訊'],
+    ['barcode','ISBN／JAN條碼','txt','編碼條碼'],
+    ['code','商品編號','txt','編碼條碼'],
+    ['collect_status','購買狀態','sel','收藏狀態'],
+    ['condition','品況','sel','收藏狀態'],
+    ['completeness','品項完整度','comp','品相完整度'],
+    ['storage_location','存放位置','storagesel','收藏狀態'],
+    ['buy_date','購入日期','date','收藏狀態'],
+    ['purchase_channel','購入管道','txt','收藏狀態'],
+    ['buy_source','取得方式','sel','收藏狀態'],
+    ['buy_price','原幣價格','price','收藏狀態'],
+    ['local_cost','台幣實付（含運費）','price','收藏狀態'],
+    ['market_value','目前估值','price','個人記錄'],
+    ['market_value_confidence','估值信心','sel','個人記錄'],
+    ['summary','簡介','area','補充資訊'],
+    ['ref_link','參考連結','autolink','補充資訊'],
+    ['cover_img','封面圖檔','imgupload','圖片紀錄'],
+    ['back_img','封底圖檔','imgupload','圖片紀錄'],
+    ['spine_img','書背圖檔','imgupload','圖片紀錄'],
+    ['extra_images','自訂圖片','multiimg','圖片紀錄'],
+    ['related_code','關聯商品','txt','關聯商品'],
+    ['notes','備註','area','補充資訊'],
+    ['uuid','UUID','hidden','補充資訊'],
+    ['created_at','建檔時間','hidden','補充資訊'],
+  ];
+}
+const AN_SHARED_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
   subtype:['漫畫／單行本','畫冊／插畫集','設定集／公式資料集','原畫集／分鏡集','雜誌／MOOK／同人誌','動畫影集','動畫電影／劇場版','周邊／其他'],
-  binding:['平裝書','精裝書','Blu-ray','DVD','CD','數位版'],
   collect_status:['願望清單','已預購','運送中','已入庫'],
   condition:['全新未拆','近全新','良好','有瑕疵'],
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
+  binding:['平裝書','精裝書','Blu-ray','DVD','CD','數位版'],
 };
-const ARTBOOK_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const ARTBOOK_DEFAULTS={
-  category:'動漫/美術設定集',subtype:'',collect_status:'已入庫',condition:'',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',binding:'',
-};
-const ARTBOOK_GCOL={'識別資訊':'#00e5ff','內容資訊':'#aed581','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const AN_SHARED_GCOL={'識別資訊':'#00e5ff','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const AN_SHARED_DEFAULTS={collect_status:'已入庫',condition:'',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',release_date:'',cover_img:'',back_img:'',spine_img:''};
 
-// ── 公仔／模型（Figure，v42.20）：量身設計，非沿用週邊模板 ──
-const FIGURE_FIELDS=[
-  ['category','資料類別','sel','識別資訊'],
-  ['subtype','類型','sel','識別資訊'],
-  ['series','作品／IP名稱','txt','識別資訊'],
-  ['primary_name','商品名稱','txt','識別資訊'],
-  ['character','角色名稱','txt','識別資訊'],
-  ['jp_name','日文名稱','txt','識別資訊'],
-  ['zh_name','中文名稱','txt','識別資訊'],
-  ['en_name','英文名稱','txt','識別資訊'],
-  ['brand','製造商／發行商','txt','模型資訊'],
-  ['sculptor','原型師／塗裝師','txt','模型資訊'],
-  ['scale','比例','txt','模型資訊'],
-  ['material','材質','txt','模型資訊'],
-  ['dimensions','商品尺寸','txt','模型資訊'],
-  ['manufacturer','發售商','txt','發行資訊'],
-  ['release_date','發售日期','dateq','發行資訊'],
-  ['suggest_price','建議售價','price','發行資訊'],
-  ['region','地區版本','regionsel','發行資訊'],
-  ['edition','版本說明','txt','發行資訊'],
-  ['barcode','條碼','txt','編碼條碼'],
-  ['code','商品編號','txt','編碼條碼'],
-  ['collect_status','收藏狀態','sel','收藏狀態'],
-  ['box_condition','盒況','sel','收藏狀態'],
-  ['condition','本體狀態','sel','收藏狀態'],
-  ['completeness','品項完整度','comp','品相完整度'],
-  ['storage_location','存放／展示位置','storagesel','收藏狀態'],
-  ['buy_date','購入日期','date','收藏狀態'],
-  ['purchase_channel','購入管道','txt','收藏狀態'],
-  ['buy_source','取得方式','sel','收藏狀態'],
-  ['buy_price','原幣價格','price','收藏狀態'],
-  ['local_cost','台幣實付（含運費）','price','收藏狀態'],
-  ['market_value','目前估值','price','個人記錄'],
-  ['market_value_confidence','估值信心','sel','個人記錄'],
-  ['summary','簡介','area','補充資訊'],
-  ['ref_link','參考連結','autolink','補充資訊'],
-  ['cover_img','正面圖檔','imgupload','圖片紀錄'],
-  ['back_img','背面圖檔','imgupload','圖片紀錄'],
-  ['spine_img','外盒圖檔','imgupload','圖片紀錄'],
-  ['extra_images','自訂圖片','multiimg','圖片紀錄'],
-  ['related_code','關聯商品','txt','關聯商品'],
-  ['notes','備註','area','補充資訊'],
-  ['uuid','UUID','hidden','補充資訊'],
-  ['created_at','建檔時間','hidden','補充資訊'],
-];
-const FIGURE_SELECTS={
+// ── 1. 漫畫／單行本 ──
+const ANMANGA_FIELDS=_anHead().concat([
+  ['volume','集數／卷數','txt','內容資訊'],
+  ['illustrator','作者','txt','內容資訊'],
+  ['page_count','頁數','txt','內容資訊'],
+]).concat(_anTail());
+const ANMANGA_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANMANGA_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANMANGA_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANMANGA_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'漫畫／單行本'});
+
+// ── 2. 畫冊／插畫集 ──
+const ANARTBOOK_FIELDS=_anHead().concat([
+  ['illustrator','作者／繪師','txt','內容資訊'],
+  ['page_count','頁數','txt','內容資訊'],
+]).concat(_anTail());
+const ANARTBOOK_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANARTBOOK_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANARTBOOK_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANARTBOOK_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'畫冊／插畫集'});
+
+// ── 3. 設定集／公式資料集 ──
+const ANSETTING_FIELDS=_anHead().concat([
+  ['illustrator','編著者','txt','內容資訊'],
+  ['page_count','頁數','txt','內容資訊'],
+]).concat(_anTail());
+const ANSETTING_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANSETTING_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANSETTING_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANSETTING_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'設定集／公式資料集'});
+
+// ── 4. 原畫集／分鏡集 ──
+const ANKEYFRAME_FIELDS=_anHead().concat([
+  ['studio','製作公司','txt','內容資訊'],
+  ['page_count','頁數','txt','內容資訊'],
+]).concat(_anTail());
+const ANKEYFRAME_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANKEYFRAME_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANKEYFRAME_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANKEYFRAME_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'原畫集／分鏡集'});
+
+// ── 5. 雜誌／MOOK／同人誌 ──
+const ANMAG_FIELDS=_anHead().concat([
+  ['issue_number','期數／號數','txt','內容資訊'],
+  ['circle_name','社團名稱','txt','內容資訊'],
+  ['page_count','頁數','txt','內容資訊'],
+]).concat(_anTail());
+const ANMAG_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANMAG_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANMAG_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANMAG_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'雜誌／MOOK／同人誌'});
+
+// ── 6. 動畫影集 ──
+const ANTV_FIELDS=_anHead().concat([
+  ['studio','製作公司','txt','內容資訊'],
+  ['episode_count','集數','txt','內容資訊'],
+  ['disc_count','片數','txt','內容資訊'],
+  ['binding','載體格式','sel','內容資訊'],
+]).concat(_anTail());
+const ANTV_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANTV_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANTV_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANTV_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'動畫影集',binding:''});
+
+// ── 7. 動畫電影／劇場版 ──
+const ANMOVIE_FIELDS=_anHead().concat([
+  ['studio','製作公司','txt','內容資訊'],
+  ['runtime','片長（分鐘）','txt','內容資訊'],
+  ['binding','載體格式','sel','內容資訊'],
+]).concat(_anTail());
+const ANMOVIE_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANMOVIE_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANMOVIE_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
+const ANMOVIE_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'動畫電影／劇場版',binding:''});
+
+// ── 8. 周邊／其他 ──
+const ANOTHER_FIELDS=_anHead().concat([]).concat(_anTail());
+const ANOTHER_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
+const ANOTHER_GROUPS=['圖片紀錄','識別資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANOTHER_GCOL=Object.assign({},AN_SHARED_GCOL,{});
+const ANOTHER_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'周邊／其他'});
+
+var ARTBOOK_SUBTYPE_META={
+  '漫畫／單行本':{fields:function(){return ANMANGA_FIELDS;},selects:function(){return ANMANGA_SELECTS;},groups:function(){return ANMANGA_GROUPS;},gcol:function(){return ANMANGA_GCOL;},defaults:function(){return ANMANGA_DEFAULTS;},sub:function(d){return [d.related_work,d.illustrator,d.volume];}},
+  '畫冊／插畫集':{fields:function(){return ANARTBOOK_FIELDS;},selects:function(){return ANARTBOOK_SELECTS;},groups:function(){return ANARTBOOK_GROUPS;},gcol:function(){return ANARTBOOK_GCOL;},defaults:function(){return ANARTBOOK_DEFAULTS;},sub:function(d){return [d.related_work,d.illustrator];}},
+  '設定集／公式資料集':{fields:function(){return ANSETTING_FIELDS;},selects:function(){return ANSETTING_SELECTS;},groups:function(){return ANSETTING_GROUPS;},gcol:function(){return ANSETTING_GCOL;},defaults:function(){return ANSETTING_DEFAULTS;},sub:function(d){return [d.related_work,d.illustrator];}},
+  '原畫集／分鏡集':{fields:function(){return ANKEYFRAME_FIELDS;},selects:function(){return ANKEYFRAME_SELECTS;},groups:function(){return ANKEYFRAME_GROUPS;},gcol:function(){return ANKEYFRAME_GCOL;},defaults:function(){return ANKEYFRAME_DEFAULTS;},sub:function(d){return [d.related_work,d.studio];}},
+  '雜誌／MOOK／同人誌':{fields:function(){return ANMAG_FIELDS;},selects:function(){return ANMAG_SELECTS;},groups:function(){return ANMAG_GROUPS;},gcol:function(){return ANMAG_GCOL;},defaults:function(){return ANMAG_DEFAULTS;},sub:function(d){return [d.related_work,d.circle_name,d.issue_number];}},
+  '動畫影集':{fields:function(){return ANTV_FIELDS;},selects:function(){return ANTV_SELECTS;},groups:function(){return ANTV_GROUPS;},gcol:function(){return ANTV_GCOL;},defaults:function(){return ANTV_DEFAULTS;},sub:function(d){return [d.related_work,d.studio,d.episode_count];}},
+  '動畫電影／劇場版':{fields:function(){return ANMOVIE_FIELDS;},selects:function(){return ANMOVIE_SELECTS;},groups:function(){return ANMOVIE_GROUPS;},gcol:function(){return ANMOVIE_GCOL;},defaults:function(){return ANMOVIE_DEFAULTS;},sub:function(d){return [d.related_work,d.studio];}},
+  '周邊／其他':{fields:function(){return ANOTHER_FIELDS;},selects:function(){return ANOTHER_SELECTS;},groups:function(){return ANOTHER_GROUPS;},gcol:function(){return ANOTHER_GCOL;},defaults:function(){return ANOTHER_DEFAULTS;},sub:function(d){return [d.related_work];}},
+};
+// 相容用：ARTBOOK_FIELDS 等舊名稱指向「漫畫／單行本」schema，供尚未改用子類型判斷的舊呼叫點 fallback
+const ARTBOOK_FIELDS=ANMANGA_FIELDS;
+const ARTBOOK_SELECTS=ANMANGA_SELECTS;
+const ARTBOOK_GROUPS=ANMANGA_GROUPS;
+const ARTBOOK_GCOL=ANMANGA_GCOL;
+const ARTBOOK_DEFAULTS=ANMANGA_DEFAULTS;
+
+
+// ══ 公仔／模型（v43.01 新增，v45.01 欄位擴充，v47.01 起比照數位下載版模式，依 6 子類型拆表量身欄位 ══
+function _figHead(){
+  return [
+    ['category','資料類別','sel','識別資訊'],
+    ['subtype','類型','sel','識別資訊'],
+    ['series','作品／IP名稱','txt','識別資訊'],
+    ['primary_name','商品名稱','txt','識別資訊'],
+    ['character','角色名稱','txt','識別資訊'],
+    ['jp_name','日文名稱','txt','識別資訊'],
+    ['zh_name','中文名稱','txt','識別資訊'],
+    ['en_name','英文名稱','txt','識別資訊'],
+  ];
+}
+function _figTail(){
+  return [
+    ['brand','製造商／發行商','txt','模型資訊'],
+    ['manufacturer','發售商','txt','發行資訊'],
+    ['release_date','發售日期','dateq','發行資訊'],
+    ['suggest_price','建議售價','price','發行資訊'],
+    ['region','地區版本','regionsel','發行資訊'],
+    ['edition','版本說明','txt','發行資訊'],
+    ['barcode','條碼','txt','編碼條碼'],
+    ['code','商品編號','txt','編碼條碼'],
+    ['collect_status','收藏狀態','sel','收藏狀態'],
+    ['box_condition','盒況','sel','收藏狀態'],
+    ['condition','本體狀態','sel','收藏狀態'],
+    ['completeness','品項完整度','comp','品相完整度'],
+    ['storage_location','存放／展示位置','storagesel','收藏狀態'],
+    ['buy_date','購入日期','date','收藏狀態'],
+    ['purchase_channel','購入管道','txt','收藏狀態'],
+    ['buy_source','取得方式','sel','收藏狀態'],
+    ['buy_price','原幣價格','price','收藏狀態'],
+    ['local_cost','台幣實付（含運費）','price','收藏狀態'],
+    ['market_value','目前估值','price','個人記錄'],
+    ['market_value_confidence','估值信心','sel','個人記錄'],
+    ['summary','簡介','area','補充資訊'],
+    ['ref_link','參考連結','autolink','補充資訊'],
+    ['cover_img','正面圖檔','imgupload','圖片紀錄'],
+    ['back_img','背面圖檔','imgupload','圖片紀錄'],
+    ['spine_img','外盒圖檔','imgupload','圖片紀錄'],
+    ['extra_images','自訂圖片','multiimg','圖片紀錄'],
+    ['related_code','關聯商品','txt','關聯商品'],
+    ['notes','備註','area','補充資訊'],
+    ['uuid','UUID','hidden','補充資訊'],
+    ['created_at','建檔時間','hidden','補充資訊'],
+  ];
+}
+const FIG_SHARED_SELECTS={
   category:['遊戲','書籍','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'],
   subtype:['比例模型','可動模型','黏土人／Q版','景品／一番賞','組裝模型','GK雕像'],
   box_condition:['全新未拆封','有壓痕／微損','嚴重盒損','無盒／已丟棄'],
@@ -2719,13 +2884,85 @@ const FIGURE_SELECTS={
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
 };
-const FIGURE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const FIGURE_DEFAULTS={
-  category:'公仔',subtype:'',collect_status:'收藏中',box_condition:'',condition:'',buy_source:'全新購入',
-  buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',
-  release_date:'',cover_img:'',back_img:'',spine_img:'',ref_link:'',
+const FIG_SHARED_GCOL={'識別資訊':'#00e5ff','模型資訊':'#f06292','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const FIG_SHARED_DEFAULTS={collect_status:'收藏中',box_condition:'',condition:'',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',release_date:'',cover_img:'',back_img:'',spine_img:''};
+
+// ── 1. 比例模型 ──
+const FIGSCALE_FIELDS=_figHead().concat([
+  ['scale','比例','txt','模型資訊'],
+  ['material','材質','txt','模型資訊'],
+  ['sculptor','原型師','txt','模型資訊'],
+]).concat(_figTail());
+const FIGSCALE_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
+const FIGSCALE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGSCALE_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
+const FIGSCALE_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'比例模型'});
+
+// ── 2. 可動模型 ──
+const FIGACTION_FIELDS=_figHead().concat([
+  ['joint_info','關節活動說明','txt','模型資訊'],
+  ['accessories','配件清單','area','模型資訊'],
+]).concat(_figTail());
+const FIGACTION_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
+const FIGACTION_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGACTION_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
+const FIGACTION_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'可動模型'});
+
+// ── 3. 黏土人／Q版 ──
+const FIGNENDO_FIELDS=_figHead().concat([
+  ['accessories','配件清單','area','模型資訊'],
+]).concat(_figTail());
+const FIGNENDO_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
+const FIGNENDO_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGNENDO_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
+const FIGNENDO_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'黏土人／Q版'});
+
+// ── 4. 景品／一番賞 ──
+const FIGPRIZE_FIELDS=_figHead().concat([
+  ['prize_rank','賞別','txt','模型資訊'],
+  ['event_name','活動名稱','txt','模型資訊'],
+]).concat(_figTail());
+const FIGPRIZE_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
+const FIGPRIZE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGPRIZE_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
+const FIGPRIZE_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'景品／一番賞'});
+
+// ── 5. 組裝模型 ──
+const FIGGUNPLA_FIELDS=_figHead().concat([
+  ['grade','模型等級','txt','模型資訊'],
+  ['scale','比例','txt','模型資訊'],
+]).concat(_figTail());
+const FIGGUNPLA_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
+const FIGGUNPLA_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGGUNPLA_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
+const FIGGUNPLA_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'組裝模型'});
+
+// ── 6. GK雕像 ──
+const FIGGK_FIELDS=_figHead().concat([
+  ['material','材質','txt','模型資訊'],
+  ['limited_number','限定編號','txt','模型資訊'],
+  ['sculptor','原型師','txt','模型資訊'],
+]).concat(_figTail());
+const FIGGK_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
+const FIGGK_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGGK_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
+const FIGGK_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'GK雕像'});
+
+var FIGURE_SUBTYPE_META={
+  '比例模型':{fields:function(){return FIGSCALE_FIELDS;},selects:function(){return FIGSCALE_SELECTS;},groups:function(){return FIGSCALE_GROUPS;},gcol:function(){return FIGSCALE_GCOL;},defaults:function(){return FIGSCALE_DEFAULTS;},sub:function(d){return [d.character,d.series,d.scale];}},
+  '可動模型':{fields:function(){return FIGACTION_FIELDS;},selects:function(){return FIGACTION_SELECTS;},groups:function(){return FIGACTION_GROUPS;},gcol:function(){return FIGACTION_GCOL;},defaults:function(){return FIGACTION_DEFAULTS;},sub:function(d){return [d.character,d.series,d.brand];}},
+  '黏土人／Q版':{fields:function(){return FIGNENDO_FIELDS;},selects:function(){return FIGNENDO_SELECTS;},groups:function(){return FIGNENDO_GROUPS;},gcol:function(){return FIGNENDO_GCOL;},defaults:function(){return FIGNENDO_DEFAULTS;},sub:function(d){return [d.character,d.series];}},
+  '景品／一番賞':{fields:function(){return FIGPRIZE_FIELDS;},selects:function(){return FIGPRIZE_SELECTS;},groups:function(){return FIGPRIZE_GROUPS;},gcol:function(){return FIGPRIZE_GCOL;},defaults:function(){return FIGPRIZE_DEFAULTS;},sub:function(d){return [d.character,d.prize_rank,d.event_name];}},
+  '組裝模型':{fields:function(){return FIGGUNPLA_FIELDS;},selects:function(){return FIGGUNPLA_SELECTS;},groups:function(){return FIGGUNPLA_GROUPS;},gcol:function(){return FIGGUNPLA_GCOL;},defaults:function(){return FIGGUNPLA_DEFAULTS;},sub:function(d){return [d.series,d.grade,d.scale];}},
+  'GK雕像':{fields:function(){return FIGGK_FIELDS;},selects:function(){return FIGGK_SELECTS;},groups:function(){return FIGGK_GROUPS;},gcol:function(){return FIGGK_GCOL;},defaults:function(){return FIGGK_DEFAULTS;},sub:function(d){return [d.character,d.series,d.limited_number];}},
 };
-const FIGURE_GCOL={'識別資訊':'#00e5ff','模型資訊':'#f06292','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+// 相容用：FIGURE_FIELDS 等舊名稱指向「比例模型」schema，供尚未改用子類型判斷的舊呼叫點 fallback
+const FIGURE_FIELDS=FIGSCALE_FIELDS;
+const FIGURE_SELECTS=FIGSCALE_SELECTS;
+const FIGURE_GROUPS=FIGSCALE_GROUPS;
+const FIGURE_GCOL=FIGSCALE_GCOL;
+const FIGURE_DEFAULTS=FIGSCALE_DEFAULTS;
+
 
 // ── 媒體類型（僅遊戲，單選 highlight）──
 const MEDIA_OPTS=['光碟（CD/DVD/BD）','卡匣（ROM 卡帶）','UMD（PSP 專用）','數位版','其他'];
@@ -2931,10 +3168,22 @@ var CAT_META={
 function _catMeta(cat,subtype){
   var c=catInternal(cat);
   var base=CAT_META[c]||CAT_META['遊戲'];
+  var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   if(c==='數位下載版'){
-    var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
     var dm=DIGITAL_SUBTYPE_META[sub]||DIGITAL_SUBTYPE_META['下載版遊戲'];
     return Object.assign({},base,dm);
+  }
+  if(c==='動漫/美術設定集'){
+    var am=ARTBOOK_SUBTYPE_META[sub]||ARTBOOK_SUBTYPE_META['漫畫／單行本'];
+    return Object.assign({},base,am);
+  }
+  if(c==='公仔'){
+    var fm=FIGURE_SUBTYPE_META[sub]||FIGURE_SUBTYPE_META['比例模型'];
+    return Object.assign({},base,fm);
+  }
+  if(c==='原聲帶'){
+    var om=OST_SUBTYPE_META[sub]||OST_SUBTYPE_META['原聲帶'];
+    return Object.assign({},base,om);
   }
   return base;
 }
@@ -9065,8 +9314,10 @@ function onSelChange(k,sel){
     _selectedPlatform=entry[_platKeyFor(cat)]||entry.platform||'';
     renderForm();_bindFormFocusScroll();
   }
-  // v47.01：數位下載版依子類型拆分欄位表，子類型變更時也要重新套用欄位集合並重繪（其他分類子類型不影響欄位，故只在此分類需要）
-  if(k==='subtype'&&catInternal(entry.category)==='數位下載版'){
+  // v47.01：數位下載版依子類型拆分欄位表；v49.01 起動漫/美術設定集、公仔、原聲帶也採同一模式，
+  // 子類型變更時都要重新套用欄位集合並重繪（其他分類子類型不影響欄位，不受影響）
+  var _subtypeDrivenCats=['數位下載版','動漫/美術設定集','公仔','原聲帶'];
+  if(k==='subtype'&&_subtypeDrivenCats.indexOf(catInternal(entry.category))>=0){
     _selectedSubtype=entry.subtype;
     _applyCatFields(entry.category,entry.subtype);
     renderForm();_bindFormFocusScroll();
@@ -11142,9 +11393,18 @@ function renderGlist(){
       var _dm=DIGITAL_SUBTYPE_META[d.subtype];
       midParts=_dm?_dm.sub(d):[d.store,shortPlat];
     }
-    else if(cat==='原聲帶')midParts=[d.composer,d.related_work];
-    else if(cat==='動漫/美術設定集')midParts=[d.illustrator,d.related_work];
-    else if(cat==='公仔')midParts=[d.character,d.series];
+    else if(cat==='原聲帶'){
+      var _om=OST_SUBTYPE_META[d.subtype];
+      midParts=_om?_om.sub(d):[d.composer,d.related_work];
+    }
+    else if(cat==='動漫/美術設定集'){
+      var _am=ARTBOOK_SUBTYPE_META[d.subtype];
+      midParts=_am?_am.sub(d):[d.illustrator,d.related_work];
+    }
+    else if(cat==='公仔'){
+      var _fm=FIGURE_SUBTYPE_META[d.subtype];
+      midParts=_fm?_fm.sub(d):[d.character,d.series];
+    }
     else midParts=[shortPlat,d.region];
     var midLine=midParts.filter(Boolean).join(' · ');
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
