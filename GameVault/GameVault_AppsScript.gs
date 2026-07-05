@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v50.01         ║
+// ║  GameVault — Google Apps Script 後端  v51            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -639,9 +639,21 @@ function doGet(e) {
   const p = e.parameter || {};
   const action = p.action || 'ping';
   let result;
- 
   try {
-    switch (action) {
+    result = dispatchRead(action, p);
+  } catch (err) {
+    result = { ok: false, error: err.message };
+  }
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 讀取／代理類 action 共用分派：doGet 由 URL query 呼叫、doPost 由 POST body 呼叫。
+// 讓帶密鑰的代理呼叫可把 secret 放進 POST body，不再出現在 URL / GAS 執行紀錄。
+function dispatchRead(action, p) {
+  let result;
+  switch (action) {
       case 'ping':
         result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games/Books/Consoles/Peripherals/Hunt + 數位下載版8子表 + 原聲帶5子表 + 動漫美術8子表 + 公仔6子表，共32工作表)' };
         break;
@@ -697,66 +709,67 @@ function doGet(e) {
         result = googleImageSearchProxy(p.q || '', p.gcsekey || '', p.gcxid || '', parseInt(p.num||'1'));
         break;
       default:
-        result = { ok: false, error: '不支援的 action: ' + action };
-    }
-  } catch (err) {
-    result = { ok: false, error: err.message };
-  }
- 
-  return ContentService
-    .createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
+        result = { ok: false, error: '不支援的 action: ' + action };  }
+  return result;
 }
- 
+
 // ── POST handler ──────────────────────────────────
 function doPost(e) {
   let result;
   try {
     const data = JSON.parse(e.postData.contents);
-    const type = resolveType(
-      data.category || (data.row && data.row[0]),
-      (data.fields && data.fields.subtype) || (data.row && data.row[1])
-    );
-    switch (data.action) {
-      case 'add':
-        result = addRow(data.row, type, data.fields);
-        break;
-      case 'update': {
-        // 優先用 uuid（精確），否則用 rowNum（type:n 或純數字）
-        const updKey = (data.uuid && data.uuid.length >= 30) ? data.uuid : data.rowNum;
-        result = updateRow(updKey, data.row, type, data.fields);
-        break;
-      }
-      case 'delete': {
-        // 優先用 uuid 精確搜尋，fallback 用 rowNum
-        const delKey = data.uuid || data.rowNum;
-        if (!delKey) { result = { ok: false, error: '缺少 uuid 或 rowNum' }; break; }
-        try {
-          result = deleteRow(delKey, type, data.keepImg);
-        } catch (e1) {
-          // UUID 找不到時，退回用 rowNum（'type:N' 或數字）再試一次
-          if (data.uuid && data.rowNum && data.rowNum !== data.uuid) {
-            result = deleteRow(data.rowNum, type, data.keepImg);
-          } else { throw e1; }
+    const action = data.action;
+    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany') {
+      // 寫入類 action → 驗證 app_token。
+      // 後端「指令碼屬性」設定 APP_TOKEN 後才啟用驗證；未設定則放行（相容尚未設定 token 的狀態）。
+      const need = PropertiesService.getScriptProperties().getProperty('APP_TOKEN');
+      if (need && data.app_token !== need) {
+        result = { ok: false, error: 'unauthorized：寫入 token 不符或未提供' };
+      } else {
+        const type = resolveType(
+          data.category || (data.row && data.row[0]),
+          (data.fields && data.fields.subtype) || (data.row && data.row[1])
+        );
+        switch (action) {
+          case 'add':
+            result = addRow(data.row, type, data.fields);
+            break;
+          case 'update': {
+            const updKey = (data.uuid && data.uuid.length >= 30) ? data.uuid : data.rowNum;
+            result = updateRow(updKey, data.row, type, data.fields);
+            break;
+          }
+          case 'delete': {
+            const delKey = data.uuid || data.rowNum;
+            if (!delKey) { result = { ok: false, error: '缺少 uuid 或 rowNum' }; break; }
+            try {
+              result = deleteRow(delKey, type, data.keepImg);
+            } catch (e1) {
+              if (data.uuid && data.rowNum && data.rowNum !== data.uuid) {
+                result = deleteRow(data.rowNum, type, data.keepImg);
+              } else { throw e1; }
+            }
+            break;
+          }
+          case 'deleteMany': {
+            result = deleteManyRows(data.keys || [], type, data.keepImg);
+            break;
+          }
         }
-        break;
       }
-      case 'deleteMany': {
-        result = deleteManyRows(data.keys || [], type, data.keepImg);
-        break;
-      }
-      default:
-        result = { ok: false, error: '不支援的 action: ' + data.action };
+    } else {
+      // 讀取／代理類 action 也可經 POST（帶密鑰呼叫把 secret 放 body，不進 URL/log）
+      result = dispatchRead(action, data);
     }
   } catch (err) {
     result = { ok: false, error: err.message };
   }
- 
+
   return ContentService
     .createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
 }
- 
+
 // ── 資料操作 ──────────────────────────────────────
 function listAll(type) {
   if (type === 'game')       return listSheet('game');

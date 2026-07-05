@@ -840,7 +840,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">GameVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v50.02a1</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.01</span></div>
         </div>
         <div class="hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -1510,6 +1510,13 @@ body{
             向上方「首次設定向導」展開詳細步驟。完成後，部署網頁應用程式時會得到一個很長的網址，複製貼到上方即可。
           </div>
         </div>
+        <div class="srow">
+          <div class="srl">🔒 寫入保護 Token（選填）</div>
+          <input class="fi" id="c-apptoken" type="text" autocomplete="off" placeholder="與 Apps Script 指令碼屬性 APP_TOKEN 相同">
+          <div class="shlp">
+            後端若在「指令碼屬性」設定了 <strong>APP_TOKEN</strong>，此處需填入相同字串，否則新增／修改／刪除會被拒絕。留空＝後端未啟用驗證。此 Token 只存在本機，不會匯出到公開網頁。
+          </div>
+        </div>
         <div class="stitle">AI 辨識（圖片辨識必要）</div>
         <div class="srow">
           <div class="srl">🎯 偏好 AI 引擎</div>
@@ -1829,7 +1836,7 @@ body{
         <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v50.02a1</span></strong><br>
+          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v51.01</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2216,7 +2223,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v50.02a1';
+const APP_VERSION='v51.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3874,6 +3881,7 @@ function toggleSetupGuide(){
 function loadCfg(){
   try{cfg=JSON.parse(localStorage.getItem('gv_cfg')||'{}')}catch(e){cfg={}}
   if($('c-url')&&cfg.url)$('c-url').value=cfg.url;
+  if($('c-apptoken')&&cfg.app_token)$('c-apptoken').value=cfg.app_token;
   // 顯示設定狀態指示
   if(cfg.url){
     var status=$('cfg-status');
@@ -4370,6 +4378,7 @@ function saveCfg(){
   }
   cfg=Object.assign(cfg||{},{
     url:fixUrl(url),
+    app_token:($('c-apptoken')&&$('c-apptoken').value||'').trim(),
     gkey:gkey,
     gmdl:$('c-gmdl').value,
     okey:okey,
@@ -4676,6 +4685,8 @@ function shGet(p){
 }
 function shPost(d){
   if(!cfg.url)return Promise.reject(new Error('未設定試算表 URL'));
+  // 寫入類 action 附帶 app_token（後端 APP_TOKEN 有設定時驗證；讀取/代理類不帶）
+  if(d&&/^(add|update|delete|deleteMany)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
   var url=fixUrl(cfg.url);
   return fetchWithRetry(url,{
     method:'POST',
@@ -4686,6 +4697,12 @@ function shPost(d){
     if(!r.ok)throw new Error(translateSheetError(r.status));
     return r.json();
   });
+}
+// 帶密鑰的代理呼叫改走 POST body（避免 secret 進 URL 與 GAS 執行紀錄）。
+// 接受 URLSearchParams，回傳 fetch Response，相容原本 .then(function(r){return r.ok?r.json():null;}) 的串接。
+function shGetSecP(params){
+  var o={};params.forEach(function(v,k){o[k]=v;});
+  return fetchWithRetry(fixUrl(cfg.url),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(o)});
 }
 function testSheets(){
   var url=($('c-url').value||'').trim();
@@ -5461,7 +5478,7 @@ function gbSearch(q){
     q:q,
     gbkey:cfg.gbkey
   });
-  return fetch(fixUrl(proxyUrl)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d||!d.results||!d.results.length)return null;
@@ -6336,13 +6353,13 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
   );
   // 4. IGDB — 用名稱查
   if(cfg.iid&&cfg.isec&&cfg.url&&nameQ&&_ok('igdb')) tasks.push(
-    shGet({action:'igdb_search',q:nameQ,client_id:cfg.iid,client_secret:cfg.isec})
+    shPost({action:'igdb_search',q:nameQ,client_id:cfg.iid,client_secret:cfg.isec})
       .then(function(r){return r&&r.games&&r.games.length?{src:'igdb',data:r.games[0]}:null;})
       .catch(function(){return null;})
   );
   // 4b. 楽天市場（日系）— JAN 條碼或名稱查
   if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQ)&&_ok('rakuten')) tasks.push(
-    shGet({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+    shPost({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?{src:'rakuten',data:r}:null;})
       .catch(function(){return null;})
   );
@@ -6685,7 +6702,7 @@ function applyMultiDbResult(dbResult,code,aiResult){
 function mobygamesSearch(q){
   if(!cfg.mbkey||!cfg.url)return Promise.resolve(null);
   var params=new URLSearchParams({action:'mb_search',q:q,mbkey:cfg.mbkey});
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.games&&d.games.length?d.games[0]:null;})
     .catch(function(){return null;});
@@ -6694,7 +6711,7 @@ function mobygamesSearch(q){
 function tgdbSearch(q){
   if(!cfg.tgdbkey||!cfg.url)return Promise.resolve(null);
   var params=new URLSearchParams({action:'tgdb_search',q:q,tgdbkey:cfg.tgdbkey});
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.data&&d.data.games&&d.data.games.length?d.data.games[0]:null;})
     .catch(function(){return null;});
@@ -6703,7 +6720,7 @@ function tgdbSearch(q){
 function barcodeLookupSearch(barcode){
   if(!cfg.blkey||!cfg.url)return Promise.resolve(null);
   var params=new URLSearchParams({action:'bl_search',barcode:barcode,blkey:cfg.blkey});
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.products&&d.products.length?d.products[0]:null;})
     .catch(function(){return null;});
@@ -6852,7 +6869,7 @@ function productBarcodeLookupPromise(barcode,type){
   if(!barcode)return Promise.resolve({});
   var tasks=[];
   if(cfg.rktid&&cfg.rktkey&&cfg.url){
-    tasks.push(shGet({action:'rakuten_search',q:barcode,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+    tasks.push(shPost({action:'rakuten_search',q:barcode,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?_normalizeBarcodeProduct('rakuten',r,type,barcode):null;})
       .catch(function(){return null;}));
   }
@@ -6915,7 +6932,7 @@ function testRakuten(){
   if(!id||!key){toast('請填入 楽天 Application ID 與 Access Key（兩者皆必填）','er');return;}
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
   loading('測試 楽天市場...');
-  shGet({action:'rakuten_search',q:'ゼルダの伝説',rakuten_appid:id,rakuten_accesskey:key}).then(function(r){
+  shPost({action:'rakuten_search',q:'ゼルダの伝説',rakuten_appid:id,rakuten_accesskey:key}).then(function(r){
     noLoad();
     if(r&&r.item_name)toast('✓ 楽天 連線正常：'+r.item_name.slice(0,30),'ok',4000);
     else if(r&&r.error)toast('楽天 錯誤：'+r.error,'er',6000);
@@ -6940,7 +6957,7 @@ function testYahoo(){
   if(!id){toast('請先填入 Yahoo!ショッピング Client ID','er');return;}
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
   loading('測試 Yahoo!ショッピング...');
-  shGet({action:'market_estimate',q:'ゼルダの伝説',title:'ゼルダの伝説',alt_titles:'ゼルダの伝説',
+  shPost({action:'market_estimate',q:'ゼルダの伝説',title:'ゼルダの伝説',alt_titles:'ゼルダの伝説',
     jp_title:'ゼルダの伝説',en_title:'',zh_title:'',category:'遊戲',platform:'',model:'',barcode:'',
     rakuten_appid:'',rakuten_accesskey:'',yahoo_appid:id,ebay_client_id:'',ebay_client_secret:'',
     fx_jpy:'',fx_usd:'',region:'jp'
@@ -6954,7 +6971,7 @@ function testEbay(){
   if(!id||!sec){toast('請填入 eBay Client ID 與 Client Secret（兩者皆必填）','er');return;}
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
   loading('測試 eBay Browse...');
-  shGet({action:'market_estimate',q:'The Legend of Zelda',title:'The Legend of Zelda',alt_titles:'The Legend of Zelda',
+  shPost({action:'market_estimate',q:'The Legend of Zelda',title:'The Legend of Zelda',alt_titles:'The Legend of Zelda',
     jp_title:'',en_title:'The Legend of Zelda',zh_title:'',category:'遊戲',platform:'',model:'',barcode:'',
     rakuten_appid:'',rakuten_accesskey:'',yahoo_appid:'',ebay_client_id:id,ebay_client_secret:sec,
     fx_jpy:'',fx_usd:'',region:'us'
@@ -6995,7 +7012,7 @@ function ssSearch(q, serialnum){
     action:'ss_search',q:q||'',ssid:cfg.ssid,sspass:cfg.sspass,serialnum:serialnum||'',systemeid:systemeid,
     ssdevid:cfg.ssdevid||'',ssdevpass:cfg.ssdevpass||'',region:_region||''  // 帶入使用者選擇的區域，讓封面優先序依實際區域動態調整（非固定日版優先）
   });
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d)return null;
@@ -7018,7 +7035,7 @@ function testScreenScraper(){
   if(!cfg.url){toast('請先填入 Apps Script 網址','er');return;}
   loading('測試 ScreenScraper...');
   var params=new URLSearchParams({action:'ss_search',q:'Mario',ssid:ssid,sspass:sspass,serialnum:'',systemeid:'',ssdevid:ssdevid,ssdevpass:ssdevpass});
-  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       noLoad();
@@ -7036,7 +7053,7 @@ function testGiantBomb(){
   cfg.gbkey=key;
   loading('測試 Giant Bomb...');
   // 先直接測試 Apps Script 能不能傳到 GB
-  fetch(fixUrl(cfg.url)+'?action=gb_search&q=Final+Fantasy&gbkey='+encodeURIComponent(key),{redirect:'follow'})
+  shGetSecP(new URLSearchParams({action:'gb_search',q:'Final Fantasy',gbkey:key}))
     .then(function(r){return r.ok?r.json():r.json().then(function(e){throw new Error('HTTP '+r.status);});})
     .then(function(d){
       noLoad();
@@ -7064,7 +7081,7 @@ function testGCSE(){
   cfg.gcsekey=key;cfg.gcxid=cx;
   loading('測試 Google 圖片搜尋...');
   var params=new URLSearchParams({action:'google_image_search',q:'Super Mario Bros Nintendo',gcsekey:key,gcxid:cx,num:'1'});
-  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       noLoad();
@@ -7081,7 +7098,7 @@ function _autoFetchCover(cb){
   var platform=entry.platform||_selectedPlatform||'';
   var q=name+(platform?' '+platform:'');
   var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:'1'});
-  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(d&&d.ok&&d.imageUrl&&!entry.cover_img){
@@ -7099,7 +7116,7 @@ function testIGDB(){
   if(!id||!sec){toast('請輸入憑證','er');return;}
   if(!url){toast('請先設定 Apps Script URL','er');return;}
   cfg.iid=id;cfg.isec=sec;cfg.url=url;loading('測試 IGDB...');
-  shGet({action:'igdb_search',q:'Elden Ring',client_id:id,client_secret:sec})
+  shPost({action:'igdb_search',q:'Elden Ring',client_id:id,client_secret:sec})
   .then(function(r){if(r.games&&r.games.length)toast('IGDB 成功 ✓','ok');else throw new Error('查無結果');})
   .catch(function(e){toast('IGDB 失敗：'+e.message,'er');}).finally(noLoad);
 }
@@ -7167,7 +7184,7 @@ function openbdLookup(isbn){
 function rakutenBooksLookup(isbn){
   if(!(cfg.rktid&&cfg.rktkey&&cfg.url))return Promise.resolve(null);
   var c=isbn.replace(/[-\s]/g,'');
-  return shGet({action:'rakuten_books_search',isbn:c,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey}).then(function(r){
+  return shPost({action:'rakuten_books_search',isbn:c,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey}).then(function(r){
     if(!r||!r.title)return null;
     var yr=(r.sales_date||'').match(/(\d{4})/);
     var o={category:'攻略',primary_name:r.title,zh_name:r.title,jp_name:r.title,
@@ -12403,7 +12420,7 @@ function marketEstimateWithName(rowNum,nameKey,sources){
   huntSheetClose();
   if(!hasAuto){marketOpenWorkbench(rowNum,null,'尚未設定自動估值 API，可先用市場連結與人工樣本估值');return;}
   loading('查詢市場估值...');
-  shGet({
+  shPost({
     action:'market_estimate',
     q:q,
     title:chosenName,

@@ -204,6 +204,7 @@ body{
 .si2{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
 .si2:active{transform:scale(.96)}
 .si2.on{background:#0f2330;border-color:#00e5ff}
+#sf-total{position:sticky;left:0;z-index:2;background:#080c18;box-shadow:6px 0 8px -4px rgba(8,12,24,.85)}
 .si2.on .sl2{color:#00e5ff}
 .sv2{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:21px;font-weight:700;color:#00e5ff;line-height:1.1}
 .sl2{font-size:10px;color:#7986cb}
@@ -839,7 +840,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">GameVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v39.05</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.01</span></div>
         </div>
         <div class="hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -944,9 +945,9 @@ body{
                 <div class="mb-ico" style="background:rgba(105,240,174,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#69f0ae" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></div>
                 <div class="ect">手動建檔</div><div class="ecd">直接填寫</div>
               </div>
-              <div class="ec-card mb-wide" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
+              <div class="ec-card" id="mb-link" onclick="pagePickMethod('initDigitalLinkMode')" style="display:none">
                 <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
-                <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上商店頁網址自動抓資料</div></div>
+                <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上網址抓資料</div></div>
               </div>
               <div class="ec-card mb-wide" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
                 <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
@@ -955,7 +956,7 @@ body{
               </div>
               <div class="ec-card mb-wide" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
                 <div class="mb-ico" style="background:rgba(128,203,196,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#80cbc4" stroke-width="1.5"><rect x="3" y="7" width="10" height="10" rx="2"/><path d="M15 8h4M15 12h4M15 16h2"/><circle cx="20" cy="8" r="1.5" fill="#80cbc4" stroke="none"/></svg></div>
-                <div class="mb-txt"><div class="ect">編碼＋照片</div><div class="ecd">精確比對</div></div>
+                <div class="mb-txt"><div class="ect" id="mb-gcode-combo-title">編碼＋照片</div><div class="ecd" id="mb-gcode-combo-sub">精確比對</div></div>
               </div>
             </div>
           </div>
@@ -1509,6 +1510,13 @@ body{
             向上方「首次設定向導」展開詳細步驟。完成後，部署網頁應用程式時會得到一個很長的網址，複製貼到上方即可。
           </div>
         </div>
+        <div class="srow">
+          <div class="srl">🔒 寫入保護 Token（選填）</div>
+          <input class="fi" id="c-apptoken" type="text" autocomplete="off" placeholder="與 Apps Script 指令碼屬性 APP_TOKEN 相同">
+          <div class="shlp">
+            後端若在「指令碼屬性」設定了 <strong>APP_TOKEN</strong>，此處需填入相同字串，否則新增／修改／刪除會被拒絕。留空＝後端未啟用驗證。此 Token 只存在本機，不會匯出到公開網頁。
+          </div>
+        </div>
         <div class="stitle">AI 辨識（圖片辨識必要）</div>
         <div class="srow">
           <div class="srl">🎯 偏好 AI 引擎</div>
@@ -1828,7 +1836,7 @@ body{
         <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v39.05</span></strong><br>
+          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v51.01</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2215,7 +2223,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v49.04';
+const APP_VERSION='v51.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3873,6 +3881,7 @@ function toggleSetupGuide(){
 function loadCfg(){
   try{cfg=JSON.parse(localStorage.getItem('gv_cfg')||'{}')}catch(e){cfg={}}
   if($('c-url')&&cfg.url)$('c-url').value=cfg.url;
+  if($('c-apptoken')&&cfg.app_token)$('c-apptoken').value=cfg.app_token;
   // 顯示設定狀態指示
   if(cfg.url){
     var status=$('cfg-status');
@@ -4369,6 +4378,7 @@ function saveCfg(){
   }
   cfg=Object.assign(cfg||{},{
     url:fixUrl(url),
+    app_token:($('c-apptoken')&&$('c-apptoken').value||'').trim(),
     gkey:gkey,
     gmdl:$('c-gmdl').value,
     okey:okey,
@@ -4675,6 +4685,8 @@ function shGet(p){
 }
 function shPost(d){
   if(!cfg.url)return Promise.reject(new Error('未設定試算表 URL'));
+  // 寫入類 action 附帶 app_token（後端 APP_TOKEN 有設定時驗證；讀取/代理類不帶）
+  if(d&&/^(add|update|delete|deleteMany)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
   var url=fixUrl(cfg.url);
   return fetchWithRetry(url,{
     method:'POST',
@@ -4685,6 +4697,12 @@ function shPost(d){
     if(!r.ok)throw new Error(translateSheetError(r.status));
     return r.json();
   });
+}
+// 帶密鑰的代理呼叫改走 POST body（避免 secret 進 URL 與 GAS 執行紀錄）。
+// 接受 URLSearchParams，回傳 fetch Response，相容原本 .then(function(r){return r.ok?r.json():null;}) 的串接。
+function shGetSecP(params){
+  var o={};params.forEach(function(v,k){o[k]=v;});
+  return fetchWithRetry(fixUrl(cfg.url),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(o)});
 }
 function testSheets(){
   var url=($('c-url').value||'').trim();
@@ -5460,7 +5478,7 @@ function gbSearch(q){
     q:q,
     gbkey:cfg.gbkey
   });
-  return fetch(fixUrl(proxyUrl)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d||!d.results||!d.results.length)return null;
@@ -6053,14 +6071,17 @@ function gcodeSearch(){
 // ════ 主查詢函數（編碼+照片模式）════
 function gcodeComboSearch(){
   var code=normalizeGameCode(($('gcode-combo-inp')&&$('gcode-combo-inp').value||'').trim().toUpperCase());
+  // v49.05：數位下載版的電子書子類型改走 ISBN 書籍資料庫查詢，取代遊戲交叉比對
+  var _digiBookSubsCombo={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
+  var isEbookCombo=(_selectedType==='數位下載版'&&_digiBookSubsCombo[_selectedSubtype]);
   // v49.03：原聲帶的商品番號寫入專屬 catalog_number 欄位，不誤填進通用 code 欄位
   if(_selectedType==='原聲帶')entry.catalog_number=code;else entry.code=code;
   var btn=$('gcode-combo-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ 查詢中...';}
-  loadingTimed('交叉比對資料庫＋AI 辨識');
+  loadingTimed(isEbookCombo?'查詢書籍資料庫＋AI 辨識':'交叉比對資料庫＋AI 辨識');
 
-  // 並行：資料庫查詢 + 圖片 AI 辨識
-  var dbP=crossRefLookupPromise(code,null);
+  // 並行：資料庫查詢（電子書走 ISBN，其餘走遊戲交叉比對）+ 圖片 AI 辨識
+  var dbP=isEbookCombo?bookLookupPromise(code.replace(/[-\s]/g,'')):crossRefLookupPromise(code,null);
   var aiP=_gcodeImg?new Promise(function(ok,ng){
     var r=new FileReader();
     r.onload=function(){
@@ -6085,8 +6106,21 @@ function gcodeComboSearch(){
     var dbResult=results[0],aiResult=results[1];
     // 合併前備份封面原圖：applyMultiDbResult 會重建 entry，會清掉 _raw_cover/cover_img
     var _savedCoverGcode=entry._raw_cover||entry.cover_img||'';
-    // 合併：資料庫為主，AI 補全，AI 圖片辨識的封面存入
-    applyMultiDbResult(dbResult,code,aiResult);
+    if(isEbookCombo){
+      // 電子書：ISBN 書籍資料庫為主，AI 圖片辨識補齊缺的欄位（不走遊戲導向的 applyMultiDbResult）
+      if(dbResult&&dbResult.primary_name)Object.assign(entry,dbResult);
+      if(aiResult&&typeof aiResult==='object'){
+        Object.keys(aiResult).forEach(function(k){
+          if(k.charAt(0)==='_')return;
+          var v=_aiStr(aiResult[k]);
+          if(v&&v!=='無'&&v!=='未知'&&!entry[k])entry[k]=v;
+        });
+      }
+      if(!dbResult&&!(aiResult&&aiResult.primary_name))toast('查無書籍資料，請手動補齊','',3000);
+    }else{
+      // 合併：資料庫為主，AI 補全，AI 圖片辨識的封面存入
+      applyMultiDbResult(dbResult,code,aiResult);
+    }
     if(_savedCoverGcode){entry._raw_cover=_savedCoverGcode;entry.cover_img=_savedCoverGcode;}
     if(_gcodeImg&&!entry.cover_img){
       var r2=new FileReader();
@@ -6096,7 +6130,7 @@ function gcodeComboSearch(){
       };
       r2.readAsDataURL(_gcodeImg);
     }
-    showForm('編碼＋照片建檔');
+    showForm(isEbookCombo?'ISBN＋照片建檔':'編碼＋照片建檔');
     aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
   }).catch(function(e){
     noLoad();
@@ -6319,13 +6353,13 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
   );
   // 4. IGDB — 用名稱查
   if(cfg.iid&&cfg.isec&&cfg.url&&nameQ&&_ok('igdb')) tasks.push(
-    shGet({action:'igdb_search',q:nameQ,client_id:cfg.iid,client_secret:cfg.isec})
+    shPost({action:'igdb_search',q:nameQ,client_id:cfg.iid,client_secret:cfg.isec})
       .then(function(r){return r&&r.games&&r.games.length?{src:'igdb',data:r.games[0]}:null;})
       .catch(function(){return null;})
   );
   // 4b. 楽天市場（日系）— JAN 條碼或名稱查
   if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQ)&&_ok('rakuten')) tasks.push(
-    shGet({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+    shPost({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?{src:'rakuten',data:r}:null;})
       .catch(function(){return null;})
   );
@@ -6668,7 +6702,7 @@ function applyMultiDbResult(dbResult,code,aiResult){
 function mobygamesSearch(q){
   if(!cfg.mbkey||!cfg.url)return Promise.resolve(null);
   var params=new URLSearchParams({action:'mb_search',q:q,mbkey:cfg.mbkey});
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.games&&d.games.length?d.games[0]:null;})
     .catch(function(){return null;});
@@ -6677,7 +6711,7 @@ function mobygamesSearch(q){
 function tgdbSearch(q){
   if(!cfg.tgdbkey||!cfg.url)return Promise.resolve(null);
   var params=new URLSearchParams({action:'tgdb_search',q:q,tgdbkey:cfg.tgdbkey});
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.data&&d.data.games&&d.data.games.length?d.data.games[0]:null;})
     .catch(function(){return null;});
@@ -6686,7 +6720,7 @@ function tgdbSearch(q){
 function barcodeLookupSearch(barcode){
   if(!cfg.blkey||!cfg.url)return Promise.resolve(null);
   var params=new URLSearchParams({action:'bl_search',barcode:barcode,blkey:cfg.blkey});
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.products&&d.products.length?d.products[0]:null;})
     .catch(function(){return null;});
@@ -6835,7 +6869,7 @@ function productBarcodeLookupPromise(barcode,type){
   if(!barcode)return Promise.resolve({});
   var tasks=[];
   if(cfg.rktid&&cfg.rktkey&&cfg.url){
-    tasks.push(shGet({action:'rakuten_search',q:barcode,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+    tasks.push(shPost({action:'rakuten_search',q:barcode,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?_normalizeBarcodeProduct('rakuten',r,type,barcode):null;})
       .catch(function(){return null;}));
   }
@@ -6898,7 +6932,7 @@ function testRakuten(){
   if(!id||!key){toast('請填入 楽天 Application ID 與 Access Key（兩者皆必填）','er');return;}
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
   loading('測試 楽天市場...');
-  shGet({action:'rakuten_search',q:'ゼルダの伝説',rakuten_appid:id,rakuten_accesskey:key}).then(function(r){
+  shPost({action:'rakuten_search',q:'ゼルダの伝説',rakuten_appid:id,rakuten_accesskey:key}).then(function(r){
     noLoad();
     if(r&&r.item_name)toast('✓ 楽天 連線正常：'+r.item_name.slice(0,30),'ok',4000);
     else if(r&&r.error)toast('楽天 錯誤：'+r.error,'er',6000);
@@ -6923,7 +6957,7 @@ function testYahoo(){
   if(!id){toast('請先填入 Yahoo!ショッピング Client ID','er');return;}
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
   loading('測試 Yahoo!ショッピング...');
-  shGet({action:'market_estimate',q:'ゼルダの伝説',title:'ゼルダの伝説',alt_titles:'ゼルダの伝説',
+  shPost({action:'market_estimate',q:'ゼルダの伝説',title:'ゼルダの伝説',alt_titles:'ゼルダの伝説',
     jp_title:'ゼルダの伝説',en_title:'',zh_title:'',category:'遊戲',platform:'',model:'',barcode:'',
     rakuten_appid:'',rakuten_accesskey:'',yahoo_appid:id,ebay_client_id:'',ebay_client_secret:'',
     fx_jpy:'',fx_usd:'',region:'jp'
@@ -6937,7 +6971,7 @@ function testEbay(){
   if(!id||!sec){toast('請填入 eBay Client ID 與 Client Secret（兩者皆必填）','er');return;}
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
   loading('測試 eBay Browse...');
-  shGet({action:'market_estimate',q:'The Legend of Zelda',title:'The Legend of Zelda',alt_titles:'The Legend of Zelda',
+  shPost({action:'market_estimate',q:'The Legend of Zelda',title:'The Legend of Zelda',alt_titles:'The Legend of Zelda',
     jp_title:'',en_title:'The Legend of Zelda',zh_title:'',category:'遊戲',platform:'',model:'',barcode:'',
     rakuten_appid:'',rakuten_accesskey:'',yahoo_appid:'',ebay_client_id:id,ebay_client_secret:sec,
     fx_jpy:'',fx_usd:'',region:'us'
@@ -6978,7 +7012,7 @@ function ssSearch(q, serialnum){
     action:'ss_search',q:q||'',ssid:cfg.ssid,sspass:cfg.sspass,serialnum:serialnum||'',systemeid:systemeid,
     ssdevid:cfg.ssdevid||'',ssdevpass:cfg.ssdevpass||'',region:_region||''  // 帶入使用者選擇的區域，讓封面優先序依實際區域動態調整（非固定日版優先）
   });
-  return fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(!d)return null;
@@ -7001,7 +7035,7 @@ function testScreenScraper(){
   if(!cfg.url){toast('請先填入 Apps Script 網址','er');return;}
   loading('測試 ScreenScraper...');
   var params=new URLSearchParams({action:'ss_search',q:'Mario',ssid:ssid,sspass:sspass,serialnum:'',systemeid:'',ssdevid:ssdevid,ssdevpass:ssdevpass});
-  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       noLoad();
@@ -7019,7 +7053,7 @@ function testGiantBomb(){
   cfg.gbkey=key;
   loading('測試 Giant Bomb...');
   // 先直接測試 Apps Script 能不能傳到 GB
-  fetch(fixUrl(cfg.url)+'?action=gb_search&q=Final+Fantasy&gbkey='+encodeURIComponent(key),{redirect:'follow'})
+  shGetSecP(new URLSearchParams({action:'gb_search',q:'Final Fantasy',gbkey:key}))
     .then(function(r){return r.ok?r.json():r.json().then(function(e){throw new Error('HTTP '+r.status);});})
     .then(function(d){
       noLoad();
@@ -7047,7 +7081,7 @@ function testGCSE(){
   cfg.gcsekey=key;cfg.gcxid=cx;
   loading('測試 Google 圖片搜尋...');
   var params=new URLSearchParams({action:'google_image_search',q:'Super Mario Bros Nintendo',gcsekey:key,gcxid:cx,num:'1'});
-  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       noLoad();
@@ -7064,7 +7098,7 @@ function _autoFetchCover(cb){
   var platform=entry.platform||_selectedPlatform||'';
   var q=name+(platform?' '+platform:'');
   var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:'1'});
-  fetch(fixUrl(cfg.url)+'?'+params.toString(),{redirect:'follow'})
+  shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){
       if(d&&d.ok&&d.imageUrl&&!entry.cover_img){
@@ -7082,7 +7116,7 @@ function testIGDB(){
   if(!id||!sec){toast('請輸入憑證','er');return;}
   if(!url){toast('請先設定 Apps Script URL','er');return;}
   cfg.iid=id;cfg.isec=sec;cfg.url=url;loading('測試 IGDB...');
-  shGet({action:'igdb_search',q:'Elden Ring',client_id:id,client_secret:sec})
+  shPost({action:'igdb_search',q:'Elden Ring',client_id:id,client_secret:sec})
   .then(function(r){if(r.games&&r.games.length)toast('IGDB 成功 ✓','ok');else throw new Error('查無結果');})
   .catch(function(e){toast('IGDB 失敗：'+e.message,'er');}).finally(noLoad);
 }
@@ -7150,7 +7184,7 @@ function openbdLookup(isbn){
 function rakutenBooksLookup(isbn){
   if(!(cfg.rktid&&cfg.rktkey&&cfg.url))return Promise.resolve(null);
   var c=isbn.replace(/[-\s]/g,'');
-  return shGet({action:'rakuten_books_search',isbn:c,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey}).then(function(r){
+  return shPost({action:'rakuten_books_search',isbn:c,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey}).then(function(r){
     if(!r||!r.title)return null;
     var yr=(r.sales_date||'').match(/(\d{4})/);
     var o={category:'攻略',primary_name:r.title,zh_name:r.title,jp_name:r.title,
@@ -7385,7 +7419,7 @@ function selectEntryCat(cat,_noSave){
   }
   // Step 3 平台：僅遊戲／主機／數位下載版(遊戲類子類型)顯示，動態填入 PLATFORMS（onchange 寫入 _selectedPlatform）
   _refreshPlatSection(hasPlat);
-  _refreshMethodButtons(cat);
+  _refreshMethodButtons(cat,_selectedSubtype);
   if(!_noSave)_saveEntryMem();
 }
 // v42.14：數位下載版沒有實體條碼可掃，隱藏條碼/編碼相關卡片；
@@ -7393,13 +7427,28 @@ function selectEntryCat(cat,_noSave){
 // v49.04：數位下載版的 4 種電子書子類型額外顯示「商品編碼」卡（此時走 ISBN 查詢，非商品編碼），
 // 抽成獨立函式供子類型變更時（openSubtypePicker）重新呼叫
 var _DIGI_BOOK_SUBS={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
-function _refreshMethodButtons(cat){
+// v49.07：下載版遊戲／追加下載內容只有「圖片辨識/手動建檔/商店連結」3張卡，4欄格線會留空格，
+// 商店連結改成1x2填滿；其餘子類型（含其他分類）的商店連結維持1x1，不受影響
+var _DIGI_LINK_WIDE_SUBS={'下載版遊戲':1,'追加下載內容':1,'數位音源':1,'數位影音':1};
+// v49.07：改為明確傳入子類型參數（預設才退回全域變數），避免依賴呼叫當下全域 _selectedSubtype
+// 是否已同步更新造成排版忽寬忽窄的不一致（同一分類點兩次卻長不一樣）
+function _refreshMethodButtons(cat,subtype){
+  var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
-  var showIsbn=isDigital&&_DIGI_BOOK_SUBS[_selectedSubtype];
-  [['mb-bar',!isDigital],['mb-gcode',!isDigital||showIsbn],['mb-img',true],
-   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital],['mb-link',isDigital]].forEach(function(p){
+  var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
+  var showLinkWide=isDigital&&_DIGI_LINK_WIDE_SUBS[sub];
+  // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
+  [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
+   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
+  var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
+  if(t)t.textContent=showIsbn?'ISBN＋照片':'編碼＋照片';
+  if(s)s.textContent=showIsbn?'電子書精確比對':'精確比對';
+  // mb-gcode-combo 在遊戲/電子書情境都是 1x2（原生 HTML 已固定 mb-wide，這裡不需再切換）；
+  // mb-link 才需要依子類型明確設定寬窄，兩者互斥不會同時都是 wide 造成總欄數超過4欄換行
+  var linkEl=$('mb-link');
+  if(linkEl)linkEl.classList.toggle('mb-wide',!!showLinkWide);
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
@@ -7422,7 +7471,7 @@ function openSubtypePicker(){
   openPlatPicker({current:_selectedSubtype||'',allowEmpty:true,customSrc:meta.options,title:'選擇類型',searchPlaceholder:'搜尋類型…',onPick:function(v){
     _selectedSubtype=v;_applySubtypeVisual();_saveEntryMem();
     _applyCatFields(_selectedType,_selectedSubtype); // v47.01：數位下載版子類型決定欄位集合，先同步好供後續建檔流程使用
-    _refreshMethodButtons(catInternal(_selectedType)); // v49.04：電子書子類型才顯示 ISBN 查詢卡
+    _refreshMethodButtons(catInternal(_selectedType),v); // v49.04：電子書子類型才顯示 ISBN 查詢卡
     if(catInternal(_selectedType)==='數位下載版'){
       var hp=_digiHasPlatform(_selectedSubtype);
       _selectedPlatform=hp?_platMemGet(_selectedType):'';
@@ -7724,7 +7773,7 @@ var _btnLocks={};
 function _btnGuard(key,btnEl,busyText){
   if(_btnLocks[key])return false; // 已在執行中，拒絕重入
   _btnLocks[key]=true;
-  var el=btnEl||((event&&event.target&&event.target.closest)?event.target.closest('button'):null);
+  var el=btnEl||((typeof event!=='undefined'&&event&&event.target&&event.target.closest)?event.target.closest('button'):null);
   if(el){
     _btnLocks[key+'_el']=el;
     _btnLocks[key+'_txt']=el.textContent;
@@ -9871,7 +9920,7 @@ function _dashModel(cat,filtered2,catOf){
   function statusCnt(arr,key,val){return arr.filter(function(c){return c.data[key]===val;}).length;}
   function condCnt(arr,g){return arr.filter(function(c){return overallCond(c.data.category,c.data.completeness)===g;}).length;}
   function avgRating(arr){var rs=arr.map(function(c){return parseFloat(c.data.rating);}).filter(function(n){return !isNaN(n)&&n>0;});return rs.length?(rs.reduce(function(a,b){return a+b;},0)/rs.length).toFixed(1):'—';}
-  function buildMap(arr,fn){var m={};arr.forEach(function(c){var k=fn(c);if(k)m[k]=(m[k]||0)+1;});return m;}
+  function buildMap(arr,fn){var m={};arr.forEach(function(c){var k=fn(c);if(!k)k='其他';m[k]=(m[k]||0)+1;});return m;}
   var withImg=withImgCnt(filtered2);
   var catColors={};Object.keys(CAT_META).forEach(function(k){catColors[k]=CAT_META[k].color;});
 
@@ -10010,7 +10059,8 @@ function _dashModel(cat,filtered2,catOf){
       midLabel:'廠牌分佈',midMap:brandMap2,midColors:null,midTotalText:Object.keys(brandMap2).length+' 個廠牌'};
   }else{ // 全部
     var byCat=function(k){return filtered2.filter(function(c){return catOf(c)===k;}).length;};
-    var platAll=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
+    var csMap=buildMap(filtered2,function(c){return (c.data.collect_status||'').trim();});
+    var csColors={'收藏中':'#00e676','預購中':'#ffb300','願望清單':'#ce93d8','借出中':'#80deea','已出售':'#90a4ae','已退款':'#ff5252','遺失或損毀':'#ff8a65'};
     D={kpi:[
         {label:'遊戲',val:byCat('遊戲'),color:'#00e5ff',icon:'🎮'},
         {label:'書籍',val:byCat('攻略'),color:'#ce93d8',icon:'📚'},
@@ -10023,7 +10073,7 @@ function _dashModel(cat,filtered2,catOf){
         {label:'有封面 '+withImg,color:'#7986cb'}],
       donutLabel:'分類佔比',donutMap:buildMap(filtered2,function(c){return catOf(c);}),
       donutColors:catColors,donutCenter:filtered2.length+'',
-      midLabel:'平台分佈',midMap:platAll,midColors:null,midTotalText:Object.keys(platAll).length+' 個平台'};
+      midLabel:'收藏狀態分佈',midMap:csMap,midColors:csColors,midTotalText:filtered2.length+' 件'};
   }
   return D;
 }
@@ -12370,7 +12420,7 @@ function marketEstimateWithName(rowNum,nameKey,sources){
   huntSheetClose();
   if(!hasAuto){marketOpenWorkbench(rowNum,null,'尚未設定自動估值 API，可先用市場連結與人工樣本估值');return;}
   loading('查詢市場估值...');
-  shGet({
+  shPost({
     action:'market_estimate',
     q:q,
     title:chosenName,
@@ -12401,7 +12451,7 @@ function marketEstimateWithName(rowNum,nameKey,sources){
     noLoad();
     var msg=(e&&e.message)||'';
     if(msg.indexOf('不支援的 action: market_estimate')>=0){
-      toast('估值失敗：Apps Script 尚未更新/重新部署 v39.05，請貼上新版後端並重新部署','er',8000);
+      toast('估值失敗：Apps Script 後端版本過舊（缺少 market_estimate），請貼上最新版後端並重新部署','er',8000);
       return;
     }
     marketOpenWorkbench(rowNum,null,_friendlyError(msg));
@@ -12876,7 +12926,7 @@ window.onload=function(){
 // ══ 尋寶清單（二手比價）v06 — 完全獨立模組 ══
 //    自有狀態與掃描器，不碰收藏建檔的 entry / combo
 // ══════════════════════════════════════════════════════
-var HUNT_HDR=['category','target_cat','primary_name','platform','barcode','notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'];
+var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barcode','notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'];
 var hunt=[];                 // [{rowNum,uid,data:{...}}]
 var _huntEntry=null;         // 新增目標暫存
 var _huntPhoto='';           // 目標照片暫存（base64；空＝沿用舊照）
@@ -13045,7 +13095,7 @@ function _huntQuickPass(item){
   var q=(($('hunt-search')&&$('hunt-search').value)||'').trim().toLowerCase();
   if(!q)return true;
   var locs=huntSights(d).map(function(s){return (s.loc||'')+' '+(s.url||'');}).join(' ');
-  var s=[d.primary_name,d.jp_name,d.platform,d.barcode,d.notes,d.summary,d.region,catLabel(d.target_cat||''),locs].join(' ').toLowerCase();
+  var s=[d.primary_name,d.jp_name,d.platform,d.subtype,d.barcode,d.notes,d.summary,d.region,catLabel(d.target_cat||''),locs].join(' ').toLowerCase();
   return s.indexOf(q)>=0;
 }
 function renderHuntList(){
@@ -13116,7 +13166,7 @@ function huntCardHtml(h){
         (done?'<span style="font-size:9px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 5px">已入手</span>':'')+
       '</div>'+
       '<div style="font-size:14px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(d.primary_name||'未命名目標')+'</div>'+
-      '<div style="font-size:11px;color:#7986cb;margin-top:2px">'+esc(d.platform||'')+'</div>'+
+      '<div style="font-size:11px;color:#7986cb;margin-top:2px">'+esc(d.platform||d.subtype||'')+'</div>'+
       '<div style="font-size:11px;margin-top:4px">'+priceLine+
         '<span style="color:#5c6b8a"> · '+sights.length+' 個通路</span></div>'+
     '</div>'+
@@ -13382,22 +13432,47 @@ function _huntOpenPlatPicker(card){
 }
 function _huntFormFieldsHtml(e,p){
   e=e||{};
+  var curCat=catInternal(e.target_cat||'遊戲');
   var catSel=['遊戲','攻略','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'].map(function(c){
-    return '<option value="'+c+'"'+(c===catInternal(e.target_cat||'遊戲')?' selected':'')+'>'+catLabel(c)+'</option>';
+    return '<option value="'+c+'"'+(c===curCat?' selected':'')+'>'+catLabel(c)+'</option>';
   }).join('');
   var curRegion=mapRegion(e.region)||e.region||'';
   var regSel='<option value=""'+(!curRegion?' selected':'')+'>— 不指定 —</option>'+REGION_OPTS.map(function(r){
     return '<option value="'+esc(r)+'"'+(r===curRegion?' selected':'')+'>'+esc(r)+'</option>';
   }).join('');
+  // v49.08：動漫/美術設定集、公仔、原聲帶、數位下載版改顯示「類型」子類型選單（依 SUBTYPE_META），
+  // 取代原本不管什麼分類都套用遊戲主機平台選擇的通用邏輯；分類切換時由 _huntOnCatChange 動態換選單
+  var showSubtype=hasSubtype(curCat);
+  var subOptHtml=_huntSubtypeOptionsHtml(curCat,e.subtype||'');
   return ''+
     '<div class="fg"><label class="fl">中文品名 <button type="button" class="ocr-btn" onclick="document.getElementById(\''+p+'-name-cam\').click()">📷 OCR</button></label><input class="fi" id="'+p+'-name" value="'+esc(e.primary_name||'')+'" placeholder="例：太空戰士 VII"><input type="file" accept="image/*" capture="environment" id="'+p+'-name-cam" style="display:none" onchange="nameFieldOCR(this,\''+p+'-name\',\'zh\')"></div>'+
     '<div class="fg"><label class="fl">日文品名 <button type="button" class="ocr-btn" onclick="document.getElementById(\''+p+'-jpname-cam\').click()">📷 OCR</button></label><input class="fi" id="'+p+'-jpname" value="'+esc(e.jp_name||'')+'" placeholder="日本站查價用（選填）"><input type="file" accept="image/*" capture="environment" id="'+p+'-jpname-cam" style="display:none" onchange="nameFieldOCR(this,\''+p+'-jpname\',\'jp\')"></div>'+
-    '<div class="fg"><label class="fl">分類</label><select class="fsel" id="'+p+'-cat">'+catSel+'</select></div>'+
-    '<div class="fg"><label class="fl">平台</label><div class="plat-card" id="'+p+'-plat-card" onclick="_huntOpenPlatPicker(this)"><div style="flex:1"><div style="font-size:12px;color:#7986cb"></div><div id="'+p+'-plat-val" style="font-size:14px;font-weight:600;color:#e8eaf6">'+(e.platform||'— 不指定 —')+'</div></div><div class="plat-card-chev">▾</div></div><select class="fsel" id="'+p+'-plat" style="display:none">'+platformOptionsHtml(e.platform||'')+'</select></div>'+
+    '<div class="fg"><label class="fl">分類</label><select class="fsel" id="'+p+'-cat" onchange="_huntOnCatChange(\''+p+'\')">'+catSel+'</select></div>'+
+    '<div class="fg" id="'+p+'-plat-fg" style="display:'+(showSubtype?'none':'block')+'"><label class="fl">平台</label><div class="plat-card" id="'+p+'-plat-card" onclick="_huntOpenPlatPicker(this)"><div style="flex:1"><div style="font-size:12px;color:#7986cb"></div><div id="'+p+'-plat-val" style="font-size:14px;font-weight:600;color:#e8eaf6">'+(e.platform||'— 不指定 —')+'</div></div><div class="plat-card-chev">▾</div></div><select class="fsel" id="'+p+'-plat" style="display:none">'+platformOptionsHtml(e.platform||'')+'</select></div>'+
+    '<div class="fg" id="'+p+'-subtype-fg" style="display:'+(showSubtype?'block':'none')+'"><label class="fl">類型</label><select class="fsel" id="'+p+'-subtype">'+subOptHtml+'</select></div>'+
     '<div class="fg"><label class="fl">區域</label><select class="fsel" id="'+p+'-region">'+regSel+'</select></div>'+
     '<div class="fg"><label class="fl">條碼 <button type="button" class="ocr-btn" onclick="huntBarcodeScan(\''+p+'-bc\')">📷 OCR</button></label><input class="fi mono" id="'+p+'-bc" value="'+esc(e.barcode||'')+'" placeholder="（選填）"></div>'+
     '<div class="fg"><label class="fl">遊戲簡介</label><textarea class="ft" id="'+p+'-summary" placeholder="商品／遊戲簡介（拍照辨識會自動帶入）" style="min-height:84px">'+esc(e.summary||'')+'</textarea></div>'+
     '<div class="fg"><label class="fl">備註</label><textarea class="ft" id="'+p+'-notes" placeholder="想找的版本／追蹤原因…">'+esc(e.notes||'')+'</textarea></div>';
+}
+// 依分類取得子類型 <option> HTML（無子類型分類回傳空字串）
+function _huntSubtypeOptionsHtml(cat,cur){
+  var meta=SUBTYPE_META[catInternal(cat)];
+  if(!meta)return '';
+  return '<option value=""'+(!cur?' selected':'')+'>— 不指定 —</option>'+meta.options.map(function(o){
+    return '<option value="'+esc(o)+'"'+(o===cur?' selected':'')+'>'+esc(o)+'</option>';
+  }).join('');
+}
+// 尋寶表單分類變更：切換顯示「平台」或「類型」欄位，並重新產生子類型選單
+function _huntOnCatChange(p){
+  var catSel=$(p+'-cat');if(!catSel)return;
+  var cat=catInternal(catSel.value)||'遊戲';
+  var showSubtype=hasSubtype(cat);
+  var platFg=$(p+'-plat-fg'),subFg=$(p+'-subtype-fg');
+  if(platFg)platFg.style.display=showSubtype?'none':'block';
+  if(subFg)subFg.style.display=showSubtype?'block':'none';
+  var subSel=$(p+'-subtype');
+  if(subSel)subSel.innerHTML=_huntSubtypeOptionsHtml(cat,'');
 }
 function _huntReadFormFields(e,p){
   e=e||{};
@@ -13406,6 +13481,7 @@ function _huntReadFormFields(e,p){
   e.jp_name=val('jpname');
   e.target_cat=catInternal(($(p+'-cat')&&$(p+'-cat').value)||'遊戲')||'遊戲';
   e.platform=val('plat');
+  e.subtype=val('subtype');
   e.region=val('region');
   e.barcode=val('bc');
   e.summary=val('summary');
@@ -13479,7 +13555,7 @@ function huntDetail(uid){
       '<span style="font-size:10px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 6px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
       (done?' <span style="font-size:10px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 6px">已入手</span>':'')+
       '<div style="font-size:17px;font-weight:700;color:#e8eaf6;margin:6px 0 2px">'+esc(d.primary_name||'未命名')+'</div>'+
-      '<div style="font-size:12px;color:#7986cb">'+esc(d.platform||'')+(d.region?' · '+esc(mapRegion(d.region)||d.region):'')+(d.barcode?' · <span class="mono">'+esc(d.barcode)+'</span>':'')+'</div>'+
+      '<div style="font-size:12px;color:#7986cb">'+esc(d.platform||d.subtype||'')+(d.region?' · '+esc(mapRegion(d.region)||d.region):'')+(d.barcode?' · <span class="mono">'+esc(d.barcode)+'</span>':'')+'</div>'+
       (d.summary?'<div style="font-size:12px;color:#aab4d4;line-height:1.55;margin-top:6px;max-height:120px;overflow-y:auto">'+esc(d.summary)+'</div>':'')+
       (d.notes?'<div style="font-size:12px;color:#9fa8c8;margin-top:6px">'+esc(d.notes)+'</div>':'')+
     '</div></div>';
@@ -13736,8 +13812,8 @@ function huntBuyConfirm(uid,idx){
     else if(cur==='TWD')buyPrice=pr;                        // 台幣：存純數字（與既有慣例一致，統計預設台幣）
     else{buyPrice=pr;buySource=buySource+'（'+cur+'）';}     // 自訂幣別：金額存數字，幣別註記在來源
   }
-  var ce=Object.assign({},_defaultsFor(cat),{
-    category:cat,primary_name:d.primary_name||'',platform:d.platform||'',barcode:d.barcode||'',
+  var ce=Object.assign({},_defaultsFor(cat,d.subtype),{
+    category:cat,primary_name:d.primary_name||'',platform:d.platform||'',subtype:d.subtype||'',barcode:d.barcode||'',
     cover_img:d.cover_img||'',buy_source:buySource,buy_price:buyPrice,buy_date:tpeDate(),
     collect_status:'收藏中',notes:''
   });
@@ -13746,6 +13822,7 @@ function huntBuyConfirm(uid,idx){
   // 不直接寫入：載入到對應分類的建檔表單暫存，使用者可跑 AI 補全、確認後再按「儲存至收藏」
   _huntConvertUid=uid;                 // 記住來源尋寶目標；doSave 成功後標記為已入手
   entry=ce;edited.clear();
+  _selectedType=cat;_selectedSubtype=d.subtype||''; // v49.08：轉入收藏後續流程（如切換表單）需要正確的子類型狀態
   showPg('scan');
   if($('method-sel'))$('method-sel').style.display='none';
   showForm('尋寶轉入（請確認/補齊後儲存）');

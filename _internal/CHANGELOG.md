@@ -1,6 +1,28 @@
+## v51.01 (2026-07-05)
+
+### 變更內容
+上線前資安補強（依盤點報告，僅採納實際成立的項目）：
+- GS 寫入驗證：doPost 的 add/update/delete/deleteMany 新增 APP_TOKEN 驗證。後端「指令碼屬性」設定 APP_TOKEN 後啟用；前端設定頁「寫入保護 Token」填相同字串（只存本機、不進公開網頁），未設定則放行以相容。
+- 代理密鑰改走 POST body：igdb/gb/mb/tgdb/bl/ss/rakuten×2/market_estimate/google_image 等帶密鑰呼叫原以 GET query 傳送（會進 GAS 執行紀錄），改為 POST body。GS 讀取/代理類 action 抽為共用 dispatchRead，doGet/doPost 皆可分派。
+- 前端 shPost 對寫入集中注入 app_token；新增 shGetSecP 相容原串接。
+- 未採納誤報項（index/manual/icons「缺檔」實際存在）與過度工程項（單檔模組化重構）。
+
+### 影響檔案
+- index.html / GameVault_v51_01_index.html
+- sw.js
+- GameVault_AppsScript.gs（後端 v50 → v51）
+
+### GS 版本
+- v50 → v51（doGet/doPost 重構 + APP_TOKEN 驗證），需重新貼上並部署後端。
+
+### PWA 快取
+- CACHE_NAME: gamevault-v50-02a1 → gamevault-v51-01
+
+### 對應備份
+- _internal/old/v50_02a1/
+
 ## v50.02a1 (2026-07-05)
 - 修正 manifest icon 路徑（原指向 repo 根目錄 404 → 改為同源 ./icons/）；清除殘留的 v39.05 版本佔位字串與過時錯誤文案（改為版本無關說法）；_btnGuard 加 typeof event 保護避免非事件情境誤判
-
 ## v50.02 (2026-07-05)
 
 ### 變更內容
@@ -44,24 +66,3 @@
 
 ### 對應備份
 - _internal/old/v49_07/
-## v49.07 (2026-07-05)
-
-### 變更內容
-修正建檔方式卡片排版忽寬忽窄的不一致問題，並重新檢查整個數位下載版：
-- **根因**：`_refreshMethodButtons()` 原本讀取呼叫當下的全域 `_selectedSubtype`，在特定時序下可能跟畫面顯示的子類型不同步，導致「商店連結」卡片有時是 1x1、有時變成 1x2，連帶讓「ISBN＋照片」卡片被擠到下一排
-- **修正**：`_refreshMethodButtons(cat, subtype)` 改為要求呼叫端明確傳入剛設定好的子類型，不再依賴呼叫當下全域變數是否已同步，消除時序造成的不一致
-- **重新檢查數位下載版全部 8 個子類型**，發現數位音源、數位影音也有同樣「3張卡留一格空白」的排版問題，一併修正：商店連結改 1x2 填滿
-- 自我檢查：8 個子類型的建檔方式卡片欄數皆確認整除 4，不會再留空格或不對齊
-
-### 影響檔案
-- index.html / GameVault_v49_07_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端邏輯修正）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v49-06 → gamevault-v49-07
-
-### 對應備份
-- _internal/old/v49_06/
