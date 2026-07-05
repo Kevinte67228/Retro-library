@@ -840,7 +840,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">GameVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v39.05</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v50.02a1</span></div>
         </div>
         <div class="hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -1829,7 +1829,7 @@ body{
         <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v39.05</span></strong><br>
+          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v50.02a1</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2216,7 +2216,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v50.02';
+const APP_VERSION='v50.02a1';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7756,7 +7756,7 @@ var _btnLocks={};
 function _btnGuard(key,btnEl,busyText){
   if(_btnLocks[key])return false; // 已在執行中，拒絕重入
   _btnLocks[key]=true;
-  var el=btnEl||((event&&event.target&&event.target.closest)?event.target.closest('button'):null);
+  var el=btnEl||((typeof event!=='undefined'&&event&&event.target&&event.target.closest)?event.target.closest('button'):null);
   if(el){
     _btnLocks[key+'_el']=el;
     _btnLocks[key+'_txt']=el.textContent;
@@ -12434,7 +12434,7 @@ function marketEstimateWithName(rowNum,nameKey,sources){
     noLoad();
     var msg=(e&&e.message)||'';
     if(msg.indexOf('不支援的 action: market_estimate')>=0){
-      toast('估值失敗：Apps Script 尚未更新/重新部署 v39.05，請貼上新版後端並重新部署','er',8000);
+      toast('估值失敗：Apps Script 後端版本過舊（缺少 market_estimate），請貼上最新版後端並重新部署','er',8000);
       return;
     }
     marketOpenWorkbench(rowNum,null,_friendlyError(msg));
