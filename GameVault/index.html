@@ -2215,7 +2215,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v49.01';
+const APP_VERSION='v49.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3341,17 +3341,6 @@ var AI_CAT_SPEC={
       region:'發行地區',edition:'版本說明（初回限定版/通常版等文字備註）'},
     constraint:'composer 填作曲/編曲者或演唱者姓名。format 只能是 CD/黑膠唱片/卡帶/數位高解析音檔/其他其中之一。catalog_number 只填包裝或光碟上實際印出的編號，沒有把握就留空，不可推測捏造。suggest_price 格式為「數字 幣別代碼」。'
   },
-  '動漫/美術設定集':{
-    role:'遊戲/動畫漫畫與美術設定集資料庫專家',itemLabel:'書名',
-    fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
-      related_work:'作品／IP名稱（繁體中文，如：葬送的芙莉蓮）',volume:'集數／卷數（如 01、Vol.1；單本完結留空）',
-      illustrator:'作者／製作公司（漫畫家、插畫家或動畫製作公司，如有）',
-      page_count:'頁數（不確定留空，僅出版品類適用）',binding:'載體格式(平裝書/精裝書/Blu-ray/DVD/CD/數位版)',
-      publisher:'出版社或發行商名稱（必填）',suggest_price:'建議零售價(如 3500 JPY / 34.99 USD / 890 TWD；依區域決定幣別)',
-      release_date:'發售日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，描述本書/本片而非原作)',
-      region:'發行地區',edition:'版次/版本說明'},
-    constraint:'publisher 必填出版社或發行商。illustrator 填作者、插畫家或動畫製作公司。binding 只能是 平裝書/精裝書/Blu-ray/DVD/CD/數位版其中之一。summary 描述本項目內容而非原作劇情。suggest_price 格式為「數字 幣別代碼」。'
-  },
   公仔:{
     role:'公仔/模型玩具資料庫專家',itemLabel:'商品名稱',
     fields:{jp_name:'日文商品名稱',zh_name:'中文名稱',en_name:'英文名稱',
@@ -3365,10 +3354,100 @@ var AI_CAT_SPEC={
     constraint:'character 填公仔對應的角色名稱。scale 只填比例數字或 Non-scale。suggest_price 格式為「數字 幣別代碼」。'
   }
 };
+// v49.02：動漫/美術設定集不沿用遊戲的通用 AI 規格，改依 8 子類型各自量身訂做（role/欄位/限制規則皆不同）
+var ARTBOOK_AI_SPEC={
+  '漫畫／單行本':{
+    role:'漫畫作品資料庫專家',itemLabel:'書名',
+    fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
+      related_work:'作品／IP名稱（繁體中文）',volume:'集數（讀封面上實際印出的數字，如 01、12；單本完結留空）',
+      illustrator:'作者（漫畫家本人，不確定留空）',
+      publisher:'出版社（必填）',suggest_price:'建議零售價(如 490 JPY / 4.99 USD / 120 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，描述本集內容，不要暴雷或描述全系列劇情)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'illustrator 只填漫畫家本人，不確定留空不可瞎猜。volume 只讀封面實際印出的集數數字。publisher 必填出版社。summary 只描述本集內容，不可暴雷或描述全系列劇情。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  '畫冊／插畫集':{
+    role:'插畫畫集資料庫專家',itemLabel:'書名',
+    fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
+      related_work:'作品／IP名稱（繁體中文，獨立畫集可留空）',illustrator:'作者／繪師（不確定或團隊創作留空）',
+      page_count:'頁數（不確定留空）',
+      publisher:'出版社（必填）',suggest_price:'建議零售價(如 3500 JPY / 34.99 USD / 890 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，描述收錄畫作的主題或風格)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'illustrator 為團隊創作或不確定時留空，不可瞎猜單一繪師名。summary 描述收錄畫作的主題或風格。publisher 必填出版社。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  '設定集／公式資料集':{
+    role:'官方設定集資料庫專家',itemLabel:'書名',
+    fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
+      related_work:'相關作品（繁體中文）',illustrator:'編著／監修（不確定留空）',
+      publisher:'出版社（必填）',suggest_price:'建議零售價(如 3500 JPY / 34.99 USD / 890 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內，需說明本書屬於角色設定/機械設定/世界觀考據/訪談等哪一類內容)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'summary 必須說明本書屬於角色設定、機械設定、世界觀考據、訪談等哪一類內容。publisher 必填出版社。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  '原畫集／分鏡集':{
+    role:'動畫原畫/分鏡資料庫專家',itemLabel:'書名',
+    fields:{jp_name:'日文書名',zh_name:'中文書名',en_name:'英文書名',
+      related_work:'相關作品（繁體中文）',studio:'製作公司（不確定留空）',
+      publisher:'出版社（不確定留空，此類商品常無標準出版社）',suggest_price:'建議零售價(如 5000 JPY / 49.99 USD / 1290 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',summary:'內容簡介(繁體中文，100字內)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'barcode 此類商品常無標準 ISBN，看不清楚就留空，不可推測。studio 填動畫製作公司。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  '雜誌／MOOK／同人誌':{
+    role:'動漫情報誌與同人誌資料庫專家',itemLabel:'刊名',
+    fields:{jp_name:'日文刊名',zh_name:'中文刊名',en_name:'英文刊名',
+      related_work:'相關作品（繁體中文，綜合情報誌可留空）',issue_number:'期數／號數（讀封面實際印出的期數）',
+      circle_name:'社團名稱（只有確定是同人誌／社團自製刊物才填，官方雜誌一律留空）',
+      publisher:'出版社（同人誌可留空）',suggest_price:'建議零售價(如 800 JPY / 7.99 USD / 250 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'circle_name 只有確定是同人誌或社團自製刊物時才填，官方雜誌一律留空，不可瞎猜。issue_number 只填封面實際印出的期數/號數。'
+  },
+  '動畫影集':{
+    role:'動畫BD/DVD商品資料庫專家',itemLabel:'商品名稱',
+    fields:{jp_name:'日文商品名稱',zh_name:'中文商品名稱',en_name:'英文商品名稱',
+      related_work:'相關作品（繁體中文）',studio:'製作公司（不確定留空）',
+      episode_count:'收錄集數（只填此商品實際收錄的集數範圍，不是作品全系列總集數，如「第1-4話」）',
+      disc_count:'片數（不確定留空）',binding:'載體格式（只能是 Blu-ray 或 DVD 其中之一，依包裝標示判斷）',
+      publisher:'發行商（必填）',suggest_price:'建議零售價(如 8800 JPY / 79.99 USD / 2290 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'binding 只能是 Blu-ray 或 DVD 其中之一，不可填其他值。episode_count 只填此商品實際收錄範圍，不是全系列總集數。publisher 必填發行商。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  '動畫電影／劇場版':{
+    role:'動畫劇場版商品資料庫專家',itemLabel:'片名',
+    fields:{jp_name:'日文片名',zh_name:'中文片名',en_name:'英文片名',
+      related_work:'相關作品（繁體中文，原創劇場版可留空）',studio:'製作公司（不確定留空）',
+      runtime:'片長（分鐘，只填包裝上實際標示的數字，不確定留空）',binding:'載體格式（只能是 Blu-ray 或 DVD 其中之一）',
+      publisher:'發行商（必填）',suggest_price:'建議零售價(如 9800 JPY / 89.99 USD / 2590 TWD；依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'runtime 只填包裝上實際標示的分鐘數，看不到就留空，不可自行推算。binding 只能是 Blu-ray 或 DVD 其中之一。suggest_price 格式為「數字 幣別代碼」。'
+  },
+  '周邊／其他':{
+    role:'動漫周邊商品資料庫專家',itemLabel:'商品名稱',
+    fields:{jp_name:'日文商品名稱',zh_name:'中文商品名稱',en_name:'英文商品名稱',
+      related_work:'相關作品（繁體中文，不確定留空）',
+      publisher:'發行商（不確定留空）',suggest_price:'建議零售價(依區域決定幣別)',
+      release_date:'發售日期(YYYY/MM/DD)',summary:'商品簡介(繁體中文，100字內)',
+      region:'發行地區',edition:'版次/版本說明'},
+    constraint:'此為通用類別，欄位資訊不確定一律留空，不可瞎猜。suggest_price 格式為「數字 幣別代碼」。'
+  }
+};
+// AI 規格統一取得入口：動漫/美術設定集依子類型分派，其餘分類沿用扁平 AI_CAT_SPEC（比照 _catMeta 模式）
+function _aiSpecFor(cat,subtype){
+  cat=catInternal(cat);
+  if(cat==='動漫/美術設定集'){
+    var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
+    return ARTBOOK_AI_SPEC[sub]||ARTBOOK_AI_SPEC['漫畫／單行本'];
+  }
+  return AI_CAT_SPEC[cat];
+}
 // v24.04：第二階段 AI 補全的「檢查欄位」改由分類動態推導（主機/週邊納入 brand/model_no 等硬體欄位），取代寫死的遊戲清單
 function _checkFieldsFor(cat){
   cat=catInternal(cat)||'遊戲';
-  return Object.keys((AI_CAT_SPEC[cat]||AI_CAT_SPEC['遊戲']).fields);
+  return Object.keys((_aiSpecFor(cat)||AI_CAT_SPEC['遊戲']).fields);
 }
 
 // ── 視覺辨識系統提示：共用區塊（通用欄位 / 收藏固定值 / 鐵律）──
@@ -3421,7 +3500,7 @@ function _visionCatBlock(cat){
   cat=catInternal(cat);
   if(cat==='遊戲')return _SYS_GAME;
   if(cat==='攻略')return _SYS_BOOK;
-  var sp=AI_CAT_SPEC[cat];if(!sp)return '';
+  var sp=_aiSpecFor(cat);if(!sp)return '';
   var lines=Object.keys(sp.fields).map(function(k){return k+'：'+sp.fields[k];});
   return '═══ '+cat+'專屬欄位 ═══\n'+lines.join('\n')+
     '\nplatform/media/genre/players/features/play_status: 固定留空（此類別不適用）\nbundle: 固定"'+cat+'本體"';
@@ -3441,10 +3520,10 @@ function _regionCtx(){
 //          未知 → 退回原「遊戲 vs 攻略」自由分類（含兩類 schema）。區域上下文不變。
 function buildSYS(){
   var st=catInternal(_selectedType);
-  var cat=AI_CAT_SPEC[st]?st:'';
+  var cat=_aiSpecFor(st)?st:'';
   var head,catBlocks;
   if(cat){
-    head='你是「GameVault '+AI_CAT_SPEC[cat].role+'」。本次建檔類別已由使用者指定為【'+cat+'】，請直接以該類規格辨識並輸出 JSON，category 固定填"'+cat+'"，不要改判其他類別。';
+    head='你是「GameVault '+_aiSpecFor(cat).role+'」。本次建檔類別已由使用者指定為【'+cat+'】，請直接以該類規格辨識並輸出 JSON，category 固定填"'+cat+'"，不要改判其他類別。';
     catBlocks=_visionCatBlock(cat);
   }else{
     head='你是「GameVault 收藏建檔鑑定專家」。請先判斷圖片內容是【遊戲軟體】還是【攻略本/書籍】，再依對應規格輸出 JSON。\n\n'+
@@ -5217,7 +5296,7 @@ function aiCompleteMissing(cb){
 function aiKnowledgeFill(gameName,platform,missingFields,category,region){
   if(!gameName||!missingFields||!missingFields.length)return Promise.resolve({});
   var cat=catInternal(category||_selectedType)||'遊戲';
-  var spec=AI_CAT_SPEC[cat]||AI_CAT_SPEC['遊戲'];
+  var spec=_aiSpecFor(cat)||AI_CAT_SPEC['遊戲'];
   var fieldDesc=spec.fields;
   var ask=missingFields.map(function(k){return fieldDesc[k]||k;}).filter(Boolean);
   var rgn=region!==undefined?region:_region; // 優先用傳入的區域，退款用全域 _region
@@ -5409,6 +5488,18 @@ function _gcodeLabels(type){
       hint:'輸入週邊型號或條碼',placeholder:'CUH-ZCT2',
       examples:'例如：DualShock 4 → CUH-ZCT2　Switch Pro → HAC-013',
       searchBtn:'🔍 查詢週邊資料庫',step1:'① 輸入週邊型號',step2:'② 拍攝週邊照片'};
+    case '動漫/美術設定集': {
+      // v49.02：依子類型分兩組文案，修正原本掉進遊戲預設文案（CUSA-00001）的問題
+      var _anBdSub={'動畫影集':1,'動畫電影／劇場版':1};
+      if(_anBdSub[_selectedSubtype]) return {
+        hint:'輸入商品編碼（BD/DVD 側標或光碟上的產品代碼）',placeholder:'ANZX-XXXXX',
+        examples:'例如：ANZX-15251　BCXA-1234',
+        searchBtn:'🔍 查詢動畫商品資料庫',step1:'① 輸入商品編碼',step2:'② 拍攝商品封面'};
+      return {
+        hint:'輸入 ISBN 書號',placeholder:'978-4-XXXXXXXX-X',
+        examples:'例如：ISBN-13 → 978-4-04-735985-6',
+        searchBtn:'🔍 查詢書籍資料庫',step1:'① 輸入 ISBN 書號',step2:'② 拍攝封面'};
+    }
     default: return { // 遊戲（預設）
       hint:'輸入商品編碼（碟片/卡帶上的產品代碼）',placeholder:'CUSA-00001',
       examples:'例如：PS4 → CUSA-00001　PS3 → BLUS-00001<br>Switch → HAC-001　PS1 → SLUS-00001',
