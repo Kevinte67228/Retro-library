@@ -840,7 +840,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">GameVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.01</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.02</span></div>
         </div>
         <div class="hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -1516,6 +1516,8 @@ body{
           <div class="shlp">
             後端若在「指令碼屬性」設定了 <strong>APP_TOKEN</strong>，此處需填入相同字串，否則新增／修改／刪除會被拒絕。留空＝後端未啟用驗證。此 Token 只存在本機，不會匯出到公開網頁。
           </div>
+          <button class="btn bo bs" style="width:100%;margin-top:8px" onclick="gvSelfCheck()">🩺 連線自檢（驗證寫入保護）</button>
+          <div id="selfcheck-out" style="display:none;margin-top:8px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.25);border-radius:8px;padding:10px;font-size:12px;line-height:1.9;color:#cfe8ff"></div>
         </div>
         <div class="stitle">AI 辨識（圖片辨識必要）</div>
         <div class="srow">
@@ -1836,7 +1838,7 @@ body{
         <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v51.01</span></strong><br>
+          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v51.02</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2223,7 +2225,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v51.01';
+const APP_VERSION='v51.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4703,6 +4705,40 @@ function shPost(d){
 function shGetSecP(params){
   var o={};params.forEach(function(v,k){o[k]=v;});
   return fetchWithRetry(fixUrl(cfg.url),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(o)});
+}
+// 連線自檢：GET ping（連線）＋ POST ping（後端是否新版、POST 讀取代理可用）＋ 帶錯 token 的空 deleteMany（寫入保護是否生效）。
+// 安全性：deleteMany 的 keys 為空陣列，後端 deleteManyRows([]) 保證 deleted=0、不觸碰任何工作表，故此探針不會刪到任何資料。
+function gvSelfCheck(){
+  var out=$('selfcheck-out');
+  if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
+  out.style.display='block';
+  var lines=['⏳ 檢測中…'];
+  function render(){out.innerHTML=lines.join('<br>');}
+  render();lines=[];
+  var url=fixUrl(cfg.url);
+  function postJSON(body){
+    return fetchWithRetry(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)}).then(function(r){return r.json();});
+  }
+  shGet({action:'ping'}).then(function(d){
+    lines.push((d&&d.ok)?'✓ 連線正常（GET）':'✗ 連線失敗：'+esc((d&&d.error)||'無回應'));render();
+    return postJSON({action:'ping'});
+  }).then(function(d){
+    if(d&&d.ok)lines.push('✓ 後端為新版：POST 讀取代理可用（IGDB／估值等帶密鑰搜尋走 POST 正常）');
+    else if(d&&/\u4e0d\u652f\u63f4\u7684 action/.test(d.error||''))lines.push('⚠️ 後端為舊版：尚未支援 POST 讀取，請把最新版 GS 貼上並「重新部署」，否則部分搜尋／估值會失效');
+    else lines.push('⚠️ POST 讀取回應異常：'+esc((d&&d.error)||'?'));
+    render();
+    return postJSON({action:'deleteMany',keys:[],app_token:'__gv_selfcheck_invalid_'+Date.now()+'__'});
+  }).then(function(d){
+    if(d&&d.ok===false&&/unauthorized/i.test(d.error||''))
+      lines.push('✓ 寫入保護已生效：錯誤 token 被拒，外部無法用 URL 竄改／刪除你的資料');
+    else if(d&&d.ok)
+      lines.push('⚠️ 寫入保護<b>未生效</b>：後端接受了錯誤 token。請到 Apps Script「指令碼屬性」設定 APP_TOKEN，並在上方欄位填入同一組字串後重新部署');
+    else
+      lines.push('⚠️ 寫入保護狀態不明：'+esc((d&&d.error)||'?'));
+    render();
+  }).catch(function(e){
+    lines.push('✗ 自檢中斷：'+esc((e&&e.message)||e));render();
+  });
 }
 function testSheets(){
   var url=($('c-url').value||'').trim();

@@ -1,3 +1,24 @@
+## v51.02 (2026-07-06)
+
+### 變更內容
+設定頁「寫入保護 Token」區新增「🩺 連線自檢」按鈕，一鍵實測後端狀態：
+- GET ping 確認連線；POST ping 確認後端為新版（POST 讀取代理可用，帶密鑰搜尋走 POST 正常）
+- 以「帶錯 token 的空 deleteMany」探測寫入保護：錯 token 被拒＝已生效；被接受＝APP_TOKEN 尚未設定。keys 為空、後端 deleteManyRows([]) 保證不刪任何資料，探針絕對安全
+- 結果即時顯示於按鈕下方，錯誤訊息經 esc() 轉義
+
+### 影響檔案
+- index.html / GameVault_v51_02_index.html
+- sw.js
+
+### GS 版本
+- 無（後端 v51 未變更）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v51-01 → gamevault-v51-02
+
+### 對應備份
+- _internal/old/v51_01/
+
 ## v51.01 (2026-07-05)
 
 ### 變更內容
@@ -20,7 +41,6 @@
 
 ### 對應備份
 - _internal/old/v50_02a1/
-
 ## v50.02a1 (2026-07-05)
 - 修正 manifest icon 路徑（原指向 repo 根目錄 404 → 改為同源 ./icons/）；清除殘留的 v39.05 版本佔位字串與過時錯誤文案（改為版本無關說法）；_btnGuard 加 typeof event 保護避免非事件情境誤判
 ## v50.02 (2026-07-05)
@@ -44,25 +64,3 @@
 
 ### 對應備份
 - _internal/old/v50_01/
-## v50.01 (2026-07-05)
-
-### 變更內容
-尋寶（Hunt）頁面套用新分類子類型，取代原本不管什麼分類都用遊戲主機平台選擇的通用邏輯：
-- 尋寶表單新增「類型」欄位，動漫/美術設定集、公仔、原聲帶、數位下載版四個分類改顯示對應 SUBTYPE_META 子類型選單，取代「平台」欄位（遊戲/攻略/主機/週邊維持原本平台選擇不變）
-- 分類下拉選單變更時，即時切換顯示「平台」或「類型」欄位並重新產生對應選項
-- 尋寶清單卡片、詳情頁、關鍵字搜尋皆同步顯示/比對子類型資訊
-- 「購入→轉入收藏庫」流程一併帶入子類型，避免轉入收藏後子類型資訊遺失
-
-### 影響檔案
-- index.html / GameVault_v50_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**需使用者手動貼到 Apps Script 編輯器**）
-
-### GS 版本
-- v49 → v50（HUNT_HEADERS 新增 subtype 欄位）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v49-07 → gamevault-v50-01
-
-### 對應備份
-- _internal/old/v49_07/
