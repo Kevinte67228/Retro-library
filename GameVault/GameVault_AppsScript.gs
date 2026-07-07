@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v52            ║
+// ║  GameVault — Google Apps Script 後端  v53            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -700,9 +700,6 @@ function dispatchRead(action, p) {
       case 'fetch_store_page':
         result = fetchStorePageProxy(p.url || '');
         break;
-      case 'fix_headers':
-        result = fixSheetHeaders();
-        break;
       case 'resolve_map':
         result = resolveMapLink(p.url || '');
         break;
@@ -720,12 +717,15 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
-    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany') {
-      // 寫入類 action → 驗證 app_token。
-      // 後端「指令碼屬性」設定 APP_TOKEN 後才啟用驗證；未設定則放行（相容尚未設定 token 的狀態）。
+    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers') {
+      // 寫入類 action（含維護性質的 fix_headers）→ 驗證 app_token。
+      // v53.01：改為 fail-closed —— 後端未設定 APP_TOKEN 時一律拒絕寫入，不再「未設定就放行」。
+      // 使用前請確認已在「指令碼屬性」設定 APP_TOKEN，否則新增/修改/刪除/修復標題列都會被拒絕。
       const need = PropertiesService.getScriptProperties().getProperty('APP_TOKEN');
-      if (need && data.app_token !== need) {
+      if (!need || data.app_token !== need) {
         result = { ok: false, error: 'unauthorized：寫入 token 不符或未提供' };
+      } else if (action === 'fix_headers') {
+        result = fixSheetHeaders();
       } else {
         const type = resolveType(
           data.category || (data.row && data.row[0]),
