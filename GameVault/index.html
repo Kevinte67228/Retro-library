@@ -854,7 +854,7 @@ body{
               <div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 1 · 選擇分類</div>
             </div>
             <button onclick="toggleHelp()" id="help-btn"
-              style="background:transparent;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:4px">
+              style="background:transparent;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:4px" type="button">
               <span>💡</span><span>說明</span>
             </button>
           </div>
@@ -964,7 +964,7 @@ body{
           <!-- 查詢資料來源（v17.06）：預設自動分流，可手動強制指定單一資料庫；session 內有效，重整還原 -->
           <div style="margin-top:18px">
             <button id="db-src-chip" onclick="showDbSrcSheet()"
-              style="width:100%;background:#141b30;border:1.5px solid #1e2a45;color:#7986cb;font-size:13px;font-weight:600;padding:14px;border-radius:16px;cursor:pointer;text-align:center;transition:border-color .2s,color .2s">
+              style="width:100%;background:#141b30;border:1.5px solid #1e2a45;color:#7986cb;font-size:13px;font-weight:600;padding:14px;border-radius:16px;cursor:pointer;text-align:center;transition:border-color .2s,color .2s" type="button">
               🔀 查詢資料來源：自動分流
             </button>
           </div>
@@ -974,7 +974,7 @@ body{
           <div id="help-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:24px 16px 32px;max-height:70vh;overflow-y:auto;z-index:1000;-webkit-overflow-scrolling:touch">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
               <div style="font-size:14px;font-weight:700;color:#e8eaf6">建檔方式說明</div>
-              <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px">✕</button>
+              <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px" type="button">✕</button>
             </div>
             <div style="font-size:12px;color:#9fa8c8;line-height:1.8">
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
@@ -1041,8 +1041,8 @@ body{
               <div id="bar-val" style="font-family:monospace;font-size:15px;color:#00e676;font-weight:700;letter-spacing:2px;margin-top:2px">—</div>
             </div>
             <div style="display:flex;gap:10px;margin-top:4px">
-              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
-              <button id="bar-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="barSearchFromInput()">🔍 查詢資料庫</button>
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button id="bar-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="barSearchFromInput()" type="button">🔍 查詢資料庫</button>
             </div>
           </div>
         </div>
@@ -1072,8 +1072,8 @@ body{
               <img id="scan-preview-img" alt="掃描預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
             </div>
             <div style="display:flex;gap:10px;margin-top:4px">
-              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
-              <button id="combo-ai-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="comboSearchFromInput()">✨ 資料庫查詢＋AI 辨識</button>
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button id="combo-ai-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="comboSearchFromInput()" type="button">✨ 資料庫查詢＋AI 辨識</button>
             </div>
           </div>
         </div>
@@ -1099,8 +1099,8 @@ body{
             <input type="file" accept="image/*" capture="environment" style="display:none" id="gcode-cam-inp" onchange="gcodeOCR(this)">
             <div id="gcode-ocr-status" class="ocr-status">辨識中...</div>
             <div style="display:flex;gap:10px;margin-top:4px">
-              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
-              <button id="gcode-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeSearch()">🔍 查詢遊戲資料庫</button>
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button id="gcode-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeSearch()" type="button">🔍 查詢遊戲資料庫</button>
             </div>
           </div>
         </div>
@@ -1136,8 +1136,8 @@ body{
               <img id="gcode-combo-img" alt="拍攝預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
             </div>
             <div style="display:flex;gap:10px;margin-top:4px">
-              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
-              <button id="gcode-combo-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeComboSearch()">✨ 資料庫查詢＋AI 辨識</button>
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button id="gcode-combo-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeComboSearch()" type="button">✨ 資料庫查詢＋AI 辨識</button>
             </div>
           </div>
         </div>
@@ -1181,8 +1181,8 @@ body{
 
           <div id="ai-btn-wrap" style="padding:0 16px 12px">
             <div style="display:flex;gap:10px">
-              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()">取消</button>
-              <button class="btn bp bw" style="flex:1" onclick="doAnalyze()">✨ AI 辨識（Gemini 免費）</button>
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button class="btn bp bw" style="flex:1" onclick="doAnalyze()" type="button">✨ AI 辨識（Gemini 免費）</button>
             </div>
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">已上傳圖片將自動存入對應欄位</div>
           </div>
@@ -1192,16 +1192,16 @@ body{
         <div id="form-sec" style="display:none">
           <div style="padding:10px 16px 6px;display:flex;justify-content:space-between;align-items:center">
             <span style="font-size:12px;color:#7986cb" id="form-src">來源：—</span>
-            <button class="btn bo bs" onclick="clearForm()">清除</button>
+            <button class="btn bo bs" onclick="clearForm()" type="button">清除</button>
           </div>
           <div id="hunt-aifill-wrap" style="display:none;padding:0 16px 10px">
-            <button class="btn bp bw" onclick="huntConvertAIFill()">✨ AI 補齊資料</button>
+            <button class="btn bp bw" onclick="huntConvertAIFill()" type="button">✨ AI 補齊資料</button>
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
           </div>
           <div id="form-body"></div>
           <div id="save-bar">
-            <button class="btn bo" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()">取消</button>
-            <button class="btn bp bw" id="save-btn" onclick="doSave()">儲存至收藏</button>
+            <button class="btn bo" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+            <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button">儲存至收藏</button>
           </div>
         </div>
       </div>
@@ -1216,32 +1216,32 @@ body{
           <div style="display:flex;gap:8px;align-items:center">
             <!-- 視圖切換（放大版＋文字說明）-->
             <div class="vtoggle">
-              <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018" title="卡片模式">
+              <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018" title="卡片模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
                 卡片
               </button>
-              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb" title="書架模式">
+              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb" title="書架模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
                 書架
               </button>
             </div>
             <!-- 大量刪除 -->
-            <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除" style="width:40px;height:40px">
+            <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除" style="width:40px;height:40px" type="button">
               <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
             </button>
             <!-- ⋯⋯ 更多選單 -->
             <div style="position:relative">
-              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px">⋯</button>
+              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px" type="button">⋯</button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
-                <button class="col-menu-item" onclick="colRefresh();closeColMenu()">
+                <button class="col-menu-item" onclick="colRefresh();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
                   從雲端同步
                 </button>
-                <button class="col-menu-item" onclick="exportCsvByType();closeColMenu()">
+                <button class="col-menu-item" onclick="exportCsvByType();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
                   匯出 CSV
                 </button>
-                <button class="col-menu-item" onclick="triggerImportCsv();closeColMenu()">
+                <button class="col-menu-item" onclick="triggerImportCsv();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V10m0 0-4 4m4-4 4 4M5 5h14"/></svg>
                   匯入 CSV
                 </button>
@@ -1269,13 +1269,13 @@ body{
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#7986cb;width:16px;height:16px;pointer-events:none"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input class="si" id="col-search" type="search" placeholder="搜尋名稱、平台、條碼..." oninput="filterCol()" onsearch="filterCol()">
         </div>
-        <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="掃條碼比對收藏" onclick="initColScan()">
+        <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="掃條碼比對收藏" onclick="initColScan()" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/></svg>
         </button>
-        <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="圖片辨識比對收藏" onclick="toggleImgSearchMenu()">
+        <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="圖片辨識比對收藏" onclick="toggleImgSearchMenu()" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
         </button>
-        <button class="btn bo" style="padding:9px 12px;flex-shrink:0;position:relative" title="進階篩選" onclick="openFilterSheet()">
+        <button class="btn bo" style="padding:9px 12px;flex-shrink:0;position:relative" title="進階篩選" onclick="openFilterSheet()" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>
           <span id="filter-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#00e5ff;color:#000;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;padding:0 3px">0</span>
         </button>
@@ -1284,10 +1284,10 @@ body{
       <div id="img-search-menu" style="display:none;margin:8px 16px 0;background:#141b30;border:1px solid #1e2a45;border-radius:10px;overflow:hidden">
         <div style="padding:10px 12px 4px">
           <div style="display:flex;gap:6px;margin-bottom:8px">
-            <button class="btn bo" style="flex:1;gap:8px;padding:10px 12px;justify-content:center" onclick="initColImgSearch('camera')">
+            <button class="btn bo" style="flex:1;gap:8px;padding:10px 12px;justify-content:center" onclick="initColImgSearch('camera')" type="button">
               <span>📷</span><span style="font-size:13px"><strong>拍照辨識</strong></span>
             </button>
-            <button class="btn bo" style="flex:1;gap:8px;padding:10px 12px;justify-content:center" onclick="initColImgSearch('gallery')">
+            <button class="btn bo" style="flex:1;gap:8px;padding:10px 12px;justify-content:center" onclick="initColImgSearch('gallery')" type="button">
               <span>🖼</span><span style="font-size:13px"><strong>從相簿</strong></span>
             </button>
           </div>
@@ -1319,7 +1319,7 @@ body{
         </div>
         <div style="padding:10px 14px;display:flex;gap:8px;align-items:center">
           <span style="font-size:12px;color:#7986cb;flex:1" id="col-scan-hint">對準條碼掃描...</span>
-          <button class="btn bo bs" onclick="stopColScan()">關閉</button>
+          <button class="btn bo bs" onclick="stopColScan()" type="button">關閉</button>
         </div>
       </div>
       <div id="sort-bar"></div>
@@ -1335,8 +1335,8 @@ body{
           <div class="fp-hdr">
             <div style="font-size:17px;font-weight:700">篩選</div>
             <div style="display:flex;align-items:center;gap:10px">
-              <button id="filter-clear" class="btn bo bs" style="display:none" onclick="clearFilters()">清除全部</button>
-              <button class="btn bo bs" onclick="closeFilterSheet()">✕</button>
+              <button id="filter-clear" class="btn bo bs" style="display:none" onclick="clearFilters()" type="button">清除全部</button>
+              <button class="btn bo bs" onclick="closeFilterSheet()" type="button">✕</button>
             </div>
           </div>
           <div class="filter-2pane">
@@ -1344,7 +1344,7 @@ body{
             <div id="filter-body" onclick="onFacetClick(event)"></div>
           </div>
           <div class="filter-apply-bar">
-            <button class="btn bp bw" onclick="closeFilterSheet()">顯示 <span id="filter-result">0</span> 筆結果</button>
+            <button class="btn bp bw" onclick="closeFilterSheet()" type="button">顯示 <span id="filter-result">0</span> 筆結果</button>
           </div>
         </div>
       </div>
@@ -1368,7 +1368,7 @@ body{
               <option value="artbook">動漫/美術設定集</option>
               <option value="figure">公仔</option>
             </select>
-            <button class="tbtn" onclick="dashRefresh()" title="同步資料">
+            <button class="tbtn" onclick="dashRefresh()" title="同步資料" type="button">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
             </button>
           </div>
@@ -1458,7 +1458,7 @@ body{
             <span style="flex-shrink:0">ℹ️</span>
             <div>GameVault 需要你的個人 Google 試算表作為資料庫。首次使用需要 5 分鐘完成一次設定。</div>
           </div>
-          <button class="btn bo bs" style="width:100%;margin-top:8px;font-size:11px;padding:8px" onclick="toggleSetupGuide()">展開詳細步驟</button>
+          <button class="btn bo bs" style="width:100%;margin-top:8px;font-size:11px;padding:8px" onclick="toggleSetupGuide()" type="button">展開詳細步驟</button>
           <div id="setup-guide" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,229,255,0.2)">
             <div style="margin-bottom:14px">
               <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">步驟 1：建立 Google 試算表</div>
@@ -1500,8 +1500,8 @@ body{
           </div>
           <input class="fi" id="c-url" type="url" placeholder="https://script.google.com/macros/s/...">
           <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn bo bs" style="flex:1" onclick="testSheets()">測試連線</button>
-            <button class="btn bp bs" style="flex:1" onclick="loadCol()">載入收藏</button>
+            <button class="btn bo bs" style="flex:1" onclick="testSheets()" type="button">測試連線</button>
+            <button class="btn bp bs" style="flex:1" onclick="loadCol()" type="button">載入收藏</button>
           </div>
           <div class="shlp">
             <strong>已有 Apps Script URL？</strong><br>
@@ -1516,7 +1516,7 @@ body{
           <div class="shlp">
             後端若在「指令碼屬性」設定了 <strong>APP_TOKEN</strong>，此處需填入相同字串，否則新增／修改／刪除會被拒絕。留空＝後端未啟用驗證。此 Token 只存在本機，不會匯出到公開網頁。
           </div>
-          <button class="btn bo bs" style="width:100%;margin-top:8px" onclick="gvSelfCheck()">🩺 連線自檢（驗證寫入保護）</button>
+          <button class="btn bo bs" style="width:100%;margin-top:8px" onclick="gvSelfCheck()" type="button">🩺 連線自檢（驗證寫入保護）</button>
           <div id="selfcheck-out" style="display:none;margin-top:8px;background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.25);border-radius:8px;padding:10px;font-size:12px;line-height:1.9;color:#cfe8ff"></div>
         </div>
         <div class="stitle">AI 辨識（圖片辨識必要）</div>
@@ -1532,7 +1532,7 @@ body{
         <div class="srow">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">✨ Gemini API 金鑰（免費）</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('gemini')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('gemini')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-gkey" type="password" placeholder="AIza...">
           <select class="fsel" id="c-gmdl" style="margin-top:8px;width:100%" onchange="toggleProNote(this.value)">
@@ -1543,7 +1543,7 @@ body{
               <option value="gemini-2.5-pro-preview-06-05">2.5 Pro Preview ★ 最強</option>
             </optgroup>
           </select>
-          <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testGemini()">測試</button>
+          <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testGemini()" type="button">測試</button>
           <div id="pro-note" style="display:none;margin-top:6px;padding:8px 10px;background:rgba(255,183,77,.08);border:1px solid rgba(255,183,77,.3);border-radius:8px;font-size:11px;color:#ffb74d">
             ⚠️ 付費模型需在 <a href="https://aistudio.google.com/billing" target="_blank" style="color:#ffb74d">Google AI Studio</a> 啟用計費帳戶
           </div>
@@ -1569,12 +1569,12 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🛒 楽天市場</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('rakuten')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('rakuten')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-rktid" type="password" placeholder="Application ID (App ID)">
           <input class="fi" id="c-rktkey" type="password" placeholder="Access Key" style="margin-top:6px">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testRakuten()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testRakuten()" type="button">測試</button>
           </div>
           <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 楽天市場 ↗</a>
           <div class="shlp" style="margin-top:8px">webservice.rakuten.co.jp → 新規アプリ登録（免費）→ 取得 Application ID 與 Access Key（兩者皆必填）；用於日版 JAN 條碼直查與攻略本 ISBN 查詢（楽天ブックス）</div>
@@ -1582,11 +1582,11 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🛍 Yahoo!ショッピング（市場估值，免費）</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('yahoo')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('yahoo')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-yjappid" type="password" placeholder="Client ID / アプリケーションID">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testYahoo()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testYahoo()" type="button">測試</button>
           </div>
           <a href="https://developer.yahoo.co.jp/webapi/shopping/v3/itemsearch.html" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Yahoo!ショッピング ↗</a>
           <div class="shlp" style="margin-top:8px">developer.yahoo.co.jp → 商品検索 API。用於日本市場目前刊登價估值，不是成交價。</div>
@@ -1594,12 +1594,12 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🌐 eBay Browse（市場估值，免費額度）</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('ebay')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('ebay')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-ebayid" type="password" placeholder="Client ID">
           <input class="fi" id="c-ebaysec" type="password" placeholder="Client Secret" style="margin-top:6px">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testEbay()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testEbay()" type="button">測試</button>
           </div>
           <a href="https://developer.ebay.com/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 eBay Browse ↗</a>
           <div class="shlp" style="margin-top:8px">eBay Browse API 可查目前刊登價；免費開發者帳號有預設額度。不是 sold / completed 成交價，僅作北美/歐版市場參考。</div>
@@ -1607,10 +1607,10 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div class="srl" style="margin:0">🏷 自訂市場連結</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('custom_market')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('custom_market')" type="button">❓ 說明</button>
           </div>
           <div id="cm-list"></div>
-          <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="cmOpenEditor(-1)">＋ 新增市場</button>
+          <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="cmOpenEditor(-1)" type="button">＋ 新增市場</button>
           <div class="shlp" style="margin-top:8px">在商品詳情與尋寶頁的「二手估值市場參考」加入自己常用的查價網站；該區塊改為可左右滑動。最多 12 個，僅存於本機（隨「匯出／匯入設定」攜帶）。</div>
         </div>
         <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
@@ -1624,7 +1624,7 @@ body{
         <div class="srow">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🤖 OpenAI API 金鑰</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('openai')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('openai')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-okey" type="password" placeholder="sk-...">
           <select class="fsel" id="c-omdl" style="margin-top:8px;width:100%">
@@ -1632,7 +1632,7 @@ body{
             <option value="gpt-4o">GPT-4o（最強）</option>
             <option value="gpt-4.1-mini">GPT-4.1 mini</option>
           </select>
-          <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testOpenAI()">測試</button>
+          <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testOpenAI()" type="button">測試</button>
           <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 OpenAI API ↗</a>
           <div style="margin-top:8px;padding:8px 10px;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.2);border-radius:8px;font-size:11px;color:#7986cb;line-height:1.6">
             ⚠️ OpenAI API <strong style="color:#ffb300">需要付費帳號</strong>才能使用（非 ChatGPT Plus）<br>
@@ -1644,11 +1644,11 @@ body{
         <div class="srow">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">💣 Giant Bomb</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('giantbomb')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('giantbomb')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-gbkey" type="password" placeholder="API Key">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testGiantBomb()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testGiantBomb()" type="button">測試</button>
           </div>
           <a href="https://www.giantbomb.com/api/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Giant Bomb ↗</a>
           <div class="shlp" style="margin-top:8px">giantbomb.com/api → 登入取得（免費，每分鐘 200 次）<br><span style="color:#ef5350;font-size:10px">⚠️ 注意：遊戲 API 目前暫停服務，待官方恢復後可使用</span></div>
@@ -1656,11 +1656,11 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">👾 MobyGames</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('mobygames')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('mobygames')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-mbkey" type="password" placeholder="API Key">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testMobyGames()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testMobyGames()" type="button">測試</button>
           </div>
           <a href="https://www.mobygames.com/api/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 MobyGames ↗</a>
           <div class="shlp" style="margin-top:8px">mobygames.com/api → 訂閱 Hobbyist 方案（付費，$9.99/月起；免費方案已於 2025/03 終止，個人用途不提供免費金鑰）</div>
@@ -1668,14 +1668,14 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">💿 ScreenScraper.fr</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('screenscraper')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('screenscraper')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-ssid" type="text" placeholder="會員帳號" style="margin-bottom:8px">
           <input class="fi" id="c-sspass" type="password" placeholder="會員密碼" style="margin-bottom:8px">
           <input class="fi" id="c-ssdevid" type="text" placeholder="開發者帳號 devid" style="margin-bottom:8px">
           <input class="fi" id="c-ssdevpass" type="password" placeholder="開發者密碼 devpassword">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testScreenScraper()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testScreenScraper()" type="button">測試</button>
           </div>
           <a href="https://www.screenscraper.fr/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 ScreenScraper.fr ↗</a>
           <div class="shlp" style="margin-top:8px">screenscraper.fr → 先註冊會員帳號（免費）→ 填會員帳密；再向官方論壇申請「開發者帳號」devid/devpassword，一併填入。特點：序號／名稱查詢、中文簡介、封面與遊戲截圖。</div>
@@ -1683,11 +1683,11 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🗄 TheGamesDB</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('thegamesdb')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('thegamesdb')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-tgdbkey" type="password" placeholder="API Key">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testTGDB()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testTGDB()" type="button">測試</button>
           </div>
           <a href="https://api.thegamesdb.net/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 TheGamesDB ↗</a>
           <div class="shlp" style="margin-top:8px">thegamesdb.net → 建立帳號 → 進入「Developer Console」取得 API Key（免費，每月 3000 次請求）；速率限制：每秒 1 次。</div>
@@ -1695,11 +1695,11 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">📊 Barcode Lookup API</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('barcode')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('barcode')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-blkey" type="password" placeholder="API Key">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testBarcodeLookup()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testBarcodeLookup()" type="button">測試</button>
           </div>
           <a href="https://www.barcodelookup.com/api" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Barcode Lookup API ↗</a>
           <div class="shlp" style="margin-top:8px">barcodelookup.com/api → 免費方案（100 次/月）或付費（$0.99/月起）；免費用戶無需 API Key，點「測試」驗證可用額度。</div>
@@ -1707,12 +1707,12 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🎮 IGDB — Twitch 憑證</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('igdb')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('igdb')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-iid" type="text" placeholder="Client ID" style="margin-bottom:8px">
           <input class="fi" id="c-isec" type="password" placeholder="Client Secret">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testIGDB()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testIGDB()" type="button">測試</button>
           </div>
           <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Twitch 開發者主控台 ↗</a>
           <div class="shlp" style="margin-top:8px">dev.twitch.tv → 建立應用程式（Confidential 類型）→ 取得 Client ID 和 Client Secret（後端會自動交換 OAuth Token，使用者只需填寫兩個認證資訊）。</div>
@@ -1724,7 +1724,7 @@ body{
           <input class="fi" id="c-gcsekey" type="password" placeholder="Google API Key">
           <input class="fi" id="c-gcxid" type="text" placeholder="Search Engine ID (cx)" style="margin-top:8px">
           <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testGCSE()">測試</button>
+            <button class="btn bo bw bs" style="flex:1" onclick="testGCSE()" type="button">測試</button>
           </div>
           <a href="https://programmablesearchengine.google.com/" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Google Programmable Search Engine ↗</a>
           <div class="shlp" style="margin-top:8px">Google Cloud → 啟用 Custom Search API → 建立 API Key。再到 Programmable Search Engine 建立搜尋引擎（勾選「搜尋全網」）取得 cx ID。免費額度：每日 100 次。無封面時自動以名稱+平台搜尋圖片帶入。</div>
@@ -1732,7 +1732,7 @@ body{
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🗺 Google 地圖 — 報價縮圖（選填）</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('googlemaps')">❓ 說明</button>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('googlemaps')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-gmapskey" type="password" placeholder="Maps Static API Key">
           <a href="https://cloud.google.com/maps-platform" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Google Maps Platform ↗</a>
@@ -1755,7 +1755,7 @@ body{
             <span style="font-size:13px;color:#7986cb;flex:0 0 auto">1 USD =</span>
             <input class="fi mono" id="c-fx-usd" inputmode="decimal" placeholder="32" style="flex:1" onchange="saveFxFromInputs()">
           </div>
-          <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="updateFxLive()">🔄 同步即時匯率</button>
+          <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="updateFxLive()" type="button">🔄 同步即時匯率</button>
           <div class="shlp">尋寶報價為日圓／美元時，會在下方顯示「≈ NT$」並可跨幣別比最低價。手動值離線可用；按上方鈕會抓即時匯率覆寫（來源：open.er-api.com，免金鑰）。</div>
         </div>
           </div>
@@ -1770,8 +1770,8 @@ body{
           <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
             <img id="appimg-logo-prev" alt="" style="width:56px;height:56px;border-radius:14px;object-fit:cover;border:1px solid #1e2a45;background:#0f1525;display:none">
             <div style="flex:1;display:flex;gap:8px">
-              <button class="btn bo bs" style="flex:1" onclick="pickAppImage('logo')">選擇圖片</button>
-              <button class="btn bo bs" style="flex:1;color:#ff7043;border-color:#ff7043" onclick="resetAppImage('logo')">還原預設</button>
+              <button class="btn bo bs" style="flex:1" onclick="pickAppImage('logo')" type="button">選擇圖片</button>
+              <button class="btn bo bs" style="flex:1;color:#ff7043;border-color:#ff7043" onclick="resetAppImage('logo')" type="button">還原預設</button>
             </div>
           </div>
           <div class="shlp">替換開機啟動畫面的 logo（僅本機；不影響手機桌面 App 圖示）。建議方形圖。</div>
@@ -1781,8 +1781,8 @@ body{
           <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
             <img id="appimg-bg-prev" alt="" style="width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid #1e2a45;background:#0f1525;display:none">
             <div style="flex:1;display:flex;gap:8px">
-              <button class="btn bo bs" style="flex:1" onclick="pickAppImage('bg')">選擇圖片</button>
-              <button class="btn bo bs" style="flex:1;color:#ff7043;border-color:#ff7043" onclick="resetAppImage('bg')">還原預設</button>
+              <button class="btn bo bs" style="flex:1" onclick="pickAppImage('bg')" type="button">選擇圖片</button>
+              <button class="btn bo bs" style="flex:1;color:#ff7043;border-color:#ff7043" onclick="resetAppImage('bg')" type="button">還原預設</button>
             </div>
           </div>
           <div class="shlp">替換 App 背景圖（僅本機）。建議直式、解析度接近螢幕。</div>
@@ -1798,7 +1798,7 @@ body{
           <div class="srl">建立常用保管位置</div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <input class="fi" id="new-storage-loc" type="text" placeholder="例如：客廳書櫃、倉庫A箱12" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addStorageLocation();}">
-            <button class="btn bp bs" style="flex-shrink:0" onclick="addStorageLocation()">➕ 新增</button>
+            <button class="btn bp bs" style="flex-shrink:0" onclick="addStorageLocation()" type="button">➕ 新增</button>
           </div>
           <div class="shlp">建立後，建檔表單的「保管位置」欄位會變成從這份清單選擇，避免同一個位置打成不同的字。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
           <div id="storage-loc-list" style="margin-top:10px"></div>
@@ -1815,7 +1815,7 @@ body{
           <input class="fi" id="new-digital-acct" type="text" placeholder="例如：我的 PSN、家人共用 Switch" style="margin-top:8px" onkeydown="if(event.key==='Enter'){event.preventDefault();addDigitalAccount();}">
           <div style="display:flex;gap:8px;margin-top:8px">
             <select class="fsel" id="new-digital-acct-plat" style="flex:1"></select>
-            <button class="btn bp bs" style="flex-shrink:0" onclick="addDigitalAccount()">➕ 新增</button>
+            <button class="btn bp bs" style="flex-shrink:0" onclick="addDigitalAccount()" type="button">➕ 新增</button>
           </div>
           <div class="shlp">選擇平台後，這個帳號只會出現在該平台的「購入帳號」選項裡；選「不限平台」則所有數位下載版都看得到。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
           <div id="digital-acct-list" style="margin-top:10px"></div>
@@ -1830,11 +1830,11 @@ body{
         <div class="stitle">測試樣本</div>
         <div class="srow">
           <div class="srl">📦 預設樣本</div>
-          <button class="btn bp bw bs" onclick="loadSamples()">匯入 5 筆樣本藏品</button>
+          <button class="btn bp bw bs" onclick="loadSamples()" type="button">匯入 5 筆樣本藏品</button>
           <div class="shlp">內含遊戲、攻略等多個類別的範例藏品，可用於體驗 App 功能。任何時刻都可重複匯入。</div>
         </div>
         <div class="stitle">說明文件</div>
-        <button class="btn bo bw bs" style="color:#7986cb;border-color:#7986cb;margin-bottom:8px" onclick="downloadManual()">📖 下載使用說明書</button>
+        <button class="btn bo bw bs" style="color:#7986cb;border-color:#7986cb;margin-bottom:8px" onclick="downloadManual()" type="button">📖 下載使用說明書</button>
         <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
@@ -1848,15 +1848,15 @@ body{
           </div>
         </div>
         <div class="stitle">儲存</div>
-        <button class="btn bp bw" style="margin-bottom:10px" onclick="saveCfg()">儲存所有設定</button>
+        <button class="btn bp bw" style="margin-bottom:10px" onclick="saveCfg()" type="button">儲存所有設定</button>
         <div style="display:flex;gap:8px;margin-bottom:16px">
-          <button class="btn bo bs" style="flex:1" onclick="exportCfg()">📤 匯出設定</button>
-          <button class="btn bo bs" style="flex:1" onclick="importCfg()">📥 匯入設定</button>
+          <button class="btn bo bs" style="flex:1" onclick="exportCfg()" type="button">📤 匯出設定</button>
+          <button class="btn bo bs" style="flex:1" onclick="importCfg()" type="button">📥 匯入設定</button>
         </div>
-        <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()">🗑️ 清除設定與快取</button>
-        <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()">🔧 修復工作表標題列</button>
+        <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
+        <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
         <div style="font-size:11px;color:#555;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
-        <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()">🔬 測試 AI 連線</button>
+        <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
         <div style="font-size:11px;color:#555;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
 
       </div>
@@ -1882,32 +1882,32 @@ body{
         </div>
       </div>
       <div id="hunt-body"></div>
-      <button id="hunt-lens-fab" onclick="huntLensStart()" aria-label="拍照辨識遊戲"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+      <button id="hunt-lens-fab" onclick="huntLensStart()" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
     </div>
 
   </div><!-- /content -->
 
   <!-- ══ Bottom Nav ══ -->
   <nav id="nav">
-    <button class="nb on" id="nb-scan" onclick="showPg('scan')">
+    <button class="nb on" id="nb-scan" onclick="showPg('scan')" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/>
         <rect x="7" y="7" width="10" height="10" rx="1"/>
       </svg>建檔
     </button>
-    <button class="nb" id="nb-col" onclick="showPg('col')">
+    <button class="nb" id="nb-col" onclick="showPg('col')" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
       </svg>收藏
     </button>
-    <button class="nb" id="nb-hunt" onclick="showPg('hunt')">
+    <button class="nb" id="nb-hunt" onclick="showPg('hunt')" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>
         <path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>
       </svg>尋寶
     </button>
-    <button class="nb" id="nb-dash" onclick="showPg('dash')">
+    <button class="nb" id="nb-dash" onclick="showPg('dash')" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <rect x="3" y="3" width="7" height="11" rx="1"/>
         <rect x="14" y="3" width="7" height="5" rx="1"/>
@@ -1915,7 +1915,7 @@ body{
         <rect x="3" y="18" width="7" height="3" rx="1"/>
       </svg>統計
     </button>
-    <button class="nb" id="nb-cfg" onclick="showPg('cfg')">
+    <button class="nb" id="nb-cfg" onclick="showPg('cfg')" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -1927,8 +1927,8 @@ body{
 <!-- Detail sheet -->
 <div id="dsheet">
   <div id="dov"></div>
-  <button class="dnav-float" id="dprev-float" title="上一筆">‹</button>
-  <button class="dnav-float" id="dnext-float" title="下一筆">›</button>
+  <button class="dnav-float" id="dprev-float" title="上一筆" type="button">‹</button>
+  <button class="dnav-float" id="dnext-float" title="下一筆" type="button">›</button>
   <div id="dp">
     <div class="dhandle"></div>
     <div class="dhdr">
@@ -1939,7 +1939,7 @@ body{
   </div>
 </div>
 <div id="toast"></div>
-<div id="lov"><div class="spin"></div><div class="ltxt" id="ltxt">處理中...</div><button id="l-cancel-btn" onclick="cancelAI()" style="display:none;margin-top:14px;padding:6px 18px;background:transparent;border:1px solid #1e2a45;border-radius:8px;color:#7986cb;font-size:12px;cursor:pointer">取消，手動填寫</button></div>
+<div id="lov"><div class="spin"></div><div class="ltxt" id="ltxt">處理中...</div><button id="l-cancel-btn" onclick="cancelAI()" style="display:none;margin-top:14px;padding:6px 18px;background:transparent;border:1px solid #1e2a45;border-radius:8px;color:#7986cb;font-size:12px;cursor:pointer" type="button">取消，手動填寫</button></div>
 
 <script>
 // ════════════════════════════════════════
@@ -2225,7 +2225,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v51.02';
+const APP_VERSION='v52.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4048,8 +4048,8 @@ function cmRenderList(){
       ic+
       '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(m.n)+'</div>'+
       '<div style="font-size:10px;color:#7986cb">'+langTxt+'</div></div>'+
-      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px" onclick="cmOpenEditor('+i+')">編輯</button>'+
-      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="cmDelete('+i+')">刪除</button>'+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px" onclick="cmOpenEditor('+i+')" type="button">編輯</button>'+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="cmDelete('+i+')" type="button">刪除</button>'+
     '</div>';
   }).join('');
 }
@@ -4203,7 +4203,7 @@ function slRenderList(){
   box.innerHTML=list.map(function(loc,i){
     return '<div style="display:flex;align-items:center;gap:10px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:8px 10px;margin-bottom:6px">'+
       '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(loc)+'</div>'+
-      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="slDelete('+i+')">刪除</button>'+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a" onclick="slDelete('+i+')" type="button">刪除</button>'+
     '</div>';
   }).join('');
 }
@@ -4251,7 +4251,7 @@ function acRenderList(){
     return '<div style="display:flex;align-items:center;gap:10px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:8px 10px;margin-bottom:6px">'+
       '<div style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(a.name)+'</div>'+
       platTag+
-      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a;flex-shrink:0" onclick="acDelete('+i+')">刪除</button>'+
+      '<button class="btn bo bs" style="padding:6px 10px;font-size:12px;color:#ff5252;border-color:#5a2a2a;flex-shrink:0" onclick="acDelete('+i+')" type="button">刪除</button>'+
     '</div>';
   }).join('');
 }
@@ -5024,9 +5024,9 @@ function colSelBar(){
   }
   if(tools)tools.style.display='none';
   bar.style.display='flex';
-  bar.innerHTML='<button class="btn bo" onclick="colSelectAllVisible()">全選</button>'+
-    '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="colDeleteSelected()">刪除（'+_colSelSet.size+'）</button>'+
-    '<button class="btn bo" onclick="colToggleSelect()">取消</button>';
+  bar.innerHTML='<button class="btn bo" onclick="colSelectAllVisible()" type="button">全選</button>'+
+    '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="colDeleteSelected()" type="button">刪除（'+_colSelSet.size+'）</button>'+
+    '<button class="btn bo" onclick="colToggleSelect()" type="button">取消</button>';
 }
 function colDeleteSelected(){
   if(!_colSelSet.size){toast('尚未選取','er');return;}
@@ -6305,7 +6305,7 @@ function showDbSrcSheet(){
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6">查詢資料來源</div></div>'+
     '<div style="font-size:10px;color:#555;line-height:1.6;margin:0 2px 10px;flex-shrink:0">💡 純條碼／編碼流程中，「名稱」型資料庫需 AI 先辨識出名稱才會被調用；書籍類查詢只會調用書籍類（📖）資料庫。</div>'+
     '<div class="dbsrc-table" style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+rows+'</div>'+
-    '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:10px" onclick="_dbSrcClose()">關閉</button></div></div>';
+    '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:10px" onclick="_dbSrcClose()" type="button">關閉</button></div></div>';
   ov.style.display='flex';
 }
 // 競態條件防護計數器
@@ -7651,22 +7651,22 @@ function pickTypeAndPlatform(mode,cb){
           ' style="padding:12px;background:'+(_selectedType==='遊戲'?'rgba(0,229,255,.15)':'#0f1525')+
           ';border:1.5px solid '+(_selectedType==='遊戲'?'#00e5ff':'#1e2a45')+
           ';border-radius:10px;color:'+(_selectedType==='遊戲'?'#00e5ff':'#7986cb')+
-          ';font-size:13px;font-weight:600;cursor:pointer">🎮 遊戲</button>'+
+          ';font-size:13px;font-weight:600;cursor:pointer" type="button">🎮 遊戲</button>'+
         '<button id="tp-book" data-t="book" onclick="selectType(this.dataset.t)"'+
           ' style="padding:12px;background:'+(_selectedType==='攻略'?'rgba(206,147,216,.15)':'#0f1525')+
           ';border:1.5px solid '+(_selectedType==='攻略'?'#ce93d8':'#1e2a45')+
           ';border-radius:10px;color:'+(_selectedType==='攻略'?'#ce93d8':'#7986cb')+
-          ';font-size:13px;font-weight:600;cursor:pointer">📚 書籍</button>'+
+          ';font-size:13px;font-weight:600;cursor:pointer" type="button">📚 書籍</button>'+
         '<button id="tp-console" data-t="console" onclick="selectType(this.dataset.t)"'+
           ' style="padding:12px;background:'+(_selectedType==='主機'?'rgba(105,240,174,.15)':'#0f1525')+
           ';border:1.5px solid '+(_selectedType==='主機'?'#69f0ae':'#1e2a45')+
           ';border-radius:10px;color:'+(_selectedType==='主機'?'#69f0ae':'#7986cb')+
-          ';font-size:13px;font-weight:600;cursor:pointer">🕹️ 主機</button>'+
+          ';font-size:13px;font-weight:600;cursor:pointer" type="button">🕹️ 主機</button>'+
         '<button id="tp-periph" data-t="peripheral" onclick="selectType(this.dataset.t)"'+
           ' style="padding:12px;background:'+(_selectedType==='週邊'?'rgba(255,171,64,.15)':'#0f1525')+
           ';border:1.5px solid '+(_selectedType==='週邊'?'#ffab40':'#1e2a45')+
           ';border-radius:10px;color:'+(_selectedType==='週邊'?'#ffab40':'#7986cb')+
-          ';font-size:13px;font-weight:600;cursor:pointer">🎧 週邊</button>'+
+          ';font-size:13px;font-weight:600;cursor:pointer" type="button">🎧 週邊</button>'+
       '</div>'+
     '</div>'+
     // 平台選擇（僅遊戲時顯示）
@@ -7676,8 +7676,8 @@ function pickTypeAndPlatform(mode,cb){
       '<select id="tp-platform" class="fsel" style="width:100%">'+platSelHtml+'</select>'+
     '</div>'+
     // 確認按鈕
-    '<button onclick="confirmTypePlatform()" class="btn bp bw" style="margin-bottom:8px">確認，開始建檔</button>'+
-    '<button onclick="cancelTypePicker()" class="btn bo bw bs" style="color:#7986cb">取消</button>'+
+    '<button onclick="confirmTypePlatform()" class="btn bp bw" style="margin-bottom:8px" type="button">確認，開始建檔</button>'+
+    '<button onclick="cancelTypePicker()" class="btn bo bw bs" style="color:#7986cb" type="button">取消</button>'+
     '</div>';
   window._typePickerCb=cb;
 }
@@ -7715,7 +7715,7 @@ function enterMode(){
     bar=document.createElement('div');
     bar.id='mode-back-bar';
     bar.style.cssText='padding:12px 16px 4px;display:flex;align-items:center';
-    bar.innerHTML='<button onclick="backToModeSelect()" style="background:transparent;border:1px solid #00e5ff;color:#00e5ff;font-size:13px;padding:8px 16px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px"><span style="font-size:16px">‹</span> 返回選擇建檔方式</button>';
+    bar.innerHTML='<button onclick="backToModeSelect()" style="background:transparent;border:1px solid #00e5ff;color:#00e5ff;font-size:13px;padding:8px 16px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:6px" type="button"><span style="font-size:16px">‹</span> 返回選擇建檔方式</button>';
     var ms2=$('method-sel');
     if(ms2&&ms2.parentNode)ms2.parentNode.insertBefore(bar,ms2);
   }
@@ -7863,7 +7863,7 @@ function digitalLinkFetch(){
   shGet({action:'fetch_store_page',url:url}).then(function(page){
     if(!page||page.error||!page.title){
       var reason=[page&&page.error,page&&page.hint].filter(Boolean).join('；')||'伺服器無回應';
-      if(st)st.innerHTML='⚠️ 抓取失敗（'+esc(reason)+'）<br><button class="btn bp bs" style="margin-top:8px" onclick="digitalLinkToManual()">✏️ 改用手動建檔（保留此網址）</button>';
+      if(st)st.innerHTML='⚠️ 抓取失敗（'+esc(reason)+'）<br><button class="btn bp bs" style="margin-top:8px" onclick="digitalLinkToManual()" type="button">✏️ 改用手動建檔（保留此網址）</button>';
       toast('抓取失敗：'+reason,'er',6000);
       _btnRelease('digitalLink');
       return null;
@@ -8399,8 +8399,8 @@ function buildManualBarcodeUI(o){
     ' style="text-align:center;font-size:18px;letter-spacing:3px;margin-bottom:10px"'+
     ' onkeydown="if(this.value&&event.key===\'Enter\'){'+o.onConfirm+'(this.value.trim())}">'+
     '<div style="display:flex;gap:8px">'+
-    '<button class="btn bo" style="flex:1;font-size:13px" onclick="'+o.onBack+'()">📷 切回相機</button>'+
-    '<button class="btn bp" style="flex:1;font-size:13px" onclick="'+o.onConfirm+'(document.getElementById(\''+o.inputId+'\').value.trim())">確認</button>'+
+    '<button class="btn bo" style="flex:1;font-size:13px" onclick="'+o.onBack+'()" type="button">📷 切回相機</button>'+
+    '<button class="btn bp" style="flex:1;font-size:13px" onclick="'+o.onConfirm+'(document.getElementById(\''+o.inputId+'\').value.trim())" type="button">確認</button>'+
     '</div></div>';
 }
 function comboShowManual(){
@@ -8433,9 +8433,9 @@ function openFieldScanner(opt){
   var bar=$('fscan-bar');
   if(bar){
     var html='';
-    (_fscanOpt.secondary||[]).forEach(function(b,i){html+='<button data-fsx="'+i+'">'+b.label+'</button>';});
-    html+='<button id="fscan-cancel-btn">取消</button>';
-    if(!isBar)html+='<button id="fscan-shot" class="cp" onclick="fscanCapture()">'+(_fscanOpt.shotLabel||'📷 拍攝並辨識')+'</button>';
+    (_fscanOpt.secondary||[]).forEach(function(b,i){html+='<button data-fsx="'+i+'" type="button">'+b.label+'</button>';});
+    html+='<button id="fscan-cancel-btn" type="button">取消</button>';
+    if(!isBar)html+='<button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">'+(_fscanOpt.shotLabel||'📷 拍攝並辨識')+'</button>';
     bar.innerHTML=html;
     (_fscanOpt.secondary||[]).forEach(function(b,i){
       var el=bar.querySelector('[data-fsx="'+i+'"]');
@@ -8812,13 +8812,6 @@ function barAIFill(bc,hint,hasGB){
     });
 }
 
-// ── 手動輸入條碼（bar-sec 模式）──
-function barRestartScanner(){
-  stopScanner();
-  var br=$('bar-result');if(br)br.style.display='none';
-  _barScanLaunch(); // #1：改用統一全螢幕取景框
-}
-
 // AI 搜尋遊戲資料（IGDB 備援）
 // ── AI 條碼自動填寫 ──
 
@@ -8866,7 +8859,7 @@ function renderSlotThumbs(){
     if(has){
       var url=URL.createObjectURL(_slotImgs[s]);
       inner='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover">'+
-            '<button class="tslot-del" onclick="event.stopPropagation();clearSlot(\''+s+'\')">\u2715</button>';
+            '<button class="tslot-del" onclick="event.stopPropagation();clearSlot(\''+s+'\')" type="button">\u2715</button>';
     }else{
       inner='<div class="tslot-ph">'+lbls[s]+'</div>';
     }
@@ -9415,8 +9408,8 @@ function openRelatedPicker(){
     '</div>'+
     '<div id="gp-list" style="overflow-y:auto;flex:1">'+_relRows(_relPickList)+'</div>'+
     '<div style="padding:12px 16px;border-top:1px solid #1e2a45;flex-shrink:0;display:flex;gap:8px">'+
-      '<button onclick="closeGamePicker()" class="btn bo" style="flex:1;color:#7986cb">取消</button>'+
-      '<button onclick="confirmRelatedPicker()" class="btn bp" style="flex:1">完成</button>'+
+      '<button onclick="closeGamePicker()" class="btn bo" style="flex:1;color:#7986cb" type="button">取消</button>'+
+      '<button onclick="confirmRelatedPicker()" class="btn bp" style="flex:1" type="button">完成</button>'+
     '</div>'+
     '</div>';
 }
@@ -9767,18 +9760,18 @@ function renderFld(f){
       return '<div style="display:flex;align-items:center;gap:8px;background:#0f1525;border:1px solid #1e2a45;border-radius:8px;padding:6px 10px;margin-bottom:4px">'+
         (cat?'<span style="font-size:9px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 5px;flex-shrink:0">'+esc(catLabel(cat))+'</span>':'')+
         '<span style="flex:1;min-width:0;font-size:12px;color:#e8eaf6">'+esc(nm)+(it?'':' <span style="color:#7986cb;font-size:10px">(未在收藏)</span>')+'</span>'+
-        '<button class="btn bo" style="padding:2px 8px;flex-shrink:0;font-size:11px;color:#ef5350;border-color:#ef5350" onclick="_relRemove(\''+tEsc+'\')">✕</button>'+
+        '<button class="btn bo" style="padding:2px 8px;flex-shrink:0;font-size:11px;color:#ef5350;border-color:#ef5350" onclick="_relRemove(\''+tEsc+'\')" type="button">✕</button>'+
       '</div>';
     }).join('');
     return wrap+'<label class="fl">'+lbl+'</label>'+
       '<div>'+_chips+'</div>'+
-      '<button class="btn bo bw" style="margin-top:2px;font-size:12px" onclick="openRelatedPicker()">➕ 關聯商品</button>'+
+      '<button class="btn bo bw" style="margin-top:2px;font-size:12px" onclick="openRelatedPicker()" type="button">➕ 關聯商品</button>'+
       '</div>';
   }
   if(type==='autolink'){
     return wrap+'<label class="fl">'+lbl+'</label><div style="display:flex;gap:8px">'+
       '<input class="fi" type="url" value="'+esc(v)+'" placeholder="https://..." style="flex:1" data-k="'+(k)+'" oninput="onFld(this.dataset.k,this.value)">'+
-      '<button class="btn bo bs" style="flex-shrink:0" onclick="makeRefLink()">🔍自動</button></div></div>';
+      '<button class="btn bo bs" style="flex-shrink:0" onclick="makeRefLink()" type="button">🔍自動</button></div></div>';
   }
   if(type==='imgupload'){
     var hasImg=hasImgVal(v);
@@ -9796,7 +9789,7 @@ function renderFld(f){
       '</div>'+
       '<div id="lbl-'+k+'" style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:4px;display:'+(hasImg?'block':'none')+'">'+
         (hasImg?'已上傳':'')+'</div>'+
-      '<button id="clr-'+k+'" class="btn bo bs" style="width:100%;color:#ff5252;border-color:#ff5252;display:'+(hasImg?'block':'none')+'" data-k="'+k+'" onclick="clearImg(this.dataset.k)">✕ 移除圖片</button></div>';
+      '<button id="clr-'+k+'" class="btn bo bs" style="width:100%;color:#ff5252;border-color:#ff5252;display:'+(hasImg?'block':'none')+'" data-k="'+k+'" onclick="clearImg(this.dataset.k)" type="button">✕ 移除圖片</button></div>';
   }
   if(type==='multiimg'){
     var _exArr=[];try{_exArr=JSON.parse(v||'[]');}catch(e){_exArr=[];}
@@ -10475,7 +10468,7 @@ function renderDash(){
       '<div class="dv2-empty-ic">\uD83D\uDCCA</div>'+
       '<div class="dv2-empty-t">'+(cat?'\u6b64\u5206\u985e\u5c1a\u7121\u8cc7\u6599':'\u5c1a\u7121\u6536\u85cf\u8cc7\u6599')+'</div>'+
       '<div class="dv2-empty-s">\u8acb\u81f3\u6536\u85cf\u9801\u9762\u9ede\u2713\u540c\u6b65\u8cc7\u6599</div>'+
-      '<button class="btn bp" style="margin-top:16px;font-size:13px" onclick="showPg(\'col\')">\u524d\u5f80\u6536\u85cf\u9801\u9762</button></div>';
+      '<button class="btn bp" style="margin-top:16px;font-size:13px" onclick="showPg(\'col\')" type="button">\u524d\u5f80\u6536\u85cf\u9801\u9762</button></div>';
     var det=$('dash-kpi-detail');if(det){det.style.display='none';det.innerHTML='';}
     ['dash-finance','dash-recent'].forEach(function(id){var e=$(id);if(e)e.innerHTML='';});
     ['yearly','mid','cond'].forEach(function(k){if(_dashCharts[k]){_dashCharts[k].destroy();_dashCharts[k]=null;}});
@@ -10673,7 +10666,7 @@ function initColScan(){
     $('col-scan-hint').textContent='裝置不支援掃描，請手動輸入條碼';
     $('col-scan-wrap').innerHTML='<div style="padding:20px;text-align:center;color:#7986cb">'+
       '<input class="fi mono" id="col-mbar" type="text" inputmode="numeric" maxlength="13" placeholder="EAN-13 條碼" style="text-align:center;font-size:16px;letter-spacing:2px;margin-bottom:10px">'+
-      '<button class="btn bp bw" onclick="searchColByBarcode(document.getElementById(\'col-mbar\').value.trim())">搜尋</button></div>';
+      '<button class="btn bp bw" onclick="searchColByBarcode(document.getElementById(\'col-mbar\').value.trim())" type="button">搜尋</button></div>';
     return;
   }
   _colScan.start();
@@ -11125,16 +11118,16 @@ function renderFilterSummary(){
   Object.keys(colFilters).forEach(function(k){
     var f=_facetByKey(k),lbl=f?f.label:k;
     (colFilters[k]||[]).forEach(function(v){
-      chips.push('<button class="filter-pill" onclick="removeFacetFilter(\''+_escAttr(k)+'\',\''+_escAttr(v)+'\')"><b>'+esc(lbl)+'</b>'+esc(_facetDisp(k,v))+'<span class="x">×</span></button>');
+      chips.push('<button class="filter-pill" onclick="removeFacetFilter(\''+_escAttr(k)+'\',\''+_escAttr(v)+'\')" type="button"><b>'+esc(lbl)+'</b>'+esc(_facetDisp(k,v))+'<span class="x">×</span></button>');
     });
   });
   if(_pmin!==''||_pmax!==''){
     var txt=(_pmin||'0')+' - '+(_pmax||'∞');
-    chips.push('<button class="filter-pill" onclick="removeFacetFilter(\'__price__\',\'\')"><b>購入價</b>'+esc(txt)+'<span class="x">×</span></button>');
+    chips.push('<button class="filter-pill" onclick="removeFacetFilter(\'__price__\',\'\')" type="button"><b>購入價</b>'+esc(txt)+'<span class="x">×</span></button>');
   }
   if(_mvmin!==''||_mvmax!==''){
     var vtxt=(_mvmin||'0')+' - '+(_mvmax||'∞');
-    chips.push('<button class="filter-pill" onclick="removeFacetFilter(\'__market__\',\'\')"><b>估值</b>'+esc(vtxt)+'<span class="x">×</span></button>');
+    chips.push('<button class="filter-pill" onclick="removeFacetFilter(\'__market__\',\'\')" type="button"><b>估值</b>'+esc(vtxt)+'<span class="x">×</span></button>');
   }
   el.classList.toggle('on',!!chips.length);
   el.innerHTML=chips.length?('<span class="filter-pill-lbl">已篩選</span>'+chips.join('')):'';
@@ -11768,12 +11761,12 @@ function createPressGesture(cfg){
 function _showActionSheet(o){
   var ov=$(o.ovId);
   if(!ov){ov=document.createElement('div');ov.id=o.ovId;ov.style.cssText='position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center';ov.onclick=function(e){if(e.target===ov)window[o.closeName]();};document.body.appendChild(ov);}
-  var btns=o.buttons.map(function(b){return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'">'+b.label+'</button>';}).join('');
+  var btns=o.buttons.map(function(b){return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';}).join('');
   ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;display:flex;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.name)+'</div></div>'+
     '<div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+btns+'</div>'+
-    '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="'+o.closeName+'()">取消</button></div></div>';
+    '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="'+o.closeName+'()" type="button">取消</button></div></div>';
   ov.style.display='flex';
 }
 
@@ -11828,7 +11821,7 @@ function _detailValHtml(k,v,isBook2){
             var cat=it.data.category||'';var cc=_relCatColor(cat);
             var nav=(''+_relIdOf(it)).replace(/'/g,"\\'");
             return '<div style="margin:3px 0"><button onclick="goToRelated(\''+nav+'\')" '+
-              'style="background:transparent;border:1px solid '+cc+';border-radius:8px;color:'+cc+';font-size:11px;padding:3px 10px;cursor:pointer;max-width:100%;text-align:left">'+
+              'style="background:transparent;border:1px solid '+cc+';border-radius:8px;color:'+cc+';font-size:11px;padding:3px 10px;cursor:pointer;max-width:100%;text-align:left" type="button">'+
               (cat?esc(cat)+'｜':'')+esc(nm)+' ›</button></div>';
           }
           return '<div style="margin:3px 0;font-size:12px;color:#7986cb">'+esc(t)+'（未在收藏）</div>';
@@ -12015,7 +12008,7 @@ function marketValueDisplay(d){
 }
 function marketEstimateExplain(){
   alert([
-    '目前估值邏輯（v39）',
+    '目前估值邏輯說明',
     '',
     '1. 依商品「區域屬性」決定幣別優先順序：日本/亞洲品 → 優先採用 JPY 樣本；美國品 → 優先採用 USD 樣本，不再單純從筆數決定，減少跺幣別樣本干擾中位數。',
     '2. 依語言對市場分流：日本站（樂天/Yahoo JP）只用日文名查詢；eBay 只用英文名查詢；缺對應語言名稱的市場直接略過，減少跨語言噪音。',
@@ -12160,7 +12153,7 @@ function marketRenderAutoBlock(){
       '<td class="mvw-name">'+nameHtml+'</td>'+
       '<td class="mvw-price">'+esc(marketAmountText(s.price,s.currency))+(s.used?'':' <span style="color:#ffb74d">新</span>')+'</td>'+
       '<td class="mvw-rg">'+esc(marketSampleRegion(s))+'</td>'+
-      '<td class="mvw-del"><button class="mvw-x" data-action="delete" data-idx="'+i+'" aria-label="刪除">✕</button></td>'+
+      '<td class="mvw-del"><button class="mvw-x" data-action="delete" data-idx="'+i+'" aria-label="刪除" type="button">✕</button></td>'+
     '</tr>';
   }).join('');
   el.innerHTML=
@@ -12171,8 +12164,8 @@ function marketRenderAutoBlock(){
     '<div class="mvw-tablewrap"><table class="mvw-table"><thead><tr>'+
       '<th>來源</th><th>商品名稱</th><th>價格</th><th>區域</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
     '<div class="mvw-actions">'+
-      '<button class="btn bo mvw-reest" data-action="reestimate">重新估值</button>'+
-      '<button class="btn bp" onclick="marketAcceptAutoEstimate()">確認寫入</button>'+
+      '<button class="btn bo mvw-reest" data-action="reestimate" type="button">重新估值</button>'+
+      '<button class="btn bp" onclick="marketAcceptAutoEstimate()" type="button">確認寫入</button>'+
     '</div>';
   var _newWrap=el.querySelector('.mvw-tablewrap');
   if(_newWrap){_newWrap.scrollLeft=_keepL;_newWrap.scrollTop=_keepT;}
@@ -12290,9 +12283,9 @@ function marketOpenWorkbench(rowNum,result,errMsg){
       '<div style="font-size:13px;font-weight:700;margin-bottom:8px">人工樣本估值</div>'+
       '<div class="fg"><label class="fl">樣本幣別</label><select class="fsel" id="mv-cur"><option value="TWD">TWD 台幣</option><option value="JPY">JPY 日圓</option><option value="USD">USD 美元</option></select></div>'+
       '<div class="fg"><label class="fl">價格樣本</label><textarea class="ft mono" id="mv-samples" placeholder="每行一筆，例如：&#10;1890&#10;1680&#10;2200"></textarea></div>'+
-      '<button class="btn bp bw" onclick="marketManualEstimate()">用樣本中位數寫入估值</button>'+
+      '<button class="btn bp bw" onclick="marketManualEstimate()" type="button">用樣本中位數寫入估值</button>'+
     '</div>'+
-    '<button class="btn bo bw bs" style="color:#7986cb;margin-top:10px" onclick="huntSheetClose()">關閉</button>'+
+    '<button class="btn bo bw bs" style="color:#7986cb;margin-top:10px" onclick="huntSheetClose()" type="button">關閉</button>'+
   '</div>';
   markScrollableRefs(ov);
   // 事件委派：在靜態 mv-auto-block 元素挂一次，處理動態注入的按鈕
@@ -12353,12 +12346,12 @@ function marketOpenNamePicker(rowNum){
     '<div style="font-size:16px;font-weight:700;color:#ffcc02">選擇估值名稱（步驟 1 / 2）</div>'+
     '<div class="mvq-meta">'+esc(meta||'請選擇要送出市場查詢的名稱')+'</div></div>'+
     '<div class="mvq-list">'+opts.map(function(o,i){
-      return '<button class="mvq-opt" onclick="marketPickSources(\''+String(rowNum).replace(/'/g,"\\'")+'\',\''+o.key+'\')">'+
+      return '<button class="mvq-opt" onclick="marketPickSources(\''+String(rowNum).replace(/'/g,"\\'")+'\',\''+o.key+'\')" type="button">'+
         '<span class="mvq-label">'+esc(o.label)+'</span>'+
         '<span class="mvq-name">'+esc(o.value)+'</span>'+
       '</button>';
     }).join('')+'</div>'+
-    '<button class="btn bo bw bs" style="color:#7986cb;margin-top:14px" onclick="huntSheetClose()">取消</button>'+
+    '<button class="btn bo bw bs" style="color:#7986cb;margin-top:14px" onclick="huntSheetClose()" type="button">取消</button>'+
   '</div>';
 }
 function estimateMarketValue(rowNum){
@@ -12410,17 +12403,17 @@ function marketRenderSrc(){
     '<div class="mvq-meta">名稱：'+esc(chosenName)+'　｜　單選一個平台；楽天／Yahoo 以日文名命中最佳，eBay 需英文名</div></div>'+
     '<div class="mvq-list">'+defs.map(function(s){
       if(!s.has){
-        return '<button class="mvq-opt" disabled style="opacity:.45;cursor:not-allowed">'+
+        return '<button class="mvq-opt" disabled style="opacity:.45;cursor:not-allowed" type="button">'+
           '<span class="mvq-label">'+esc(s.label)+'</span>'+
           '<span class="mvq-name" style="color:#7986cb">未設定金鑰</span></button>';
       }
       var on=(_marketSrc===s.key);
-      return '<button class="mvq-opt" onclick="marketSelectSource(\''+s.key+'\')" style="'+(on?'border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff inset;':'')+'">'+
+      return '<button class="mvq-opt" onclick="marketSelectSource(\''+s.key+'\')" style="'+(on?'border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff inset;':'')+'" type="button">'+
         '<span class="mvq-label">'+(on?'● ':'○ ')+esc(s.label)+'</span>'+
         '<span class="mvq-name" style="color:'+(on?'#00e5ff':'#7986cb')+'">'+(on?'已選用':'點選使用')+'</span></button>';
     }).join('')+'</div>'+
-    '<button class="btn bp bw bs" style="margin-top:14px" onclick="marketRunEstimate()">開始估值</button>'+
-    '<button class="btn bo bw bs" style="color:#7986cb;margin-top:8px" onclick="huntSheetClose()">取消</button>'+
+    '<button class="btn bp bw bs" style="margin-top:14px" onclick="marketRunEstimate()" type="button">開始估值</button>'+
+    '<button class="btn bo bw bs" style="color:#7986cb;margin-top:8px" onclick="huntSheetClose()" type="button">取消</button>'+
   '</div>';
 }
 function marketSelectSource(key){
@@ -12598,7 +12591,7 @@ function showDetail(rowNum,keepNav){
   // 關聯商品跳轉後顯示「返回」（回到上一個檢視的商品）
   var backBtn='';
   if(_detailNavStack.length){
-    backBtn='<button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="detailNavBack()">‹ 返回</button>';
+    backBtn='<button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="detailNavBack()" type="button">‹ 返回</button>';
   }
     // 計算目前位置
   var _navL=_detailNavList();
@@ -12611,11 +12604,11 @@ function showDetail(rowNum,keepNav){
   var _isDigitalDetail=(catInternal(d.category)==='數位下載版');
 $('dact').innerHTML=
     backBtn+
-    (_isDigitalDetail?'':'<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明">💡</button>'+
-    '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')">估值</button>')+
-    '<button class="btn bo bs" onclick="editDetail()">編輯</button>'+
-    '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')" >刪除</button>'+
-    '<button class="btn bo bs" onclick="closeDetail()">✕</button>';
+    (_isDigitalDetail?'':'<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
+    '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')" type="button">估值</button>')+
+    '<button class="btn bo bs" onclick="editDetail()" type="button">編輯</button>'+
+    '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
+    '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
   
 var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(_dh){
@@ -13112,15 +13105,15 @@ function renderHuntToolbar(){
   if(_huntSel){
     if(bar)bar.classList.add('selmode');
     tb.innerHTML='<div class="hunt-toolbar-row select">'+
-      '<button class="btn bo" onclick="huntSelectAll()">全選</button>'+
-      '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="huntDeleteSelected()">刪除（'+_huntSelSet.size+'）</button>'+
-      '<button class="btn bo" onclick="huntToggleSelect()">取消</button></div>';
+      '<button class="btn bo" onclick="huntSelectAll()" type="button">全選</button>'+
+      '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="huntDeleteSelected()" type="button">刪除（'+_huntSelSet.size+'）</button>'+
+      '<button class="btn bo" onclick="huntToggleSelect()" type="button">取消</button></div>';
   }else{
     if(bar)bar.classList.remove('selmode');
     tb.innerHTML='<div class="hunt-toolbar-row">'+
-      '<button class="btn bp hunt-act-add" onclick="huntStartAdd()">＋ 新增</button>'+
-      '<button class="hunt-act-icon" title="大量刪除" aria-label="大量刪除" onclick="huntToggleSelect()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>'+
-      '<button class="hunt-act-icon" title="從雲端同步最新" aria-label="同步" onclick="huntRefresh()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg></button></div>';
+      '<button class="btn bp hunt-act-add" onclick="huntStartAdd()" type="button">＋ 新增</button>'+
+      '<button class="hunt-act-icon" title="大量刪除" aria-label="大量刪除" onclick="huntToggleSelect()" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>'+
+      '<button class="hunt-act-icon" title="從雲端同步最新" aria-label="同步" onclick="huntRefresh()" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg></button></div>';
   }
 }
 // 搜尋框：只重渲染清單本體與動態工具列，靜態搜尋框不重建 → 不丟焦點
@@ -13150,7 +13143,7 @@ function renderHuntList(){
   if(!hunt.length){
     html+='<div style="text-align:center;color:#7986cb;padding:36px 24px;font-size:13px;line-height:1.7">還沒有尋寶目標。<br>在店裡或網路看到想收的二手品，按上面新增、拍照、記下各通路的價格與品況，之後用最佳 CP 出手。</div>';
   }else if(!fdata.length){
-    html+='<div style="text-align:center;color:#7986cb;padding:36px 24px;font-size:13px;line-height:1.7">搜尋沒有符合的目標。<br><button class="btn bo bs" style="margin-top:10px" onclick="huntClearSearch()">清除搜尋</button></div>';
+    html+='<div style="text-align:center;color:#7986cb;padding:36px 24px;font-size:13px;line-height:1.7">搜尋沒有符合的目標。<br><button class="btn bo bs" style="margin-top:10px" onclick="huntClearSearch()" type="button">清除搜尋</button></div>';
   }else{
     html+='<div style="font-size:11px;color:#7986cb;letter-spacing:1px;padding:4px 16px 6px">追蹤中（'+active.length+'）</div>';
     html+=(active.map(huntCardHtml).join('')||'<div style="color:#5c6b8a;font-size:12px;padding:0 16px 8px">（無）</div>');
@@ -13228,14 +13221,14 @@ function huntScanStep(){
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">① 掃條碼</div>'+
-      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer">×</button></div>'+
+      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+
       '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">對準條碼自動偵測。二手老卡帶／裸片常無條碼，可手動輸入或直接略過。</div>'+
       '<div style="border-radius:12px;overflow:hidden;border:1.5px solid #ff6e9c;background:#000;position:relative;margin-bottom:12px">'+
         '<video id="hunt-scan-video" autoplay playsinline muted style="width:100%;display:block;max-height:280px;object-fit:cover"></video>'+
         '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div class="scan-box"></div><div class="scan-line"></div></div></div>'+
       '<input class="fi mono" id="hunt-bc-inp" type="text" inputmode="numeric" placeholder="手動輸入條碼（選填）" style="text-align:center;letter-spacing:2px;margin-bottom:12px">'+
-      '<button class="btn bo bw" onclick="huntScanNext()">略過 / 確認，下一步 →</button>'+
+      '<button class="btn bo bw" onclick="huntScanNext()" type="button">略過 / 確認，下一步 →</button>'+
     '</div>';
   huntStartScanner();
 }
@@ -13266,7 +13259,7 @@ function huntPhotoStep(){
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">② 拍照（選填）</div>'+
-      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer">×</button></div>'+
+      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+bcLine+
       '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">拍一張參考照，方便日後在店裡認出是哪一款。轉入收藏後可再用 AI 補齊完整資料。</div>'+
       '<div id="hunt-photo-prev" style="border-radius:12px;overflow:hidden;background:#0f1525;border:1.5px dashed #2a3a5a;min-height:200px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:#5c6b8a;font-size:13px">尚未拍照</div>'+
@@ -13278,7 +13271,7 @@ function huntPhotoStep(){
           '<span>🖼</span><span>相簿</span>'+
           '<input type="file" accept="image/*" id="hunt-gal" style="display:none" onchange="huntPhotoPick(this)"></label>'+
       '</div>'+
-      '<button class="btn bp bw" onclick="huntFormStep()">下一步 →</button>'+
+      '<button class="btn bp bw" onclick="huntFormStep()" type="button">下一步 →</button>'+
     '</div>';
 }
 function huntPhotoPick(input){
@@ -13301,7 +13294,7 @@ function huntLensStart(){
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">📷 拍照辨識</div>'+
-      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer">×</button></div>'+
+      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+
       '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">拍下店裡看到的遊戲，AI 會辨識並帶出相關資料；有興趣再一鍵轉入尋寶，記下價格與販售地點。</div>'+
       '<div id="hunt-lens-prev" style="border-radius:12px;overflow:hidden;background:#0f1525;border:1.5px dashed #2a3a5a;min-height:200px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:#5c6b8a;font-size:13px">尚未拍照</div>'+
@@ -13313,7 +13306,7 @@ function huntLensStart(){
           '<span>🖼</span><span>相簿</span>'+
           '<input type="file" accept="image/*" style="display:none" onchange="huntLensPick(this)"></label>'+
       '</div>'+
-      '<button onclick="huntCancelAdd()" class="btn bo bs" style="width:100%;margin-top:12px;color:#00e5ff;border-color:#00e5ff">‹ 返回清單</button>'+
+      '<button onclick="huntCancelAdd()" class="btn bo bs" style="width:100%;margin-top:12px;color:#00e5ff;border-color:#00e5ff" type="button">‹ 返回清單</button>'+
     '</div>';
 }
 function huntLensPick(input){
@@ -13365,14 +13358,14 @@ function huntLensResult(d){
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">辨識結果</div>'+
-      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer">×</button></div>'+
+      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+
       img+
       '<div style="font-size:18px;font-weight:700;color:#e8eaf6;margin-top:12px;word-break:break-word">'+esc(d.primary_name||'未能辨識名稱，可手動填寫')+'</div>'+
       plat+metaLine+priceLine+sumLine+
       '<a href="'+_huntLensSearchUrl(d)+'" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:14px;padding:11px;border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;text-decoration:none;font-size:13px;font-weight:600">🔍 上網搜尋更多（中古行情）</a>'+
-      '<button class="btn bp bw" style="margin-top:10px" onclick="huntLensToHunt()">→ 轉入尋寶，記錄價格與地點</button>'+
-      '<button class="btn bo bw" style="margin-top:8px" onclick="huntLensStart()">↺ 重拍</button>'+
+      '<button class="btn bp bw" style="margin-top:10px" onclick="huntLensToHunt()" type="button">→ 轉入尋寶，記錄價格與地點</button>'+
+      '<button class="btn bo bw" style="margin-top:8px" onclick="huntLensStart()" type="button">↺ 重拍</button>'+
     '</div>';
 }
 function huntLensToHunt(){
@@ -13529,10 +13522,10 @@ function huntFormStep(){
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">③ 目標資訊</div>'+
-      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer">×</button></div>'+
+      '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+
       _huntFormFieldsHtml(e,'hf')+
-      '<button class="btn bp bw" onclick="huntSaveTarget()">儲存目標</button>'+
+      '<button class="btn bp bw" onclick="huntSaveTarget()" type="button">儲存目標</button>'+
     '</div>';
 }
 function huntSaveTarget(){
@@ -13583,7 +13576,7 @@ function huntDetail(uid){
   var cc=HUNT_CATCOLOR[catInternal(d.target_cat)]||'#00e5ff';
   var photo=imgUrl(d.cover_img,400);
   var box=$('hunt-body');if(!box)return;
-  var html='<div style="padding:10px 16px 6px"><button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="renderHuntList()">‹ 返回清單</button></div>';
+  var html='<div style="padding:10px 16px 6px"><button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="renderHuntList()" type="button">‹ 返回清單</button></div>';
   html+='<div class="card" style="display:flex;gap:14px">'+
     (photo?'<img src="'+photo+'" alt="" style="width:90px;height:120px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:90px;height:120px;border-radius:8px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:28px">🎮</div>')+
@@ -13596,8 +13589,8 @@ function huntDetail(uid){
       (d.notes?'<div style="font-size:12px;color:#9fa8c8;margin-top:6px">'+esc(d.notes)+'</div>':'')+
     '</div></div>';
   html+='<div style="display:flex;gap:8px;padding:0 16px 10px">'+
-    '<button class="btn bo bs" style="flex:1" onclick="huntEditTarget(\''+uid+'\')">編輯目標</button>'+
-    '<button class="btn bo bs" style="flex:1;color:#ff5252;border-color:#5a2a2a" onclick="huntDeleteTarget(\''+uid+'\')">刪除</button></div>';
+    '<button class="btn bo bs" style="flex:1" onclick="huntEditTarget(\''+uid+'\')" type="button">編輯目標</button>'+
+    '<button class="btn bo bs" style="flex:1;color:#ff5252;border-color:#5a2a2a" onclick="huntDeleteTarget(\''+uid+'\')" type="button">刪除</button></div>';
   // 參考連結（與收藏頁 makeRefLink 相同邏輯：googleRefLink 依名稱＋平台）
   html+='<div style="padding:0 16px 10px"><a href="'+esc(googleRefLink(d.primary_name||'',d.platform||''))+'" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;border:1.5px solid #00e5ff;border-radius:10px;color:#00e5ff;text-decoration:none;font-size:13px;font-weight:600">🔍 參考連結 — 查詢網路相關資料</a></div>';
   // 二手查價六鈕：與收藏詳情同一套（台灣中文名／日本日文名）。尋寶項目無 zh/jp 名時，兩組皆退回主要名稱。
@@ -13605,7 +13598,7 @@ function huntDetail(uid){
   if(_huntRef)html+='<div style="padding:0 16px 10px;display:flex;flex-direction:column;gap:10px">'+_huntRef+'</div>';
   html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 16px 8px">'+
     '<div style="font-size:13px;font-weight:600;color:#e8eaf6">各通路報價（'+sights.length+'）</div>'+
-    (done?'<span style="font-size:11px;color:#5c6b8a">已入手，報價鎖定</span>':'<button class="btn bp bs" onclick="huntSightForm(\''+uid+'\',-1)">＋ 新增報價</button>')+'</div>';
+    (done?'<span style="font-size:11px;color:#5c6b8a">已入手，報價鎖定</span>':'<button class="btn bp bs" onclick="huntSightForm(\''+uid+'\',-1)" type="button">＋ 新增報價</button>')+'</div>';
   if(!sights.length){
     html+='<div style="text-align:center;color:#5c6b8a;font-size:12px;padding:8px 24px 16px;line-height:1.6">還沒有報價。在不同店家／網站看到時，按上面記下價格與品況；最低價會自動標示。</div>';
   }else{
@@ -13629,13 +13622,13 @@ function huntDetail(uid){
             (_huntIsOnline(s)?'<span style="font-size:11px;color:#7986cb;flex-shrink:0">🛒 線上通路</span>':(huntMapUrl(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="color:#00e5ff;font-size:12px;text-decoration:none;flex-shrink:0">📍 地圖</a>':''))+
           '</div>'+
           '<div style="display:flex;gap:18px;flex-shrink:0">'+
-            '<button onclick="huntSightForm(\''+uid+'\','+o.i+')" style="background:none;border:none;color:#7986cb;font-size:12px;cursor:pointer">編輯</button>'+
-            '<button onclick="huntSightDelete(\''+uid+'\','+o.i+')" style="background:none;border:none;color:#ff5252;font-size:12px;cursor:pointer">刪除</button>'+
+            '<button onclick="huntSightForm(\''+uid+'\','+o.i+')" style="background:none;border:none;color:#7986cb;font-size:12px;cursor:pointer" type="button">編輯</button>'+
+            '<button onclick="huntSightDelete(\''+uid+'\','+o.i+')" style="background:none;border:none;color:#ff5252;font-size:12px;cursor:pointer" type="button">刪除</button>'+
           '</div></div></div>';
     }).join('');
   }
   if(!done&&sights.length){
-    html+='<div style="padding:14px 16px 8px"><button class="btn bw" style="background:#69f0ae;color:#001018;font-weight:600" onclick="huntBuyFlow(\''+uid+'\')">✓ 已購入，轉入收藏庫</button></div>';
+    html+='<div style="padding:14px 16px 8px"><button class="btn bw" style="background:#69f0ae;color:#001018;font-weight:600" onclick="huntBuyFlow(\''+uid+'\')" type="button">✓ 已購入，轉入收藏庫</button></div>';
   }
   html+='<div style="height:24px"></div>';
   box.innerHTML=html;
@@ -13717,8 +13710,8 @@ function huntSightForm(uid,idx){
     '<div class="fg"><label class="fl">品況</label><input class="fi" id="hs-cond" value="'+esc(s.cond||'')+'" placeholder="例：盒書完整，片面薄刮"></div>'+
     '<div class="fg"><label class="fl">備註（此通路專用）</label><input class="fi" id="hs-note" value="'+esc(s.note||'')+'" placeholder="例：可議價、老闆保留三天、只剩一片"></div>'+
     '<div class="fg"><label class="fl">看到日期</label><input class="fi mono" id="hs-date" value="'+esc(s.date||tpeDate())+'" placeholder="YYYY/MM/DD"></div>'+
-    '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntSightSave(\''+uid+'\','+idx+')">儲存</button>'+
-    '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()">取消</button></div>';
+    '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntSightSave(\''+uid+'\','+idx+')" type="button">儲存</button>'+
+    '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()" type="button">取消</button></div>';
 }
 function huntSightSave(uid,idx){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;
@@ -13785,8 +13778,8 @@ function huntEditTarget(uid){
         '<span>🖼</span><span>相簿</span>'+
         '<input type="file" accept="image/*" id="he-gal" style="display:none" onchange="huntEditPhoto(this)"></label>'+
     '</div>'+
-    '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntEditSave(\''+uid+'\')">儲存變更</button>'+
-    '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()">取消</button></div>';
+    '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntEditSave(\''+uid+'\')" type="button">儲存變更</button>'+
+    '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()" type="button">取消</button></div>';
 }
 function huntEditPhoto(input){
   var f=input.files&&input.files[0];if(!f)return;
@@ -13827,7 +13820,7 @@ function huntBuyFlow(uid){
   if(!sights.length){toast('還沒有報價可選','er');return;}
   var ov=_huntSheet();
   var opts=sights.map(function(s,i){
-    return '<button onclick="huntBuyConfirm(\''+uid+'\','+i+')" style="width:100%;text-align:left;background:#0f1525;border:1px solid #1e2a45;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;color:#e8eaf6">'+
+    return '<button onclick="huntBuyConfirm(\''+uid+'\','+i+')" style="width:100%;text-align:left;background:#0f1525;border:1px solid #1e2a45;border-radius:10px;padding:12px;margin-bottom:8px;cursor:pointer;color:#e8eaf6" type="button">'+
       '<div style="display:flex;justify-content:space-between;gap:8px"><span style="font-weight:600;word-break:break-all">'+esc(s.loc||'未填地點')+'</span><span style="color:#ff6e9c;font-weight:700;white-space:nowrap">'+huntPriceStr(s)+'</span></div>'+
       (s.cond?'<div style="font-size:11px;color:#9fa8c8;margin-top:3px">'+esc(s.cond)+'</div>':'')+'</button>';
   }).join('');
@@ -13835,7 +13828,7 @@ function huntBuyFlow(uid){
     '<div style="text-align:center;margin-bottom:14px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:15px;font-weight:700;color:#69f0ae">在哪個通路購入的？</div>'+
     '<div style="font-size:11px;color:#7986cb;margin-top:4px">選定後會帶入收藏庫的入手通路與價格，之後可在收藏頁修改或用 AI 補齊其餘資料</div></div>'+
-    opts+'<button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="huntSheetClose()">取消</button></div>';
+    opts+'<button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="huntSheetClose()" type="button">取消</button></div>';
 }
 function huntBuyConfirm(uid,idx){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;
@@ -14031,9 +14024,9 @@ function _imgToB64(src){
   <div id="crop-head">裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small></div>
   <div id="crop-stage"><canvas id="crop-canvas"></canvas></div>
   <div id="crop-bar">
-    <button onclick="cropCancel()">取消</button>
-    <button onclick="cropUseFull()">使用原圖</button>
-    <button class="cp" onclick="cropConfirm()">確認裁切</button>
+    <button onclick="cropCancel()" type="button">取消</button>
+    <button onclick="cropUseFull()" type="button">使用原圖</button>
+    <button class="cp" onclick="cropConfirm()" type="button">確認裁切</button>
   </div>
 </div>
 <!-- ══ 欄位小取景框掃描器 overlay（OCR 編碼／條碼即時偵測 共用）══ -->
@@ -14046,8 +14039,8 @@ function _imgToB64(src){
     </div>
     <div id="fscan-status"></div>
     <div id="fscan-bar">
-      <button onclick="fscanCancel()">取消</button>
-      <button id="fscan-shot" class="cp" onclick="fscanCapture()">📷 拍攝並辨識</button>
+      <button onclick="fscanCancel()" type="button">取消</button>
+      <button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">📷 拍攝並辨識</button>
     </div>
   </div>
 </div>
@@ -14056,12 +14049,12 @@ function _imgToB64(src){
 <div id="api-guide-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:75vh;z-index:1000;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:24px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6" id="api-guide-title">API 申請指南</div>
-    <button onclick="closeApiGuide()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">✕</button>
+    <button onclick="closeApiGuide()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
   </div>
   <div id="api-guide-content" style="font-size:12px;color:#9fa8c8;line-height:1.8;padding:16px;padding-bottom:32px;overflow-y:auto;flex:1"></div>
   <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">
     <a id="api-guide-link" href="#" target="_blank" rel="noopener" style="flex:1;text-decoration:none;color:#00e5ff;background:transparent;border:1.5px solid #00e5ff;border-radius:10px;text-align:center;padding:13px 10px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px;line-height:1.3">🔗 前往官網申請</a>
-    <button style="flex:1;background:#00e5ff;color:#001018;border:none;border-radius:10px;padding:13px 10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:inherit;line-height:1.3" onclick="copyAndPromptGemini()">🤖 AI 詳細詢問</button>
+    <button style="flex:1;background:#00e5ff;color:#001018;border:none;border-radius:10px;padding:13px 10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:inherit;line-height:1.3" onclick="copyAndPromptGemini()" type="button">🤖 AI 詳細詢問</button>
   </div>
 </div>
 <!-- 自訂市場編輯 Modal（v40.31）-->
@@ -14069,7 +14062,7 @@ function _imgToB64(src){
 <div id="cm-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:1002;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6" id="cm-editor-title">新增自訂市場</div>
-    <button onclick="cmCloseEditor()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0">✕</button>
+    <button onclick="cmCloseEditor()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
   </div>
   <div style="padding:16px;padding-bottom:24px;overflow-y:auto;flex:1">
     <div class="fg"><label class="fl">市場名稱<span style="color:#ff7043"> *</span></label>
@@ -14087,7 +14080,7 @@ function _imgToB64(src){
       <div style="background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.25);border-radius:10px;padding:10px;margin-bottom:8px">
         <div style="font-size:12px;color:#00e5ff;font-weight:700;margin-bottom:6px">🪄 不會填？貼網址自動產生</div>
         <ol style="margin:0 0 8px;padding-left:18px;font-size:11px;color:#9fa8c8;line-height:1.7">
-          <li>複製這個測試詞 <span style="color:#e8eaf6;font-weight:700">gvtest123</span><button class="btn bo bs" style="padding:3px 8px;font-size:11px;margin-left:6px;vertical-align:middle" onclick="cmCopyProbe()">複製</button></li>
+          <li>複製這個測試詞 <span style="color:#e8eaf6;font-weight:700">gvtest123</span><button class="btn bo bs" style="padding:3px 8px;font-size:11px;margin-left:6px;vertical-align:middle" onclick="cmCopyProbe()" type="button">複製</button></li>
           <li>到目標網站的搜尋框貼上、按搜尋（有沒有結果都沒關係）</li>
           <li>把瀏覽器網址列整串複製，貼到下面這格</li>
         </ol>
@@ -14101,8 +14094,8 @@ function _imgToB64(src){
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
         <span id="cm-ic-prev" class="mkt-ic noimg" data-mono="?" style="width:40px;height:40px;border-radius:8px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(135deg,#1b2540,#0d1322);color:#9fb3d1;font-weight:700;font-size:16px"></span>
         <div style="flex:1;display:flex;gap:8px">
-          <button class="btn bo bs" style="flex:1" onclick="cmUploadIcon()">上傳圖檔</button>
-          <button class="btn bo bs" style="flex:1;color:#ff7043;border-color:#ff7043" onclick="cmClearIcon()">清除</button>
+          <button class="btn bo bs" style="flex:1" onclick="cmUploadIcon()" type="button">上傳圖檔</button>
+          <button class="btn bo bs" style="flex:1;color:#ff7043;border-color:#ff7043" onclick="cmClearIcon()" type="button">清除</button>
         </div>
       </div>
       <input class="fi mono" id="cm-ic-url" placeholder="或貼圖示網址 https://…" oninput="cmIconFromUrl()" style="font-size:12px">
@@ -14110,15 +14103,15 @@ function _imgToB64(src){
     </div>
     <div class="fg"><label class="fl">連結測試</label>
       <div style="display:flex;gap:8px">
-        <button class="btn bo bs" style="flex:1" onclick="cmTestLink()">🔗 用範例開啟</button>
-        <button class="btn bo bs" style="flex:1" onclick="cmCopyLink()">📋 複製連結</button>
+        <button class="btn bo bs" style="flex:1" onclick="cmTestLink()" type="button">🔗 用範例開啟</button>
+        <button class="btn bo bs" style="flex:1" onclick="cmCopyLink()" type="button">📋 複製連結</button>
       </div>
       <div class="shlp" style="margin-top:4px">以範例名稱「ゼルダの伝説」代入模板，確認查詢結果是否正確。</div>
     </div>
   </div>
   <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">
-    <button class="btn bo bs" style="flex:1" onclick="cmCloseEditor()">取消</button>
-    <button class="btn bp bs" style="flex:1" onclick="cmSaveEditor()">儲存</button>
+    <button class="btn bo bs" style="flex:1" onclick="cmCloseEditor()" type="button">取消</button>
+    <button class="btn bp bs" style="flex:1" onclick="cmSaveEditor()" type="button">儲存</button>
   </div>
 </div>
 </body>
