@@ -2228,7 +2228,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.01';
+const APP_VERSION='v54.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10991,6 +10991,7 @@ function setF(f){activeF=f;_syncStatActive();filterCol();}
 var colFilters={}, _pmin='', _pmax='', _mvmin='', _mvmax='';
 var FACETS=[
   {k:'category',label:'分類',order:['遊戲','攻略','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔']},
+  {k:'subtype',label:'類型'},
   {k:'platform',label:'平台',order:PLATFORMS.map(function(p){return p.v;})},
   {k:'genre',label:'遊戲類型',multi:true,code:true,order:GENRES},
   {k:'players',label:'遊戲人數',multi:true,order:PLAYERS_OPTS},
@@ -11000,7 +11001,9 @@ var FACETS=[
   {k:'store',label:'購入商店',order:['PSN','Nintendo eShop','Steam','Xbox Store','Epic Games','其他']},
   {k:'account',label:'購入帳號'},
   {k:'purchase_method',label:'取得方式',order:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他']},
-  {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','未評級'],notCats:['數位下載版']},
+  {k:'__condition',label:'本體品相',order:['全新','良好','普通','損傷','缺少','全新未拆','近全新','有瑕疵','全新未拆(MISB)','拆封擺設(BIB)','把玩有輕微痕跡','有缺件／斷件','未評級'],notCats:['數位下載版']},
+  {k:'box_condition',label:'盒況'},
+  {k:'obi_status',label:'側標狀態'},
   {k:'__complete',label:'完整度',order:['全新','完整','部分登錄','未評級'],notCats:['數位下載版']},
   {k:'__photo',label:'照片狀態',order:['有封面','有封底','有側邊','無照片']},
   {k:'__todo',label:'待補資料',order:['缺封面','缺條碼','缺編碼','缺購入價','缺發售日','缺品相'],notCats:['數位下載版']},
@@ -11008,15 +11011,15 @@ var FACETS=[
   {k:'rating',label:'個人評分',order:['1','2','3','4','5','6','7','8','9','10','N/A']},
   {k:'buy_year',label:'購入年份',year:true},
   {k:'region',label:'地區',order:REGION_OPTS},
-  {k:'series',label:'系列'},
+  {k:'series',label:'系列／作品'},
   {k:'voice_language',label:'語音'},
   {k:'subtitle_language',label:'字幕'},
   {k:'language',label:'書籍語言'},
   {k:'developer',label:'開發商'},
-  {k:'publisher',label:'發行商'},
+  {k:'publisher',label:'發行商／出版社'},
   {k:'age_rating',label:'年齡分級'},
   {k:'book_type',label:'書籍類型',order:['系統攻略','資料設定集','美術畫冊','公式書','其他']},
-  {k:'binding',label:'裝訂',order:['平裝','精裝','騎馬釘','盒裝','其他']},
+  {k:'binding',label:'裝訂／載體格式',order:['平裝','精裝','騎馬釘','盒裝','平裝書','精裝書','Blu-ray','DVD','CD','數位版','其他']},
   {k:'print_run',label:'刷次 / 版次'},
   {k:'bonus_code_status',label:'DLC狀態',order:['已使用','未使用','已過期','未確認','N/A']},
   {k:'brand',label:'品牌'},
@@ -11024,10 +11027,25 @@ var FACETS=[
   {k:'working_status',label:'運作狀態',order:['正常','需維修','故障','未測試']},
   {k:'warranty_status',label:'保固狀態',order:['N/A','保固中','已過保','無保固','不明']},
   {k:'peripheral_type',label:'週邊類型',order:['手把/控制器','記憶卡','線材','底座/座充','收納','轉接器','耳機麥克風','其他']},
-  {k:'connection',label:'連接方式',order:['有線','無線','藍牙','USB','其他']}
+  {k:'connection',label:'連接方式',order:['有線','無線','藍牙','USB','其他']},
+  {k:'composer',label:'作曲／演出者'},
+  {k:'label',label:'發行廠牌'},
+  {k:'illustrator',label:'作者／繪師'},
+  {k:'studio',label:'製作公司'}
 ];
 function facetVals(f,d){
-  if(f.k==='__condition')return [overallCond(d.category,d.completeness)||'未評級'];
+  var cat=catInternal(d.category)||'遊戲';
+  // v54.02：動漫/美術設定集、公仔已改用獨立的 condition 欄位（非靠 completeness 推算），優先讀該欄位
+  if(f.k==='__condition'){
+    if((cat==='動漫/美術設定集'||cat==='公仔')&&d.condition)return [d.condition];
+    return [overallCond(d.category,d.completeness)||'未評級'];
+  }
+  if(f.k==='series'){
+    // v54.02：動漫/美術設定集與部分數位下載版子類型（數位音源/數位影音）用 related_work 存作品/IP名稱，
+    // 跟其他分類的 series 欄位是同一個概念、不同欄位名稱，統一在這裡合併讀取
+    var v=d.series||d.related_work;
+    return v?[String(v)]:[];
+  }
   if(f.k==='__complete')return [compStatus(d.category,d.completeness).state];
   if(f.k==='__photo'){
     var pics=[];
@@ -11052,7 +11070,11 @@ function facetVals(f,d){
   var raw=d[f.k];
   if(raw===undefined||raw===null||raw==='')return [];
   if(f.multi)return (''+raw).split(/[、,／/]/).map(function(x){return f.code?matchGenre(x.trim()):x.trim();}).filter(Boolean);
-  return [String(raw)];
+  var sraw=String(raw);
+  // v54.02 防呆：試算表若把文字欄位誤存成日期格式，GAS 讀出來會是 Date 物件、序列化成 ISO 字串（如 2026-06-20T16:00:00.000Z），
+  // 這種值混進篩選選項一定是資料異常，直接濾掉；不影響正常的日期類 facet（那些走上面 f.year 的專屬分支，不會走到這裡）
+  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(sraw))return [];
+  return [sraw];
 }
 function facetPass(f,d,sel){
   if(!sel||!sel.length)return true;
