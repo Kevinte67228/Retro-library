@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v51            ║
+// ║  GameVault — Google Apps Script 後端  v52            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1348,7 +1348,7 @@ function marketEstimateProxy(p) {
   const queries = marketBuildQueries_(jpTitles, enTitles, platform, model);
 
   const region = marketNormRegion_(p.region || '');
-  const ck = 'market_estimate_v39_01_' + q + '_' + platform + '_' + model + '_' + category + '_' + region;
+  const ck = 'market_estimate_' + q + '_' + platform + '_' + model + '_' + category + '_' + region;
   const cached = getCache(ck);
   if (cached) return cached;
 
