@@ -1,3 +1,23 @@
+## v54.01 (2026-07-07)
+
+### 變更內容
+- 「寫入保護 Token」欄位新增「❓ 說明」按鈕（比照其他 API 欄位樣式），內容涵蓋：這是什麼、如何在 Apps Script 指令碼屬性設定 APP_TOKEN、如何驗證有沒有生效、以及連線自檢的測試方式（自檢是送錯誤token測試拒絕機制，不是讀取使用者填的值）
+- Gemini API 金鑰移除無條件的「（免費）」標示與「✓ 免費方案」保證文字，改為提醒使用者自行到官網確認目前免費/付費規則，並註明已有使用者反映連結 Cloud 帳單後即使用量不大仍可能產生費用
+- **PWA 更新機制改為自動套用**：移除原本「有新版本可用，重新整理頁面即可更新」的手動提示，改為監聽 `controllerchange` 事件，新版本一接管頁面就自動重新整理一次，使用者不需要手動關閉重開 App
+
+### 影響檔案
+- index.html / GameVault_v54_01_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v53-01 → gamevault-v54-01
+
+### 對應備份
+- _internal/old/v53_01/
+
 ## v53.01 (2026-07-07)
 
 ### 變更內容
@@ -67,25 +87,3 @@
 ### 對應備份
 - _internal/old/v51_01/
 
-## v51.01 (2026-07-05)
-
-### 變更內容
-上線前資安補強（依盤點報告，僅採納實際成立的項目）：
-- GS 寫入驗證：doPost 的 add/update/delete/deleteMany 新增 APP_TOKEN 驗證。後端「指令碼屬性」設定 APP_TOKEN 後啟用；前端設定頁「寫入保護 Token」填相同字串（只存本機、不進公開網頁），未設定則放行以相容。
-- 代理密鑰改走 POST body：igdb/gb/mb/tgdb/bl/ss/rakuten×2/market_estimate/google_image 等帶密鑰呼叫原以 GET query 傳送（會進 GAS 執行紀錄），改為 POST body。GS 讀取/代理類 action 抽為共用 dispatchRead，doGet/doPost 皆可分派。
-- 前端 shPost 對寫入集中注入 app_token；新增 shGetSecP 相容原串接。
-- 未採納誤報項（index/manual/icons「缺檔」實際存在）與過度工程項（單檔模組化重構）。
-
-### 影響檔案
-- index.html / GameVault_v51_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（後端 v50 → v51）
-
-### GS 版本
-- v50 → v51（doGet/doPost 重構 + APP_TOKEN 驗證），需重新貼上並部署後端。
-
-### PWA 快取
-- CACHE_NAME: gamevault-v50-02a1 → gamevault-v51-01
-
-### 對應備份
-- _internal/old/v50_02a1/
