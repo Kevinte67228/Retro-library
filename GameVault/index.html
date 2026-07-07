@@ -1511,7 +1511,10 @@ body{
           </div>
         </div>
         <div class="srow">
-          <div class="srl">🔒 寫入保護 Token（選填）</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="srl" style="margin:0">🔒 寫入保護 Token（選填）</div>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('app_token')" type="button">❓ 說明</button>
+          </div>
           <input class="fi" id="c-apptoken" type="text" autocomplete="off" placeholder="與 Apps Script 指令碼屬性 APP_TOKEN 相同">
           <div class="shlp">
             後端若在「指令碼屬性」設定了 <strong>APP_TOKEN</strong>，此處需填入相同字串，否則新增／修改／刪除會被拒絕。留空＝後端未啟用驗證。此 Token 只存在本機，不會匯出到公開網頁。
@@ -1531,7 +1534,7 @@ body{
         </div>
         <div class="srow">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div class="srl" style="margin:0">✨ Gemini API 金鑰（免費）</div>
+            <div class="srl" style="margin:0">✨ Gemini API 金鑰</div>
             <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('gemini')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-gkey" type="password" placeholder="AIza...">
@@ -2225,7 +2228,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v53.01';
+const APP_VERSION='v54.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3798,6 +3801,18 @@ var API_GUIDES = {
       '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費 API 有速率限制（建議每秒不超過 1 次請求）</span></div>'
     ]
   },
+  app_token: {
+    title: '寫入保護 Token（APP_TOKEN）',
+    noFooter: true,
+    steps: [
+      '<strong style="color:#00e5ff">這是什麼</strong><div style="margin-top:4px;color:#9fa8c8">你的 Apps Script 網址是「知道網址就能存取」的類型。這個 Token 是一道額外密碼，避免網址萬一外流時，陌生人能透過它新增／修改／刪除你的收藏資料。<strong style="color:#e8eaf6">留空＝完全不驗證，任何人有網址就能寫入你的資料</strong>，建議一定要設定。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第一步：想一組密碼</strong><div style="margin-top:4px;color:#9fa8c8">自己想一串夠長、不好猜的英數字組合即可，不需要跟 Google 帳號密碼相關，純粹是你跟自己後端之間的通關密語。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：到 Apps Script 編輯器設定</strong><div style="margin-top:4px;color:#9fa8c8">開啟 Apps Script 編輯器 → 左側齒輪圖示「專案設定」→ 往下捲到「指令碼屬性」→ 點「新增指令碼屬性」→ 屬性名稱填 <strong style="color:#00e5ff">APP_TOKEN</strong>，值填入你剛才想的那組密碼 → 儲存。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：填回這裡</strong><div style="margin-top:4px;color:#9fa8c8">把同一組字串貼到這個欄位（跟 Apps Script 那邊要一字不差），儲存設定。</div>',
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ 驗證有沒有生效</strong><div style="margin-top:4px;color:#9fa8c8">按下方「🩺 連線自檢」，確認出現「寫入保護已生效」。<strong style="color:#e8eaf6">注意：自檢是故意送一個錯誤 Token 去測試後端會不會拒絕，不會讀取你這裡填的值</strong>——它只證明後端防護機制本身正常，不代表你這裡填的值是對的。真正要確認的是：這裡的值跟 Apps Script 指令碼屬性的 APP_TOKEN 完全一致，否則你自己新增/修改/刪除收藏也會被擋下來。</div>',
+      '<strong style="color:#ff5252;margin-top:12px;display:block">⚠️ 已設定 APP_TOKEN 後</strong><div style="margin-top:4px;color:#9fa8c8">若之後不小心清空這個欄位、或跟 Apps Script 那邊的值對不上，新增/修改/刪除都會失敗（顯示 unauthorized）。改了任何一邊記得同步改另一邊。</div>'
+    ]
+  },
   gemini: {
     title: 'Gemini API（Google AI Studio）',
     link: 'https://aistudio.google.com/app/apikey',
@@ -3805,7 +3820,8 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：Google 帳號</strong><div style="margin-top:4px;color:#9fa8c8">需要有 Google 帳號（Gmail、Google Cloud 帳號均可）；前往 <strong>https://aistudio.google.com/app/apikey</strong>。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：同意條款</strong><div style="margin-top:4px;color:#9fa8c8">首次登入時，同意「Google AI Studio」使用條款 → 繼續。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：生成 API Key</strong><div style="margin-top:4px;color:#9fa8c8">進入 API 金鑰頁面 → 點擊「Create API Key」或「Get API Key」→ 自動生成並複製。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#00e676;font-size:11px">✓ 免費方案：每分鐘 60 次請求（充足用於個人收藏管理）</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ 關於免費額度，請務必自行到官網確認</strong><div style="margin-top:4px;color:#9fa8c8">Google AI Studio 通常有免費額度可用，但實際規則（是否要求連結帳單、額度多寡、哪些模型適用）Google 會不定期調整，<strong style="color:#e8eaf6">已知有使用者反映：專案一旦連結 Cloud 帳單帳戶後，即使用量不大也可能開始產生費用（雖然通常很低）</strong>。建議申請前先到 <strong style="color:#00e5ff">https://ai.google.dev/pricing</strong> 確認你要用的模型目前的免費/付費規則，並留意 AI Studio 是否要求或建議連結帳單。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">GameVault 使用方式</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。</div>'
     ]
   },
   openai: {
@@ -12891,20 +12907,16 @@ function resetAll(){
 
 function registerServiceWorker(){
   if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
+  // v54.01：新版本自動套用，不再需要使用者手動重新整理或關閉App。
+  // sw.js 的新版 SW 在 install 已呼叫 skipWaiting()、activate 已呼叫 clients.claim()，
+  // 這裡監聽 controllerchange：新 SW 一接管頁面就自動重新整理一次（用旗標避免重複觸發造成無限迴圈）。
+  var _swReloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(_swReloaded)return;
+    _swReloaded=true;
+    location.reload();
+  });
   navigator.serviceWorker.register('sw.js?v='+encodeURIComponent(APP_VERSION))
-    .then(function(reg){
-      // v42.20：偵測新版 SW 安裝完成（舊 SW 仍控制頁面時），提示使用者重新整理取得新版
-      if(!reg)return;
-      reg.addEventListener('updatefound',function(){
-        var nw=reg.installing;
-        if(!nw)return;
-        nw.addEventListener('statechange',function(){
-          if(nw.state==='installed'&&navigator.serviceWorker.controller){
-            toast('🔄 有新版本可用，重新整理頁面即可更新','',8000);
-          }
-        });
-      });
-    })
     .catch(function(){});
 }
 
