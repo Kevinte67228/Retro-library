@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v61            ║
+// ║  GameVault — Google Apps Script 後端  v62            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1153,7 +1153,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
   // 資料完整度較高也不用再猜測任何數字 ID，直接用語言名稱字串比對（如 'Japanese'）
   // v54.12：快取 key 加上版本標記 v2，強制讓改版前（未套用在地化標題）的舊快取失效，
   // 否則同一平台/月份/語言組合會一直吐出 7 天前存的舊資料（英文標題），新邏輯永遠跑不到
-  const cacheKey = 'igdb_upcoming_v2_' + platformId + '_' + ym + '_' + (lang || 'all');
+  const cacheKey = 'igdb_upcoming_v3_' + platformId + '_' + ym + '_' + (lang || 'all');
   const cached = getCache(cacheKey);
   if (cached) return { ok: true, games: cached, cached: true };
 
@@ -1216,7 +1216,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
       const m = alts.find(function(a) { return a.comment && re.test(a.comment); });
       return m ? m.name : null;
     }
-    return find(/traditional/i) || find(/simplified/i) || find(/japan/i) || g.name || '';
+    return find(/traditional/i) || find(/simplified/i) || find(/japan(ese)?|^jp$/i) || g.name || '';
   }
 
   // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複紀錄），用 game.id 去重，只留第一筆（已依日期排序）
