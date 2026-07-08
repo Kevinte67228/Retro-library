@@ -1,3 +1,26 @@
+## v54.07 (2026-07-08)
+
+### 變更內容
+近期發售瀏覽的「地區篩選」改為「支援語言篩選」：
+- **背景**：使用者提供 IGDB 遊戲詳情頁截圖，確認該類遊戲的 Releases 區塊完全沒有地區標籤（多平台同一天發售，看不出地區差異），且 Age Ratings 沒有日本 CERO 分級——證實地區篩選連續三次失敗的根因是 IGDB 資料本身地區欄位不完整，不是查詢語法問題
+- **改用「支援語言」（language_supports 關聯）取代地區**：語意從「該地區發售」改成「支援該語言」；直接用語言名稱字串比對（如 'Japanese'、'Chinese (Traditional)'），不用再猜測任何數字 ID，資料完整度也比地區欄位高很多
+- 地區 tabs 改為「全部／🇯🇵支援日文／🇺🇸支援英文／🇹🇼支援繁中／🇨🇳支援簡中／🇰🇷支援韓文」
+- GAS `igdb_upcoming` 的 `region` 參數改名為 `lang`
+
+### 影響檔案
+- index.html / GameVault_v54_07_index.html
+- sw.js
+- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
+
+### GS 版本
+- v58 → v59（igdb_upcoming 改用語言支援篩選）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-06 → gamevault-v54-07
+
+### 對應備份
+- _internal/old/v54_06/
+
 ## v58 GS-only (2026-07-08)
 
 ### 變更內容
@@ -50,26 +73,6 @@
 
 ### GS 版本
 - v56 → v57（igdb_upcoming 改用 release_region 關聯過濾地區）
-
-### PWA 快取
-- 無變更（純後端修正）
-
-### 對應備份
-- 無（純邏輯修正，未異動前端檔案）
-
-## v56 GS-only (2026-07-08)
-
-### 變更內容
-修正近期發售瀏覽的地區篩選查出空結果的問題：
-- **根因**：原本在 IGDB `games` 端點上對巢狀子關聯 `release_dates.region` 做過濾，這種巢狀條件語法不可靠，容易查出空結果
-- **修正**：改查 IGDB 專門的 `release_dates` 端點（IGDB 官方建議的發售日瀏覽查詢方式），platform/region/date 在這個端點都是直接欄位，不是巢狀子關聯，透過 `game.*` 欄位一次帶出遊戲詳細資訊；同一款遊戲若有多筆發售日紀錄用 game.id 去重
-- 純 GAS 後端修正，前端無需更新（呼叫方式不變）
-
-### 影響檔案
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v55 → v56（igdb_upcoming 改用 release_dates 端點查詢）
 
 ### PWA 快取
 - 無變更（純後端修正）
