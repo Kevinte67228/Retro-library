@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v57            ║
+// ║  GameVault — Google Apps Script 後端  v58            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1174,10 +1174,11 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
     return { ok: false, error: 'Twitch 驗證失敗：' + JSON.stringify(tokenData), games: [] };
 
   const token = tokenData.access_token;
-  // v54.07：IGDB v4 已把 release_dates.region 舊版純數字欄位，改成透過 release_region 關聯
-  // 指到獨立的 release_date_regions 表，要用 release_region.region 過濾／取值，不能再直接 where region = X
+  // v54.09：前兩次分別嘗試 region 純數字欄位、release_region 關聯欄位直接寫在 WHERE 條件裡篩選，
+  // 兩次都查出空結果——懷疑是這兩個欄位在 IGDB 實際資料裡 populate 不穩定，導致 WHERE 條件篩選失真。
+  // 改成 WHERE 只篩 platform／date（已確認這樣能撈到資料），把地區資訊整批帶回來，
+  // 在 GAS 這邊自己依欄位內容篩選：新舊兩種可能的地區欄位格式都檢查，哪個有值就用哪個
   const whereClauses = ['platform = (' + platformId + ')', 'date >= ' + fromTs, 'date <= ' + toTs];
-  if (region) whereClauses.push('release_region.region = ' + region);
 
   const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/release_dates', {
     method: 'POST',
@@ -1187,12 +1188,12 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
       'Content-Type': 'text/plain'
     },
     payload: [
-      'fields date,release_region.region,',
+      'fields date,region,release_region.region,',
       'game.name,game.url,game.cover.url,game.genres.name,game.summary,',
       'game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;',
       'where ' + whereClauses.join(' & ') + ';',
       'sort date asc;',
-      'limit 100;'
+      'limit 500;'
     ].join(''),
     muteHttpExceptions: true
   });
@@ -1201,10 +1202,17 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
   if (!Array.isArray(rows))
     return { ok: false, error: 'IGDB 回傳錯誤：' + igdbRes.getContentText(), games: [] };
 
+  // 地區篩選在這裡自己做：region（舊版純數字欄位）或 release_region.region（新版關聯欄位）任一符合即算
+  const filteredRows = region ? rows.filter(function(r) {
+    const rOld = r.region;
+    const rNew = r.release_region && r.release_region.region;
+    return String(rOld) === String(region) || String(rNew) === String(region);
+  }) : rows;
+
   // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複區域紀錄），用 game.id 去重，只留第一筆（已依日期排序）
   const seenGame = {};
   const mapped = [];
-  rows.forEach(function(r) {
+  filteredRows.forEach(function(r) {
     const g = r.game;
     if (!g || !g.name) return;
     const gid = g.id || g.name;
