@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v55            ║
+// ║  GameVault — Google Apps Script 後端  v56            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1148,8 +1148,9 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
   if (!platformId || !ym || !clientId || !clientSecret)
     return { ok: false, error: 'missing params', games: [] };
 
-  // v54.05：region（IGDB region_enum：1歐洲/2北美/3澳洲/4紐西蘭/5日本/6中國/7亞洲/8全球）
-  // 有帶 region 時改用 release_dates 子關聯過濾＋回傳該地區專屬發售日；不帶則沿用原本的全球首發日邏輯
+  // v54.06：改查 IGDB 的 release_dates 端點（platform/region/date 都是該端點的「直接欄位」，
+  // 不是巢狀子關聯），這是 IGDB 官方建議的發售日瀏覽查詢方式，比在 games 端點上過濾巢狀
+  // release_dates.region 可靠很多（後者容易查出空結果）
   const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym + '_' + (region || 'all');
   const cached = getCache(cacheKey);
   if (cached) return { ok: true, games: cached, cached: true };
@@ -1173,16 +1174,10 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
     return { ok: false, error: 'Twitch 驗證失敗：' + JSON.stringify(tokenData), games: [] };
 
   const token = tokenData.access_token;
-  const whereClauses = ['platforms = (' + platformId + ')'];
-  if (region) {
-    whereClauses.push('release_dates.region = (' + region + ')');
-    whereClauses.push('release_dates.date >= ' + fromTs);
-    whereClauses.push('release_dates.date <= ' + toTs);
-  } else {
-    whereClauses.push('first_release_date >= ' + fromTs);
-    whereClauses.push('first_release_date <= ' + toTs);
-  }
-  const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/games', {
+  const whereClauses = ['platform = (' + platformId + ')', 'date >= ' + fromTs, 'date <= ' + toTs];
+  if (region) whereClauses.push('region = ' + region);
+
+  const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/release_dates', {
     method: 'POST',
     headers: {
       'Client-ID': clientId,
@@ -1190,35 +1185,38 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
       'Content-Type': 'text/plain'
     },
     payload: [
-      'fields name,url,cover.url,genres.name,summary,first_release_date,',
-      'release_dates.date,release_dates.human,release_dates.region,',
-      'involved_companies.company.name,involved_companies.developer,involved_companies.publisher;',
+      'fields date,region,',
+      'game.name,game.url,game.cover.url,game.genres.name,game.summary,',
+      'game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;',
       'where ' + whereClauses.join(' & ') + ';',
-      'sort first_release_date asc;',
+      'sort date asc;',
       'limit 100;'
     ].join(''),
     muteHttpExceptions: true
   });
 
-  const games = JSON.parse(igdbRes.getContentText());
-  if (!Array.isArray(games))
+  const rows = JSON.parse(igdbRes.getContentText());
+  if (!Array.isArray(rows))
     return { ok: false, error: 'IGDB 回傳錯誤：' + igdbRes.getContentText(), games: [] };
 
-  const mapped = games.map(function(g) {
+  // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複區域紀錄），用 game.id 去重，只留第一筆（已依日期排序）
+  const seenGame = {};
+  const mapped = [];
+  rows.forEach(function(r) {
+    const g = r.game;
+    if (!g || !g.name) return;
+    const gid = g.id || g.name;
+    if (seenGame[gid]) return;
+    seenGame[gid] = true;
     const devC = (g.involved_companies || []).find(function(c) { return c.developer; });
     const pubC = (g.involved_companies || []).find(function(c) { return c.publisher; });
     const coverUrl = g.cover && g.cover.url
       ? 'https:' + g.cover.url.replace('t_thumb', 't_cover_big')
       : '';
-    // 有指定地區時，優先取該地區的 release_dates 專屬日期；查無則退回全球首發日
-    let releaseDate = g.first_release_date
-      ? new Date(g.first_release_date * 1000).toISOString().slice(0, 10)
+    const releaseDate = r.date
+      ? new Date(r.date * 1000).toISOString().slice(0, 10)
       : '';
-    if (region && Array.isArray(g.release_dates)) {
-      const rd = g.release_dates.find(function(r) { return String(r.region) === String(region); });
-      if (rd && rd.date) releaseDate = new Date(rd.date * 1000).toISOString().slice(0, 10);
-    }
-    return {
+    mapped.push({
       name: g.name || '',
       cover_url: coverUrl,
       release_date: releaseDate,
@@ -1227,7 +1225,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
       genres: (g.genres || []).map(function(x) { return x.name; }).join('/'),
       summary: (g.summary || '').slice(0, 200),
       igdb_url: g.url || ''
-    };
+    });
   });
 
   setCache(cacheKey, mapped);
