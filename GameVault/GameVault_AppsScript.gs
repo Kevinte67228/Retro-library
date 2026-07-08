@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v58            ║
+// ║  GameVault — Google Apps Script 後端  v59            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -668,7 +668,7 @@ function dispatchRead(action, p) {
         result = igdbProxy(p.q || '', p.client_id || '', p.client_secret || '');
         break;
       case 'igdb_upcoming':
-        result = igdbUpcomingProxy(p.platform_id || '', p.ym || '', p.client_id || '', p.client_secret || '', p.region || '');
+        result = igdbUpcomingProxy(p.platform_id || '', p.ym || '', p.client_id || '', p.client_secret || '', p.lang || '');
         break;
       case 'gb_search':
         result = gbProxy(p.q || '', p.gbkey || '');
@@ -1144,14 +1144,14 @@ function igdbProxy(query, clientId, clientSecret) {
 
 // ── v54.04：IGDB 近期發售瀏覽（依平台＋年月），與收藏無關的獨立小工具 ──
 // 沿用既有 Cache 工作表機制（7天過期），同一平台+年月重複查詢直接吃快取，避免常駐瀏覽頁面撞到 IGDB 4次/秒的免費額度限制
-function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
+function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
   if (!platformId || !ym || !clientId || !clientSecret)
     return { ok: false, error: 'missing params', games: [] };
 
-  // v54.06：改查 IGDB 的 release_dates 端點（platform/region/date 都是該端點的「直接欄位」，
-  // 不是巢狀子關聯），這是 IGDB 官方建議的發售日瀏覽查詢方式，比在 games 端點上過濾巢狀
-  // release_dates.region 可靠很多（後者容易查出空結果）
-  const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym + '_' + (region || 'all');
+  // v54.10：地區篩選（region／release_region）連續三次因欄位資料不完整查空，改用「支援語言」
+  // （language_supports 關聯）取代地區當篩選條件——語意從「該地區發售」變成「支援該語言」，
+  // 資料完整度較高也不用再猜測任何數字 ID，直接用語言名稱字串比對（如 'Japanese'）
+  const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym + '_' + (lang || 'all');
   const cached = getCache(cacheKey);
   if (cached) return { ok: true, games: cached, cached: true };
 
@@ -1174,10 +1174,6 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
     return { ok: false, error: 'Twitch 驗證失敗：' + JSON.stringify(tokenData), games: [] };
 
   const token = tokenData.access_token;
-  // v54.09：前兩次分別嘗試 region 純數字欄位、release_region 關聯欄位直接寫在 WHERE 條件裡篩選，
-  // 兩次都查出空結果——懷疑是這兩個欄位在 IGDB 實際資料裡 populate 不穩定，導致 WHERE 條件篩選失真。
-  // 改成 WHERE 只篩 platform／date（已確認這樣能撈到資料），把地區資訊整批帶回來，
-  // 在 GAS 這邊自己依欄位內容篩選：新舊兩種可能的地區欄位格式都檢查，哪個有值就用哪個
   const whereClauses = ['platform = (' + platformId + ')', 'date >= ' + fromTs, 'date <= ' + toTs];
 
   const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/release_dates', {
@@ -1188,8 +1184,9 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
       'Content-Type': 'text/plain'
     },
     payload: [
-      'fields date,region,release_region.region,',
+      'fields date,',
       'game.name,game.url,game.cover.url,game.genres.name,game.summary,',
+      'game.language_supports.language.name,',
       'game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;',
       'where ' + whereClauses.join(' & ') + ';',
       'sort date asc;',
@@ -1202,14 +1199,13 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
   if (!Array.isArray(rows))
     return { ok: false, error: 'IGDB 回傳錯誤：' + igdbRes.getContentText(), games: [] };
 
-  // 地區篩選在這裡自己做：region（舊版純數字欄位）或 release_region.region（新版關聯欄位）任一符合即算
-  const filteredRows = region ? rows.filter(function(r) {
-    const rOld = r.region;
-    const rNew = r.release_region && r.release_region.region;
-    return String(rOld) === String(region) || String(rNew) === String(region);
+  // 語言篩選在這裡自己做：該遊戲的 language_supports 清單裡，只要有一筆語言名稱符合就算（不分是音訊/字幕/介面）
+  const filteredRows = lang ? rows.filter(function(r) {
+    const supports = (r.game && r.game.language_supports) || [];
+    return supports.some(function(s) { return s.language && s.language.name === lang; });
   }) : rows;
 
-  // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複區域紀錄），用 game.id 去重，只留第一筆（已依日期排序）
+  // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複紀錄），用 game.id 去重，只留第一筆（已依日期排序）
   const seenGame = {};
   const mapped = [];
   filteredRows.forEach(function(r) {
