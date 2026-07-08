@@ -1,3 +1,26 @@
+## v54.08 (2026-07-08)
+
+### 變更內容
+近期發售瀏覽的遊戲標題改用在地化名稱，並移除韓文語言篩選：
+- **標題改用在地化名稱**：串接 IGDB `alternative_names` 關聯（Localized Titles／Alternative Titles），依 繁中＞簡中＞日文＞英文 優序挑選顯示標題，查無在地化標題則退回原文 name
+- comment 欄位是社群自由填寫的說明文字非嚴格列舉值，用關鍵字比對（traditional／simplified／japan）挑選最可能符合的那筆
+- 移除「🇰🇷 支援韓文」篩選分頁
+- 自我檢查：優序挑選邏輯（含無在地化標題時正確退回原文）已驗證通過
+
+### 影響檔案
+- index.html / GameVault_v54_08_index.html
+- sw.js
+- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
+
+### GS 版本
+- v59 → v60（igdb_upcoming 加入 alternative_names 查詢與在地化標題挑選邏輯）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-07 → gamevault-v54-08
+
+### 對應備份
+- _internal/old/v54_07/
+
 ## v54.07 (2026-07-08)
 
 ### 變更內容
@@ -60,23 +83,4 @@
 
 ### 對應備份
 - _internal/old/v54_05/
-
-## v57 GS-only (2026-07-08)
-
-### 變更內容
-修正近期發售瀏覽的地區篩選仍然查空的問題：
-- 使用者提供 IGDB 官方文件截圖確認：地區代碼本身沒錯（歐洲=1/北美=2/日本=5...），但 IGDB v4 已把 `release_dates.region` 舊版純數字欄位改成透過 `release_region` 關聯指到獨立的 `release_date_regions` 表，直接 `where region = X` 查不到東西
-- 改用 `release_region.region` 關聯欄位過濾與取值，純 GAS 後端修正，前端無需更新
-
-### 影響檔案
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v56 → v57（igdb_upcoming 改用 release_region 關聯過濾地區）
-
-### PWA 快取
-- 無變更（純後端修正）
-
-### 對應備份
-- 無（純邏輯修正，未異動前端檔案）
 
