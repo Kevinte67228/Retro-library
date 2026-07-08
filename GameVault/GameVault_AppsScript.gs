@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v60            ║
+// ║  GameVault — Google Apps Script 後端  v61            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1151,7 +1151,9 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
   // v54.10：地區篩選（region／release_region）連續三次因欄位資料不完整查空，改用「支援語言」
   // （language_supports 關聯）取代地區當篩選條件——語意從「該地區發售」變成「支援該語言」，
   // 資料完整度較高也不用再猜測任何數字 ID，直接用語言名稱字串比對（如 'Japanese'）
-  const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym + '_' + (lang || 'all');
+  // v54.12：快取 key 加上版本標記 v2，強制讓改版前（未套用在地化標題）的舊快取失效，
+  // 否則同一平台/月份/語言組合會一直吐出 7 天前存的舊資料（英文標題），新邏輯永遠跑不到
+  const cacheKey = 'igdb_upcoming_v2_' + platformId + '_' + ym + '_' + (lang || 'all');
   const cached = getCache(cacheKey);
   if (cached) return { ok: true, games: cached, cached: true };
 
