@@ -1871,7 +1871,7 @@ body{
         <div class="hd">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="ht">尋寶清單</div>
-            <div style="font-size:11px;color:#7986cb">尋寶模式</div>
+            <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:6px 10px;border-radius:8px;display:flex;align-items:center;gap:4px">📅 近期發售</button>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
           <div class="dv2-hd-bar"></div>
@@ -2228,7 +2228,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.03';
+const APP_VERSION='v54.04';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13317,6 +13317,74 @@ function huntCardHtml(h){
 }
 
 // ── 新增目標：選類型/平台 → 掃條碼(可略過) → 拍照 → 填名稱 ──
+// ══ v54.04：近期發售瀏覽（獨立小工具，串接 IGDB，與收藏庫無關）══
+// IGDB 平台 ID 對照表：若查詢結果異常（尤其 Switch 2，較新平台 ID 可能隨 IGDB 資料庫調整），可在此调整數字
+var RC_PLATFORMS=[
+  {id:130,label:'Switch'},
+  {id:508,label:'Switch 2'},
+  {id:167,label:'PS5'},
+  {id:48,label:'PS4'},
+  {id:169,label:'Xbox Series'},
+  {id:6,label:'PC'}
+];
+var _rcPlatform=RC_PLATFORMS[0].id;
+var _rcYear,_rcMonth; // 1-12
+function openReleaseCal(){
+  if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
+  var now=new Date();
+  if(!_rcYear){_rcYear=now.getFullYear();_rcMonth=now.getMonth()+1;}
+  var ov=$('release-cal-ov');if(ov)ov.style.display='flex';
+  _rcRenderTabs();
+  rcLoad();
+}
+function closeReleaseCal(){var ov=$('release-cal-ov');if(ov)ov.style.display='none';}
+function _rcRenderTabs(){
+  var wrap=$('rc-plat-tabs');if(!wrap)return;
+  wrap.innerHTML=RC_PLATFORMS.map(function(p){
+    var on=p.id===_rcPlatform;
+    return '<button type="button" onclick="rcSelectPlatform('+p.id+')" style="flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;white-space:nowrap;'+
+      (on?'background:#00e5ff;color:#001018;border:none;font-weight:700':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(p.label)+'</button>';
+  }).join('');
+}
+function rcSelectPlatform(id){_rcPlatform=id;_rcRenderTabs();rcLoad();}
+function rcShiftMonth(delta){
+  _rcMonth+=delta;
+  if(_rcMonth>12){_rcMonth=1;_rcYear++;}
+  if(_rcMonth<1){_rcMonth=12;_rcYear--;}
+  rcLoad();
+}
+function rcLoad(){
+  var ym=_rcYear+'-'+(_rcMonth<10?'0'+_rcMonth:_rcMonth);
+  var lab=$('rc-ym-label');if(lab)lab.textContent=_rcYear+'年'+_rcMonth+'月';
+  var listEl=$('rc-list');
+  if(listEl)listEl.innerHTML='<div style="text-align:center;color:#7986cb;padding:40px 0">查詢中...</div>';
+  shPost({action:'igdb_upcoming',platform_id:_rcPlatform,ym:ym,client_id:cfg.iid,client_secret:cfg.isec}).then(function(res){
+    if(!listEl)return;
+    if(!res||!res.ok){
+      listEl.innerHTML='<div style="text-align:center;color:#ff5252;padding:40px 16px;font-size:13px">查詢失敗：'+esc((res&&res.error)||'未知錯誤')+'</div>';
+      return;
+    }
+    var games=res.games||[];
+    if(!games.length){
+      listEl.innerHTML='<div style="text-align:center;color:#7986cb;padding:40px 16px;font-size:13px">這個月這個平台查無發售資料<br>（IGDB 對日系獨佔／小廠遊戲收錄不一定完整）</div>';
+      return;
+    }
+    listEl.innerHTML=games.map(function(g){
+      var img=g.cover_url?('<img src="'+esc(g.cover_url)+'" style="width:56px;height:56px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#141b30">'):
+        '<div style="width:56px;height:56px;border-radius:8px;flex-shrink:0;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:22px">🎮</div>';
+      var metaParts=[g.release_date,g.developer||g.publisher,g.genres].filter(Boolean);
+      return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
+        img+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:14px;font-weight:600;color:#e8eaf6;margin-bottom:3px">'+esc(g.name||'')+'</div>'+
+          '<div style="font-size:11px;color:#7986cb">'+esc(metaParts.join(' · '))+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }).catch(function(){
+    if(listEl)listEl.innerHTML='<div style="text-align:center;color:#ff5252;padding:40px 16px;font-size:13px">查詢失敗，請檢查網路後重試</div>';
+  });
+}
 function huntStartAdd(){
   pickTypeAndPlatform('hunt',function(type,platform){
     _huntEntry={category:'狩獵',target_cat:type,platform:platform||'',primary_name:'',jp_name:'',barcode:'',notes:'',summary:'',region:'',cover_img:'',sightings:'[]',hunt_status:'追蹤中'};
@@ -14115,6 +14183,23 @@ function _imgToB64(src){
     <div class="lb-arrow next" id="lb-next" onclick="lbNav(1)">›</div>
     <div class="lb-caption" id="lb-caption"></div>
   </div>
+</div>
+
+<!-- ══ 近期發售瀏覽 overlay（v54.04：獨立小工具，串接 IGDB，與收藏庫無關）══ -->
+<div id="release-cal-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column">
+  <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:16px;font-weight:700;color:#00e5ff">📅 近期發售瀏覽</div>
+    <button type="button" onclick="closeReleaseCal()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
+  </div>
+  <div style="padding:10px 16px;border-bottom:1px solid #1e2a45;flex-shrink:0">
+    <div id="rc-plat-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px"></div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:4px">
+      <button type="button" onclick="rcShiftMonth(-1)" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:8px;font-size:16px">‹</button>
+      <div id="rc-ym-label" style="font-size:15px;font-weight:700;color:#e8eaf6;min-width:100px;text-align:center">2026年7月</div>
+      <button type="button" onclick="rcShiftMonth(1)" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:8px;font-size:16px">›</button>
+    </div>
+  </div>
+  <div id="rc-list" style="flex:1;overflow-y:auto;padding:12px 16px 40px"></div>
 </div>
 
 <!-- ══ 圖片裁切器 overlay ══ -->
