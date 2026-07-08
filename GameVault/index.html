@@ -2282,7 +2282,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.19';
+const APP_VERSION='v54.20';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12910,19 +12910,33 @@ function closeDetailSilent(){
 }
 
 // ── 詳細頁左右翻頁 ──────────────────────────────────
+// v54.20：連續快速點擊/滑動翻頁時，內容區塊（含圖片等）的重繪速度跟不上，
+// 標題（輕量文字）已經更新到最新，但內容還卡在處理前幾次觸發的重繪，視覺上看起來標題動內容不動
+// （最終還是會追上正確狀態，但中間這段是真的錯亂）。加節流鎖：等瀏覽器真正把這次的內容畫完（用兩層
+// requestAnimationFrame 確保至少經過一次完整繪製週期）才放行下一次翻頁，避免堆疊來不及畫完的重繪。
+var _detailNavBusy=false;
+function _detailNavRelease(){
+  requestAnimationFrame(function(){requestAnimationFrame(function(){_detailNavBusy=false;});});
+}
 function detailPrev(){
+  if(_detailNavBusy)return;
   if(!detailRow)return;
   var L=_detailNavList();
   var idx=L.findIndex(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
   if(idx<=0)return; // 已是該書架第一筆 → 阻擋跨書架
+  _detailNavBusy=true;
   showDetail(L[idx-1].uid||L[idx-1].rowNum);
+  _detailNavRelease();
 }
 function detailNext(){
+  if(_detailNavBusy)return;
   if(!detailRow)return;
   var L=_detailNavList();
   var idx=L.findIndex(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
   if(idx<0||idx>=L.length-1)return; // 已是該書架最後一筆 → 阻擋跨書架
+  _detailNavBusy=true;
   showDetail(L[idx+1].uid||L[idx+1].rowNum);
+  _detailNavRelease();
 }
 function editDetail(){
   if(!detailRow)return;
