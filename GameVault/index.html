@@ -2282,7 +2282,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.20';
+const APP_VERSION='v54.21';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12758,7 +12758,17 @@ function detailHeroHtml(d,rowNum){
     '</div>'+
   '</div>';
 }
+// v54.21：外層加 try-catch 包裝，詳情頁若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息
+// 並印出完整堆疊到 console，取代原本靜默失敗（畫面完全沒反應，使用者不知道發生什麼事）的狀況
 function showDetail(rowNum,keepNav){
+  try{
+    _showDetailImpl(rowNum,keepNav);
+  }catch(e){
+    console.error('showDetail 渲染失敗:',e);
+    toast('詳情頁開啟失敗：'+(e&&e.message?e.message:e),'er',7000);
+  }
+}
+function _showDetailImpl(rowNum,keepNav){
   if(_colSel){if(_colSelSet.has(rowNum))_colSelSet.delete(rowNum);else _colSelSet.add(rowNum);renderGlist();colSelBar();return;}
   var item=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});if(!item)return;
   if(!keepNav)_detailNavStack=[]; // 由收藏列表/滑動開啟＝全新導航，清空關聯返回堆疊
