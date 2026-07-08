@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v56            ║
+// ║  GameVault — Google Apps Script 後端  v57            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1174,8 +1174,10 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
     return { ok: false, error: 'Twitch 驗證失敗：' + JSON.stringify(tokenData), games: [] };
 
   const token = tokenData.access_token;
+  // v54.07：IGDB v4 已把 release_dates.region 舊版純數字欄位，改成透過 release_region 關聯
+  // 指到獨立的 release_date_regions 表，要用 release_region.region 過濾／取值，不能再直接 where region = X
   const whereClauses = ['platform = (' + platformId + ')', 'date >= ' + fromTs, 'date <= ' + toTs];
-  if (region) whereClauses.push('region = ' + region);
+  if (region) whereClauses.push('release_region.region = ' + region);
 
   const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/release_dates', {
     method: 'POST',
@@ -1185,7 +1187,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
       'Content-Type': 'text/plain'
     },
     payload: [
-      'fields date,region,',
+      'fields date,release_region.region,',
       'game.name,game.url,game.cover.url,game.genres.name,game.summary,',
       'game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;',
       'where ' + whereClauses.join(' & ') + ';',
