@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v54            ║
+// ║  GameVault — Google Apps Script 後端  v55            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -668,7 +668,7 @@ function dispatchRead(action, p) {
         result = igdbProxy(p.q || '', p.client_id || '', p.client_secret || '');
         break;
       case 'igdb_upcoming':
-        result = igdbUpcomingProxy(p.platform_id || '', p.ym || '', p.client_id || '', p.client_secret || '');
+        result = igdbUpcomingProxy(p.platform_id || '', p.ym || '', p.client_id || '', p.client_secret || '', p.region || '');
         break;
       case 'gb_search':
         result = gbProxy(p.q || '', p.gbkey || '');
@@ -1144,11 +1144,13 @@ function igdbProxy(query, clientId, clientSecret) {
 
 // ── v54.04：IGDB 近期發售瀏覽（依平台＋年月），與收藏無關的獨立小工具 ──
 // 沿用既有 Cache 工作表機制（7天過期），同一平台+年月重複查詢直接吃快取，避免常駐瀏覽頁面撞到 IGDB 4次/秒的免費額度限制
-function igdbUpcomingProxy(platformId, ym, clientId, clientSecret) {
+function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, region) {
   if (!platformId || !ym || !clientId || !clientSecret)
     return { ok: false, error: 'missing params', games: [] };
 
-  const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym;
+  // v54.05：region（IGDB region_enum：1歐洲/2北美/3澳洲/4紐西蘭/5日本/6中國/7亞洲/8全球）
+  // 有帶 region 時改用 release_dates 子關聯過濾＋回傳該地區專屬發售日；不帶則沿用原本的全球首發日邏輯
+  const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym + '_' + (region || 'all');
   const cached = getCache(cacheKey);
   if (cached) return { ok: true, games: cached, cached: true };
 
@@ -1171,6 +1173,15 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret) {
     return { ok: false, error: 'Twitch 驗證失敗：' + JSON.stringify(tokenData), games: [] };
 
   const token = tokenData.access_token;
+  const whereClauses = ['platforms = (' + platformId + ')'];
+  if (region) {
+    whereClauses.push('release_dates.region = (' + region + ')');
+    whereClauses.push('release_dates.date >= ' + fromTs);
+    whereClauses.push('release_dates.date <= ' + toTs);
+  } else {
+    whereClauses.push('first_release_date >= ' + fromTs);
+    whereClauses.push('first_release_date <= ' + toTs);
+  }
   const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/games', {
     method: 'POST',
     headers: {
@@ -1179,9 +1190,10 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret) {
       'Content-Type': 'text/plain'
     },
     payload: [
-      'fields name,cover.url,genres.name,summary,first_release_date,',
+      'fields name,url,cover.url,genres.name,summary,first_release_date,',
+      'release_dates.date,release_dates.human,release_dates.region,',
       'involved_companies.company.name,involved_companies.developer,involved_companies.publisher;',
-      'where platforms = (' + platformId + ') & first_release_date >= ' + fromTs + ' & first_release_date <= ' + toTs + ';',
+      'where ' + whereClauses.join(' & ') + ';',
       'sort first_release_date asc;',
       'limit 100;'
     ].join(''),
@@ -1198,9 +1210,14 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret) {
     const coverUrl = g.cover && g.cover.url
       ? 'https:' + g.cover.url.replace('t_thumb', 't_cover_big')
       : '';
-    const releaseDate = g.first_release_date
+    // 有指定地區時，優先取該地區的 release_dates 專屬日期；查無則退回全球首發日
+    let releaseDate = g.first_release_date
       ? new Date(g.first_release_date * 1000).toISOString().slice(0, 10)
       : '';
+    if (region && Array.isArray(g.release_dates)) {
+      const rd = g.release_dates.find(function(r) { return String(r.region) === String(region); });
+      if (rd && rd.date) releaseDate = new Date(rd.date * 1000).toISOString().slice(0, 10);
+    }
     return {
       name: g.name || '',
       cover_url: coverUrl,
@@ -1208,7 +1225,8 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret) {
       developer: devC ? devC.company.name : '',
       publisher: pubC ? pubC.company.name : '',
       genres: (g.genres || []).map(function(x) { return x.name; }).join('/'),
-      summary: (g.summary || '').slice(0, 200)
+      summary: (g.summary || '').slice(0, 200),
+      igdb_url: g.url || ''
     };
   });
 
