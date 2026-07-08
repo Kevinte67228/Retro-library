@@ -1,3 +1,21 @@
+## v54.15 (2026-07-08)
+
+### 變更內容
+「說明」按鈕位置調整：原本放在 Step 1「選擇分類」標題旁，但按鈕內容其實是解說 Step 4「建檔方式」，位置跟內容對不上。改移到 Step 4「建檔方式」標題旁，位置跟說明內容一致。
+
+### 影響檔案
+- index.html / GameVault_v54_15_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端排版調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-14 → gamevault-v54-15
+
+### 對應備份
+- _internal/old/v54_14/
+
 ## v54.14 (2026-07-08)
 
 ### 變更內容
@@ -64,25 +82,4 @@
 
 ### 對應備份
 - _internal/old/v54_11/
-
-## v54.11 (2026-07-08)
-
-### 變更內容
-近期發售瀏覽兩項優化：
-- **放寬日文標題比對關鍵字**：原本只比對 comment 含「japan」，改為同時比對 japan／japanese／jp 幾種可能寫法，涵蓋更多社群標記習慣不一致的情況；快取 key 升級 v3 避免舊快取殘留
-- **排版重新設計**：圖片＋遊戲名稱同一行，發售日/開發商/類型等說明文字改成獨立整行放在下面，不再擠在圖片旁的窄欄位裡
-
-### 影響檔案
-- index.html / GameVault_v54_11_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v61 → v62（igdb_upcoming 放寬日文比對關鍵字＋快取版本升級）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-10 → gamevault-v54-11
-
-### 對應備份
-- _internal/old/v54_10/
 
