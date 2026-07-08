@@ -1,3 +1,27 @@
+## v54.12 (2026-07-08)
+
+### 變更內容
+使用者提供 IGDB 遊戲頁面截圖，確認「Localized Titles」與「Alternative Titles」是兩個不同資料來源（前者 game_localizations 關聯，後者 alternative_names），部分遊戲的日文標題只存在前者：
+- **加入 game_localizations 查詢**：同時檢查兩個資料來源，任一符合語言/地區條件就採用（繁中：alternative_names traditional 或 game_localizations 的 Taiwan/Hong Kong；簡中：alternative_names simplified 或 game_localizations 的 China；日文同理）
+- **加上防呆退回機制**：`game_localizations` 是推測的欄位名稱，若導致 IGDB 查詢失敗，自動退回不含它的欄位組合重試一次，不會讓整個功能掛掉
+- 快取 key 升級 v4
+- **排版修正**：說明文字（發售日/開發商/類型）改為對齊圖片右側的品名文字，不再從圖片正下方開始
+- 自我檢查：兩資料來源整合的優序邏輯（含無在地化資料時正確退回原文）已驗證通過
+
+### 影響檔案
+- index.html / GameVault_v54_12_index.html
+- sw.js
+- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
+
+### GS 版本
+- v62 → v63（igdb_upcoming 加入 game_localizations 來源＋防呆退回機制）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-11 → gamevault-v54-12
+
+### 對應備份
+- _internal/old/v54_11/
+
 ## v54.11 (2026-07-08)
 
 ### 變更內容
@@ -59,27 +83,4 @@
 
 ### 對應備份
 - _internal/old/v54_08/
-
-## v54.08 (2026-07-08)
-
-### 變更內容
-近期發售瀏覽的遊戲標題改用在地化名稱，並移除韓文語言篩選：
-- **標題改用在地化名稱**：串接 IGDB `alternative_names` 關聯（Localized Titles／Alternative Titles），依 繁中＞簡中＞日文＞英文 優序挑選顯示標題，查無在地化標題則退回原文 name
-- comment 欄位是社群自由填寫的說明文字非嚴格列舉值，用關鍵字比對（traditional／simplified／japan）挑選最可能符合的那筆
-- 移除「🇰🇷 支援韓文」篩選分頁
-- 自我檢查：優序挑選邏輯（含無在地化標題時正確退回原文）已驗證通過
-
-### 影響檔案
-- index.html / GameVault_v54_08_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v59 → v60（igdb_upcoming 加入 alternative_names 查詢與在地化標題挑選邏輯）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-07 → gamevault-v54-08
-
-### 對應備份
-- _internal/old/v54_07/
 
