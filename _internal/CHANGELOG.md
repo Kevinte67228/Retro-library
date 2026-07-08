@@ -1,3 +1,26 @@
+## v54.04 (2026-07-08)
+
+### 變更內容
+新增「近期發售瀏覽」獨立小工具，與收藏庫無關（方案 B）：
+- 尋寶頁面新增「📅 近期發售」入口按鈕，開啟全螢幕瀏覽頁
+- 可選平台（Switch／Switch 2／PS5／PS4／Xbox Series／PC）＋切換月份，串接已設定好的 IGDB（Twitch）憑證查詢該平台當月發售遊戲
+- GAS 新增 `igdb_upcoming` 查詢代理，沿用既有 Cache 工作表機制（7天過期），同一平台+年月重複查詢直接吃快取，避免常駐瀏覽撞到 IGDB 免費額度（4次/秒）限制
+- **已知限制**：IGDB 對日系獨佔／小廠／教育類遊戲收錄不一定完整或即時，跟任天堂官方列表可能有落差；Switch 2 的 IGDB 平台 ID 較新，若查詢結果異常可能需要調整 `RC_PLATFORMS` 裡的 ID
+
+### 影響檔案
+- index.html / GameVault_v54_04_index.html
+- sw.js
+- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
+
+### GS 版本
+- v53 → v54（新增 igdb_upcoming 查詢代理）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-03 → gamevault-v54-04
+
+### 對應備份
+- _internal/old/v54_03/
+
 ## v54.03 (2026-07-08)
 
 ### 變更內容
@@ -65,27 +88,4 @@
 
 ### 對應備份
 - _internal/old/v53_01/
-
-## v53.01 (2026-07-07)
-
-### 變更內容
-處理稽核報告「五、互動功能與按鈕驗證清單」兩個 High 等級安全問題：
-- **`fix_headers` 移出未受保護的讀取路徑**：從 `dispatchRead()`（GET/POST 皆可、無驗證）移到 `doPost` 的寫入類 action 分支，跟 add/update/delete/deleteMany 共用同一組 `APP_TOKEN` 驗證，不再能被任何知道網址的人直接觸發
-- **`APP_TOKEN` 改為 fail-closed**：原本「未設定 APP_TOKEN 則放行」改成「未設定一律拒絕」，寫入類操作（含 fix_headers）現在強制要求 token 正確才能執行。**執行前已確認使用者 APP_TOKEN 已設定並通過連線自檢**，此變更不影響現有正常使用
-- 前端 `fixHeaders()` 改用 `shPost` 並自動附帶 `app_token`（原本用 `shGet` 不帶任何驗證資訊）
-- 自我檢查：fail-closed 邏輯與 fix_headers 保護邏輯皆已驗證通過
-
-### 影響檔案
-- index.html / GameVault_v53_01_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v52 → v53（doPost 寫入驗證邏輯變更：fix_headers 納入保護、APP_TOKEN 改 fail-closed）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v52-01 → gamevault-v53-01
-
-### 對應備份
-- _internal/old/v52_01/
 
