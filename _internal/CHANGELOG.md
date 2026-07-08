@@ -1,3 +1,24 @@
+## v54.16 (2026-07-08)
+
+### 變更內容
+三項優化：
+- **「近期發售」按鈕放大**：字級/padding/圖示都加大，邊框改用更醒目的青色
+- **說明彈窗標頭固定**：原本標頭（含 ✕ 關閉鈕）會跟著內容一起被滑走，改成 sticky 固定在頂部，內容區獨立捲動，關閉鈕任何時候都看得到、按得到
+- **Step 1～4 都各自有專屬說明按鈕**：原本只有 Step 4「建檔方式」有說明，現在 Step 1「選擇分類」、Step 2「商品區域」、Step 3「平台選擇」也都各自有「💡 說明」按鈕，內容對應各自的步驟（8大分類與子類型概念、地區選擇的影響、平台選填的用途）
+
+### 影響檔案
+- index.html / GameVault_v54_16_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-15 → gamevault-v54-16
+
+### 對應備份
+- _internal/old/v54_15/
+
 ## v54.15 (2026-07-08)
 
 ### 變更內容
@@ -58,28 +79,4 @@
 
 ### 對應備份
 - _internal/old/v54_12/
-
-## v54.12 (2026-07-08)
-
-### 變更內容
-使用者提供 IGDB 遊戲頁面截圖，確認「Localized Titles」與「Alternative Titles」是兩個不同資料來源（前者 game_localizations 關聯，後者 alternative_names），部分遊戲的日文標題只存在前者：
-- **加入 game_localizations 查詢**：同時檢查兩個資料來源，任一符合語言/地區條件就採用（繁中：alternative_names traditional 或 game_localizations 的 Taiwan/Hong Kong；簡中：alternative_names simplified 或 game_localizations 的 China；日文同理）
-- **加上防呆退回機制**：`game_localizations` 是推測的欄位名稱，若導致 IGDB 查詢失敗，自動退回不含它的欄位組合重試一次，不會讓整個功能掛掉
-- 快取 key 升級 v4
-- **排版修正**：說明文字（發售日/開發商/類型）改為對齊圖片右側的品名文字，不再從圖片正下方開始
-- 自我檢查：兩資料來源整合的優序邏輯（含無在地化資料時正確退回原文）已驗證通過
-
-### 影響檔案
-- index.html / GameVault_v54_12_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v62 → v63（igdb_upcoming 加入 game_localizations 來源＋防呆退回機制）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-11 → gamevault-v54-12
-
-### 對應備份
-- _internal/old/v54_11/
 
