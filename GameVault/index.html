@@ -2282,7 +2282,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.18';
+const APP_VERSION='v54.19';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11974,10 +11974,15 @@ function colActionSheet(uid){
   ]});
 }
 function _detailValHtml(k,v,isBook2){
+  try{
     var valHtml='';
-    if(k==='ref_link'&&v.startsWith('http')){
-      var disp=v.replace(/^https?:\/\//,'').slice(0,50)+(v.length>60?'...':'');
-      valHtml='<a href="'+esc(v)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:#00e5ff;text-decoration:none;word-break:break-all;font-size:12px">🔗 '+esc(disp)+'</a>';
+    // v54.19：ref_link 欄位若因資料異常不是字串型態，直接呼叫 .startsWith 會拋出例外，
+    // 導致 showDetail() 卡在標題已設定、$('dgrid') 內容還沒渲染完成就中斷（翻頁時標題動內容不動的根因）。
+    // 強制轉字串後再處理，並整段函式包 try-catch 防止其他未預期的欄位資料異常造成同樣的中斷
+    if(k==='ref_link'&&String(v).startsWith('http')){
+      var _vs=String(v);
+      var disp=_vs.replace(/^https?:\/\//,'').slice(0,50)+(_vs.length>60?'...':'');
+      valHtml='<a href="'+esc(_vs)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:#00e5ff;text-decoration:none;word-break:break-all;font-size:12px">🔗 '+esc(disp)+'</a>';
     }else if((k==='release_date'||k==='buy_date'||k==='resale_date'||k==='test_date')&&v){
       var dv=displayDate(v);
       valHtml=dv?esc(dv):'';
@@ -12027,7 +12032,12 @@ function _detailValHtml(k,v,isBook2){
     }else{
       valHtml=esc(v);
     }
-  return valHtml;
+    return valHtml;
+  }catch(e){
+    // v54.19：任何欄位資料異常導致的例外都在這裡攔截，退回顯示原始值的安全字串，
+    // 避免中斷整個 showDetail() 的渲染流程（造成標題已更新、內容卡在上一筆的錯亂畫面）
+    try{return esc(''+(v==null?'':v));}catch(e2){return '';}
+  }
 }
 function _detailTag(label,color){
   if(!label)return '';
