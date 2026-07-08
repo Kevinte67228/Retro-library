@@ -2228,7 +2228,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.05';
+const APP_VERSION='v54.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13359,7 +13359,7 @@ function _rcRenderTabs(){
 function _rcRenderRegionTabs(){
   var wrap=$('rc-region-tabs');if(!wrap)return;
   wrap.innerHTML=RC_REGIONS.map(function(r){
-    var on=r.id===_rcRegion;
+    var on=(''+r.id)===(''+_rcRegion); // v54.08：onclick 傳入的一律是字串，跟陣列裡數字型態的id用嚴格比較永遠比不中，統一轉字串比對
     return '<button type="button" onclick="rcSelectRegion(\''+r.id+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;white-space:nowrap;'+
       (on?'background:#69f0ae;color:#001018;border:none;font-weight:700':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(r.label)+'</button>';
   }).join('');
