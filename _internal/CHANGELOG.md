@@ -1,3 +1,24 @@
+## v54.11 (2026-07-08)
+
+### 變更內容
+近期發售瀏覽兩項優化：
+- **放寬日文標題比對關鍵字**：原本只比對 comment 含「japan」，改為同時比對 japan／japanese／jp 幾種可能寫法，涵蓋更多社群標記習慣不一致的情況；快取 key 升級 v3 避免舊快取殘留
+- **排版重新設計**：圖片＋遊戲名稱同一行，發售日/開發商/類型等說明文字改成獨立整行放在下面，不再擠在圖片旁的窄欄位裡
+
+### 影響檔案
+- index.html / GameVault_v54_11_index.html
+- sw.js
+- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
+
+### GS 版本
+- v61 → v62（igdb_upcoming 放寬日文比對關鍵字＋快取版本升級）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-10 → gamevault-v54-11
+
+### 對應備份
+- _internal/old/v54_10/
+
 ## v54.10 (2026-07-08)
 
 ### 變更內容
@@ -61,27 +82,4 @@
 
 ### 對應備份
 - _internal/old/v54_07/
-
-## v54.07 (2026-07-08)
-
-### 變更內容
-近期發售瀏覽的「地區篩選」改為「支援語言篩選」：
-- **背景**：使用者提供 IGDB 遊戲詳情頁截圖，確認該類遊戲的 Releases 區塊完全沒有地區標籤（多平台同一天發售，看不出地區差異），且 Age Ratings 沒有日本 CERO 分級——證實地區篩選連續三次失敗的根因是 IGDB 資料本身地區欄位不完整，不是查詢語法問題
-- **改用「支援語言」（language_supports 關聯）取代地區**：語意從「該地區發售」改成「支援該語言」；直接用語言名稱字串比對（如 'Japanese'、'Chinese (Traditional)'），不用再猜測任何數字 ID，資料完整度也比地區欄位高很多
-- 地區 tabs 改為「全部／🇯🇵支援日文／🇺🇸支援英文／🇹🇼支援繁中／🇨🇳支援簡中／🇰🇷支援韓文」
-- GAS `igdb_upcoming` 的 `region` 參數改名為 `lang`
-
-### 影響檔案
-- index.html / GameVault_v54_07_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v58 → v59（igdb_upcoming 改用語言支援篩選）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-06 → gamevault-v54-07
-
-### 對應備份
-- _internal/old/v54_06/
 
