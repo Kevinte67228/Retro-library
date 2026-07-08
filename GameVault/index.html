@@ -1357,7 +1357,7 @@ body{
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
           <div class="hs" style="margin:0">收藏數據總覽</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <select id="dash-filter" class="fsel" style="height:34px;font-size:12px;padding:0 10px;min-width:72px;border-radius:10px" onchange="renderDash()">
+            <select id="dash-filter" class="fsel" style="height:34px;font-size:12px;padding:0 10px;min-width:72px;border-radius:10px" onchange="_dashDrillSubtype=null;renderDash()">
               <option value="all">全部</option>
               <option value="game">遊戲</option>
               <option value="book">書籍</option>
@@ -2228,7 +2228,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.02';
+const APP_VERSION='v54.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9958,6 +9958,66 @@ function togSec(hdr){hdr.nextElementSibling.classList.toggle('cl');hdr.querySele
 function clearForm(){var cat=_syncFormCat(entry);entry=Object.assign({},_defaultsFor(cat,_selectedSubtype));_applyCatFields(cat,_selectedSubtype);edited.clear();renderForm();}
 
 // ── 儀表板 ──
+// v54.03：4個新分類的甜甜圈圖改用「子類型分佈」，原本用的次要欄位（載體格式/比例等）
+// 只對少數子類型有意義，改成點選特定子類型後才「下鑽」顯示該子類型專屬的細節分佈，資訊不遺失
+var DASH_SUBTYPE_DRILL={
+  '動漫/美術設定集':{
+    '動畫影集':{field:'binding',label:'載體格式'},
+    '動畫電影／劇場版':{field:'binding',label:'載體格式'},
+    '漫畫／單行本':{field:'illustrator',label:'作者分佈'},
+    '畫冊／插畫集':{field:'illustrator',label:'繪師分佈'},
+    '設定集／公式資料集':{field:'publisher',label:'出版社分佈'},
+    '原畫集／分鏡集':{field:'studio',label:'製作公司分佈'},
+    '雜誌／MOOK／同人誌':{field:'circle_name',label:'社團分佈'},
+    '周邊／其他':{field:'publisher',label:'發行商分佈'}
+  },
+  '公仔':{
+    '比例模型':{field:'scale',label:'比例分佈'},
+    '組裝模型':{field:'grade',label:'模型等級分佈'},
+    '可動模型':{field:'brand',label:'廠牌分佈'},
+    '黏土人／Q版':{field:'brand',label:'廠牌分佈'},
+    '景品／一番賞':{field:'event_name',label:'活動分佈'},
+    'GK雕像':{field:'sculptor',label:'原型師分佈'}
+  },
+  '原聲帶':{
+    '原聲帶':{field:'composer',label:'作曲者分佈'},
+    '主題曲／單曲':{field:'artist',label:'演唱者分佈'},
+    '角色歌曲／印象集':{field:'voice_actor',label:'聲優分佈'},
+    '廣播劇CD':{field:'label',label:'發行廠牌分佈'},
+    '演唱會音源／其他':{field:'venue',label:'會場分佈'}
+  },
+  '數位下載版':{
+    '下載版遊戲':{field:'store',label:'商店分佈'},
+    '追加下載內容':{field:'store',label:'商店分佈'},
+    '電子書（漫畫／單行本）':{field:'publisher',label:'出版社分佈'},
+    '電子書（畫冊／美術設定）':{field:'publisher',label:'出版社分佈'},
+    '電子書（攻略／公式書）':{field:'publisher',label:'出版社分佈'},
+    '電子書（雜誌／MOOK）':{field:'publisher',label:'出版社分佈'},
+    '數位音源':{field:'label',label:'發行廠牌分佈'},
+    '數位影音':{field:'studio',label:'製作公司分佈'}
+  }
+};
+var _dashDrillSubtype=null; // 目前下鑽選中的子類型；null＝未下鑽，顯示分類原本的細節分佈
+function dashDrillSubtype(subtype){
+  _dashDrillSubtype=(_dashDrillSubtype===subtype)?null:subtype; // 再點一次同一個子類型＝取消下鑽
+  renderDash();
+}
+// 依目前下鑽狀態決定 mid-chart 要顯示分類預設的細節分佈，還是下鑽後該子類型的專屬分佈
+function _dashMidWithDrill(cat,filtered2,buildMap,fallbackMap,fallbackLabel,fallbackColors,fallbackTotalText){
+  if(_dashDrillSubtype){
+    var cfg=(DASH_SUBTYPE_DRILL[cat]||{})[_dashDrillSubtype];
+    var subItems=filtered2.filter(function(c){return c.data.subtype===_dashDrillSubtype;});
+    if(cfg&&subItems.length){
+      return{
+        midMap:buildMap(subItems,function(c){return (c.data[cfg.field]||'').trim();}),
+        midLabel:'🔍 '+_dashDrillSubtype+'－'+cfg.label,
+        midColors:null,
+        midTotalText:subItems.length+' 件（再點一次子類型可返回）'
+      };
+    }
+  }
+  return{midMap:fallbackMap,midLabel:fallbackLabel,midColors:fallbackColors,midTotalText:fallbackTotalText};
+}
 function _dashModel(cat,filtered2,catOf){
   // ── 共用小工具 ──
   function withImgCnt(arr){return arr.filter(function(c){return hasImgVal(c.data.cover_img);}).length;}
@@ -10041,6 +10101,8 @@ function _dashModel(cat,filtered2,catOf){
     var storeMap=buildMap(filtered2,function(c){return (c.data.store||'').trim();});
     var withDlc=filtered2.filter(function(c){return (c.data.dlc_owned||'').trim();}).length;
     var plat3=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
+    var subMapDigi=buildMap(filtered2,function(c){return c.data.subtype||'未分類';});
+    var midDigi=_dashMidWithDrill(cat,filtered2,buildMap,plat3,'平台分佈',null,Object.keys(plat3).length+' 個平台');
     D={kpi:[
         {label:'數位下載版',val:filtered2.length,color:'#40c4ff',icon:'💾'},
         {label:'商店',val:distinct(filtered2,'store'),color:'#64b5f6',icon:'🏬'},
@@ -10051,12 +10113,15 @@ function _dashModel(cat,filtered2,catOf){
         {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
         {label:'已退款 '+statusCnt(filtered2,'collect_status','已退款'),color:'#ff5252'},
         {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'購入商店分佈',donutMap:storeMap,
+      // v54.03：甜甜圈改「子類型分佈」，可點擊下鑽；原本的購入商店分佈移到有需要時查看
+      donutLabel:'子類型分佈',donutMap:subMapDigi,donutDrillable:true,
       donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'平台分佈',midMap:plat3,midColors:null,midTotalText:Object.keys(plat3).length+' 個平台'};
+      midLabel:midDigi.midLabel,midMap:midDigi.midMap,midColors:midDigi.midColors,midTotalText:midDigi.midTotalText};
   }else if(cat==='原聲帶'){
     var fmtMap=buildMap(filtered2,function(c){return (c.data.format||'').trim();});
     var labelMap=buildMap(filtered2,function(c){return (c.data.label||'').trim();});
+    var subMapOst=buildMap(filtered2,function(c){return c.data.subtype||'未分類';});
+    var midOst=_dashMidWithDrill(cat,filtered2,buildMap,labelMap,'廠牌分佈',null,Object.keys(labelMap).length+' 個廠牌');
     D={kpi:[
         {label:'原聲帶',val:filtered2.length,color:'#ff8a65',icon:'💿'},
         {label:'作曲家',val:distinct(filtered2,'composer'),color:'#ffab91',icon:'🎼'},
@@ -10067,12 +10132,15 @@ function _dashModel(cat,filtered2,catOf){
         {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
         {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
         {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'媒體格式',donutMap:fmtMap,
+      donutLabel:'子類型分佈',donutMap:subMapOst,donutDrillable:true,
       donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'廠牌分佈',midMap:labelMap,midColors:null,midTotalText:Object.keys(labelMap).length+' 個廠牌'};
+      midLabel:midOst.midLabel,midMap:midOst.midMap,midColors:midOst.midColors,midTotalText:midOst.midTotalText};
   }else if(cat==='動漫/美術設定集'){
     var bindMap=buildMap(filtered2,function(c){return (c.data.binding||'').trim();});
     var pubMap2=buildMap(filtered2,function(c){return (c.data.publisher||'').trim();});
+    var subMapAn=buildMap(filtered2,function(c){return c.data.subtype||'未分類';});
+    // v54.03：裝訂方式(binding)只有動畫影集/電影兩個子類型才有，改用出版社分佈當預設，binding 移到下鑽動畫影集/電影時查看
+    var midAn=_dashMidWithDrill(cat,filtered2,buildMap,pubMap2,'出版社分佈',null,Object.keys(pubMap2).length+' 間出版社');
     D={kpi:[
         {label:'動漫/美術設定集',val:filtered2.length,color:'#aed581',icon:'🖼️'},
         {label:'繪師',val:distinct(filtered2,'illustrator'),color:'#c5e1a5',icon:'✏️'},
@@ -10083,12 +10151,15 @@ function _dashModel(cat,filtered2,catOf){
         {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
         {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
         {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'裝訂方式',donutMap:bindMap,
+      donutLabel:'子類型分佈',donutMap:subMapAn,donutDrillable:true,
       donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'出版社分佈',midMap:pubMap2,midColors:null,midTotalText:Object.keys(pubMap2).length+' 間出版社'};
+      midLabel:midAn.midLabel,midMap:midAn.midMap,midColors:midAn.midColors,midTotalText:midAn.midTotalText};
   }else if(cat==='公仔'){
     var brandMap2=buildMap(filtered2,function(c){return (c.data.brand||'').trim();});
     var scaleMap=buildMap(filtered2,function(c){return (c.data.scale||'').trim();});
+    var subMapFig=buildMap(filtered2,function(c){return c.data.subtype||'未分類';});
+    // v54.03：比例(scale)只有比例模型/組裝模型兩個子類型才有，改用廠牌分佈當預設，比例移到下鑽這兩個子類型時查看
+    var midFig=_dashMidWithDrill(cat,filtered2,buildMap,brandMap2,'廠牌分佈',null,Object.keys(brandMap2).length+' 個廠牌');
     D={kpi:[
         {label:'公仔',val:filtered2.length,color:'#f06292',icon:'🎎'},
         {label:'廠牌',val:distinct(filtered2,'brand'),color:'#f48fb1',icon:'🏷️'},
@@ -10099,18 +10170,21 @@ function _dashModel(cat,filtered2,catOf){
         {label:'預購中 '+statusCnt(filtered2,'collect_status','預購中'),color:'#ffb300'},
         {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e5ff'},
         {label:'有封面 '+withImg,color:'#7986cb'}],
-      donutLabel:'比例分佈',donutMap:scaleMap,
+      donutLabel:'子類型分佈',donutMap:subMapFig,donutDrillable:true,
       donutColors:null,donutCenter:filtered2.length+'',
-      midLabel:'廠牌分佈',midMap:brandMap2,midColors:null,midTotalText:Object.keys(brandMap2).length+' 個廠牌'};
+      midLabel:midFig.midLabel,midMap:midFig.midMap,midColors:midFig.midColors,midTotalText:midFig.midTotalText};
   }else{ // 全部
     var byCat=function(k){return filtered2.filter(function(c){return catOf(c)===k;}).length;};
     var csMap=buildMap(filtered2,function(c){return (c.data.collect_status||'').trim();});
     var csColors={'收藏中':'#00e676','預購中':'#ffb300','願望清單':'#ce93d8','借出中':'#80deea','已出售':'#90a4ae','已退款':'#ff5252','遺失或損毀':'#ff8a65'};
+    // v54.03：舊版只顯示遊戲/書籍/主機/週邊4個分類的件數，數位下載版/原聲帶/動漫美術/公仔完全沒被算進 KPI；
+    // 改用通用指標（不綁死分類名稱），才能涵蓋現在的 8 大分類
+    var catCntAll=Object.keys(catColors).filter(function(k){return byCat(k)>0;}).length;
     D={kpi:[
-        {label:'遊戲',val:byCat('遊戲'),color:'#00e5ff',icon:'🎮'},
-        {label:'書籍',val:byCat('攻略'),color:'#ce93d8',icon:'📚'},
-        {label:'主機',val:byCat('主機'),color:'#69f0ae',icon:'🕹️'},
-        {label:'週邊',val:byCat('週邊'),color:'#ffab40',icon:'🎧'}],
+        {label:'總件數',val:filtered2.length,color:'#00e5ff',icon:'📦'},
+        {label:'涵蓋分類',val:catCntAll,color:'#69f0ae',icon:'🗂️'},
+        {label:'收藏中',val:statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676',icon:'✅'},
+        {label:'願望清單',val:statusCnt(filtered2,'collect_status','願望清單'),color:'#ce93d8',icon:'💭'}],
       tags:[
         {label:'收藏中 '+statusCnt(filtered2,'collect_status','收藏中'),color:'#00e676'},
         {label:'願望清單 '+statusCnt(filtered2,'collect_status','願望清單'),color:'#ffb300'},
@@ -10537,18 +10611,21 @@ function renderDash(){
   }else{
     if(dlab)dlab.textContent=D.donutLabel;
     drawDonut(D.donutMap,filtered2.length,D.donutColors,D.donutCenter);
-    $('dash-play-bars').innerHTML=renderBars(D.donutMap,filtered2.length,D.donutColors);
+    $('dash-play-bars').innerHTML=renderBars(D.donutMap,filtered2.length,D.donutColors,D.donutDrillable);
   }
 
   // Zone5：最近入手
-  var iconOf={'\u904a\u6232':'\uD83C\uDFAE','\u653b\u7565':'\uD83D\uDCDA','\u4e3b\u6a5f':'\uD83D\uDD79\uFE0F','\u9031\u908a':'\uD83C\uDFA7'};
+  // v54.03\uff1a\u5716\u793a\u6539\u7528 CAT_META \u6db5\u84cb\u5168\u90e88\u5206\u985e\uff08\u539f\u672c\u53ea\u6709\u904a\u6232/\u653b\u7565/\u4e3b\u6a5f/\u9031\u908a4\u500b\uff0c\u65b0\u5206\u985e\u6703\u986f\u793a\u6210\ud83c\udfae\uff09
   var sorted=filtered2.filter(function(c){var d=c.data.buy_date||'';return d&&d!=='2099/01/01';})
     .sort(function(a,b){return b.data.buy_date>a.data.buy_date?1:-1;});
   var recentEl=$('dash-recent');
   if(recentEl)recentEl.innerHTML=sorted.slice(0,5).map(function(c){
     var d=c.data;var name=d.primary_name||d.zh_name||'\u2014';
-    var ico=iconOf[catOf(c)]||'\uD83C\uDFAE';
-    var sub=platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'';
+    var cc=catOf(c);
+    var ico=(CAT_META[cc]&&CAT_META[cc].icon)||'\uD83C\uDFAE';
+    // v54.03\uff1a\u526f\u6a19\u984c\u6539\u7528\u8ddf\u6536\u85cf\u5361\u7247\u4e00\u81f4\u7684 _catMeta().sub()\uff0c\u6578\u4f4d\u4e0b\u8f09\u7248/\u539f\u8072\u5e36/\u52d5\u6f2b\u7f8e\u8853/\u516c\u4ed4\u624d\u6709\u6b63\u78ba\u8cc7\u8a0a\u53ef\u986f\u793a
+    var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
+    var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
     return '<div class="dv2-ri" onclick="showPg(\'col\');setTimeout(function(){showDetail(\''+(c.uid||c.rowNum)+'\');},200)">'+
       '<div class="dv2-ri-ic">'+ico+'</div>'+
       '<div style="flex:1;min-width:0">'+
@@ -10626,16 +10703,18 @@ function drawCondChart(map,colorMap){
   });
 }
 
-function renderBars(map,total,colorMap){
+function renderBars(map,total,colorMap,drillable){
   var entries=Object.entries(map).sort(function(a,b){return b[1]-a[1];});
   var defaultColors=['#00e5ff','#69f0ae','#ffb300','#ce93d8','#80deea','#ff8c00','#f48fb1','#90a4ae'];
   return entries.map(function(e,i){
     var key=e[0],cnt=e[1];
     var pct=total?Math.round(cnt/total*100):0;
     var color=(colorMap&&colorMap[key])||defaultColors[i%defaultColors.length];
-    return'<div style="margin-bottom:10px">'+
+    var isOn=drillable&&_dashDrillSubtype===key;
+    var wrapAttrs=drillable?(' onclick="dashDrillSubtype(\''+key+'\')" style="cursor:pointer"'):'';
+    return'<div style="margin-bottom:10px;'+(isOn?'background:rgba(0,229,255,.08);border-radius:8px;padding:4px 6px;margin:-4px -6px 6px':'')+'"'+wrapAttrs+'>'+
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
-        '<span style="font-size:12px;color:#e8eaf6">'+key+'</span>'+
+        '<span style="font-size:12px;color:'+(isOn?'#00e5ff':'#e8eaf6')+'">'+(drillable?(isOn?'🔍 ':'▸ '):'')+key+'</span>'+
         '<span style="font-size:12px;font-family:Share Tech Mono,monospace;color:'+color+'">'+cnt+' 件（'+pct+'%）</span>'+
       '</div>'+
       '<div style="background:#0f1525;border-radius:4px;height:8px;overflow:hidden">'+
