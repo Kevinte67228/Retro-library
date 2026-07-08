@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v53            ║
+// ║  GameVault — Google Apps Script 後端  v54            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -667,6 +667,9 @@ function dispatchRead(action, p) {
       case 'igdb_search':
         result = igdbProxy(p.q || '', p.client_id || '', p.client_secret || '');
         break;
+      case 'igdb_upcoming':
+        result = igdbUpcomingProxy(p.platform_id || '', p.ym || '', p.client_id || '', p.client_secret || '');
+        break;
       case 'gb_search':
         result = gbProxy(p.q || '', p.gbkey || '');
         break;
@@ -1137,6 +1140,80 @@ function igdbProxy(query, clientId, clientSecret) {
   });
  
   return { ok: true, games: mapped };
+}
+
+// ── v54.04：IGDB 近期發售瀏覽（依平台＋年月），與收藏無關的獨立小工具 ──
+// 沿用既有 Cache 工作表機制（7天過期），同一平台+年月重複查詢直接吃快取，避免常駐瀏覽頁面撞到 IGDB 4次/秒的免費額度限制
+function igdbUpcomingProxy(platformId, ym, clientId, clientSecret) {
+  if (!platformId || !ym || !clientId || !clientSecret)
+    return { ok: false, error: 'missing params', games: [] };
+
+  const cacheKey = 'igdb_upcoming_' + platformId + '_' + ym;
+  const cached = getCache(cacheKey);
+  if (cached) return { ok: true, games: cached, cached: true };
+
+  // ym 格式 YYYY-MM，換算該月第一天到最後一天的 unix timestamp（秒）
+  const parts = ym.split('-');
+  const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+  if (!y || !m) return { ok: false, error: 'ym 格式錯誤，需為 YYYY-MM', games: [] };
+  const fromTs = Math.floor(new Date(Date.UTC(y, m - 1, 1)).getTime() / 1000);
+  const toTs = Math.floor(new Date(Date.UTC(y, m, 1)).getTime() / 1000) - 1;
+
+  const tokenRes = UrlFetchApp.fetch(
+    'https://id.twitch.tv/oauth2/token?' +
+    'client_id=' + encodeURIComponent(clientId) +
+    '&client_secret=' + encodeURIComponent(clientSecret) +
+    '&grant_type=client_credentials',
+    { method: 'POST', muteHttpExceptions: true }
+  );
+  const tokenData = JSON.parse(tokenRes.getContentText());
+  if (!tokenData.access_token)
+    return { ok: false, error: 'Twitch 驗證失敗：' + JSON.stringify(tokenData), games: [] };
+
+  const token = tokenData.access_token;
+  const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/games', {
+    method: 'POST',
+    headers: {
+      'Client-ID': clientId,
+      'Authorization': 'Bearer ' + token,
+      'Content-Type': 'text/plain'
+    },
+    payload: [
+      'fields name,cover.url,genres.name,summary,first_release_date,',
+      'involved_companies.company.name,involved_companies.developer,involved_companies.publisher;',
+      'where platforms = (' + platformId + ') & first_release_date >= ' + fromTs + ' & first_release_date <= ' + toTs + ';',
+      'sort first_release_date asc;',
+      'limit 100;'
+    ].join(''),
+    muteHttpExceptions: true
+  });
+
+  const games = JSON.parse(igdbRes.getContentText());
+  if (!Array.isArray(games))
+    return { ok: false, error: 'IGDB 回傳錯誤：' + igdbRes.getContentText(), games: [] };
+
+  const mapped = games.map(function(g) {
+    const devC = (g.involved_companies || []).find(function(c) { return c.developer; });
+    const pubC = (g.involved_companies || []).find(function(c) { return c.publisher; });
+    const coverUrl = g.cover && g.cover.url
+      ? 'https:' + g.cover.url.replace('t_thumb', 't_cover_big')
+      : '';
+    const releaseDate = g.first_release_date
+      ? new Date(g.first_release_date * 1000).toISOString().slice(0, 10)
+      : '';
+    return {
+      name: g.name || '',
+      cover_url: coverUrl,
+      release_date: releaseDate,
+      developer: devC ? devC.company.name : '',
+      publisher: pubC ? pubC.company.name : '',
+      genres: (g.genres || []).map(function(x) { return x.name; }).join('/'),
+      summary: (g.summary || '').slice(0, 200)
+    };
+  });
+
+  setCache(cacheKey, mapped);
+  return { ok: true, games: mapped, cached: false };
 }
  
 // ── Giant Bomb API Proxy ──────────────────────────────────────
