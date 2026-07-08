@@ -2282,7 +2282,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.17';
+const APP_VERSION='v54.18';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12862,23 +12862,32 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   // 開啟/關聯跳轉後，詳細頁捲回頂端（避免沿用前一筆的捲動位置而停在中段）
   var _dpTop=$('dp');if(_dpTop)_dpTop.scrollTop=0;
   // 統一返回堆疊維持單一守門；詳細頁視為一般圖層，不自行 push state
-  // 觸控滑動手勢（用 ontouchstart/end 避免累積多個監聽器）
+  _initDetailTouch(); // v54.18：滑動手勢只綁定一次，不要每次 showDetail 都重建（見函式註解）
+}
+// v54.18：詳細頁左右滑動翻頁手勢，只在第一次 showDetail 時綁定一次。
+// 原本寫在 showDetail() 內、每次翻頁都重新建立 ontouchstart/ontouchend，若使用者連續快速滑動、
+// 前一次觸控的 touchstart/touchend 還沒配對完成，下一次 showDetail 就把處理函式整組換掉，
+// 新的閉包 _tx 預設值是 0（不是這次手指按下的實際位置），算出來的滑動距離會是錯的，
+// 可能誤觸發多餘的翻頁，導致標題（$('dtitle') 直接設值，一定跟得上）跟內容（連動 detailRow 的欄位渲染）不同步。
+var _detailTouchInited=false;
+function _initDetailTouch(){
+  if(_detailTouchInited)return;
+  _detailTouchInited=true;
   var dp=$('dp');
-  if(dp){
-    var _tx=0,_txSkip=false;
-    dp.ontouchstart=function(e){
-      _tx=e.touches[0].clientX;
-      // v40.31：若起點在「可水平捲動」的市場參考區塊內，這次滑動讓它捲動，不觸發翻頁
-      _txSkip=false;
-      var g=e.target.closest&&e.target.closest('.market-ref-grid');
-      if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
-    };
-    dp.ontouchend=function(e){
-      if(_txSkip){_txSkip=false;return;}
-      var dx=e.changedTouches[0].clientX-_tx;
-      if(Math.abs(dx)>60){if(dx<0)detailNext();else detailPrev();}
-    };
-  }
+  if(!dp)return;
+  var _tx=0,_txSkip=false;
+  dp.ontouchstart=function(e){
+    _tx=e.touches[0].clientX;
+    // v40.31：若起點在「可水平捲動」的市場參考區塊內，這次滑動讓它捲動，不觸發翻頁
+    _txSkip=false;
+    var g=e.target.closest&&e.target.closest('.market-ref-grid');
+    if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
+  };
+  dp.ontouchend=function(e){
+    if(_txSkip){_txSkip=false;return;}
+    var dx=e.changedTouches[0].clientX-_tx;
+    if(Math.abs(dx)>60){if(dx<0)detailNext();else detailPrev();}
+  };
 }
 function closeDetail(){
   $('dsheet').classList.remove('on');
