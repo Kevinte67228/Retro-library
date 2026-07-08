@@ -993,29 +993,37 @@ body{
               <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px" type="button">✕</button>
             </div>
             <div style="font-size:12px;color:#9fa8c8;line-height:1.8">
+              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45;background:rgba(0,229,255,.06);border-radius:8px;padding:10px 12px">
+                <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">ℹ️ 各分類可用的建檔方式不完全相同</div>
+                <div>實體分類（遊戲/書籍/主機/週邊/原聲帶/動漫美術/公仔）可用下方全部方式；數位下載版沒有實體條碼，改用「商店連結」，電子書子類型另有「ISBN＋照片」可用。</div>
+              </div>
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
                 <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">📱 掃條碼</div>
-                <div>快速透過 EAN 條碼自動查詢資料庫，適合有條碼的商品。</div>
+                <div>快速透過 EAN 條碼自動查詢資料庫，適合有條碼的實體商品。</div>
               </div>
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
                 <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">📷 圖片辨識</div>
-                <div>拍封面讓 AI 自動填寫所有欄位，準確度高，適合遊戲 / 書籍。</div>
+                <div>拍封面讓 AI 自動填寫所有欄位，準確度高，所有分類皆可使用。</div>
               </div>
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
                 <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🔢 商品編碼</div>
-                <div>輸入序號/ISBN 精確查詢，適合網購或已知編號的物品。</div>
+                <div>輸入序號/ISBN/JAN碼精確查詢，依分類自動對應（書籍/電子書走 ISBN，遊戲/公仔走商品編碼），適合網購或已知編號的物品。</div>
               </div>
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
                 <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">✏️ 手動建檔</div>
-                <div>自行填寫所有欄位，適合無條碼或特殊物品。</div>
+                <div>自行填寫所有欄位，適合無條碼或特殊物品，所有分類皆可使用。</div>
+              </div>
+              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                <div style="color:#40c4ff;font-weight:700;margin-bottom:4px">🔗 商店連結（數位下載版專用）</div>
+                <div>貼上商店頁網址（Steam／PSN／eShop／BookWalker 等），AI 自動整理標題與欄位，沒有實體條碼的數位商品用這個。</div>
               </div>
               <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
                 <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 條碼＋照片</div>
-                <div>結合條碼+封面圖，最準確，推薦使用此方式。</div>
+                <div>結合條碼+封面圖，最準確，推薦使用此方式（限有條碼的實體分類）。</div>
               </div>
               <div>
-                <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 編碼＋照片</div>
-                <div>序號+封面，精確度最高，適合完整資訊。</div>
+                <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 編碼＋照片／ISBN＋照片</div>
+                <div>序號+封面，精確度最高，適合完整資訊；數位下載版的電子書子類型也是用這個組合（ISBN 比對＋AI 圖片辨識並行）。</div>
               </div>
             </div>
           </div>
@@ -2244,7 +2252,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.13';
+const APP_VERSION='v54.14';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
