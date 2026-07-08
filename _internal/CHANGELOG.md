@@ -1,3 +1,23 @@
+## v54.06 (2026-07-08)
+
+### 變更內容
+修正近期發售瀏覽的地區按鈕點擊後不會高亮的問題：
+- **根因**：地區按鈕的 onclick 傳入的一律是字串（如 `'5'`），但高亮判斷是拿去跟 `RC_REGIONS` 陣列裡數字型態的 id（如 `5`）做嚴格比較（`===`），型態不同永遠比不中，導致點了都不會亮（平台按鈕因為 onclick 沒加引號、傳入的是數字，所以沒有這個問題）
+- 改用寬鬆比較（統一轉字串再比對），點擊後正確高亮目前選中的地區
+
+### 影響檔案
+- index.html / GameVault_v54_06_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端修正）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-05 → gamevault-v54-06
+
+### 對應備份
+- _internal/old/v54_05/
+
 ## v57 GS-only (2026-07-08)
 
 ### 變更內容
@@ -59,27 +79,4 @@
 
 ### 對應備份
 - _internal/old/v54_04/
-
-## v54.04 (2026-07-08)
-
-### 變更內容
-新增「近期發售瀏覽」獨立小工具，與收藏庫無關（方案 B）：
-- 尋寶頁面新增「📅 近期發售」入口按鈕，開啟全螢幕瀏覽頁
-- 可選平台（Switch／Switch 2／PS5／PS4／Xbox Series／PC）＋切換月份，串接已設定好的 IGDB（Twitch）憑證查詢該平台當月發售遊戲
-- GAS 新增 `igdb_upcoming` 查詢代理，沿用既有 Cache 工作表機制（7天過期），同一平台+年月重複查詢直接吃快取，避免常駐瀏覽撞到 IGDB 免費額度（4次/秒）限制
-- **已知限制**：IGDB 對日系獨佔／小廠／教育類遊戲收錄不一定完整或即時，跟任天堂官方列表可能有落差；Switch 2 的 IGDB 平台 ID 較新，若查詢結果異常可能需要調整 `RC_PLATFORMS` 裡的 ID
-
-### 影響檔案
-- index.html / GameVault_v54_04_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v53 → v54（新增 igdb_upcoming 查詢代理）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-03 → gamevault-v54-04
-
-### 對應備份
-- _internal/old/v54_03/
 
