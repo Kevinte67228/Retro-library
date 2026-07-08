@@ -2228,7 +2228,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.06';
+const APP_VERSION='v54.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13327,16 +13327,18 @@ var RC_PLATFORMS=[
   {id:169,label:'Xbox Series'},
   {id:6,label:'PC'}
 ];
-// IGDB region_enum：1歐洲/2北美/3澳洲/4紐西蘭/5日本/6中國/7亞洲/8全球（若篩選結果異常可能需要調整）
-var RC_REGIONS=[
-  {id:'',label:'全部地區'},
-  {id:5,label:'🇯🇵 日本'},
-  {id:2,label:'🇺🇸 北美'},
-  {id:1,label:'🇪🇺 歐洲'},
-  {id:7,label:'🌏 亞洲'}
+// v54.10：地區篩選（region）因IGDB資料完整度不足連續查空，改用「支援語言」取代，
+// 語意從「該地區發售」變成「支援該語言」；用IGDB語言名稱字串直接比對，不用猜數字ID
+var RC_LANGS=[
+  {id:'',label:'全部'},
+  {id:'Japanese',label:'🇯🇵 支援日文'},
+  {id:'English',label:'🇺🇸 支援英文'},
+  {id:'Chinese (Traditional)',label:'🇹🇼 支援繁中'},
+  {id:'Chinese (Simplified)',label:'🇨🇳 支援簡中'},
+  {id:'Korean',label:'🇰🇷 支援韓文'}
 ];
 var _rcPlatform=RC_PLATFORMS[0].id;
-var _rcRegion=RC_REGIONS[0].id;
+var _rcLang=RC_LANGS[0].id;
 var _rcYear,_rcMonth; // 1-12
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
@@ -13344,7 +13346,7 @@ function openReleaseCal(){
   if(!_rcYear){_rcYear=now.getFullYear();_rcMonth=now.getMonth()+1;}
   var ov=$('release-cal-ov');if(ov)ov.style.display='flex';
   _rcRenderTabs();
-  _rcRenderRegionTabs();
+  _rcRenderLangTabs();
   rcLoad();
 }
 function closeReleaseCal(){var ov=$('release-cal-ov');if(ov)ov.style.display='none';}
@@ -13356,16 +13358,16 @@ function _rcRenderTabs(){
       (on?'background:#00e5ff;color:#001018;border:none;font-weight:700':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(p.label)+'</button>';
   }).join('');
 }
-function _rcRenderRegionTabs(){
+function _rcRenderLangTabs(){
   var wrap=$('rc-region-tabs');if(!wrap)return;
-  wrap.innerHTML=RC_REGIONS.map(function(r){
-    var on=(''+r.id)===(''+_rcRegion); // v54.08：onclick 傳入的一律是字串，跟陣列裡數字型態的id用嚴格比較永遠比不中，統一轉字串比對
-    return '<button type="button" onclick="rcSelectRegion(\''+r.id+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;white-space:nowrap;'+
+  wrap.innerHTML=RC_LANGS.map(function(r){
+    var on=r.id===_rcLang; // 兩邊都是字串，直接嚴格比較即可
+    return '<button type="button" onclick="rcSelectLang(\''+r.id+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;white-space:nowrap;'+
       (on?'background:#69f0ae;color:#001018;border:none;font-weight:700':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(r.label)+'</button>';
   }).join('');
 }
 function rcSelectPlatform(id){_rcPlatform=id;_rcRenderTabs();rcLoad();}
-function rcSelectRegion(id){_rcRegion=id;_rcRenderRegionTabs();rcLoad();}
+function rcSelectLang(id){_rcLang=id;_rcRenderLangTabs();rcLoad();}
 function rcShiftMonth(delta){
   _rcMonth+=delta;
   if(_rcMonth>12){_rcMonth=1;_rcYear++;}
@@ -13377,7 +13379,7 @@ function rcLoad(){
   var lab=$('rc-ym-label');if(lab)lab.textContent=_rcYear+'年'+_rcMonth+'月';
   var listEl=$('rc-list');
   if(listEl)listEl.innerHTML='<div style="text-align:center;color:#7986cb;padding:40px 0">查詢中...</div>';
-  shPost({action:'igdb_upcoming',platform_id:_rcPlatform,ym:ym,region:_rcRegion,client_id:cfg.iid,client_secret:cfg.isec}).then(function(res){
+  shPost({action:'igdb_upcoming',platform_id:_rcPlatform,ym:ym,lang:_rcLang,client_id:cfg.iid,client_secret:cfg.isec}).then(function(res){
     if(!listEl)return;
     if(!res||!res.ok){
       listEl.innerHTML='<div style="text-align:center;color:#ff5252;padding:40px 16px;font-size:13px">查詢失敗：'+esc((res&&res.error)||'未知錯誤')+'</div>';
