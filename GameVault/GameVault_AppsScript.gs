@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v62            ║
+// ║  GameVault — Google Apps Script 後端  v63            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1153,7 +1153,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
   // 資料完整度較高也不用再猜測任何數字 ID，直接用語言名稱字串比對（如 'Japanese'）
   // v54.12：快取 key 加上版本標記 v2，強制讓改版前（未套用在地化標題）的舊快取失效，
   // 否則同一平台/月份/語言組合會一直吐出 7 天前存的舊資料（英文標題），新邏輯永遠跑不到
-  const cacheKey = 'igdb_upcoming_v3_' + platformId + '_' + ym + '_' + (lang || 'all');
+  const cacheKey = 'igdb_upcoming_v4_' + platformId + '_' + ym + '_' + (lang || 'all');
   const cached = getCache(cacheKey);
   if (cached) return { ok: true, games: cached, cached: true };
 
@@ -1178,27 +1178,37 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
   const token = tokenData.access_token;
   const whereClauses = ['platform = (' + platformId + ')', 'date >= ' + fromTs, 'date <= ' + toTs];
 
-  const igdbRes = UrlFetchApp.fetch('https://api.igdb.com/v4/release_dates', {
-    method: 'POST',
-    headers: {
-      'Client-ID': clientId,
-      'Authorization': 'Bearer ' + token,
-      'Content-Type': 'text/plain'
-    },
-    payload: [
+  // v54.13：IGDB「Localized Titles」跟「Alternative Titles」是兩個不同資料來源，
+  // 前者來自 game_localizations 關聯，後者是 alternative_names——有些遊戲的日文標題只存在前者，
+  // 只查 alternative_names 會漏掉。加上防呆：若 game_localizations 欄位名稱猜錯導致查詢失敗，
+  // 自動退回原本已驗證能正常運作的欄位組合重試一次，不會讓整個功能掛掉
+  function fetchReleaseDates(withLocalizations) {
+    var fieldParts = [
       'fields date,',
       'game.name,game.url,game.cover.url,game.genres.name,game.summary,',
       'game.language_supports.language.name,',
-      'game.alternative_names.name,game.alternative_names.comment,',
-      'game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;',
-      'where ' + whereClauses.join(' & ') + ';',
-      'sort date asc;',
-      'limit 500;'
-    ].join(''),
-    muteHttpExceptions: true
-  });
+      'game.alternative_names.name,game.alternative_names.comment,'
+    ];
+    if (withLocalizations) fieldParts.push('game.game_localizations.name,game.game_localizations.region.name,');
+    fieldParts.push('game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;');
+    fieldParts.push('where ' + whereClauses.join(' & ') + ';');
+    fieldParts.push('sort date asc;');
+    fieldParts.push('limit 500;');
+    return UrlFetchApp.fetch('https://api.igdb.com/v4/release_dates', {
+      method: 'POST',
+      headers: { 'Client-ID': clientId, 'Authorization': 'Bearer ' + token, 'Content-Type': 'text/plain' },
+      payload: fieldParts.join(''),
+      muteHttpExceptions: true
+    });
+  }
 
-  const rows = JSON.parse(igdbRes.getContentText());
+  var igdbRes = fetchReleaseDates(true);
+  var rows = JSON.parse(igdbRes.getContentText());
+  if (!Array.isArray(rows)) {
+    // game_localizations 猜測的欄位名稱可能無效，退回不含它的版本重試
+    igdbRes = fetchReleaseDates(false);
+    rows = JSON.parse(igdbRes.getContentText());
+  }
   if (!Array.isArray(rows))
     return { ok: false, error: 'IGDB 回傳錯誤：' + igdbRes.getContentText(), games: [] };
 
@@ -1208,15 +1218,24 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
     return supports.some(function(s) { return s.language && s.language.name === lang; });
   }) : rows;
 
-  // v54.11：標題改用在地化標題，優序 繁中＞簡中＞日文＞英文（原文 name）。
-  // alternative_names 的 comment 是社群自由填寫的說明文字，不是嚴格列舉值，用關鍵字比對挑選最可能符合的那筆
+  // v54.13：標題改用在地化標題，優序 繁中＞簡中＞日文＞英文（原文 name）。
+  // 同時檢查 alternative_names（comment 自由文字）與 game_localizations（region 關聯）兩個資料來源，
+  // 任一符合語言/地區條件就採用，涵蓋更多遊戲的實際資料分佈情況
   function pickLocalizedName(g) {
     const alts = g.alternative_names || [];
-    function find(re) {
+    const locs = g.game_localizations || [];
+    function findAlt(re) {
       const m = alts.find(function(a) { return a.comment && re.test(a.comment); });
       return m ? m.name : null;
     }
-    return find(/traditional/i) || find(/simplified/i) || find(/japan(ese)?|^jp$/i) || g.name || '';
+    function findLoc(re) {
+      const m = locs.find(function(l) { return l.region && l.region.name && re.test(l.region.name); });
+      return m ? m.name : null;
+    }
+    return findAlt(/traditional/i) || findLoc(/taiwan|hong ?kong/i)
+        || findAlt(/simplified/i) || findLoc(/^china$/i)
+        || findAlt(/japan(ese)?|^jp$/i) || findLoc(/japan/i)
+        || g.name || '';
   }
 
   // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複紀錄），用 game.id 去重，只留第一筆（已依日期排序）
