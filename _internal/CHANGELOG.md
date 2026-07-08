@@ -1,3 +1,23 @@
+## v54.17 (2026-07-08)
+
+### 變更內容
+修正說明彈窗一進入建檔頁就直接顯示的 bug：
+- **根因**：v54.16 改版時 `#help-panel` 的 inline style 不小心寫了兩次 `display` 屬性（`display:none` 後面又接 `display:flex`），CSS 遇到重複屬性後面蓋過前面，導致面板一開始就被強制顯示成 flex，內容還沒被任何按鈕觸發顯示所以看起來是空的
+- **修正**：移除多餘的 `display:flex`，只保留 `display:none` 作為初始狀態，開啟/關閉交給 JS 動態控制
+
+### 影響檔案
+- index.html / GameVault_v54_17_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端修正）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-16 → gamevault-v54-17
+
+### 對應備份
+- _internal/old/v54_16/
+
 ## v54.16 (2026-07-08)
 
 ### 變更內容
@@ -58,25 +78,4 @@
 
 ### 對應備份
 - _internal/old/v54_13/
-
-## v54.13 (2026-07-08)
-
-### 變更內容
-「立即更新」提示橫幅視覺優化，原本深色背景（#141b30）跟版面其他深色卡片太像不夠明顯：
-- 改用青紫漸層亮色背景（#00e5ff → #7c4dff），文字改深色確保對比度
-- 新增滑入進場動畫＋持續發光脈動動畫，吸引注意力
-- 按鈕改深色底、亮色文字，跟背景形成更清楚的層次
-
-### 影響檔案
-- index.html / GameVault_v54_13_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端視覺調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-12 → gamevault-v54-13
-
-### 對應備份
-- _internal/old/v54_12/
 
