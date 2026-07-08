@@ -727,6 +727,8 @@ body{
 .mb-wide .mb-txt{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;text-align:center}
 /* Step1 第五張分類卡（數位下載版）撐滿整行，避免旁邊留白破版（v42.18）*/
 /* v42.18：ec-card-full 系列已於 v42.15 改回普通卡片後移除 */
+.step-help-btn{background:transparent;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.step-help-btn.on{color:#00e5ff;border-color:#00e5ff}
 .ec-card{min-height:84px;background:#141b30;border:1.5px solid #1e2a45;border-radius:16px;padding:12px 10px;cursor:pointer;color:#e8eaf6;transition:border-color .2s,background .2s,transform .1s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
 .ec-card:active{transform:scale(.97)}
 .ec-card .eci{font-size:24px;line-height:1}
@@ -869,6 +871,9 @@ body{
               <span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#7986cb;flex-shrink:0"></span>
               <div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 1 · 選擇分類</div>
             </div>
+            <button onclick="toggleHelp('step1')" class="step-help-btn" type="button">
+              <span>💡</span><span>說明</span>
+            </button>
           </div>
 
           <!-- Step 1：商品分類卡（8 類，v42.20）。選定分類＋區域後顯示後續步驟 -->
@@ -913,7 +918,10 @@ body{
           </div>
           <!-- Step 2：商品區域（v23.03→卡片化 v25.07）：影響 API 路由優先序與 AI prompt；持久化進 cfg -->
           <div style="border-top:2px solid #69f0ae;padding-top:12px;margin-top:12px">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#69f0ae;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 2 · 商品區域</div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#69f0ae;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 2 · 商品區域</div></div>
+              <button onclick="toggleHelp('step2')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>
+            </div>
             <div id="region-btns" class="ec-grid ec-grid-4">
               <div class="ec-card" id="rbtn-jp"    onclick="setRegion('jp')"><div class="eci">🇯🇵</div><div class="ect">日本</div><div class="ecd">Japan</div></div>
               <div class="ec-card" id="rbtn-asia"  onclick="setRegion('asia')"><div class="eci">🌏</div><div class="ect">亞洲</div><div class="ecd">Asia</div></div>
@@ -924,7 +932,10 @@ body{
 
           <!-- Step 3：平台選擇（v25.07→卡片化 v26.07）：僅遊戲／主機顯示；隱藏 select 為值載體，卡片觸發 bottom-sheet；分類各自記憶平台 -->
           <div id="step3-plat-sec" style="display:none;border-top:2px solid #ffb300;padding-top:12px;margin-top:12px">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#ffb300;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 3 · 平台選擇</div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#ffb300;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 3 · 平台選擇</div></div>
+              <button onclick="toggleHelp('step3')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>
+            </div>
             <div style="font-size:10px;color:#555;margin-bottom:10px;letter-spacing:.5px">選填，提升 AI 辨識準確率</div>
             <select id="step3-plat" tabindex="-1" style="display:none"></select>
             <div id="step3-plat-card" class="plat-card" onclick="openStep3PlatPicker()">
@@ -941,8 +952,7 @@ body{
           <div id="step-method-sec" style="border-top:2px solid #ce93d8;padding-top:12px;margin-top:12px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#ce93d8;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px"><span id="step-method-num">Step 4</span> · 建檔方式</div></div>
-              <button onclick="toggleHelp()" id="help-btn"
-                style="background:transparent;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:4px" type="button">
+              <button onclick="toggleHelp('step4')" id="help-btn" class="step-help-btn" type="button">
                 <span>💡</span><span>說明</span>
               </button>
             </div>
@@ -987,45 +997,63 @@ body{
             </button>
           </div>
 
-          <!-- 建檔說明（v26.05）：移除底部標題列；預設隱藏，按頂部 💡 才在底部展開 -->
+          <!-- 建檔說明（v54.16）：改為 Step1-4 各自獨立說明內容，標頭(含關閉鈕)改sticky固定頂部不會被滑走 -->
           <div id="help-overlay" onclick="if(event.target===this)toggleHelp()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:999;"></div>
-          <div id="help-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:24px 16px 32px;max-height:70vh;overflow-y:auto;z-index:1000;-webkit-overflow-scrolling:touch">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-              <div style="font-size:14px;font-weight:700;color:#e8eaf6">建檔方式說明</div>
-              <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px" type="button">✕</button>
+          <div id="help-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;max-height:70vh;z-index:1000;display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:24px 16px 16px;flex-shrink:0;background:#0f1525;border-radius:20px 20px 0 0">
+              <div id="help-panel-title" style="font-size:14px;font-weight:700;color:#e8eaf6">說明</div>
+              <button onclick="toggleHelp()" style="background:transparent;border:1px solid #1e2a45;color:#7986cb;width:40px;height:40px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0" type="button">✕</button>
             </div>
-            <div style="font-size:12px;color:#9fa8c8;line-height:1.8">
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45;background:rgba(0,229,255,.06);border-radius:8px;padding:10px 12px">
-                <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">ℹ️ 各分類可用的建檔方式不完全相同</div>
-                <div>實體分類（遊戲/書籍/主機/週邊/原聲帶/動漫美術/公仔）可用下方全部方式；數位下載版沒有實體條碼，改用「商店連結」，電子書子類型另有「ISBN＋照片」可用。</div>
+            <div style="overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 32px">
+              <div id="help-content-step1" style="display:none;font-size:12px;color:#9fa8c8;line-height:1.8">
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🗂️ 8 大分類</div>
+                  <div>遊戲、書籍、主機、週邊、原聲帶、動漫/美術設定集、公仔、數位下載版。分類決定後續要填的欄位表跟可用的建檔方式。</div>
+                </div>
+                <div>
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🔽 子類型</div>
+                  <div>原聲帶、動漫/美術設定集、公仔、數位下載版這 4 個分類選定後，會再跳出子類型選單（例如原聲帶要再選是原聲帶本體、單曲還是廣播劇），不同子類型的欄位表跟建檔方式也會不一樣。</div>
+                </div>
               </div>
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">📱 掃條碼</div>
-                <div>快速透過 EAN 條碼自動查詢資料庫，適合有條碼的實體商品。</div>
+              <div id="help-content-step2" style="display:none;font-size:12px;color:#9fa8c8;line-height:1.8">
+                <div>選擇商品的發行地區（日本／亞洲／美國／其他），會影響：AI 圖片辨識時判斷的語言與資料庫查詢站點優先序、幣別顯示、市場估值查詢的優先市場。選錯地區可能導致 AI 辨識或估值查詢命中率下降，建議依實際商品的發行地區選擇。</div>
               </div>
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">📷 圖片辨識</div>
-                <div>拍封面讓 AI 自動填寫所有欄位，準確度高，所有分類皆可使用。</div>
+              <div id="help-content-step3" style="display:none;font-size:12px;color:#9fa8c8;line-height:1.8">
+                <div>選填，但選了能提升 AI 圖片辨識的準確率（AI 會知道要辨識哪個平台的封面/包裝特徵，減少誤判）。僅遊戲、主機、數位下載版的遊戲類子類型才會顯示這個步驟，其他分類沒有平台概念。</div>
               </div>
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🔢 商品編碼</div>
-                <div>輸入序號/ISBN/JAN碼精確查詢，依分類自動對應（書籍/電子書走 ISBN，遊戲/公仔走商品編碼），適合網購或已知編號的物品。</div>
-              </div>
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">✏️ 手動建檔</div>
-                <div>自行填寫所有欄位，適合無條碼或特殊物品，所有分類皆可使用。</div>
-              </div>
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                <div style="color:#40c4ff;font-weight:700;margin-bottom:4px">🔗 商店連結（數位下載版專用）</div>
-                <div>貼上商店頁網址（Steam／PSN／eShop／BookWalker 等），AI 自動整理標題與欄位，沒有實體條碼的數位商品用這個。</div>
-              </div>
-              <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 條碼＋照片</div>
-                <div>結合條碼+封面圖，最準確，推薦使用此方式（限有條碼的實體分類）。</div>
-              </div>
-              <div>
-                <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 編碼＋照片／ISBN＋照片</div>
-                <div>序號+封面，精確度最高，適合完整資訊；數位下載版的電子書子類型也是用這個組合（ISBN 比對＋AI 圖片辨識並行）。</div>
+              <div id="help-content-step4" style="display:none;font-size:12px;color:#9fa8c8;line-height:1.8">
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45;background:rgba(0,229,255,.06);border-radius:8px;padding:10px 12px">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">ℹ️ 各分類可用的建檔方式不完全相同</div>
+                  <div>實體分類（遊戲/書籍/主機/週邊/原聲帶/動漫美術/公仔）可用下方全部方式；數位下載版沒有實體條碼，改用「商店連結」，電子書子類型另有「ISBN＋照片」可用。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">📱 掃條碼</div>
+                  <div>快速透過 EAN 條碼自動查詢資料庫，適合有條碼的實體商品。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">📷 圖片辨識</div>
+                  <div>拍封面讓 AI 自動填寫所有欄位，準確度高，所有分類皆可使用。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🔢 商品編碼</div>
+                  <div>輸入序號/ISBN/JAN碼精確查詢，依分類自動對應（書籍/電子書走 ISBN，遊戲/公仔走商品編碼），適合網購或已知編號的物品。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">✏️ 手動建檔</div>
+                  <div>自行填寫所有欄位，適合無條碼或特殊物品，所有分類皆可使用。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#40c4ff;font-weight:700;margin-bottom:4px">🔗 商店連結（數位下載版專用）</div>
+                  <div>貼上商店頁網址（Steam／PSN／eShop／BookWalker 等），AI 自動整理標題與欄位，沒有實體條碼的數位商品用這個。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 條碼＋照片</div>
+                  <div>結合條碼+封面圖，最準確，推薦使用此方式（限有條碼的實體分類）。</div>
+                </div>
+                <div>
+                  <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 編碼＋照片／ISBN＋照片</div>
+                  <div>序號+封面，精確度最高，適合完整資訊；數位下載版的電子書子類型也是用這個組合（ISBN 比對＋AI 圖片辨識並行）。</div>
+                </div>
               </div>
             </div>
           </div>
@@ -1897,7 +1925,7 @@ body{
         <div class="hd">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="ht">尋寶清單</div>
-            <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:6px 10px;border-radius:8px;display:flex;align-items:center;gap:4px">📅 近期發售</button>
+            <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售</button>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
           <div class="dv2-hd-bar"></div>
@@ -2254,7 +2282,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.15';
+const APP_VERSION='v54.16';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7798,17 +7826,25 @@ function setMbActive(which){
     if(titleDiv)titleDiv.style.color=on?c:'#e8eaf6';
   });
 }
-function toggleHelp(){
+var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明'};
+function toggleHelp(step){
   var overlay=$('help-overlay');
   var panel=$('help-panel');
-  var btn=$('help-btn');
   if(!panel||!overlay)return;
-  var open=(overlay.style.display==='none');
+  var wasOpen=(overlay.style.display!=='none'&&overlay.style.display!=='');
+  // 有帶 step 參數：切換到該步驟的說明並確保面板開啟；沒帶參數（按 X 或點背景）：直接關閉
+  var open=step?true:false;
   overlay.style.display=open?'block':'none';
-  panel.style.display=open?'block':'none';
-  if(btn){
-    btn.style.color=open?'#00e5ff':'#7986cb';
-    btn.style.borderColor=open?'#00e5ff':'#1e2a45';
+  panel.style.display=open?'flex':'none';
+  document.querySelectorAll('.step-help-btn').forEach(function(b){b.classList.remove('on');});
+  if(step){
+    ['step1','step2','step3','step4'].forEach(function(k){
+      var el=$('help-content-'+k);if(el)el.style.display=(k===step)?'block':'none';
+    });
+    var titleEl=$('help-panel-title');if(titleEl)titleEl.textContent=STEP_HELP_TITLES[step]||'說明';
+    var srcBtn=(typeof event!=='undefined'&&event&&event.target)?event.target.closest('.step-help-btn'):null;
+    if(srcBtn)srcBtn.classList.add('on');
+    var content=panel.querySelector('div[style*="overflow-y"]');if(content)content.scrollTop=0;
   }
 }
 function initManualMode(){
