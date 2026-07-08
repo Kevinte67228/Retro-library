@@ -35,7 +35,7 @@ body{
   display:flex;
   flex-direction:column;
   height:100%;
-  height:100dvh;
+  height:var(--app-height, 100dvh);
   background:rgba(8,12,24,.87);
   backdrop-filter:blur(1px);
 }
@@ -824,6 +824,22 @@ body{
 
 </head>
 <body>
+<script>
+// v54.10：#shell 版面高度改用 JS 動態計算，不再單靠 100dvh —— 部分手機瀏覽器在網址列/工具列
+// 顯示狀態切換的瞬間（尤其是 JS 觸發 reload 時）算出來的 dvh 值可能不穩定，
+// 導致最外層容器高度塌陷、底部導覽列消失。這裡在最早的時機（body一開啟）就先算好一次，
+// 並在 resize/orientationchange/視覺視窗變化時持續更新，確保任何時候都有可靠的高度可用。
+(function(){
+  function setAppHeight(){
+    var h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
+    document.documentElement.style.setProperty('--app-height',h+'px');
+  }
+  setAppHeight();
+  window.addEventListener('resize',setAppHeight);
+  window.addEventListener('orientationchange',function(){setTimeout(setAppHeight,50);});
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',setAppHeight);
+})();
+</script>
 
 <!-- ══ 開機啟動畫面 ══ -->
 <div id="boot-splash">
@@ -2228,7 +2244,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.09';
+const APP_VERSION='v54.10';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
