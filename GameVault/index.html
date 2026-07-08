@@ -863,16 +863,12 @@ body{
       </div>
       <div style="padding-bottom:80px">
         <div id="method-sel" style="padding:14px 16px 0">
-          <!-- 標題（含說明圖示） -->
+          <!-- 標題 -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px 14px;margin-bottom:14px;border-bottom:2px solid #7986cb">
             <div style="display:flex;align-items:center;gap:7px">
               <span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#7986cb;flex-shrink:0"></span>
               <div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 1 · 選擇分類</div>
             </div>
-            <button onclick="toggleHelp()" id="help-btn"
-              style="background:transparent;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:4px" type="button">
-              <span>💡</span><span>說明</span>
-            </button>
           </div>
 
           <!-- Step 1：商品分類卡（8 類，v42.20）。選定分類＋區域後顯示後續步驟 -->
@@ -943,7 +939,13 @@ body{
 
           <!-- Step 4／3：建檔方式（v25.07，由抽屜搬上頁面）：標題編號依分類動態切換 -->
           <div id="step-method-sec" style="border-top:2px solid #ce93d8;padding-top:12px;margin-top:12px">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#ce93d8;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px"><span id="step-method-num">Step 4</span> · 建檔方式</div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#ce93d8;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px"><span id="step-method-num">Step 4</span> · 建檔方式</div></div>
+              <button onclick="toggleHelp()" id="help-btn"
+                style="background:transparent;border:1px solid #1e2a45;color:#7986cb;font-size:11px;padding:5px 12px;border-radius:14px;cursor:pointer;display:flex;align-items:center;gap:4px" type="button">
+                <span>💡</span><span>說明</span>
+              </button>
+            </div>
             <div class="ec-grid ec-grid-4">
               <div class="ec-card" id="mb-bar" onclick="pagePickMethod('initBarMode')">
                 <div class="mb-ico" style="background:rgba(121,134,203,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7986cb" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/></svg></div>
@@ -2252,7 +2254,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.14';
+const APP_VERSION='v54.15';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
