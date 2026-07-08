@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v59            ║
+// ║  GameVault — Google Apps Script 後端  v60            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -1187,6 +1187,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
       'fields date,',
       'game.name,game.url,game.cover.url,game.genres.name,game.summary,',
       'game.language_supports.language.name,',
+      'game.alternative_names.name,game.alternative_names.comment,',
       'game.involved_companies.company.name,game.involved_companies.developer,game.involved_companies.publisher;',
       'where ' + whereClauses.join(' & ') + ';',
       'sort date asc;',
@@ -1204,6 +1205,17 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
     const supports = (r.game && r.game.language_supports) || [];
     return supports.some(function(s) { return s.language && s.language.name === lang; });
   }) : rows;
+
+  // v54.11：標題改用在地化標題，優序 繁中＞簡中＞日文＞英文（原文 name）。
+  // alternative_names 的 comment 是社群自由填寫的說明文字，不是嚴格列舉值，用關鍵字比對挑選最可能符合的那筆
+  function pickLocalizedName(g) {
+    const alts = g.alternative_names || [];
+    function find(re) {
+      const m = alts.find(function(a) { return a.comment && re.test(a.comment); });
+      return m ? m.name : null;
+    }
+    return find(/traditional/i) || find(/simplified/i) || find(/japan/i) || g.name || '';
+  }
 
   // 同一款遊戲在同平台可能有多筆 release_dates（不同版本/重複紀錄），用 game.id 去重，只留第一筆（已依日期排序）
   const seenGame = {};
@@ -1223,7 +1235,7 @@ function igdbUpcomingProxy(platformId, ym, clientId, clientSecret, lang) {
       ? new Date(r.date * 1000).toISOString().slice(0, 10)
       : '';
     mapped.push({
-      name: g.name || '',
+      name: pickLocalizedName(g),
       cover_url: coverUrl,
       release_date: releaseDate,
       developer: devC ? devC.company.name : '',
