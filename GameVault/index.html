@@ -198,14 +198,16 @@ body{
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
 #pg-col .col-sel-row .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-#stats{display:flex;padding:12px 12px 10px;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
+#stats-row{display:flex;align-items:stretch;gap:8px;padding:12px 12px 10px}
+#sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
+#sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
+#stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
 #stats.at-end{mask-image:none;-webkit-mask-image:none}
 #stats::-webkit-scrollbar{display:none}
 .si2{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s}
 .si2:active{transform:scale(.96)}
-.si2.on{background:#0f2330;border-color:#00e5ff}
-#sf-total{position:sticky;left:0;z-index:2;background:#080c18;box-shadow:6px 0 8px -4px rgba(8,12,24,.85)}
-.si2.on .sl2{color:#00e5ff}
+.si2.on,#sf-total.on{background:#0f2330;border-color:#00e5ff}
+.si2.on .sl2,#sf-total.on .sl2{color:#00e5ff}
 .sv2{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:21px;font-weight:700;color:#00e5ff;line-height:1.1}
 .sl2{font-size:10px;color:#7986cb}
 
@@ -1255,9 +1257,9 @@ body{
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
                 卡片
               </button>
-              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb" title="書架模式" type="button">
+              <button id="vbtn-shelf" onclick="setView('shelf')" style="background:transparent;color:#7986cb" title="分類模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
-                書架
+                分類
               </button>
             </div>
             <!-- 大量刪除 -->
@@ -1285,8 +1287,9 @@ body{
             <input type="file" id="import-csv-input" accept=".csv" multiple style="display:none" onchange="importCsv(this)">
           </div>
         </div>
-        <div id="stats" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
+        <div id="stats-row">
           <div class="si2" id="sf-total" onclick="setF('all')"><div class="sv2" id="st-total">0</div><div class="sl2">總計</div></div>
+          <div id="stats" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
           <div class="si2" id="sf-g" onclick="setF('遊戲')"><div class="sv2" id="st-g">0</div><div class="sl2">遊戲</div></div>
           <div class="si2" id="sf-b" onclick="setF('攻略')"><div class="sv2" id="st-b">0</div><div class="sl2">書籍</div></div>
           <div class="si2" id="sf-c" onclick="setF('主機')"><div class="sv2" id="st-c">0</div><div class="sl2">主機</div></div>
@@ -1295,6 +1298,7 @@ body{
           <div class="si2" id="sf-o" onclick="setF('原聲帶')"><div class="sv2" id="st-o">0</div><div class="sl2">原聲帶</div></div>
           <div class="si2" id="sf-a" onclick="setF('動漫/美術設定集')"><div class="sv2" id="st-a">0</div><div class="sl2">動漫</div></div>
           <div class="si2" id="sf-f" onclick="setF('公仔')"><div class="sv2" id="st-f">0</div><div class="sl2">公仔</div></div>
+          </div>
         </div>
         <div class="dv2-hd-bar"></div>
       </div>
@@ -2263,7 +2267,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.27';
+const APP_VERSION='v54.28';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10968,6 +10972,7 @@ function shelfKeyOf(item){
   if(activeF==='攻略')return d.book_type||'其他';
   if(activeF==='主機')return d.platform_family||'其他';
   if(activeF==='週邊')return d.peripheral_type||'其他';
+  if(activeF==='原聲帶'||activeF==='動漫/美術設定集'||activeF==='公仔'||activeF==='數位下載版')return d.subtype||'其他';
   return d.platform||'其他';
 }
 
@@ -11007,7 +11012,7 @@ function setView(mode){
 function renderShelf(){
   var sv=$('shelf-view');if(!sv)return;
   if(!filtered.length){
-    sv.innerHTML='<div class="empty"><div class="eico">📚</div><div class="etxt">書架是空的</div></div>';
+    sv.innerHTML='<div class="empty"><div class="eico">📚</div><div class="etxt">分類瀏覽是空的</div></div>';
     return;
   }
   spineColorIdx=0;
@@ -11031,6 +11036,9 @@ function renderShelf(){
     if(activeF==='攻略'){var bt=d.book_type||'其他';return {key:key,label:bt,sort:[0,BOOKTYPE_ORDER.indexOf(bt)<0?999:BOOKTYPE_ORDER.indexOf(bt),bt]};}
     if(activeF==='主機'){var pf=d.platform_family||'其他';return {key:key,label:platFullShort(pf)||pf,sort:[0,ORDER.indexOf(pf)<0?999:ORDER.indexOf(pf),pf]};}
     if(activeF==='週邊'){var pt=d.peripheral_type||'其他';return {key:key,label:pt,sort:[0,PERITYPE_ORDER.indexOf(pt)<0?999:PERITYPE_ORDER.indexOf(pt),pt]};}
+    if(activeF==='原聲帶'||activeF==='動漫/美術設定集'||activeF==='公仔'||activeF==='數位下載版'){
+      var st=d.subtype||'其他';return {key:key,label:st,sort:[0,0,st]};
+    }
     // 遊戲（或其他）→ 平台
     var gp2=d.platform||'其他';return {key:key,label:platFullShort(gp2)||gp2,sort:[0,ORDER.indexOf(gp2)<0?999:ORDER.indexOf(gp2),gp2]};
   }
