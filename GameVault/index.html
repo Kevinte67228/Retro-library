@@ -152,7 +152,7 @@ body{
 /* === Search === */
 .sw{position:relative;margin:0 16px 10px}
 .sw svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#7986cb;width:16px;height:16px;pointer-events:none}
-.si{width:100%;background:#141b30;border:1px solid #1e2a45;border-radius:8px;color:#e8eaf6;font-family:inherit;font-size:14px;padding:10px 12px 10px 38px;-webkit-appearance:none}
+.si{width:100%;background:#141b30;border:1px solid #1e2a45;border-radius:8px;color:#e8eaf6;font-family:inherit;font-size:14px;padding:10px 12px 10px 38px;-webkit-appearance:none;text-overflow:ellipsis;overflow:hidden}
 .si:focus{outline:none;border-color:#00e5ff}
 
 /* === Thumbnails === */
@@ -198,7 +198,7 @@ body{
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
 #pg-col .col-sel-row .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-#stats-row{display:flex;align-items:stretch;gap:8px;padding:12px 12px 10px}
+#stats-row{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
 #stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
@@ -359,7 +359,7 @@ body{
 #pg-col #col-sticky .hd,#pg-hunt #hunt-sticky .hd{border-bottom:none}
 
 /* === Game cards === */
-#glist{padding:0 16px 16px}
+#glist{padding:12px 16px 16px}
 
 /* ── 書架模式 ── */
 #shelf-view{
@@ -736,7 +736,7 @@ body{
 #plat-pick-ov.on{display:flex}
 #plat-pick-sheet{width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;height:82dvh;max-height:82dvh;display:flex;flex-direction:column;overflow:hidden}
 #plat-pick-search-wrap{padding:10px 14px 8px;flex-shrink:0;border-bottom:1px solid #1e2a45}
-#plat-pick-search{width:100%;box-sizing:border-box;background:#0f1525;border:1.5px solid #1e2a45;border-radius:8px;color:#e8eaf6;font-size:14px;padding:8px 12px;outline:none}
+#plat-pick-search{width:100%;box-sizing:border-box;background:#0f1525;border:1.5px solid #1e2a45;border-radius:8px;color:#e8eaf6;font-size:14px;padding:8px 12px;outline:none;text-overflow:ellipsis;overflow:hidden}
 #plat-pick-search::placeholder{color:#4a5568}
 #plat-pick-search:focus{border-color:#00e5ff}
 #plat-pick-list{overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
@@ -2267,7 +2267,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.28';
+const APP_VERSION='v54.29';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9467,7 +9467,7 @@ function openRelatedPicker(){
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;flex-shrink:0">'+
       '<div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 10px"></div>'+
       '<div style="font-size:14px;font-weight:600;color:#e8eaf6;margin-bottom:8px">選取關聯商品（可多選，跨類別）</div>'+
-      '<input id="gp-search" placeholder="搜尋名稱 / 編碼..." class="fi" style="font-size:13px" oninput="filterRelatedPicker(this.value)">'+
+      '<input id="gp-search" placeholder="搜尋名稱 / 編碼..." class="fi" style="font-size:13px;text-overflow:ellipsis;overflow:hidden" oninput="filterRelatedPicker(this.value)">'+
     '</div>'+
     '<div id="gp-list" style="overflow-y:auto;flex:1">'+_relRows(_relPickList)+'</div>'+
     '<div style="padding:12px 16px;border-top:1px solid #1e2a45;flex-shrink:0;display:flex;gap:8px">'+
