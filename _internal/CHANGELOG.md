@@ -1,3 +1,21 @@
+## v54.31 (2026-07-08)
+
+### 變更內容
+搜尋框文字再縮小（13px→12px），左右內距也微調（38px→34px、12px→10px），讓完整的 placeholder 文字（搜尋名稱、平台、條碼...）能完整顯示，不用再依賴省略號截斷。
+
+### 影響檔案
+- index.html / GameVault_v54_31_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端字級微調）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-30 → gamevault-v54-31
+
+### 對應備份
+- _internal/old/v54_30/
+
 ## v54.30 (2026-07-08)
 
 ### 變更內容
@@ -62,24 +80,4 @@
 
 ### 對應備份
 - _internal/old/v54_27/
-
-## v54.27 (2026-07-08)
-
-### 變更內容
-兩項修正：
-- **修正詳情頁開啟失敗 `v.includes is not a function`**：日期欄位（購入日期/發售日/售出日期/測試日期/估值更新時間）格式化判斷式直接對值呼叫 `.includes()`，沒有先檢查型態，若該欄位因資料異常不是字串會直接拋出例外。跟先前 `market_value_currency.toUpperCase()` 是同一類問題（Sheets 欄位型態異常），改用 `String(v)` 強制轉字串後再判斷
-- **書架標題列改用「全名 (縮寫)」**：原本只顯示縮寫（如「NSW」），使用者不容易一眼辨識，改成「Nintendo Switch (NSW)」這種全名+縮寫並列的格式，套用到全部/遊戲/主機檢視下的平台分組標題
-
-### 影響檔案
-- index.html / GameVault_v54_27_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端邏輯修正）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-26 → gamevault-v54-27
-
-### 對應備份
-- _internal/old/v54_26/
 
