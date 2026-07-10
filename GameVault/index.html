@@ -2263,7 +2263,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.26';
+const APP_VERSION='v54.27';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11025,14 +11025,14 @@ function renderShelf(){
   function shelfGroupOf(item){
     var d=item.data, cat=d.category||'遊戲', key=shelfKeyOf(item);
     if(activeF==='all'){
-      if(cat==='遊戲'){var gp=d.platform||'其他';return {key:key,label:platShort(gp)||gp,sort:[0,ORDER.indexOf(gp)<0?999:ORDER.indexOf(gp),gp]};}
+      if(cat==='遊戲'){var gp=d.platform||'其他';return {key:key,label:platFullShort(gp)||gp,sort:[0,ORDER.indexOf(gp)<0?999:ORDER.indexOf(gp),gp]};}
       var ci=CAT_ORDER.indexOf(cat);return {key:key,label:cat,sort:[1,ci<0?999:ci,cat]};
     }
     if(activeF==='攻略'){var bt=d.book_type||'其他';return {key:key,label:bt,sort:[0,BOOKTYPE_ORDER.indexOf(bt)<0?999:BOOKTYPE_ORDER.indexOf(bt),bt]};}
-    if(activeF==='主機'){var pf=d.platform_family||'其他';return {key:key,label:platShort(pf)||pf,sort:[0,ORDER.indexOf(pf)<0?999:ORDER.indexOf(pf),pf]};}
+    if(activeF==='主機'){var pf=d.platform_family||'其他';return {key:key,label:platFullShort(pf)||pf,sort:[0,ORDER.indexOf(pf)<0?999:ORDER.indexOf(pf),pf]};}
     if(activeF==='週邊'){var pt=d.peripheral_type||'其他';return {key:key,label:pt,sort:[0,PERITYPE_ORDER.indexOf(pt)<0?999:PERITYPE_ORDER.indexOf(pt),pt]};}
     // 遊戲（或其他）→ 平台
-    var gp2=d.platform||'其他';return {key:key,label:platShort(gp2)||gp2,sort:[0,ORDER.indexOf(gp2)<0?999:ORDER.indexOf(gp2),gp2]};
+    var gp2=d.platform||'其他';return {key:key,label:platFullShort(gp2)||gp2,sort:[0,ORDER.indexOf(gp2)<0?999:ORDER.indexOf(gp2),gp2]};
   }
 
   var groups={};
@@ -11084,6 +11084,12 @@ function platShort(full){
   var map={};
   PLATFORMS.forEach(function(p){map[p.v]=p.s;});
   return map[full]||full;
+}
+// v54.27：書架標題列改用「全名 (縮寫)」，例如 Nintendo Switch (NSW)，取代只顯示縮寫
+function platFullShort(full){
+  var s=platShort(full);
+  if(!s||s===full)return full;
+  return full+' ('+s+')';
 }
 function updateStats(){
   var counts={'遊戲':0,'攻略':0,'主機':0,'週邊':0,'數位下載版':0,'原聲帶':0,'動漫/美術設定集':0,'公仔':0};
@@ -12820,7 +12826,7 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     // 髒資料防護：日期/時間戳誤存入遊戲人數，不顯示（重新編輯存檔即會被晶片選取覆寫清除）
     if(k==='players'&&typeof v==='string'&&(/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(v)||/T\d\d:\d\d/.test(v)))return;
     // 日期格式化：ISO 格式 → YYYY/MM/DD
-    if((k==='buy_date'||k==='release_date'||k==='resale_date'||k==='test_date'||k==='market_value_updated_at')&&v&&v.includes('T')&&v.includes('Z')){
+    if((k==='buy_date'||k==='release_date'||k==='resale_date'||k==='test_date'||k==='market_value_updated_at')&&v&&String(v).includes('T')&&String(v).includes('Z')){
       try{var dt=new Date(v);v=dt.getFullYear()+'/'+(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0');}catch(e){}
     }
     // 圖片欄位已在上方顯示，跳過
