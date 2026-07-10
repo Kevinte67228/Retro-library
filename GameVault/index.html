@@ -152,7 +152,7 @@ body{
 /* === Search === */
 .sw{position:relative;margin:0 16px 10px}
 .sw svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#7986cb;width:16px;height:16px;pointer-events:none}
-.si{width:100%;background:#141b30;border:1px solid #1e2a45;border-radius:8px;color:#e8eaf6;font-family:inherit;font-size:14px;padding:10px 12px 10px 38px;-webkit-appearance:none;text-overflow:ellipsis;overflow:hidden}
+.si{width:100%;background:#141b30;border:1px solid #1e2a45;border-radius:8px;color:#e8eaf6;font-family:inherit;font-size:13px;padding:10px 12px 10px 38px;-webkit-appearance:none;text-overflow:ellipsis;overflow:hidden}
 .si:focus{outline:none;border-color:#00e5ff}
 
 /* === Thumbnails === */
@@ -198,7 +198,7 @@ body{
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
 #pg-col .col-sel-row .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-#stats-row{display:flex;align-items:center;gap:8px;padding:12px 12px 10px}
+#stats-row{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
 #stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
@@ -323,7 +323,7 @@ body{
 
 /* ══ DV2 頁面通用擴充（建檔／收藏／尋寶／設定）══ */
 /* Header accent 底線 */
-.dv2-hd-bar{height:3px;background:var(--dv2-pg-color,#00e5ff);border-radius:0 0 3px 3px;margin-top:10px;opacity:.85}
+.dv2-hd-bar{height:3px;background:var(--dv2-pg-color,#00e5ff);border-radius:0 0 3px 3px;margin-top:6px;opacity:.85}
 /* 建檔頁 accent 色 */
 #pg-scan{--dv2-pg-color:#7986cb}
 /* 收藏頁 accent 色 */
@@ -367,7 +367,7 @@ body{
   overflow-x:hidden;
 }
 .shelf-row{
-  margin-bottom:26px;
+  margin-bottom:16px;
 }
 .shelf-label{
   font-size:16px;font-weight:700;color:#e8eaf6;letter-spacing:.5px;
@@ -2267,7 +2267,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.29';
+const APP_VERSION='v54.30';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
