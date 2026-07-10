@@ -2282,7 +2282,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.22';
+const APP_VERSION='v54.23';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11431,30 +11431,32 @@ function closeColMenu(){
   var p=document.getElementById('col-menu-panel');
   if(p)p.style.display='none';
 }
-// ── 匯出 CSV（按類型分檔）──
+// ── 匯出 CSV（按「分類＋子類型」分檔，避免不同子類型的欄位混在同一檔案錯位）──
 function exportCsvByType(){
   var rows=filtered;
   if(!rows||!rows.length){toast('目前沒有可匯出的資料','er');return;}
   var groups={};
   rows.forEach(function(c){
-    var tp=c._type||(catInternal((c.data&&c.data.category)||'')||'game');
-    if(!groups[tp])groups[tp]=[];
-    groups[tp].push(c);
+    var d=c.data||{};
+    var catI=catInternal(d.category||'');
+    var isHunt=catI==='狩獵';
+    var key=isHunt?'__hunt__':(catI+'||'+(d.subtype||''));
+    if(!groups[key])groups[key]={rows:[],cat:catI,subtype:d.subtype||'',isHunt:isHunt};
+    groups[key].rows.push(c);
   });
-  var typeLabel={game:'遊戲',book:'書籍',console:'主機',peripheral:'週邊',hunt:'尋寶'};
   var date=(new Date()).toISOString().slice(0,10);
   var totalFiles=0;
   function cell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
-  function downloadOne(typeRows,tp){
-    var lbl=typeLabel[tp]||tp;
+  function downloadOne(g){
+    var typeRows=g.rows;
+    var lbl=g.isHunt?'尋寶':catLabel(g.cat);
+    if(g.subtype)lbl+='_'+g.subtype;
     var cols;
-    if(tp==='hunt'){
+    if(g.isHunt){
       cols=HUNT_HDR.filter(function(k){return k!=='uuid'&&k!=='cover_img';}).map(function(k){return [k,k,'text'];});
     } else {
       var seen={};cols=[];
-      var sampleCat=(typeRows[0]&&typeRows[0].data&&typeRows[0].data.category)||lbl;
-      var sampleSubtype=(typeRows[0]&&typeRows[0].data&&typeRows[0].data.subtype)||'';
-      fieldsFor(sampleCat,sampleSubtype).forEach(function(f){
+      fieldsFor(g.cat,g.subtype).forEach(function(f){
         if(f[2]==='imgupload'||f[0]==='uuid'||seen[f[0]])return;
         seen[f[0]]=1;cols.push(f);
       });
@@ -11477,7 +11479,7 @@ function exportCsvByType(){
     setTimeout(function(){a.click();URL.revokeObjectURL(u);},totalFiles*450);
     totalFiles++;
   }
-  Object.keys(groups).forEach(function(tp){downloadOne(groups[tp],tp);});
+  Object.keys(groups).forEach(function(key){downloadOne(groups[key]);});
   var cnt=rows.length;
   setTimeout(function(){
     toast('已匯出 '+Object.keys(groups).length+' 個檔案，共 '+cnt+' 筆 ✓','ok',3000);
