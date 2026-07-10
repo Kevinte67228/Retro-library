@@ -365,62 +365,40 @@ body{
   overflow-x:hidden;
 }
 .shelf-row{
-  background:linear-gradient(180deg,#1a1008 0%,#2a1c0e 40%,#1a1008 100%);
-  border-radius:4px;
-  padding:10px 8px 0;
-  margin-bottom:20px;
-  position:relative;
-  box-shadow:0 4px 12px rgba(0,0,0,.5);
+  margin-bottom:26px;
 }
 .shelf-label{
-  font-size:10px;color:#7986cb;letter-spacing:1px;
-  text-transform:uppercase;font-family:'Rajdhani',sans-serif;
-  padding:0 4px 6px;
+  font-size:16px;font-weight:700;color:#e8eaf6;letter-spacing:.5px;
+  padding:0 2px 12px;display:flex;align-items:center;gap:8px;
+  border-bottom:2px solid #1e2a45;margin-bottom:12px;
 }
-.shelf-books{
-  display:flex;
-  align-items:flex-end;
-  gap:3px;
-  overflow-x:auto;
-  padding-bottom:0;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  min-height:120px;
+.shelf-label .cnt{
+  font-size:12px;font-weight:600;color:#00e5ff;
+  background:rgba(0,229,255,.12);border-radius:10px;padding:2px 9px;
 }
-.shelf-books::-webkit-scrollbar{display:none}
-/* 書架底板 */
-.shelf-plank{
-  width:100%;height:10px;
-  background:linear-gradient(180deg,#8B6914 0%,#6B4F10 50%,#4a3508 100%);
-  border-radius:0 0 4px 4px;
-  box-shadow:0 2px 6px rgba(0,0,0,.6);
-  flex-shrink:0;
+.shelf-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
 }
-.spine{
-  flex-shrink:0;
-  width:auto;
-  height:110px;
-  border-radius:3px 1px 1px 3px;
-  cursor:pointer;
-  position:relative;
-  overflow:hidden;
-  transition:transform .15s,box-shadow .15s;
-  box-shadow:2px 2px 6px rgba(0,0,0,.5),-1px 0 3px rgba(0,0,0,.3);
+.shelf-cover{
+  position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;
+  background:#141b30;border:1px solid #1e2a45;cursor:pointer;
 }
-.spine:active{transform:translateY(-8px);box-shadow:2px 8px 14px rgba(0,0,0,.7);}
-.spine img{
-  width:auto;height:100%;
-  object-fit:contain;display:block;
+.shelf-cover:active{border-color:#00e5ff}
+.shelf-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.shelf-cover-default{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:rgba(255,255,255,.9);text-align:center;
+  padding:6px;line-height:1.3;word-break:break-all;
 }
-.spine-default{
-  width:32px;height:110px;
-  display:flex;align-items:center;justify-content:center;
-  writing-mode:vertical-rl;text-orientation:mixed;
-  font-size:9px;font-weight:600;color:rgba(255,255,255,.9);
-  padding:4px 2px;line-height:1.2;text-align:center;word-break:break-all;
-  border-left:3px solid rgba(255,255,255,.2);
+.shelf-sold-tag{
+  position:absolute;top:6px;left:6px;background:#ff5252;color:#fff;
+  font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;letter-spacing:.5px;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
 }
-.spine-no-img .spine-default{background:var(--color,#1e3a5f);}
+.shelf-title{
+  margin-top:5px;font-size:11px;color:#9fa8c8;line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
+}
 .gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer}
 .gc:active{border-color:#00e5ff}
 .gi{width:42px;height:42px;border-radius:8px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
@@ -2282,7 +2260,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.24';
+const APP_VERSION='v54.25';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11070,29 +11048,28 @@ function renderShelf(){
   var html2='';
   sortedKeys.forEach(function(key){
     var grp=groups[key];var items=grp.items;
-    var spines=items.map(function(item){
+    var covers=items.map(function(item){
       var d=item.data;
-      // 優先用 spine_img，其無則 cover_img；皆無則色塊+文字
-      var _spineRaw=hasImgVal(d.spine_img)?d.spine_img:(hasImgVal(d.cover_img)?d.cover_img:null);
-      var spineImg=_spineRaw?imgUrl(_spineRaw,300):null;
+      var _coverRaw=hasImgVal(d.cover_img)?d.cover_img:(hasImgVal(d.spine_img)?d.spine_img:null);
+      var coverImg=_coverRaw?imgUrl(_coverRaw,300):null;
       var color=nextSpineColor(key);
       var title=d.primary_name||d.zh_name||d.en_name||d.jp_name||'?';
       var shortTitle=title.length>10?title.slice(0,10)+'…':title;
-      if(spineImg){
-        return '<div class="spine" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
-          '<img src="'+spineImg+'" alt="'+esc(shortTitle)+'">'+
-          '</div>';
-      }else{
-        return '<div class="spine spine-no-img" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
-          '<div class="spine-default" style="--color:'+color+'">'+esc(shortTitle)+'</div>'+
-          '</div>';
-      }
+      var sold=d.collect_status==='已出售'?'<div class="shelf-sold-tag">已出售</div>':'';
+      var thumb=coverImg
+        ?'<img src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
+        :'<div class="shelf-cover-default" style="background:'+color+'">'+esc(shortTitle)+'</div>';
+      return '<div>'+
+        '<div class="shelf-cover" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
+          thumb+sold+
+        '</div>'+
+        '<div class="shelf-title">'+esc(shortTitle)+'</div>'+
+      '</div>';
     }).join('');
 
     html2+='<div class="shelf-row">'+
-      '<div class="shelf-label">'+esc(grp.label)+'（'+items.length+'）</div>'+
-      '<div class="shelf-books">'+spines+'</div>'+
-      '<div class="shelf-plank"></div>'+
+      '<div class="shelf-label">'+esc(grp.label)+'<span class="cnt">'+items.length+'</span></div>'+
+      '<div class="shelf-grid">'+covers+'</div>'+
     '</div>';
   });
 
