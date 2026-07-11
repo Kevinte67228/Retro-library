@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v63            ║
+// ║  GameVault — Google Apps Script 後端  v64            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -678,6 +678,9 @@ function dispatchRead(action, p) {
         break;
       case 'tgdb_search':
         result = tgdbProxy(p.q || '', p.tgdbkey || '');
+        break;
+      case 'rawg_search':
+        result = rawgProxy(p.q || '', p.rawgkey || '');
         break;
       case 'bl_search':
         result = barcodeLookupProxy(p.barcode || '', p.blkey || '');
@@ -2146,6 +2149,26 @@ function fetchMetaTagsWithAgeGateRetry(url) {
 }
  
 // ── TheGamesDB API Proxy ──────────────────────────────────────
+// ── RAWG 遊戲資料庫 Proxy（v54.32：現代遊戲高畫質封面/背景圖補強來源）──
+function rawgProxy(q, key) {
+  if (!q || !key) return { error: 'missing params' };
+  const url = 'https://api.rawg.io/api/games?key=' + encodeURIComponent(key) +
+    '&search=' + encodeURIComponent(q) + '&page_size=5';
+  try {
+    const res = UrlFetchApp.fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      muteHttpExceptions: true
+    });
+    const code = res.getResponseCode();
+    const text = res.getContentText('UTF-8');
+    if (code === 401 || code === 403) return { error: 'RAWG API Key 無效，請重新申請', results: [] };
+    if (code === 429) return { error: 'RAWG 額度已用完，請稍後再試', results: [] };
+    if (code !== 200) return { error: 'HTTP ' + code, results: [] };
+    if (!text || text.trimStart().startsWith('<')) return { error: 'RAWG 回傳非 JSON', results: [] };
+    return JSON.parse(text);
+  } catch (e) { return { error: e.message, results: [] }; }
+}
+
 function tgdbProxy(q, key) {
   if (!q || !key) return { error: 'missing params' };
   const url = 'https://api.thegamesdb.net/v1/Games/ByGameName?apikey=' + encodeURIComponent(key) +
