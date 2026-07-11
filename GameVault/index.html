@@ -176,7 +176,7 @@ body{
 .tslot-del{position:absolute;top:4px;right:4px;background:rgba(255,82,82,.85);border:none;color:#fff;width:18px;height:18px;border-radius:50%;font-size:11px;cursor:pointer;line-height:18px;padding:0;z-index:2}
 
 /* === Section groups === */
-.sg{margin:0 16px 8px;border:1px solid #1e2a45;border-radius:10px}
+.sg{margin:0 16px 8px;border:1px solid #1e2a45;border-radius:10px;overflow:hidden}
 .sh2{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#141b30;cursor:pointer;user-select:none}
 .sl{font-family:'Rajdhani','PingFang TC',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px}
 .sl .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
@@ -817,32 +817,12 @@ body{
 (function(){
   function setAppHeight(){
     var h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-    // v54.53：加入有效性檢查，避免異常過小/無效的數值被套用到 --app-height，
-    // 那樣會讓 #shell 高度塌陷、裡面所有內容（含底部導覽列）被擠壓到看不見
-    if(!h||h<200)return;
-    var cur=document.documentElement.style.getPropertyValue('--app-height');
-    var newVal=h+'px';
-    if(cur===newVal)return; // 數值沒變就不用動 DOM，避免不必要的重繪
-    document.documentElement.style.setProperty('--app-height',newVal);
+    document.documentElement.style.setProperty('--app-height',h+'px');
   }
   setAppHeight();
   window.addEventListener('resize',setAppHeight);
   window.addEventListener('orientationchange',function(){setTimeout(setAppHeight,50);});
   if(window.visualViewport)window.visualViewport.addEventListener('resize',setAppHeight);
-  // v54.52：相機/OCR/掃描等功能會觸發視窗尺寸暫時變化，切回 App 畫面時 --app-height 可能卡在
-  // 過時的數值沒有正確重新計算，導致最外層容器高度塌陷、底部導覽列消失。切回分頁時強制重算一次。
-  document.addEventListener('visibilitychange',function(){
-    if(document.visibilityState==='visible'){setAppHeight();setTimeout(setAppHeight,150);}
-  });
-  // v54.53：定時保險網，每3秒檢查一次 #shell 實際渲染高度是否異常過小（可能是某個未預期情境
-  // 下前面幾個事件監聽都沒被觸發到），若異常則強制重新計算，作為最後一層防護
-  setInterval(function(){
-    var shell=document.getElementById('shell');
-    if(shell&&shell.getBoundingClientRect){
-      var rect=shell.getBoundingClientRect();
-      if(rect.height<200)setAppHeight();
-    }
-  },3000);
 })();
 </script>
 
@@ -985,13 +965,9 @@ body{
                 <div class="mb-ico" style="background:rgba(206,147,216,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ce93d8" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/><circle cx="20" cy="5" r="2.5" fill="#ce93d8" stroke="none"/></svg></div>
                 <div class="mb-txt"><div class="ect">條碼＋照片</div><div class="ecd">最高準確度</div></div>
               </div>
-              <div class="ec-card" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
+              <div class="ec-card mb-wide" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
                 <div class="mb-ico" style="background:rgba(128,203,196,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#80cbc4" stroke-width="1.5"><rect x="3" y="7" width="10" height="10" rx="2"/><path d="M15 8h4M15 12h4M15 16h2"/><circle cx="20" cy="8" r="1.5" fill="#80cbc4" stroke="none"/></svg></div>
-                <div class="ect" id="mb-gcode-combo-title">編碼＋照片</div><div class="ecd" id="mb-gcode-combo-sub">精確比對</div>
-              </div>
-              <div class="ec-card" id="mb-aiweb" onclick="pagePickMethod('initAiWebMode')">
-                <div class="mb-ico" style="background:rgba(124,77,255,.14)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7c4dff" stroke-width="1.5"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 3v4M15 3v4"/><circle cx="9" cy="13" r="1" fill="#7c4dff" stroke="none"/><circle cx="15" cy="13" r="1" fill="#7c4dff" stroke="none"/></svg></div>
-                <div class="ect">AI 網頁查詢</div><div class="ecd">貼上生成資料</div>
+                <div class="mb-txt"><div class="ect" id="mb-gcode-combo-title">編碼＋照片</div><div class="ecd" id="mb-gcode-combo-sub">精確比對</div></div>
               </div>
             </div>
           </div>
@@ -1055,13 +1031,11 @@ body{
                 </div>
                 <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
                   <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 條碼＋照片</div>
-                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
-                  <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 編碼＋照片／ISBN＋照片</div>
-                  <div>序號+封面，精確度最高，適合完整資訊；數位下載版的電子書子類型也是用這個組合（ISBN 比對＋AI 圖片辨識並行）。</div>
+                  <div>結合條碼+封面圖，最準確，推薦使用此方式（限有條碼的實體分類）。</div>
                 </div>
                 <div>
-                  <div style="color:#7c4dff;font-weight:700;margin-bottom:4px">🤖 AI 網頁查詢</div>
-                  <div>輸入商品名稱／條碼／關鍵字，帶入該分類的核心識別欄位（名稱/平台/發行商/發售日/類型等，不含購入日期/價格等個人記錄欄位）產生查詢提示詞，複製給 DeepSeek／GPT／Gemini／Claude 其中一個查詢，再把 AI 回覆的 JSON 貼回來解析匯入手動建檔表單。適合沒有條碼、圖片辨識也查不到，但想借助 AI 網頁版查詢能力的情況。</div>
+                  <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⭐ 編碼＋照片／ISBN＋照片</div>
+                  <div>序號+封面，精確度最高，適合完整資訊；數位下載版的電子書子類型也是用這個組合（ISBN 比對＋AI 圖片辨識並行）。</div>
                 </div>
               </div>
             </div>
@@ -2307,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.56';
+const APP_VERSION='v54.57';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3659,9 +3633,7 @@ function _topLayerClose(){
     ['type-picker-overlay','disp',function(){cancelTypePicker();}],
     ['game-picker-overlay','disp',function(){closeGamePicker();}],
     ['filter-sheet','on',function(){closeFilterSheet();}],
-    ['dsheet','on',function(){ if(_detailNavStack.length){detailNavBack();} else {closeDetailSilent();} }],
-    ['aiweb-ov','disp',function(){closeAiWebSearchOv();}],
-    ['barcode-web-ov','disp',function(){closeBarcodeWebSearch();}]
+    ['dsheet','on',function(){ if(_detailNavStack.length){detailNavBack();} else {closeDetailSilent();} }]
   ];
   for(var i=0;i<L.length;i++){
     var el=$(L[i][0]);if(!el)continue;
@@ -7614,25 +7586,26 @@ function selectEntryCat(cat,_noSave){
 var _DIGI_BOOK_SUBS={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
 // v49.07：下載版遊戲／追加下載內容只有「圖片辨識/手動建檔/商店連結」3張卡，4欄格線會留空格，
 // 商店連結改成1x2填滿；其餘子類型（含其他分類）的商店連結維持1x1，不受影響
-// v54.50：新增「AI網頁查詢」卡片後，改由它補滿第4格，商店連結不再需要撐寬（電子書子類型例外，
-// 該情境改成隱藏AI網頁查詢維持原本 ISBN+照片(2) + 商店連結(1) + 手動建檔(1) = 4 的填滿方式）
+var _DIGI_LINK_WIDE_SUBS={'下載版遊戲':1,'追加下載內容':1,'數位音源':1,'數位影音':1};
+// v49.07：改為明確傳入子類型參數（預設才退回全域變數），避免依賴呼叫當下全域 _selectedSubtype
+// 是否已同步更新造成排版忽寬忽窄的不一致（同一分類點兩次卻長不一樣）
 function _refreshMethodButtons(cat,subtype){
   var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
+  var showLinkWide=isDigital&&_DIGI_LINK_WIDE_SUBS[sub];
   // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
   [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
-   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital],
-   ['mb-aiweb',!showIsbn]].forEach(function(p){
+   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
   if(t)t.textContent=showIsbn?'ISBN＋照片':'編碼＋照片';
   if(s)s.textContent=showIsbn?'電子書精確比對':'精確比對';
   // mb-gcode-combo 在遊戲/電子書情境都是 1x2（原生 HTML 已固定 mb-wide，這裡不需再切換）；
-  // mb-link 固定維持 1x1 窄版，數位下載版的其他子類型改由 AI網頁查詢 補滿第4格，不再撐寬 mb-link
+  // mb-link 才需要依子類型明確設定寬窄，兩者互斥不會同時都是 wide 造成總欄數超過4欄換行
   var linkEl=$('mb-link');
-  if(linkEl)linkEl.classList.remove('mb-wide');
+  if(linkEl)linkEl.classList.toggle('mb-wide',!!showLinkWide);
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
@@ -7745,7 +7718,7 @@ function openPlatFldPicker(trigger){
 }
 // 頁面上點選建檔方式：平台已於 Step 3 寫入 _selectedPlatform，直接啟動對應模式（init*Mode）
 // v26.01：建檔方式（init*Mode）↔ 卡片短名 對照，供記憶外框還原（只上外框、不執行該模式）
-var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',initManualMode:'manual',initComboMode:'combo',initGameCodeComboMode:'gcode-combo',initDigitalLinkMode:'link',initAiWebMode:'aiweb'};
+var _METHOD_MB={initBarMode:'bar',initImgMode:'img',initGameCodeMode:'gcode',initManualMode:'manual',initComboMode:'combo',initGameCodeComboMode:'gcode-combo',initDigitalLinkMode:'link'};
 function _saveMethodMem(fn){
   try{
     cfg.entry_method=fn;
@@ -7935,127 +7908,6 @@ function initManualMode(){
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
     showForm('手動建檔');
   });
-}
-// ── AI 網頁查詢：先選分類（Step1既有）→ 產生該分類核心欄位的提示詞 → 複製並開啟AI網頁 →
-// 使用者貼上AI回覆的JSON → 解析匯入手動建檔表單（v54.49）──
-function initAiWebMode(){
-  pickTypeAndPlatform('aiweb',function(type,platform){
-    _selectedType=type;_selectedPlatform=platform;
-    setMbActive('aiweb');
-    stopScanner();stopComboScanner();
-    entry=Object.assign({},_defaultsFor(type),{category:type,platform:platform||''});
-    _carrySelPlat();_carrySelRegion();_carrySelSubtype();
-    openAiWebSearchOv();
-  });
-}
-// 核心識別欄位（排除個人記錄/收藏狀態/品相完整度/關聯商品/圖片類欄位，這些AI網頁查不到也不該問）
-function _aiWebFieldsFor(cat,subtype){
-  var fields=fieldsFor(cat,subtype)||[];
-  var excludePattern=/收藏狀態|品相|完整度|個人記錄|關聯商品|圖片/;
-  return fields.filter(function(f){
-    var k=f[0],type=f[2],group=f[3]||'';
-    if(excludePattern.test(group))return false;
-    if(type==='hidden'||type==='imgupload')return false;
-    if(k==='uuid'||k==='completeness'||k==='cover_img'||k==='back_img'||k==='spine_img')return false;
-    return true;
-  });
-}
-var AIWEB_DESTS=[
-  {id:'deepseek',label:'DeepSeek',homeUrl:'https://chat.deepseek.com/'},
-  {id:'gpt',label:'GPT',homeUrl:'https://chatgpt.com/'},
-  {id:'gemini',label:'Gemini',homeUrl:'https://gemini.google.com/'},
-  {id:'claude',label:'Claude',homeUrl:'https://claude.ai/new'}
-];
-function _aiWebBuildPrompt(subject){
-  var cat=_selectedType||entry.category||'遊戲';
-  var subtype=_selectedSubtype||entry.subtype||'';
-  var fields=_aiWebFieldsFor(cat,subtype);
-  var fieldDesc=fields.map(function(f){return f[0]+'（'+f[1]+'）';}).join('、');
-  var jsonKeys=fields.map(function(f){return f[0];}).join(', ');
-  return '請幫我查詢這個'+cat+(subtype?'（子類型：'+subtype+'）':'')+'商品的詳細資訊：「'+subject+'」。\n\n'+
-    '請務必只用純 JSON 物件格式回覆整個回答（不要有其他文字、說明、markdown程式碼區塊符號），JSON 欄位限定為以下這些 key：\n'+
-    fieldDesc+'\n\n'+
-    '查無法確定的欄位請填空字串 ""，不要臆測編造內容。JSON 只能包含這些 key：'+jsonKeys+'，不要新增其他 key。';
-}
-function openAiWebSearchOv(){
-  var ov=$('aiweb-ov');if(ov)ov.style.display='flex';
-  var si=$('aiweb-subject');if(si)si.value='';
-  var pa=$('aiweb-paste');if(pa)pa.value='';
-  _aiWebRenderDestTabs();
-  var cat=_selectedType||entry.category||'遊戲';
-  var subtype=_selectedSubtype||entry.subtype||'';
-  var fields=_aiWebFieldsFor(cat,subtype);
-  var fl=$('aiweb-fields-list');
-  if(fl)fl.textContent=fields.map(function(f){return f[1];}).join('、');
-}
-function closeAiWebSearchOv(){
-  var ov=$('aiweb-ov');if(ov)ov.style.display='none';
-}
-// 條碼掃描：重用既有 openFieldScanner 通用即時掃描機制，掃到直接帶入主旨欄位
-function aiWebScanBarcode(){
-  openFieldScanner({mode:'barcode',inputId:'aiweb-subject',
-    title:'掃描條碼',subtitle:'對準商品條碼，自動偵測後帶入',
-    resultToast:function(v){return '已帶入條碼：'+v;}});
-}
-// 拍照辨識名稱：重用既有 openFieldScanner 的 OCR 模式（Gemini 視覺辨識），免去手動輸入商品名稱
-function aiWebOcrName(){
-  openFieldScanner({mode:'ocr',inputId:'aiweb-subject',
-    title:'拍照辨識名稱',subtitle:'對準封面或商品名稱後按「拍攝並辨識」',
-    prompt:'請從圖片中找出並回傳這個商品的名稱或標題文字（可能是遊戲標題、書名、專輯名稱、商品名稱等），用圖片上看到的原文語言回傳即可，不需要翻譯。只回傳名稱本身，不要其他說明文字，找不到回傳空字串。',
-    resultToast:function(v){return '已帶入名稱：'+v;}});
-}
-function _aiWebRenderDestTabs(){
-  var wrap=$('aiweb-dest-tabs');if(!wrap)return;
-  wrap.innerHTML=AIWEB_DESTS.map(function(d){
-    return '<button type="button" onclick="aiWebCopyAndOpen(\''+d.id+'\')" style="height:44px;padding:4px;border-radius:10px;font-size:11px;font-weight:700;background:#141b30;color:#7c4dff;border:1.5px solid #7c4dff">'+esc(d.label)+'</button>';
-  }).join('');
-}
-// 複製提示詞＋開啟AI網頁，比照條碼查詢已驗證可用的模式
-function aiWebCopyAndOpen(destId){
-  var subject=($('aiweb-subject')&&$('aiweb-subject').value||'').trim();
-  if(!subject){toast('請先輸入商品名稱、條碼或關鍵字','er');return;}
-  var d=AIWEB_DESTS.filter(function(x){return x.id===destId;})[0];
-  if(!d)return;
-  var prompt=_aiWebBuildPrompt(subject);
-  var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁，進入後請在輸入框「貼上」提示詞並送出。取得回覆後，把 AI 回傳的 JSON 內容複製，回到 GameVault 貼到下方框裡按「解析並匯入」。\n\n按「確定」開啟 '+d.label+'。';
-  navigator.clipboard.writeText(prompt).then(function(){
-    if(confirm(notice))_openExternalLink(d.homeUrl);
-  }).catch(function(){
-    if(confirm('無法自動複製提示詞，請進入 '+d.label+' 後手動輸入查詢。\n\n按「確定」開啟 '+d.label+'。'))_openExternalLink(d.homeUrl);
-  });
-}
-// 貼上AI回覆的JSON，解析後匯入手動建檔表單（容錯：AI若在JSON前後夾帶說明文字也能解析）
-function aiWebParseAndImport(){
-  var raw=($('aiweb-paste')&&$('aiweb-paste').value||'').trim();
-  if(!raw){toast('請先貼上 AI 回覆的內容','er');return;}
-  var res;
-  try{res=JSON.parse(raw);}catch(e){res=extractJson(raw);}
-  if(!res||typeof res!=='object'){toast('無法解析內容，請確認貼上的是完整的 JSON','er',4000);return;}
-  // v54.51：加上錯誤攔截，避免解析匯入過程中若拋出例外導致畫面卡在不明狀態（靜默失敗看不到原因）
-  try{
-    var cat=_selectedType||entry.category||'遊戲';
-    var subtype=_selectedSubtype||entry.subtype||'';
-    var fields=_aiWebFieldsFor(cat,subtype);
-    var filled=0;
-    fields.forEach(function(f){
-      var k=f[0];
-      var v=_aiStr(res[k]);
-      if(v&&v!=='無'&&v!=='未知'){
-        if(k==='genre')v=matchGenreMulti(v);
-        entry[k]=v;entry._src=entry._src||{};entry._src[k]='ai';filled++;
-      }
-    });
-    _pickBestPrimaryName();
-    closeAiWebSearchOv();
-    enterMode();
-    hideAllSecs();
-    showForm('AI網頁查詢');
-    if(filled>0)toast('✓ 已匯入 '+filled+' 個欄位','ok',2500);
-    else toast('沒有解析到可用的欄位資料，請確認格式','er',3500);
-  }catch(e){
-    console.error('aiWebParseAndImport 匯入失敗:',e);
-    toast('匯入失敗：'+(e&&e.message?e.message:e),'er',7000);
-  }
 }
 // ── 數位下載版：貼上商店連結自動抓資料（v42.14）──
 function initDigitalLinkMode(){
@@ -9311,17 +9163,7 @@ function _pickBestPrimaryName(){
     else if(!cur&&jp)entry.primary_name=jp;
   }
 }
-// v54.53：外層加 try-catch 包裝，showForm() 若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息，
-// 用來排除「除了AI網頁查詢外所有建檔方式進入後都空白」是否為 JS 例外造成（而非版面高度塌陷）
 function showForm(src){
-  try{
-    _showFormImpl(src);
-  }catch(e){
-    console.error('showForm 渲染失敗:',e);
-    toast('表單開啟失敗：'+(e&&e.message?e.message:e),'er',7000);
-  }
-}
-function _showFormImpl(src){
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
   $('bar-sec').style.display='none';$('img-sec').style.display='none';
@@ -9399,58 +9241,6 @@ function renderForm(){
     c.appendChild(div);
   });
   _aiAnnotateFields(); // F3：依 _src 標記插入 ✨badge，並對新填入欄位閃爍一次
-  _showRenderDiag(_F,_G,c); // v54.54：暫時性診斷面板，排查「建檔方式進入後空白」用
-}
-// v54.54：暫時性除錯面板 —— 顯示 renderForm() 完成當下的關鍵狀態，固定定位不受版面問題影響，
-// 方便使用者截圖回報，問題排除後會移除
-function _showRenderDiag(_F,_G,formBodyEl){
-  try{
-    var old=document.getElementById('render-diag');if(old)old.remove();
-    var shellEl=document.getElementById('shell');
-    var contentEl=document.getElementById('content');
-    var formSecEl=document.getElementById('form-sec');
-    var navEl=document.getElementById('nav');
-    var pgScanEl=document.getElementById('pg-scan');
-    var sr=shellEl?shellEl.getBoundingClientRect():null;
-    var cr=contentEl?contentEl.getBoundingClientRect():null;
-    var fr=formSecEl?formSecEl.getBoundingClientRect():null;
-    var nr=navEl?navEl.getBoundingClientRect():null;
-    var pr=pgScanEl?pgScanEl.getBoundingClientRect():null;
-    var fbr=formBodyEl?formBodyEl.getBoundingClientRect():null;
-    var pgCS=pgScanEl?getComputedStyle(pgScanEl):null;
-    var fsCS=formSecEl?getComputedStyle(formSecEl):null;
-    var fbCS=formBodyEl?getComputedStyle(formBodyEl):null;
-    var firstSg=formBodyEl?formBodyEl.querySelector('.sg'):null;
-    var sgRect=firstSg?firstSg.getBoundingClientRect():null;
-    var firstSh2=firstSg?firstSg.querySelector('.sh2'):null;
-    var sh2Rect=firstSh2?firstSh2.getBoundingClientRect():null;
-    var sh2CS=firstSh2?getComputedStyle(firstSh2):null;
-    var lines=[
-      '🔍 診斷面板（暫時性）v2',
-      'entry.category='+(entry&&entry.category)+' entry.subtype='+(entry&&entry.subtype),
-      '_CUR_FIELDS.length='+(_F?_F.length:'?')+' _CUR_GROUPS.length='+(_G?_G.length:'?'),
-      'form-body.innerHTML.length='+(formBodyEl?formBodyEl.innerHTML.length:'?'),
-      'form-body rect.height='+(fbr?Math.round(fbr.height):'?')+' computed display='+(fbCS?fbCS.display:'?')+' height='+(fbCS?fbCS.height:'?'),
-      '第一個.sg元素 存在='+(!!firstSg)+' rect.height='+(sgRect?Math.round(sgRect.height):'?'),
-      '.sh2子元素 存在='+(!!firstSh2)+' rect.height='+(sh2Rect?Math.round(sh2Rect.height):'?')+' computed display='+(sh2CS?sh2CS.display:'?')+' textContent前20字='+(firstSh2?firstSh2.textContent.slice(0,20):'?'),
-      'form-sec display='+(formSecEl?formSecEl.style.display:'?')+' rect.height='+(fr?Math.round(fr.height):'?')+' computed display='+(fsCS?fsCS.display:'?'),
-      'pg-scan classList='+(pgScanEl?pgScanEl.className:'?')+' rect.height='+(pr?Math.round(pr.height):'?')+' computed display='+(pgCS?pgCS.display:'?'),
-      '#shell rect: w='+(sr?Math.round(sr.width):'?')+' h='+(sr?Math.round(sr.height):'?'),
-      '#content rect: w='+(cr?Math.round(cr.width):'?')+' h='+(cr?Math.round(cr.height):'?'),
-      '#nav rect: w='+(nr?Math.round(nr.width):'?')+' h='+(nr?Math.round(nr.height):'?'),
-      '--app-height='+getComputedStyle(document.documentElement).getPropertyValue('--app-height')
-    ];
-    var div=document.createElement('div');
-    div.id='render-diag';
-    div.style.cssText='position:fixed;top:60px;left:8px;right:8px;z-index:99999;background:rgba(255,0,0,.92);color:#fff;font-size:10px;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;line-height:1.5;max-height:80vh;overflow-y:auto';
-    div.textContent=lines.join('\n');
-    var closeBtn=document.createElement('div');
-    closeBtn.textContent='✕ 關閉';
-    closeBtn.style.cssText='text-align:right;font-weight:700;margin-top:6px;cursor:pointer';
-    closeBtn.onclick=function(){div.remove();};
-    div.appendChild(closeBtn);
-    document.body.appendChild(div);
-  }catch(e){console.error('_showRenderDiag 本身出錯:',e);}
 }
 // ══ F3：AI 補全視覺回饋 ══
 var _aiFlashed={}; // 已閃爍過的欄位 key，避免重複動畫
@@ -14787,33 +14577,6 @@ function _imgToB64(src){
     <div class="lb-arrow prev" id="lb-prev" onclick="lbNav(-1)">‹</div>
     <div class="lb-arrow next" id="lb-next" onclick="lbNav(1)">›</div>
     <div class="lb-caption" id="lb-caption"></div>
-  </div>
-</div>
-
-<!-- ══ AI 網頁查詢 overlay（v54.49：選分類後帶入核心欄位提示詞，複製給AI查詢，貼回JSON解析匯入手動建檔）══ -->
-<div id="aiweb-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column;overflow-y:auto">
-  <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;background:#080c18;z-index:1">
-    <div style="font-size:16px;font-weight:700;color:#7c4dff">🤖 AI 網頁查詢</div>
-    <button type="button" onclick="closeAiWebSearchOv()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
-  </div>
-  <div style="padding:20px 16px 40px">
-    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6">
-      輸入商品名稱、條碼或關鍵字，選一個 AI 助手複製提示詞並開啟其網頁，將提示詞貼上送出後，把 AI 回覆的 JSON 內容複製回來貼在下方，按「解析並匯入」即可帶入手動建檔表單。
-    </div>
-    <div class="sw" style="margin:0 0 8px;position:relative">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="si" id="aiweb-subject" type="text" placeholder="商品名稱／條碼／關鍵字">
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <button type="button" class="ocr-btn" style="flex:1;margin:0;padding:8px;text-align:center" onclick="aiWebScanBarcode()">🔍 掃描條碼</button>
-      <button type="button" class="ocr-btn" style="flex:1;margin:0;padding:8px;text-align:center" onclick="aiWebOcrName()">📷 拍照辨識名稱</button>
-    </div>
-    <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手複製提示詞並開啟</div>
-    <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
-    <div style="font-size:11px;color:#555;margin-bottom:18px">會帶入的欄位：<span id="aiweb-fields-list"></span></div>
-    <div style="font-size:11px;color:#7986cb;margin-bottom:6px">📋 貼上 AI 回覆的 JSON 內容</div>
-    <textarea id="aiweb-paste" class="ft" style="min-height:120px;margin-bottom:12px" placeholder='例如：{"primary_name":"...","platform":"...",...}'></textarea>
-    <button class="btn bo bw" style="width:100%;border-color:#7c4dff;color:#7c4dff" onclick="aiWebParseAndImport()" type="button">解析並匯入 →</button>
   </div>
 </div>
 
