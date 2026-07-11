@@ -2307,7 +2307,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.53';
+const APP_VERSION='v54.54';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9399,6 +9399,43 @@ function renderForm(){
     c.appendChild(div);
   });
   _aiAnnotateFields(); // F3：依 _src 標記插入 ✨badge，並對新填入欄位閃爍一次
+  _showRenderDiag(_F,_G,c); // v54.54：暫時性診斷面板，排查「建檔方式進入後空白」用
+}
+// v54.54：暫時性除錯面板 —— 顯示 renderForm() 完成當下的關鍵狀態，固定定位不受版面問題影響，
+// 方便使用者截圖回報，問題排除後會移除
+function _showRenderDiag(_F,_G,formBodyEl){
+  try{
+    var old=document.getElementById('render-diag');if(old)old.remove();
+    var shellEl=document.getElementById('shell');
+    var contentEl=document.getElementById('content');
+    var formSecEl=document.getElementById('form-sec');
+    var navEl=document.getElementById('nav');
+    var sr=shellEl?shellEl.getBoundingClientRect():null;
+    var cr=contentEl?contentEl.getBoundingClientRect():null;
+    var fr=formSecEl?formSecEl.getBoundingClientRect():null;
+    var nr=navEl?navEl.getBoundingClientRect():null;
+    var lines=[
+      '🔍 診斷面板（暫時性）',
+      'entry.category='+(entry&&entry.category)+' entry.subtype='+(entry&&entry.subtype),
+      '_CUR_FIELDS.length='+(_F?_F.length:'?')+' _CUR_GROUPS.length='+(_G?_G.length:'?'),
+      'form-body.innerHTML.length='+(formBodyEl?formBodyEl.innerHTML.length:'?'),
+      'form-sec display='+(formSecEl?formSecEl.style.display:'?')+' rect.height='+(fr?Math.round(fr.height):'?'),
+      '#shell rect: w='+(sr?Math.round(sr.width):'?')+' h='+(sr?Math.round(sr.height):'?'),
+      '#content rect: w='+(cr?Math.round(cr.width):'?')+' h='+(cr?Math.round(cr.height):'?'),
+      '#nav rect: w='+(nr?Math.round(nr.width):'?')+' h='+(nr?Math.round(nr.height):'?'),
+      '--app-height='+getComputedStyle(document.documentElement).getPropertyValue('--app-height')
+    ];
+    var div=document.createElement('div');
+    div.id='render-diag';
+    div.style.cssText='position:fixed;top:60px;left:8px;right:8px;z-index:99999;background:rgba(255,0,0,.92);color:#fff;font-size:11px;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;line-height:1.5';
+    div.textContent=lines.join('\n');
+    var closeBtn=document.createElement('div');
+    closeBtn.textContent='✕ 關閉';
+    closeBtn.style.cssText='text-align:right;font-weight:700;margin-top:6px;cursor:pointer';
+    closeBtn.onclick=function(){div.remove();};
+    div.appendChild(closeBtn);
+    document.body.appendChild(div);
+  }catch(e){console.error('_showRenderDiag 本身出錯:',e);}
 }
 // ══ F3：AI 補全視覺回饋 ══
 var _aiFlashed={}; // 已閃爍過的欄位 key，避免重複動畫
