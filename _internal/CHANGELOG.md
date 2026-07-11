@@ -1,3 +1,21 @@
+## v54.39 (2026-07-08)
+
+### 變更內容
+開機畫面副標題文字更新：「實體遊戲收藏管理系統」→「電玩/動漫迷的收藏基地」，反映 App 現況已涵蓋遊戲/書籍/主機/週邊/原聲帶/動漫美術/公仔/數位下載版 8 大分類，不再侷限「實體遊戲」。
+
+### 影響檔案
+- index.html / GameVault_v54_39_index.html
+- sw.js
+
+### GS 版本
+- 無（純文案更新）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-38 → gamevault-v54-39
+
+### 對應備份
+- _internal/old/v54_38/
+
 ## v54.38 (2026-07-08)
 
 ### 變更內容
@@ -59,26 +77,4 @@
 
 ### 對應備份
 - _internal/old/v54_35/
-
-## v54.35 (2026-07-08)
-
-### 變更內容
-Barcode Lookup 已無免費 API 方案，全面移除相關程式碼並新增替代方案：
-- **移除**：設定頁的 Barcode Lookup API Key 欄位、測試連線、API guide 說明；DB_REGISTRY 資料來源項目；`_crossRefQuery`／欄位優先序／cover_url 候補鏈中的所有相關邏輯；`barcodeLookupSearch()`／`barcodeLookupProxy()`（GAS）等函式；`_normalizeBarcodeProduct`／`_mergeBarcodeProducts`／`productBarcodeLookupPromise` 中的相關分支；因而變成孤兒的輔助函式（`_firstStoreUrl`／`_firstProductImage`）一併清除
-- **新增替代方案**：尋寶頁面新增「🔎 條碼查詢」按鈕，輸入條碼後直接開啟 Barcode Lookup 網頁版（`barcodelookup.com/{條碼}`）查詢結果，不需要 API Key，也不用手動再輸入一次條碼
-- 條碼資料庫查詢說明文字更新（移除「美版 Barcode Lookup」的描述）
-
-### 影響檔案
-- index.html / GameVault_v54_35_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v64 → v65（移除 barcodeLookupProxy）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-34 → gamevault-v54-35
-
-### 對應備份
-- _internal/old/v54_34/
 
