@@ -1767,7 +1767,7 @@ body{
             <button class="btn bo bw bs" style="flex:1" onclick="testBarcodeLookup()" type="button">測試</button>
           </div>
           <a href="https://www.barcodelookup.com/api" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Barcode Lookup API ↗</a>
-          <div class="shlp" style="margin-top:8px">barcodelookup.com/api → 免費方案（100 次/月）或付費（$0.99/月起）；免費用戶無需 API Key，點「測試」驗證可用額度。</div>
+          <div class="shlp" style="margin-top:8px">barcodelookup.com/api → 免費方案（100 次/月）或付費（$0.99/月起）；<strong style="color:#ff9800">免費方案也需要註冊帳號取得 API Key</strong>（不用付費，但一定要填），填好後點「測試」驗證可用額度。</div>
         </div>
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -2290,7 +2290,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.33';
+const APP_VERSION='v54.34';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3827,9 +3827,9 @@ var API_GUIDES = {
     link: 'https://www.barcodelookup.com/api',
     steps: [
       '<strong style="color:#00e5ff">第一步：Barcode Lookup 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://www.barcodelookup.com/api</strong>。</div>',
-      '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：選擇訂閱方案</strong><div style="margin-top:4px;color:#9fa8c8">免費方案：每月 100 次查詢（無需註冊），點「Sign up」；付費方案（$0.99 起）：月度計費。</div>',
-      '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">若選免費方案，無需 API Key；若選付費方案，註冊後在控制台取得 API Key。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">• 免費用戶：欄位留空，點「測試」驗證免費額度。<br>• 付費用戶：將 API Key 貼入欄位，點「測試」驗證是否成功。</div>'
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：註冊帳號並選擇方案</strong><div style="margin-top:4px;color:#9fa8c8">點「Sign up」註冊帳號。免費方案：每月 100 次查詢；付費方案（$0.99 起）：月度計費，額度更高。<strong style="color:#ff9800">不管選哪個方案都需要註冊取得 API Key</strong>。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">註冊後在帳號控制台（Account／My API）頁面取得 API Key。</div>',
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。欄位留空無法查詢（GameVault 這裡一定要有 Key 才會送出請求）。</div>'
     ]
   },
   igdb: {
