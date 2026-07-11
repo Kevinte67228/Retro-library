@@ -1065,7 +1065,7 @@ body{
             </div>
             <input class="fi mono" id="bar-inp" type="text" inputmode="numeric" placeholder="4988601009000"
               style="letter-spacing:2px;font-size:15px;margin-bottom:6px">
-            <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 條碼資料庫查詢目前僅支援日版（樂天）與美版（Barcode Lookup）商品；台／港／韓／中版條碼可能查無資料，建議改用拍照辨識或手動輸入</div>
+            <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 條碼資料庫查詢目前僅支援日版（樂天）商品；台／港／韓／中／美版條碼可能查無資料，建議改用拍照辨識或手動輸入</div>
             <!-- 相機掃描條碼（即時取景框；回填上方欄位後按查詢）-->
             <button type="button" onclick="barScanFromBtn()"
               style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:rgba(121,134,203,.08);border:1.5px dashed rgba(121,134,203,.35);border-radius:10px;padding:10px 12px;cursor:pointer;margin-bottom:10px;color:#7986cb;font-size:13px;font-family:inherit">
@@ -1759,18 +1759,6 @@ body{
         </div>
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div class="srl" style="margin:0">📊 Barcode Lookup API</div>
-            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('barcode')" type="button">❓ 說明</button>
-          </div>
-          <input class="fi" id="c-blkey" type="password" placeholder="API Key">
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn bo bw bs" style="flex:1" onclick="testBarcodeLookup()" type="button">測試</button>
-          </div>
-          <a href="https://www.barcodelookup.com/api" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 Barcode Lookup API ↗</a>
-          <div class="shlp" style="margin-top:8px">barcodelookup.com/api → 免費方案（100 次/月）或付費（$0.99/月起）；<strong style="color:#ff9800">免費方案也需要註冊帳號取得 API Key</strong>（不用付費，但一定要填），填好後點「測試」驗證可用額度。</div>
-        </div>
-        <div class="srow" style="margin-top:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🎮 IGDB — Twitch 憑證</div>
             <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('igdb')" type="button">❓ 說明</button>
           </div>
@@ -1931,9 +1919,12 @@ body{
     <div class="pg" id="pg-hunt">
       <div id="hunt-sticky">
         <div class="hd">
-          <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
-            <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" onclick="openBarcodeWebSearch()" style="background:#141b30;border:1.5px solid #69f0ae;color:#69f0ae;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">🔎 條碼查詢</button>
+              <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售</button>
+            </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
           <div class="dv2-hd-bar"></div>
@@ -2290,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.34';
+const APP_VERSION='v54.35';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3822,16 +3813,6 @@ var API_GUIDES = {
       '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 付費方案：$9.99/月起，需信用卡綁定</span></div>'
     ]
   },
-  barcode: {
-    title: 'Barcode Lookup API',
-    link: 'https://www.barcodelookup.com/api',
-    steps: [
-      '<strong style="color:#00e5ff">第一步：Barcode Lookup 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://www.barcodelookup.com/api</strong>。</div>',
-      '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：註冊帳號並選擇方案</strong><div style="margin-top:4px;color:#9fa8c8">點「Sign up」註冊帳號。免費方案：每月 100 次查詢；付費方案（$0.99 起）：月度計費，額度更高。<strong style="color:#ff9800">不管選哪個方案都需要註冊取得 API Key</strong>。</div>',
-      '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">註冊後在帳號控制台（Account／My API）頁面取得 API Key。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。欄位留空無法查詢（GameVault 這裡一定要有 Key 才會送出請求）。</div>'
-    ]
-  },
   igdb: {
     title: 'IGDB API（透過 Twitch 憑證）',
     link: 'https://api.igdb.com/',
@@ -4013,7 +3994,6 @@ function loadCfg(){
   _updateRegionBtns();
   if($('c-tgdbkey')&&cfg.tgdbkey)$('c-tgdbkey').value=cfg.tgdbkey;
   if($('c-rawgkey')&&cfg.rawgkey)$('c-rawgkey').value=cfg.rawgkey;
-  if($('c-blkey')&&cfg.blkey)$('c-blkey').value=cfg.blkey;
   if($('c-ssid')&&cfg.ssid)$('c-ssid').value=cfg.ssid;
   if($('c-sspass')&&cfg.sspass)$('c-sspass').value=cfg.sspass;
   if($('c-ssdevid')&&cfg.ssdevid)$('c-ssdevid').value=cfg.ssdevid;
@@ -4493,7 +4473,6 @@ function saveCfg(){
     mbkey:($('c-mbkey')&&$('c-mbkey').value||'').trim(),
     tgdbkey:($('c-tgdbkey')&&$('c-tgdbkey').value||'').trim(),
     rawgkey:($('c-rawgkey')&&$('c-rawgkey').value||'').trim(),
-    blkey:($('c-blkey')&&$('c-blkey').value||'').trim(),
     rktid:($('c-rktid')&&$('c-rktid').value||'').trim(),
     rktkey:($('c-rktkey')&&$('c-rktkey').value||'').trim(),
     yjappid:($('c-yjappid')&&$('c-yjappid').value||'').trim(),
@@ -6415,10 +6394,6 @@ var DB_REGISTRY=[
    desc:'海外書籍 ISBN 直查・補英文書名／作者／封面（免金鑰，經 Apps Script）',
    inputs:['barcode'],group:'west',cats:['book'],
    ready:function(){return !!cfg.url;}},
-  {id:'barcode_lookup',name:'Barcode Lookup',icon:'📦',
-   desc:'商品條碼直查（付費方案）・可補主機／週邊品牌與圖片',
-   inputs:['barcode'],group:'west',cats:['game','console','peripheral'],
-   ready:function(){return !!(cfg.blkey&&cfg.url);}},
   {id:'giantbomb',name:'Giant Bomb',icon:'💣',
    desc:'歐美遊戲百科',
    inputs:['name'],group:'west',cats:['game'],suspended:true,
@@ -6596,10 +6571,6 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
       .catch(function(){return null;})
   );
 
-  // 5. Barcode Lookup — 用條碼查
-  if(cfg.blkey&&cfg.url&&codeQ&&_ok('barcode_lookup')) tasks.push(
-    barcodeLookupSearch(codeQ).then(function(r){return r?{src:'barcode_lookup',data:r}:null;}).catch(function(){return null;})
-  );
   // v42.06：UPC ItemDB 試用庫偏美版商品，對台/日條碼常誤配（如 471 開頭台灣碼），
   // 依先前 ponytail 註記的決定徹底移除，不再自動查詢。
   // 7. ScreenScraper — 序號精確查 或 名稱查（不用條碼查）
@@ -6684,7 +6655,7 @@ function mergeMultiDbResults(results){
 
   // 欄位優先來源定義
   var priority={
-    primary_name: ['igdb','screenscraper','tgdb','mobygames','giantbomb','barcode_lookup','rakuten','rawg'],
+    primary_name: ['igdb','screenscraper','tgdb','mobygames','giantbomb','rakuten','rawg'],
     jp_name:      ['screenscraper','rakuten'],
     platform:     ['igdb','screenscraper','tgdb','mobygames','giantbomb','rawg'],
     developer:    ['igdb','screenscraper','mobygames','giantbomb','tgdb'],
@@ -6751,10 +6722,6 @@ function mergeMultiDbResults(results){
   if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
   if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image)merged.cover_url=srcMap['rawg'].background_image;
   if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
-  if(!merged.cover_url&&srcMap['barcode_lookup']){
-    var _bli=extractField('barcode_lookup',srcMap['barcode_lookup'],'cover_url');
-    if(_bli)merged.cover_url=_bli;
-  }
   // F：完全沒有拉丁/中文主名時，用日文名回填 primary_name 避免空白
   if(!merged.primary_name&&merged.jp_name)merged.primary_name=merged.jp_name;
 
@@ -6823,18 +6790,6 @@ function extractField(src,data,field){
         cover_url:data.cover_url||''
       };
       return igMap[field]||'';
-    case 'barcode_lookup':
-      var blImgs=data.images||data.image||data.product_image||'';
-      var blImg=Array.isArray(blImgs)?(blImgs[0]||''):blImgs;
-      var blStores=data.stores||[];
-      var blUrl=(blStores[0]&&(blStores[0].link||blStores[0].url))||data.url||data.product_url||'';
-      return {
-        primary_name:data.product_name||data.title||'',
-        summary:data.description||'',
-        publisher:data.manufacturer||data.brand||'',
-        ref_link:blUrl,
-        cover_url:blImg
-      }[field]||'';
     case 'screenscraper':
       // ScreenScraper 欄位（已由 parseSSGame 整理）
       var ssDate=data.release_date||'';
@@ -6969,36 +6924,12 @@ function tgdbSearch(q){
     .catch(function(){return null;});
 }
 
-function barcodeLookupSearch(barcode){
-  if(!cfg.blkey||!cfg.url)return Promise.resolve(null);
-  var params=new URLSearchParams({action:'bl_search',barcode:barcode,blkey:cfg.blkey});
-  return shGetSecP(params)
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){return d&&d.products&&d.products.length?d.products[0]:null;})
-    .catch(function(){return null;});
-}
-
 function _cleanProductName(s){
   return (''+(s||''))
     .replace(/【[^】]*】/g,'')
     .replace(/\[[^\]]*\]/g,'')
     .replace(/\s+/g,' ')
     .trim();
-}
-function _firstStoreUrl(stores){
-  stores=stores||[];
-  if(!Array.isArray(stores))return '';
-  for(var i=0;i<stores.length;i++){
-    var u=stores[i]&&(stores[i].link||stores[i].url||stores[i].product_url);
-    if(u)return u;
-  }
-  return '';
-}
-function _firstProductImage(data){
-  if(!data)return '';
-  var imgs=data.images||data.image||data.product_image||data.imageUrl||'';
-  if(Array.isArray(imgs))return imgs[0]||'';
-  return imgs||'';
 }
 function _inferPlatformFromText(txt){
   var s=(''+(txt||'')).toLowerCase();
@@ -7061,28 +6992,6 @@ function _normalizeBarcodeProduct(src,data,type,barcode){
     out.cover_img=data.image||'';
     out.ref_link=data.item_url||'';
     out.notes='[楽天市場 條碼查詢補全]';
-  }else if(src==='barcode_lookup'){
-    var name=_cleanProductName(data.product_name||data.title||'');
-    if(!name)return null;
-    var brand=(data.brand||data.manufacturer||data.publisher||'').trim();
-    var desc=(data.description||'').trim();
-    var img=_firstProductImage(data);
-    var url=_firstStoreUrl(data.stores)||data.url||data.product_url||'';
-    out.primary_name=name;
-    out.en_name=name;
-    if(brand){
-      if(type==='遊戲')out.publisher=brand;
-      else out.brand=brand;
-    }
-    if(type==='主機'||type==='週邊'){
-      out.model_no=data.model||data.mpn||data.part_number||data.asin||'';
-    }else if(type==='遊戲'){
-      out.code=data.mpn||data.model||'';
-    }
-    out.summary=desc;
-    out.cover_img=img;
-    out.ref_link=url;
-    out.notes='[Barcode Lookup 條碼查詢補全]'+(data.category?' '+data.category:'');
   }
   var text=[out.primary_name,out.jp_name,out.en_name,out.summary,out.notes].join(' ');
   var plat=_inferPlatformFromText(text);
@@ -7101,7 +7010,7 @@ function _normalizeBarcodeProduct(src,data,type,barcode){
 function _mergeBarcodeProducts(list,type,barcode){
   var valid=(list||[]).filter(Boolean);
   if(!valid.length)return {};
-  var order=(_region==='jp'||_region==='asia')?['rakuten','barcode_lookup']:['barcode_lookup','rakuten'];
+  var order=['rakuten'];
   valid.sort(function(a,b){return order.indexOf(a._src_db)-order.indexOf(b._src_db);});
   var out={},srcs=[];
   valid.forEach(function(x){
@@ -7123,11 +7032,6 @@ function productBarcodeLookupPromise(barcode,type){
   if(cfg.rktid&&cfg.rktkey&&cfg.url){
     tasks.push(shPost({action:'rakuten_search',q:barcode,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?_normalizeBarcodeProduct('rakuten',r,type,barcode):null;})
-      .catch(function(){return null;}));
-  }
-  if(cfg.blkey&&cfg.url){
-    tasks.push(barcodeLookupSearch(barcode)
-      .then(function(r){return r?_normalizeBarcodeProduct('barcode_lookup',r,type,barcode):null;})
       .catch(function(){return null;}));
   }
   if(!tasks.length)return Promise.resolve({});
@@ -7241,17 +7145,6 @@ function testEbay(){
     fx_jpy:'',fx_usd:'',region:'us'
   }).then(function(r){noLoad();_reportMarketTest(r,/ebay/i,'eBay Browse');
   }).catch(function(e){noLoad();toast('eBay 錯誤：'+_friendlyError(e.message),'er',6000);});
-}
-function testBarcodeLookup(){
-  var key=($('c-blkey')&&$('c-blkey').value||'').trim();
-  if(!key){toast('請先填入 Barcode Lookup API Key','er');return;}
-  cfg.blkey=key;
-  loading('測試 Barcode Lookup...');
-  barcodeLookupSearch('4902370540734').then(function(r){
-    noLoad();
-    if(r&&r.product_name)toast('✓ Barcode Lookup 正常：'+r.product_name,'ok',4000);
-    else toast('Barcode Lookup 無回應，請確認 API Key 或 Apps Script 已更新','er',5000);
-  }).catch(function(e){noLoad();toast('錯誤：'+_friendlyError(e.message),'er',5000);});
 }
 
 // ── ScreenScraper 查詢（前端）────────────────────────────────
@@ -8922,7 +8815,7 @@ function barWithGB(bc,hint){
   var q=hint||bc; // 用產品名稱或條碼查
 
   // 遊戲先跑遊戲庫交叉比對；其他分類跑一般商品條碼庫，不再依賴 Gemini grounding 上網查找。
-  var hasDBs=cfg.gbkey||cfg.mbkey||cfg.tgdbkey||cfg.blkey||(cfg.iid&&cfg.isec)||(cfg.ssid&&cfg.sspass);
+  var hasDBs=cfg.gbkey||cfg.mbkey||cfg.tgdbkey||(cfg.iid&&cfg.isec)||(cfg.ssid&&cfg.sspass);
   function productFallback(fallbackHint){
     loading('商品條碼資料庫查詢中...');
     productBarcodeLookupPromise(bc,type).then(function(prod){
@@ -13637,6 +13530,19 @@ var RC_LANGS=[
 var _rcPlatform=RC_PLATFORMS[0].id;
 var _rcLang=RC_LANGS[0].id;
 var _rcYear,_rcMonth; // 1-12
+// ══ v54.35：條碼查詢（帶入條碼開啟 Barcode Lookup 網頁版）══
+function openBarcodeWebSearch(){
+  var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
+  var inp=$('barcode-web-input');
+  if(inp){inp.value='';setTimeout(function(){inp.focus();},80);}
+}
+function closeBarcodeWebSearch(){var ov=$('barcode-web-ov');if(ov)ov.style.display='none';}
+function goBarcodeWebSearch(){
+  var raw=($('barcode-web-input')&&$('barcode-web-input').value||'').trim();
+  var code=raw.replace(/[^0-9A-Za-z]/g,'');
+  if(!code){toast('請輸入條碼','er');return;}
+  window.open('https://www.barcodelookup.com/'+encodeURIComponent(code),'_blank');
+}
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
   var now=new Date();
@@ -14501,6 +14407,22 @@ function _imgToB64(src){
     <div class="lb-arrow prev" id="lb-prev" onclick="lbNav(-1)">‹</div>
     <div class="lb-arrow next" id="lb-next" onclick="lbNav(1)">›</div>
     <div class="lb-caption" id="lb-caption"></div>
+  </div>
+</div>
+
+<!-- ══ 條碼查詢 overlay（v54.35：帶入條碼直接開啟 Barcode Lookup 網頁版，取代已下架的付費API）══ -->
+<div id="barcode-web-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column">
+  <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:16px;font-weight:700;color:#69f0ae">🔎 條碼查詢</div>
+    <button type="button" onclick="closeBarcodeWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
+  </div>
+  <div style="padding:20px 16px">
+    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6">輸入條碼，直接開啟 Barcode Lookup 網頁版查詢結果，不用手動再輸入一次條碼。</div>
+    <div class="sw" style="margin:0 0 14px;position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
+    </div>
+    <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" onclick="goBarcodeWebSearch()" type="button">前往 Barcode Lookup 查詢 ↗</button>
   </div>
 </div>
 
