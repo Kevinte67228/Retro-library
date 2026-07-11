@@ -1,3 +1,25 @@
+## v54.55 (2026-07-08)
+
+### 變更內容
+上一版診斷面板抓到關鍵線索：`#shell`/`#content`/`#nav` 全部正常（765/765/60），`form-body` 確實有 31790 字元內容，但 **`form-sec` 的實際渲染高度是 0**。這排除了「版面高度計算異常」的推測（`--app-height` 本身完全正常），問題縮小到 `form-sec` 這一層或其祖先層級。
+
+新增懷疑對象：`.pg{display:none}` 是所有分頁的預設狀態，只有加上 `.on` class 才會 `display:block`。若 `pg-scan`（建檔頁本身）不知何故遺失了 `.on` class，`form-sec` 即使自己是 `display:block`，也會因為祖先層 `display:none` 而整體塌陷成 0 高度——這會同時解釋「除了固定定位的 overlay 外全部消失」與「`form-sec` 高度算出 0」兩個現象。
+
+擴充診斷面板：加入 `pg-scan` 的 `classList`／實際渲染高度／電腦樣式 `display`、`form-body` 自身的實際渲染尺寸、第一個 `.sg` 分組元素是否存在及其高度，用來直接驗證這個新假設。
+
+### 影響檔案
+- index.html / GameVault_v54_55_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端暫時性診斷工具擴充）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-54 → gamevault-v54-55
+
+### 對應備份
+- _internal/old/v54_54/
+
 ## v54.54 (2026-07-08)
 
 ### 變更內容
@@ -63,24 +85,4 @@
 
 ### 對應備份
 - _internal/old/v54_51/
-
-## v54.51 (2026-07-08)
-
-### 變更內容
-使用者回報「AI網頁查詢」貼上JSON解析匯入時會導致收藏頁空白（伴隨「建檔內容保留中」提示）。程式碼審查沒能直接定位確切拋出點，比照先前 `showDetail()`／`quickCompPreset()` 遇到類似情況的處理方式：
-- **加入錯誤攔截**：`aiWebParseAndImport()` 核心邏輯包上 try-catch，若匯入過程真的拋出例外，會明確用 toast 顯示錯誤訊息＋印出完整堆疊到 console，取代靜默失敗
-- **順帶修正一個相關缺口**：檢查返回鍵處理邏輯 `_topLayerClose()` 時發現 `aiweb-ov`（AI網頁查詢）與 `barcode-web-ov`（條碼查詢）這兩個 overlay 都沒有納入清單，代表這兩個畫面開啟時按返回鍵不會正常關閉 overlay，而是繼續往下觸發「建檔內容保留中」跳轉收藏頁的邏輯——這很可能是空白頁的部分成因，一併補上
-
-### 影響檔案
-- index.html / GameVault_v54_51_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端錯誤處理與邏輯補強）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-50 → gamevault-v54-51
-
-### 對應備份
-- _internal/old/v54_50/
 
