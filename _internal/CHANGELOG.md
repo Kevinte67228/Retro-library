@@ -1,3 +1,24 @@
+## v54.37 (2026-07-08)
+
+### 變更內容
+修正尋寶「拍照辨識→轉入尋寶」流程：中文品名欄位會被直接塞進辨識到的原文（例如純日文封面辨識出的品名，中文品名跟日文品名填了同一段日文，沒有真的翻譯）：
+- 新增 `_huntTranslateToZh()`：偵測辨識到的品名是否含中文字，不含中文字時（純日文/英文/羅馬拼音）才觸發上網查詢中文譯名（沿用既有 Gemini grounding 機制，跟隨使用者的「AI 上網查證」設定）
+- 「轉入尋寶」按鈕改為先查詢再帶入表單，原文會保留到日文品名欄位，不會遺失
+- 查無公認中文譯名時中文品名留空，不會自行編造翻譯；無 Gemini 金鑰時直接跳過查詢，交由使用者手動填寫
+
+### 影響檔案
+- index.html / GameVault_v54_37_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端邏輯調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-36 → gamevault-v54-37
+
+### 對應備份
+- _internal/old/v54_36/
+
 ## v54.36 (2026-07-08)
 
 ### 變更內容
@@ -59,30 +80,4 @@ Barcode Lookup 已無免費 API 方案，全面移除相關程式碼並新增替
 
 ### 對應備份
 - _internal/old/v54_33/
-
-## v54.33 (2026-07-08)
-
-### 變更內容
-新增 DeepSeek 混合式 AI 辨識模式，參照使用者提供的架構文件實作（Gemini Vision OCR + DeepSeek 推理校正）：
-- **架構**：DeepSeek 官方 API 本身不支援圖片輸入（純文字模型），改採兩步驟接力：Step1 用 Gemini 抽取封面上所有可見文字（OCR），Step2 把抽出的破碎文字交給 DeepSeek 依 ACG／復古遊戲知識推理校正成結構化 JSON
-- 新增 `callDeepSeekCorrect()`（呼叫 `api.deepseek.com/v1/chat/completions`，OpenAI 相容格式，直接前端呼叫比照現有 OpenAI 呼叫模式）與 `callHybridVision()`（管線入口）
-- 「偏好 AI 引擎」新增「混合模式」選項（手動強制使用）；「自動」模式新增智慧分流：地區設為日本／亞洲時，優先嘗試混合模式，失敗才退回 GPT/Gemini 原本流程
-- 設定頁新增 DeepSeek API Key 欄位＋測試連線＋說明彈窗
-- 自我檢查：JSON 容錯解析邏輯（含夾帶說明文字的情況）已驗證通過
-
-### 已知風險 / 待確認
-- DeepSeek API 是否允許瀏覽器端直接 CORS 呼叫，沿用了跟 OpenAI 相同的直連模式，但**沒有實際測試過**，如果 DeepSeek 不允許跨網域直連，混合模式會直接失敗（已有自動退回 Gemini 的容錯機制，不會整個中斷，但混合模式本身就會失效）。需使用者實測「測試」按鈕確認
-
-### 影響檔案
-- index.html / GameVault_v54_33_index.html
-- sw.js
-
-### GS 版本
-- 無（DeepSeek 前端直連，未經 GAS 代理）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-32 → gamevault-v54-33
-
-### 對應備份
-- _internal/old/v54_32/
 
