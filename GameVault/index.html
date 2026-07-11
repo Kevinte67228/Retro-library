@@ -817,7 +817,13 @@ body{
 (function(){
   function setAppHeight(){
     var h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;
-    document.documentElement.style.setProperty('--app-height',h+'px');
+    // v54.53：加入有效性檢查，避免異常過小/無效的數值被套用到 --app-height，
+    // 那樣會讓 #shell 高度塌陷、裡面所有內容（含底部導覽列）被擠壓到看不見
+    if(!h||h<200)return;
+    var cur=document.documentElement.style.getPropertyValue('--app-height');
+    var newVal=h+'px';
+    if(cur===newVal)return; // 數值沒變就不用動 DOM，避免不必要的重繪
+    document.documentElement.style.setProperty('--app-height',newVal);
   }
   setAppHeight();
   window.addEventListener('resize',setAppHeight);
@@ -828,6 +834,15 @@ body{
   document.addEventListener('visibilitychange',function(){
     if(document.visibilityState==='visible'){setAppHeight();setTimeout(setAppHeight,150);}
   });
+  // v54.53：定時保險網，每3秒檢查一次 #shell 實際渲染高度是否異常過小（可能是某個未預期情境
+  // 下前面幾個事件監聽都沒被觸發到），若異常則強制重新計算，作為最後一層防護
+  setInterval(function(){
+    var shell=document.getElementById('shell');
+    if(shell&&shell.getBoundingClientRect){
+      var rect=shell.getBoundingClientRect();
+      if(rect.height<200)setAppHeight();
+    }
+  },3000);
 })();
 </script>
 
@@ -2292,7 +2307,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.52';
+const APP_VERSION='v54.53';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9296,7 +9311,17 @@ function _pickBestPrimaryName(){
     else if(!cur&&jp)entry.primary_name=jp;
   }
 }
+// v54.53：外層加 try-catch 包裝，showForm() 若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息，
+// 用來排除「除了AI網頁查詢外所有建檔方式進入後都空白」是否為 JS 例外造成（而非版面高度塌陷）
 function showForm(src){
+  try{
+    _showFormImpl(src);
+  }catch(e){
+    console.error('showForm 渲染失敗:',e);
+    toast('表單開啟失敗：'+(e&&e.message?e.message:e),'er',7000);
+  }
+}
+function _showFormImpl(src){
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
   $('bar-sec').style.display='none';$('img-sec').style.display='none';
