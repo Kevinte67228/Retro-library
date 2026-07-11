@@ -1,3 +1,24 @@
+## v54.43 (2026-07-08)
+
+### 變更內容
+使用者實測確認 DeepSeek 網頁版不支援用網址參數帶入文字（`?q=` 直接被忽略，網址能開但輸入框空白），改用既有的 DeepSeek API 直接查詢：
+- DeepSeek 選項改為呼叫 `api.deepseek.com` 直接查詢條碼對應的商品資訊，結果以文字卡片顯示在條碼查詢 overlay 內，不再嘗試開網頁
+- 查詢按鈕文字依選擇的目的地動態調整（DeepSeek 顯示「查詢」，其他維持「前往查詢 ↗」）
+- Barcode Lookup／Google 搜尋維持開網頁＋帶入條碼的做法，不受影響
+
+### 影響檔案
+- index.html / GameVault_v54_43_index.html
+- sw.js
+
+### GS 版本
+- 無（DeepSeek 前端直連，未經 GAS 代理）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-42 → gamevault-v54-43
+
+### 對應備份
+- _internal/old/v54_42/
+
 ## v54.42 (2026-07-08)
 
 ### 變更內容
@@ -59,22 +80,4 @@
 
 ### 對應備份
 - _internal/old/v54_39/
-
-## v54.39 (2026-07-08)
-
-### 變更內容
-開機畫面副標題文字更新：「實體遊戲收藏管理系統」→「電玩/動漫迷的收藏基地」，反映 App 現況已涵蓋遊戲/書籍/主機/週邊/原聲帶/動漫美術/公仔/數位下載版 8 大分類，不再侷限「實體遊戲」。
-
-### 影響檔案
-- index.html / GameVault_v54_39_index.html
-- sw.js
-
-### GS 版本
-- 無（純文案更新）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-38 → gamevault-v54-39
-
-### 對應備份
-- _internal/old/v54_38/
 
