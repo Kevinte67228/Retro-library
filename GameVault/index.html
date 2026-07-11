@@ -2287,7 +2287,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.49';
+const APP_VERSION='v54.50';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7592,26 +7592,25 @@ function selectEntryCat(cat,_noSave){
 var _DIGI_BOOK_SUBS={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
 // v49.07：下載版遊戲／追加下載內容只有「圖片辨識/手動建檔/商店連結」3張卡，4欄格線會留空格，
 // 商店連結改成1x2填滿；其餘子類型（含其他分類）的商店連結維持1x1，不受影響
-var _DIGI_LINK_WIDE_SUBS={'下載版遊戲':1,'追加下載內容':1,'數位音源':1,'數位影音':1};
-// v49.07：改為明確傳入子類型參數（預設才退回全域變數），避免依賴呼叫當下全域 _selectedSubtype
-// 是否已同步更新造成排版忽寬忽窄的不一致（同一分類點兩次卻長不一樣）
+// v54.50：新增「AI網頁查詢」卡片後，改由它補滿第4格，商店連結不再需要撐寬（電子書子類型例外，
+// 該情境改成隱藏AI網頁查詢維持原本 ISBN+照片(2) + 商店連結(1) + 手動建檔(1) = 4 的填滿方式）
 function _refreshMethodButtons(cat,subtype){
   var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
-  var showLinkWide=isDigital&&_DIGI_LINK_WIDE_SUBS[sub];
   // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
   [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
-   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital]].forEach(function(p){
+   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital],
+   ['mb-aiweb',!showIsbn]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
   if(t)t.textContent=showIsbn?'ISBN＋照片':'編碼＋照片';
   if(s)s.textContent=showIsbn?'電子書精確比對':'精確比對';
   // mb-gcode-combo 在遊戲/電子書情境都是 1x2（原生 HTML 已固定 mb-wide，這裡不需再切換）；
-  // mb-link 才需要依子類型明確設定寬窄，兩者互斥不會同時都是 wide 造成總欄數超過4欄換行
+  // mb-link 固定維持 1x1 窄版，數位下載版的其他子類型改由 AI網頁查詢 補滿第4格，不再撐寬 mb-link
   var linkEl=$('mb-link');
-  if(linkEl)linkEl.classList.toggle('mb-wide',!!showLinkWide);
+  if(linkEl)linkEl.classList.remove('mb-wide');
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
@@ -7969,6 +7968,19 @@ function openAiWebSearchOv(){
 }
 function closeAiWebSearchOv(){
   var ov=$('aiweb-ov');if(ov)ov.style.display='none';
+}
+// 條碼掃描：重用既有 openFieldScanner 通用即時掃描機制，掃到直接帶入主旨欄位
+function aiWebScanBarcode(){
+  openFieldScanner({mode:'barcode',inputId:'aiweb-subject',
+    title:'掃描條碼',subtitle:'對準商品條碼，自動偵測後帶入',
+    resultToast:function(v){return '已帶入條碼：'+v;}});
+}
+// 拍照辨識名稱：重用既有 openFieldScanner 的 OCR 模式（Gemini 視覺辨識），免去手動輸入商品名稱
+function aiWebOcrName(){
+  openFieldScanner({mode:'ocr',inputId:'aiweb-subject',
+    title:'拍照辨識名稱',subtitle:'對準封面或商品名稱後按「拍攝並辨識」',
+    prompt:'請從圖片中找出並回傳這個商品的名稱或標題文字（可能是遊戲標題、書名、專輯名稱、商品名稱等），用圖片上看到的原文語言回傳即可，不需要翻譯。只回傳名稱本身，不要其他說明文字，找不到回傳空字串。',
+    resultToast:function(v){return '已帶入名稱：'+v;}});
 }
 function _aiWebRenderDestTabs(){
   var wrap=$('aiweb-dest-tabs');if(!wrap)return;
@@ -14698,9 +14710,13 @@ function _imgToB64(src){
     <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6">
       輸入商品名稱、條碼或關鍵字，選一個 AI 助手複製提示詞並開啟其網頁，將提示詞貼上送出後，把 AI 回覆的 JSON 內容複製回來貼在下方，按「解析並匯入」即可帶入手動建檔表單。
     </div>
-    <div class="sw" style="margin:0 0 14px;position:relative">
+    <div class="sw" style="margin:0 0 8px;position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="si" id="aiweb-subject" type="text" placeholder="商品名稱／條碼／關鍵字">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button type="button" class="ocr-btn" style="flex:1;margin:0;padding:8px;text-align:center" onclick="aiWebScanBarcode()">🔍 掃描條碼</button>
+      <button type="button" class="ocr-btn" style="flex:1;margin:0;padding:8px;text-align:center" onclick="aiWebOcrName()">📷 拍照辨識名稱</button>
     </div>
     <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手複製提示詞並開啟</div>
     <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
