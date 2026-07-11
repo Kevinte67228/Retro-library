@@ -1,3 +1,25 @@
+## v54.46 (2026-07-08)
+
+### 變更內容
+使用者實測確認：直接在手機瀏覽器打開 Google 搜尋網址是正常手機版，但透過 GameVault 的 `window.open()` 開啟卻變成桌面版——確認問題出在 GameVault 開新分頁的方式，不是 Google 本身。推測是 PWA 用 `window.open()` 開新分頁時走系統內嵌瀏覽器元件，跟完整瀏覽器的裝置身分字串不同。
+
+嘗試性修正：新增 `_openExternalLink()`，改用建立 `<a>` 元素模擬點擊的方式開啟外部連結，取代 `window.open()`，這是這類問題常見的嘗試方向，套用到條碼查詢的 8 個目的地（含 Barcode Lookup/Google/Bing/Yahoo!JAPAN 與 DeepSeek/GPT/Gemini/Claude 的開啟連結）。
+
+**⚠️ 不保證一定有效，需要使用者實測 Google／Gemini 這次開啟是否變成手機版確認。**
+
+### 影響檔案
+- index.html / GameVault_v54_46_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端功能調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-45 → gamevault-v54-46
+
+### 對應備份
+- _internal/old/v54_45/
+
 ## v54.45 (2026-07-08)
 
 ### 變更內容
@@ -64,25 +86,4 @@
 
 ### 對應備份
 - _internal/old/v54_42/
-
-## v54.42 (2026-07-08)
-
-### 變更內容
-尋寶頁面「條碼查詢」從單一目的地（Barcode Lookup）改為三選項：
-- 新增目的地選擇 tabs：Barcode Lookup／Google 搜尋／DeepSeek，使用者先選目的地，掃描或手動輸入條碼後自動開啟對應網頁並帶入條碼
-- Barcode Lookup：`barcodelookup.com/{條碼}`；Google 搜尋：標準搜尋網址帶入條碼，兩者格式標準，預期能正常運作
-- **DeepSeek：嘗試性質，沒有官方文件依據**，用猜測的網址格式（`chat.deepseek.com/?q=`）帶入查詢文字，需要實測確認是否真的有效；若無效後續會改成呼叫既有的 DeepSeek API（已確認可用）直接在 App 內顯示結果，取代開網頁的做法
-
-### 影響檔案
-- index.html / GameVault_v54_42_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端功能擴充）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-41 → gamevault-v54-42
-
-### 對應備份
-- _internal/old/v54_41/
 
