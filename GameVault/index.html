@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.40';
+const APP_VERSION='v54.41';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9209,7 +9209,17 @@ function _applyBuyDateFromRelease(){
   }
 }
 function renderForm(){
-  var c=$('form-body');c.innerHTML='';
+  var c=$('form-body');
+  // v54.41：重繪表單前先記住目前各區塊的展開/收合狀態，重繪後套用回去，避免像「新增關聯商品」
+  // 這類會觸發 renderForm() 重繪的操作，把使用者已經展開查看的區塊重置回預設的收合狀態
+  var priorExpand={};
+  var hadPriorSections=c.children.length>0;
+  Array.prototype.forEach.call(c.querySelectorAll('.sg'),function(sg){
+    var slEl=sg.querySelector('.sl');
+    var sb=sg.querySelector('.sb');
+    if(slEl&&sb)priorExpand[slEl.textContent.trim()]=!sb.classList.contains('cl');
+  });
+  c.innerHTML='';
   _syncFormCat(entry);
   var _F=window._CUR_FIELDS||FIELDS;
   var _G=window._CUR_GROUPS||GROUPS;
@@ -9222,7 +9232,8 @@ function renderForm(){
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
-    var isCollapsed=expandByDefault.indexOf(g)<0;
+    // 這個區塊先前已渲染過 → 沿用使用者當時的展開/收合狀態；否則（首次渲染）才用預設值
+    var isCollapsed=(hadPriorSections&&(g in priorExpand))?!priorExpand[g]:expandByDefault.indexOf(g)<0;
     div.innerHTML='<div class="sh2" onclick="togSec(this)">'+
       '<div class="sl"><span class="dot" style="background:'+gcolor+'"></span>'+g+'</div>'+
       '<span class="sc'+(isCollapsed?'':' op')+'">▾</span></div>'+
