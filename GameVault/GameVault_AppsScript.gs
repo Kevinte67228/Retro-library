@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v64            ║
+// ║  GameVault — Google Apps Script 後端  v65            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -681,9 +681,6 @@ function dispatchRead(action, p) {
         break;
       case 'rawg_search':
         result = rawgProxy(p.q || '', p.rawgkey || '');
-        break;
-      case 'bl_search':
-        result = barcodeLookupProxy(p.barcode || '', p.blkey || '');
         break;
       case 'ss_search':
         result = screenScraperProxy(p.q || '', p.ssid || '', p.sspass || '', p.systemeid || '', p.serialnum || '', p.ssdevid || '', p.ssdevpass || '', p.region || '');
@@ -2188,26 +2185,6 @@ function tgdbProxy(q, key) {
     if (!text || text.trimStart().startsWith('<')) return { error: 'TGDB 回傳非 JSON', data: null };
     return JSON.parse(text);
   } catch (e) { return { error: e.message, data: null }; }
-}
- 
-// ── Barcode Lookup API Proxy ──────────────────────────────────
-function barcodeLookupProxy(barcode, key) {
-  if (!barcode || !key) return { error: 'missing params' };
-  const url = 'https://api.barcodelookup.com/v3/products?barcode=' + barcode +
-    '&formatted=y&key=' + key;
-  try {
-    const res = UrlFetchApp.fetch(url, {
-      headers: { 'Accept': 'application/json' },
-      muteHttpExceptions: true
-    });
-    const code = res.getResponseCode();
-    const text = res.getContentText('UTF-8');
-    if (code === 401 || code === 403) return { error: 'Barcode Lookup API Key 無效，請重新申請' };
-    if (code === 429) return { error: '請求過於頻繁，請稍後再試' };
-    if (code !== 200) return { error: 'HTTP ' + code };
-    if (!text || text.trimStart().startsWith('<')) return { error: 'Barcode Lookup 回傳非 JSON' };
-    return JSON.parse(text);
-  } catch (e) { return { error: e.message }; }
 }
  
 // ── ScreenScraper.fr API Proxy ──────────────────────────────
