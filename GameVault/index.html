@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.37';
+const APP_VERSION='v54.38';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13792,9 +13792,18 @@ function huntLensResult(d){
 }
 // v54.37：轉入尋寶時，若辨識到的品名不含中文字（純日文/英文），先查一次中文譯名再帶入表單，
 // 避免中文品名欄位直接被塞進原文（用戶回報中文品名跟日文品名填了同一段日文）
+function _isLikelyJapanese(s){
+  // 含平假名(\u3040-\u309F)或片假名(\u30A0-\u30FF) → 確定是日文，不管裡面有沒有漢字
+  return /[\u3040-\u309F\u30A0-\u30FF]/.test(s);
+}
 function _huntTranslateToZh(d){
   var src=(d.primary_name||d.jp_name||d.en_name||'').trim();
-  if(!src||/[\u4e00-\u9fff]/.test(src))return Promise.resolve(src); // 已含中文字，視為已是中文譯名
+  if(!src)return Promise.resolve(src);
+  // v54.38：原本只檢查「有沒有漢字」判斷是否已是中文，但日文大量使用漢字（跟中文共用同一個
+  // Unicode 區段），日版封面幾乎都有漢字，導致誤判成「已經是中文」直接跳過翻譯。
+  // 改用「有沒有假名」判斷：只要含平假名/片假名就確定是日文，不管有沒有漢字都要翻譯；
+  // 純漢字（無假名）才視為已是中文，不用再查。
+  if(!_isLikelyJapanese(src)&&/[\u4e00-\u9fff]/.test(src))return Promise.resolve(src);
   if(!cfg.gkey)return Promise.resolve(''); // 無 Gemini 金鑰，跳過查詢，交由使用者手動填
   var promptTxt='請查出這個商品在中文圈（台灣/香港/中國）常見的正體中文譯名或商品名稱：「'+src+'」'+
     (d.platform?'（平台：'+d.platform+'）':'')+'。請把查到的中文譯名填入 zh_name 欄位；若找不到公認的中文譯名，zh_name 留空字串，不要自己編造翻譯。其餘欄位留空即可。';
@@ -13805,7 +13814,7 @@ function _huntTranslateToZh(d){
 function huntLensToHunt(){
   var d=_huntLensData||{};
   var srcName=(d.primary_name||'').trim();
-  var isChinese=/[\u4e00-\u9fff]/.test(srcName);
+  var isChinese=!_isLikelyJapanese(srcName)&&/[\u4e00-\u9fff]/.test(srcName);
   var jpFallback=d.jp_name||(!isChinese?srcName:'');
   loading('查詢中文品名…');
   _huntTranslateToZh(d).then(function(zhName){
