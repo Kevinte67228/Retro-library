@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.42';
+const APP_VERSION='v54.43';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13590,12 +13590,47 @@ function setBarcodeWebDest(id){
   _bcWebRenderDestTabs();
   var d=BC_WEB_DESTS.filter(function(x){return x.id===id;})[0];
   var h=$('barcode-web-hint');
-  if(h)h.textContent='對準條碼自動掃描，掃到會直接開啟 '+(d?d.label:'')+' 查詢結果。';
+  var r=$('bc-web-result');if(r){r.style.display='none';r.innerHTML='';}
+  var btn=$('bc-web-go-btn');if(btn)btn.textContent=(id==='deepseek')?'查詢':'前往查詢 ↗';
+  if(h){
+    // v54.43：DeepSeek 網頁版實測不支援用網址參數帶入文字（?q= 直接被忽略），
+    // 改用既有的 DeepSeek API 直接查詢，結果顯示在畫面內，不再嘗試開網頁
+    h.textContent=(id==='deepseek')
+      ?'對準條碼自動掃描，掃到會直接呼叫 DeepSeek API 查詢，結果顯示在下方。'
+      :'對準條碼自動掃描，掃到會直接開啟 '+(d?d.label:'')+' 查詢結果。';
+  }
 }
 function _bcWebBuildUrl(code){
   if(_bcWebDest==='google')return 'https://www.google.com/search?q='+encodeURIComponent(code);
-  if(_bcWebDest==='deepseek')return 'https://chat.deepseek.com/?q='+encodeURIComponent('這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品');
   return 'https://www.barcodelookup.com/'+encodeURIComponent(code);
+}
+// DeepSeek 條碼查詢：直接呼叫 API（沿用混合辨識已驗證可用的呼叫方式），結果顯示在 overlay 內
+function _bcDeepSeekQuery(code){
+  if(!cfg.dskey){toast('請先到設定頁填入 DeepSeek API 金鑰','er',4000);return;}
+  var r=$('bc-web-result');
+  if(r){r.style.display='block';r.innerHTML='<div style="color:#7986cb;font-size:12px">DeepSeek 查詢中…</div>';}
+  var sys='你是精通各類商品條碼辨識的專家。使用者會提供一個商品條碼（EAN/UPC/JAN），請盡力查出這個條碼對應的商品名稱與基本資訊，用繁體中文回答，100字以內。若查無法確定的資訊，請直接說明查無資料，不要臆測編造。';
+  fetch('https://api.deepseek.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.dskey},
+    body:JSON.stringify({
+      model:'deepseek-chat',
+      temperature:0.1,
+      max_tokens:300,
+      messages:[
+        {role:'system',content:sys},
+        {role:'user',content:'商品條碼：'+code}
+      ]
+    })
+  }).then(function(res){
+    if(!res.ok)return res.json().then(function(e){throw new Error((e&&e.error&&e.error.message)||('HTTP '+res.status));});
+    return res.json();
+  }).then(function(d){
+    var txt=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'').trim();
+    if(r)r.innerHTML='<div style="background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:12px;font-size:13px;color:#e8eaf6;line-height:1.6;white-space:pre-wrap">'+esc(txt||'查無資料')+'</div>';
+  }).catch(function(e){
+    if(r)r.innerHTML='<div style="color:#ff5252;font-size:12px">DeepSeek 查詢失敗：'+esc(e.message)+'</div>';
+  });
 }
 var _bcWebScan=createScanner({videoId:'barcode-web-video',
   onDetect:function(bc){
@@ -13611,6 +13646,7 @@ function openBarcodeWebSearch(){
   var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
   var inp=$('barcode-web-input');
   if(inp)inp.value='';
+  var r=$('bc-web-result');if(r){r.style.display='none';r.innerHTML='';}
   _bcWebRenderDestTabs();
   setBarcodeWebDest(_bcWebDest);
   _bcWebScan.start();
@@ -13623,6 +13659,7 @@ function goBarcodeWebSearch(){
   var raw=($('barcode-web-input')&&$('barcode-web-input').value||'').trim();
   var code=raw.replace(/[^0-9A-Za-z]/g,'');
   if(!code){toast('請輸入或掃描條碼','er');return;}
+  if(_bcWebDest==='deepseek'){_bcDeepSeekQuery(code);return;} // App 內顯示結果，不關閉 overlay、不開新分頁
   window.open(_bcWebBuildUrl(code),'_blank');
   closeBarcodeWebSearch();
 }
@@ -14538,7 +14575,8 @@ function _imgToB64(src){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="或手動輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
     </div>
-    <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" onclick="goBarcodeWebSearch()" type="button">前往查詢 ↗</button>
+    <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" id="bc-web-go-btn" onclick="goBarcodeWebSearch()" type="button">前往查詢 ↗</button>
+    <div id="bc-web-result" style="display:none;margin-top:14px"></div>
   </div>
 </div>
 
