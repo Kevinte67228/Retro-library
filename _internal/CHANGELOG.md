@@ -1,3 +1,29 @@
+## v54.33 (2026-07-08)
+
+### 變更內容
+新增 DeepSeek 混合式 AI 辨識模式，參照使用者提供的架構文件實作（Gemini Vision OCR + DeepSeek 推理校正）：
+- **架構**：DeepSeek 官方 API 本身不支援圖片輸入（純文字模型），改採兩步驟接力：Step1 用 Gemini 抽取封面上所有可見文字（OCR），Step2 把抽出的破碎文字交給 DeepSeek 依 ACG／復古遊戲知識推理校正成結構化 JSON
+- 新增 `callDeepSeekCorrect()`（呼叫 `api.deepseek.com/v1/chat/completions`，OpenAI 相容格式，直接前端呼叫比照現有 OpenAI 呼叫模式）與 `callHybridVision()`（管線入口）
+- 「偏好 AI 引擎」新增「混合模式」選項（手動強制使用）；「自動」模式新增智慧分流：地區設為日本／亞洲時，優先嘗試混合模式，失敗才退回 GPT/Gemini 原本流程
+- 設定頁新增 DeepSeek API Key 欄位＋測試連線＋說明彈窗
+- 自我檢查：JSON 容錯解析邏輯（含夾帶說明文字的情況）已驗證通過
+
+### 已知風險 / 待確認
+- DeepSeek API 是否允許瀏覽器端直接 CORS 呼叫，沿用了跟 OpenAI 相同的直連模式，但**沒有實際測試過**，如果 DeepSeek 不允許跨網域直連，混合模式會直接失敗（已有自動退回 Gemini 的容錯機制，不會整個中斷，但混合模式本身就會失效）。需使用者實測「測試」按鈕確認
+
+### 影響檔案
+- index.html / GameVault_v54_33_index.html
+- sw.js
+
+### GS 版本
+- 無（DeepSeek 前端直連，未經 GAS 代理）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-32 → gamevault-v54-33
+
+### 對應備份
+- _internal/old/v54_32/
+
 ## v54.32 (2026-07-08)
 
 ### 變更內容
@@ -65,25 +91,4 @@
 
 ### 對應備份
 - _internal/old/v54_29/
-
-## v54.29 (2026-07-08)
-
-### 變更內容
-三項排版修正：
-- **統計列「總計」高度對齊**：`#stats-row` 的 `align-items:stretch` 改為 `center`，避免「總計」跟其他可滑動分類項目高度不一致
-- **搜尋框文字過長被生硬截斷**：共用的 `.si` 搜尋框樣式（收藏頁/尋寶頁搜尋）、平台選擇搜尋框、關聯商品搜尋框都加上 `text-overflow:ellipsis`，超出寬度改用「...」呈現，不再生硬截斷
-- **收藏列表頂部間距**：`#glist` 補上頂部 12px padding，避免第一張卡片直接貼著上方排序列
-
-### 影響檔案
-- index.html / GameVault_v54_29_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端排版修正）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-28 → gamevault-v54-29
-
-### 對應備份
-- _internal/old/v54_28/
 
