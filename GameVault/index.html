@@ -2287,7 +2287,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.50';
+const APP_VERSION='v54.51';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3639,7 +3639,9 @@ function _topLayerClose(){
     ['type-picker-overlay','disp',function(){cancelTypePicker();}],
     ['game-picker-overlay','disp',function(){closeGamePicker();}],
     ['filter-sheet','on',function(){closeFilterSheet();}],
-    ['dsheet','on',function(){ if(_detailNavStack.length){detailNavBack();} else {closeDetailSilent();} }]
+    ['dsheet','on',function(){ if(_detailNavStack.length){detailNavBack();} else {closeDetailSilent();} }],
+    ['aiweb-ov','disp',function(){closeAiWebSearchOv();}],
+    ['barcode-web-ov','disp',function(){closeBarcodeWebSearch();}]
   ];
   for(var i=0;i<L.length;i++){
     var el=$(L[i][0]);if(!el)continue;
@@ -8009,25 +8011,31 @@ function aiWebParseAndImport(){
   var res;
   try{res=JSON.parse(raw);}catch(e){res=extractJson(raw);}
   if(!res||typeof res!=='object'){toast('無法解析內容，請確認貼上的是完整的 JSON','er',4000);return;}
-  var cat=_selectedType||entry.category||'遊戲';
-  var subtype=_selectedSubtype||entry.subtype||'';
-  var fields=_aiWebFieldsFor(cat,subtype);
-  var filled=0;
-  fields.forEach(function(f){
-    var k=f[0];
-    var v=_aiStr(res[k]);
-    if(v&&v!=='無'&&v!=='未知'){
-      if(k==='genre')v=matchGenreMulti(v);
-      entry[k]=v;entry._src=entry._src||{};entry._src[k]='ai';filled++;
-    }
-  });
-  _pickBestPrimaryName();
-  closeAiWebSearchOv();
-  enterMode();
-  hideAllSecs();
-  showForm('AI網頁查詢');
-  if(filled>0)toast('✓ 已匯入 '+filled+' 個欄位','ok',2500);
-  else toast('沒有解析到可用的欄位資料，請確認格式','er',3500);
+  // v54.51：加上錯誤攔截，避免解析匯入過程中若拋出例外導致畫面卡在不明狀態（靜默失敗看不到原因）
+  try{
+    var cat=_selectedType||entry.category||'遊戲';
+    var subtype=_selectedSubtype||entry.subtype||'';
+    var fields=_aiWebFieldsFor(cat,subtype);
+    var filled=0;
+    fields.forEach(function(f){
+      var k=f[0];
+      var v=_aiStr(res[k]);
+      if(v&&v!=='無'&&v!=='未知'){
+        if(k==='genre')v=matchGenreMulti(v);
+        entry[k]=v;entry._src=entry._src||{};entry._src[k]='ai';filled++;
+      }
+    });
+    _pickBestPrimaryName();
+    closeAiWebSearchOv();
+    enterMode();
+    hideAllSecs();
+    showForm('AI網頁查詢');
+    if(filled>0)toast('✓ 已匯入 '+filled+' 個欄位','ok',2500);
+    else toast('沒有解析到可用的欄位資料，請確認格式','er',3500);
+  }catch(e){
+    console.error('aiWebParseAndImport 匯入失敗:',e);
+    toast('匯入失敗：'+(e&&e.message?e.message:e),'er',7000);
+  }
 }
 // ── 數位下載版：貼上商店連結自動抓資料（v42.14）──
 function initDigitalLinkMode(){
