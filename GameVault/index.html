@@ -1566,10 +1566,11 @@ body{
           <div class="srl">🎯 偏好 AI 引擎</div>
           <select class="fsel" id="c-aipref">
             <option value="gemini" selected>只用 Gemini（免費，推薦）</option>
-            <option value="auto">自動（GPT 優先，失敗轉 Gemini）</option>
+            <option value="auto">自動（GPT 優先，失敗轉 Gemini；亞洲版封面優先用 DeepSeek 混合校正）</option>
             <option value="gpt">只用 GPT（需付費，較精準）</option>
+            <option value="hybrid">混合模式：Gemini OCR + DeepSeek 校正（推薦：亞洲版/CJK封面）</option>
           </select>
-          <div style="font-size:11px;color:#555;margin-top:4px">選「只用」時若該引擎失敗不會自動切換</div>
+          <div style="font-size:11px;color:#555;margin-top:4px">選「只用」時若該引擎失敗不會自動切換；混合模式需同時設定 Gemini 與 DeepSeek 金鑰</div>
         </div>
         <div class="srow">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -1600,6 +1601,16 @@ body{
             <span style="font-size:13px;color:#e8eaf6">OCR 影像前處理（灰階＋對比拉伸）</span>
           </label>
           <div class="shlp">編碼/型號/ISBN 的相機 OCR 在送出前，先轉灰階並做線性對比拉伸，緩解反光與陰影。預設關閉；多數情況 Gemini 原圖辨識更佳，建議真機 A/B 比對後再決定是否常開。不做二值化。</div>
+        </div>
+        <div class="srow" style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="srl" style="margin:0">🧠 DeepSeek API 金鑰（混合模式用）</div>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('deepseek')" type="button">❓ 說明</button>
+          </div>
+          <input class="fi" id="c-dskey" type="password" placeholder="sk-...">
+          <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testDeepSeek()" type="button">測試</button>
+          <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 DeepSeek API ↗</a>
+          <div class="shlp" style="margin-top:8px">DeepSeek 本身不支援圖片輸入，混合模式的運作方式：先用 Gemini 抽取封面上所有可見文字（OCR），再交給 DeepSeek 依 ACG／復古遊戲知識推理校正成精準的遊戲資訊。對日版/亞洲版封面的藝術字體辨識準確度優於單獨使用 Gemini。需同時設定 Gemini 金鑰。</div>
         </div>
           </div>
         </div>
@@ -2279,7 +2290,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.32';
+const APP_VERSION='v54.33';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3862,6 +3873,16 @@ var API_GUIDES = {
       '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。GameVault 用它補強現代／獨立遊戲的高畫質封面（IGDB 沒圖時的候補來源）。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費方案每月 20,000 次請求；基本搜尋結果不含開發商/發行商資訊</span></div>'
     ]
   },
+  deepseek: {
+    title: 'DeepSeek API',
+    link: 'https://platform.deepseek.com/api_keys',
+    steps: [
+      '<strong style="color:#00e5ff">第一步：DeepSeek 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://platform.deepseek.com</strong>。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立帳號或登入</strong><div style="margin-top:4px;color:#9fa8c8">註冊或登入後，通常需要先儲值少量金額才能呼叫 API（按 token 用量計費，非常便宜）。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>API Keys</strong> 頁面 → 「Create new API key」→ 複製金鑰（<strong>只會顯示一次，請立即保存</strong>）。</div>',
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br>DeepSeek <strong>本身不支援圖片輸入</strong>，GameVault 採用「混合模式」：先用 Gemini 抽取封面上所有可見文字（OCR），再交給 DeepSeek 依 ACG／復古遊戲知識推理校正成精準的遊戲資訊，對日版/亞洲版封面的藝術字體辨識準確度較高。<br>需在「偏好 AI 引擎」選擇「混合模式」或「自動」（自動模式下，地區設為日本/亞洲時會優先嘗試混合模式），並同時設定好 Gemini 金鑰才會生效。<br><span style="color:#ff9800;font-size:11px">⚠️ 需先儲值才能呼叫；每次辨識 token 用量極少，成本幾乎可忽略</span></div>'
+    ]
+  },
   app_token: {
     title: '寫入保護 Token（APP_TOKEN）',
     noFooter: true,
@@ -3967,6 +3988,7 @@ function loadCfg(){
     if(status)status.style.display='flex';
   }
   if($('c-gkey')&&cfg.gkey)$('c-gkey').value=cfg.gkey;
+  if($('c-dskey')&&cfg.dskey)$('c-dskey').value=cfg.dskey;
   if($('c-okey')&&cfg.okey)$('c-okey').value=cfg.okey;
   if($('c-omdl')&&cfg.omdl)$('c-omdl').value=cfg.omdl;
   if($('c-aipref'))$('c-aipref').value=cfg.aipref||'gemini';
@@ -4460,6 +4482,7 @@ function saveCfg(){
     url:fixUrl(url),
     app_token:($('c-apptoken')&&$('c-apptoken').value||'').trim(),
     gkey:gkey,
+    dskey:($('c-dskey')&&$('c-dskey').value||'').trim(),
     gmdl:$('c-gmdl').value,
     okey:okey,
     omdl:omdl,
@@ -5343,11 +5366,11 @@ function callGemini(parts,opts){
 // 呼叫端通常先 showForm()，再呼叫本函式；完成後重繪表單。cb(n) 回報補了幾欄。
 // AI 回傳值強韌字串化：避免陣列／物件被 '' + v 轉成 "[object Object]"
 // -- callGeminiOCR --
-function callGeminiOCR(parts,_isRetry){
+function callGeminiOCR(parts,_isRetry,maxTokens){
   if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
   var mdl=cfg.gmdl||'gemini-2.5-flash';
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
-  var genCfg={temperature:0.1,maxOutputTokens:128};
+  var genCfg={temperature:0.1,maxOutputTokens:maxTokens||128};
   if(mdl.indexOf('2.5')>=0){genCfg.thinkingConfig={thinkingBudget:0};}
   var ctrl=new AbortController();
   _aiAbortCtrl=ctrl;
@@ -5361,7 +5384,7 @@ function callGeminiOCR(parts,_isRetry){
     if(r.status===429||r.status===503){
       return r.json().then(function(){
         if(_isRetry)throw new Error('服務器目前流量過高，請稍後再試');
-        return new Promise(function(res){setTimeout(res,5000);}).then(function(){return callGeminiOCR(parts,true);});
+        return new Promise(function(res){setTimeout(res,5000);}).then(function(){return callGeminiOCR(parts,true,maxTokens);});
       });
     }
     if(!r.ok)return r.json().then(function(e){throw new Error(translateGeminiError(r.status,e.error&&e.error.message||''));});
@@ -5379,6 +5402,67 @@ function callGeminiOCR(parts,_isRetry){
       throw new Error('AI 回應逾時，請重試');
     }
     throw e;
+  });
+}
+
+// ══ v54.33：混合式 AI 辨識架構（Gemini Vision OCR + DeepSeek 推理校正）══
+// 參照使用者提供的架構文件：DeepSeek 官方 API 不支援圖片輸入，純文字模型但對 ACG／復古遊戲
+// 文化知識豐富、糾錯能力強，適合校正 OCR 抽出的破碎/藝術字體文字（尤其亞洲版/CJK封面）。
+// 兩步驟接力：Step1 Gemini 抽取封面所有可見文字 → Step2 DeepSeek 推理校正成結構化 JSON。
+function callDeepSeekCorrect(ocrText){
+  if(!cfg.dskey)return Promise.reject(new Error('未設定 DeepSeek 金鑰'));
+  if(!ocrText||!ocrText.trim())return Promise.reject(new Error('OCR 未取得任何文字'));
+  var sys='你是精通復古與現代電玩遊戲、ACG文化的專家。使用者會提供一段從遊戲封面／卡匣／光碟上OCR掃描出的破碎文字片段'+
+    '（可能包含日文、英文、簡繁中文、雜訊或辨識錯字）。請推斷出正確的遊戲資訊，並嚴格以單一 JSON 物件輸出，'+
+    '欄位限定為：primary_name（遊戲主要名稱，優先用該片語言原文）、jp_name（日文原名，無則留空）、'+
+    'zh_name（中文名，無則留空）、en_name（英文名，無則留空）、platform（平台，如 Nintendo Switch/PS5/SFC，無法判斷留空）、'+
+    'developer（開發商，無法判斷留空）、publisher（發行商，無法判斷留空）、release_date（發售日YYYY/MM/DD，無法判斷留空）、'+
+    'genre（類型，無法判斷留空）、summary（繁體中文簡介，200字內，無法判斷留空）。'+
+    '無法判斷的欄位一律留空字串，不要臆測不確定的資訊，不要輸出JSON以外的任何文字或說明。';
+  var ctrl=new AbortController();
+  _aiAbortCtrl=ctrl;
+  var timeoutId=setTimeout(function(){ctrl.abort();},25000);
+  return fetch('https://api.deepseek.com/v1/chat/completions',{
+    method:'POST',
+    signal:ctrl.signal,
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.dskey},
+    body:JSON.stringify({
+      model:'deepseek-chat',
+      temperature:0.1,
+      max_tokens:1000,
+      messages:[
+        {role:'system',content:sys},
+        {role:'user',content:'這是從遊戲封面／卡匣上OCR提取出的文字片段：『'+ocrText.trim().slice(0,1500)+'』。請幫我整理成精準的遊戲資訊 JSON。'}
+      ],
+      response_format:{type:'json_object'}
+    })
+  }).then(function(r){
+    clearTimeout(timeoutId);
+    if(!r.ok)return r.json().then(function(e){
+      throw new Error('DeepSeek 錯誤：'+(e&&e.error&&e.error.message||('HTTP '+r.status)));
+    });
+    return r.json();
+  }).then(function(d){
+    var txt=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'';
+    var res;try{res=JSON.parse(txt);}catch(e){res=extractJson(txt);}
+    if(!res||typeof res!=='object')throw new Error('DeepSeek 回傳無法解析');
+    return res;
+  }).catch(function(e){
+    clearTimeout(timeoutId);
+    if(e.name==='AbortError'){
+      if(ctrl._userCancelled)throw Object.assign(new Error('已取消 AI 辨識'),{cancelled:true});
+      throw new Error('DeepSeek 回應逾時，請重試');
+    }
+    throw e;
+  });
+}
+// 混合辨識管線入口：接收跟 callAIVision 一樣的 parts（含圖片），回傳結構化 JSON（跟 callGemini 輸出格式相容）
+function callHybridVision(parts){
+  var imgPart=(parts||[]).filter(function(p){return p.inlineData;})[0];
+  if(!imgPart)return Promise.reject(new Error('混合模式缺少圖片'));
+  var ocrParts=[imgPart,{text:'請把這張遊戲圖片中所有看得到的文字（包含日文、英文、LOGO、發行商名稱、平台標誌）全部提取出來，不要遺漏，也不要做多餘的解釋，直接輸出看到的文字即可。'}];
+  return callGeminiOCR(ocrParts,false,600).then(function(ocrText){
+    return callDeepSeekCorrect(ocrText);
   });
 }
 
@@ -5550,9 +5634,34 @@ function callAIVision(parts){
     if(hasGPT)return gptCall();
     return callGemini(parts); // 無 GPT key 退回 Gemini
   }
-  // auto：GPT 優先，失敗轉 Gemini
+  if(pref==='hybrid'){
+    if(cfg.gkey&&cfg.dskey)return callHybridVision(parts).catch(function(e){
+      console.warn('[Hybrid]'+e.message+'，轉一般 Gemini 辨識');
+      return callGemini(parts);
+    });
+    return callGemini(parts); // 缺 Gemini 或 DeepSeek 金鑰時退回一般 Gemini
+  }
+  // auto：智慧分流 — 亞洲版/CJK封面優先嘗試混合模式（Gemini OCR+DeepSeek校正），其他情況 GPT 優先失敗轉 Gemini
+  if((_region==='jp'||_region==='asia')&&cfg.gkey&&cfg.dskey){
+    return callHybridVision(parts).catch(function(e){
+      console.warn('[Hybrid-auto]'+e.message+'，轉一般辨識');
+      if(hasGPT)return gptCall().catch(function(){return callGemini(parts);});
+      return callGemini(parts);
+    });
+  }
   if(hasGPT)return gptCall().catch(function(e){console.warn('[GPT]'+e.message+'，轉 Gemini');return callGemini(parts);});
   return callGemini(parts);
+}
+function testDeepSeek(){
+  var key=($('c-dskey')&&$('c-dskey').value||'').trim();
+  if(!key){toast('請輸入 DeepSeek 金鑰','er');return;}
+  cfg.dskey=key;
+  loading('測試 DeepSeek...');
+  callDeepSeekCorrect('ゼルダの伝説 ブレス オブ ザ ワイルド Nintendo Switch 任天堂').then(function(r){
+    noLoad();
+    if(r&&r.primary_name)toast('✓ DeepSeek 連線正常：'+r.primary_name,'ok',4000);
+    else toast('DeepSeek 有回應但無法解析結果，請確認金鑰','er',5000);
+  }).catch(function(e){noLoad();toast('DeepSeek 錯誤：'+e.message,'er',5000);});
 }
 function testGemini(){
   var key=($('c-gkey').value||'').trim();
