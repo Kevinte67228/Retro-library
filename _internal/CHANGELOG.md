@@ -1,3 +1,23 @@
+## v54.36 (2026-07-08)
+
+### 變更內容
+「🔎 條碼查詢」改用即時掃描框（沿用既有 `createScanner` 機制，跟收藏頁/尋寶頁掃描條碼是同一套：原生 BarcodeDetector，不支援時退回 ZXing）：
+- 開啟時自動啟動相機掃描，對準條碼即自動偵測並帶入輸入框，立即開啟 Barcode Lookup 網頁版查詢後自動關閉掃描畫面
+- 保留手動輸入條碼作為備援（裝置不支援掃描、或條碼損毀無法辨識時使用），偵測到裝置不支援或相機啟動失敗會顯示對應提示文字
+
+### 影響檔案
+- index.html / GameVault_v54_36_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端功能調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-35 → gamevault-v54-36
+
+### 對應備份
+- _internal/old/v54_35/
+
 ## v54.35 (2026-07-08)
 
 ### 變更內容
@@ -65,32 +85,4 @@ Barcode Lookup 已無免費 API 方案，全面移除相關程式碼並新增替
 
 ### 對應備份
 - _internal/old/v54_32/
-
-## v54.32 (2026-07-08)
-
-### 變更內容
-串接 RAWG 遊戲資料庫，補強 IGDB 對現代／獨立遊戲的封面圖缺漏：
-- GAS 新增 `rawg_search` proxy（標準 REST 查詢 `api.rawg.io/api/games`）
-- 加入 `DB_REGISTRY`（歐美群），跟現有 11 個資料庫一樣走「自動分流」＋「設定頁可手動強制指定單一庫」的既有機制
-- 欄位優先序：主要用於封面圖補強（優先序在 IGDB 之後、樂天之前），文字欄位（名稱/平台/發售日/類型/連結）列為最低優先，僅在其他資料庫都查無時採用（RAWG 基本搜尋不含開發商/發行商資訊，不適合當文字欄位主力來源）
-- 設定頁新增 RAWG API Key 欄位＋測試連線＋說明彈窗
-- 自我檢查：欄位擷取邏輯（含空資料/null安全性）已驗證通過
-
-### 已知後續
-- DeepSeek 圖片辨識／OCR 串接：使用者已確認需求方向（可選引擎＋智慧分流，優先用於亞洲版/CJK文字封面辨識），但因缺少 API Key 與確認過的圖片輸入端點格式，暫緩實作，待使用者提供後再進行
-- 使用者提出的「平台分級動態路由」（現代遊戲→RAWG／IGDB，復古平台→強制ScreenScraper）為更精細的路由邏輯，本版僅完成 RAWG 基礎串接，尚未實作平台判斷式的強制分流
-
-### 影響檔案
-- index.html / GameVault_v54_32_index.html
-- sw.js
-- GameVault_AppsScript.gs（**GS CI/CD 自動部署**）
-
-### GS 版本
-- v63 → v64（新增 rawg_search proxy）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-31 → gamevault-v54-32
-
-### 對應備份
-- _internal/old/v54_31/
 
