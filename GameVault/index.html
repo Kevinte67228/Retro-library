@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.47';
+const APP_VERSION='v54.48';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13672,11 +13672,19 @@ function goBarcodeWebSearch(){
   // 還停留在原本的查詢頁面（可以換個目的地或重新掃描），不會被送回尋寶首頁
   if(d&&d.type==='copy')_bcWebCopyAndOpen(code);
   else _openExternalLink(_bcWebBuildUrl(code));
-  // v54.47：畫面不關閉了，但掃描偵測成功時相機本來就會自動停止（螢幕變黑是正常的停止狀態），
-  // 之前因為整個 overlay 會關閉所以看不到黑畫面，現在畫面留著就藏不住了。
-  // 開完外部連結後重新啟動掃描器，讓使用者從外部分頁切回來時鏡頭仍是運作狀態。
-  setTimeout(function(){_bcWebScan.start();},250);
+  // v54.48：v54.47 開完連結後「立刻」重啟相機時機抓錯——此時 GameVault 分頁還在背景（使用者
+  // 還沒切過去/切回來），瀏覽器基於隱私考量通常會擋掉背景分頁申請相機權限，導致重啟失敗、
+  // 顯示「無法啟動相機」。改用 visibilitychange 事件，在使用者真正切回本頁籤的當下才重啟。
 }
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'){
+    var ov=$('barcode-web-ov');
+    if(ov&&ov.style.display==='flex'){
+      var h=$('barcode-web-hint');if(h)h.textContent='對準條碼自動掃描…';
+      _bcWebScan.start();
+    }
+  }
+});
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
   var now=new Date();
