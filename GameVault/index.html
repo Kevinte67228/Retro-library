@@ -1736,6 +1736,18 @@ body{
         </div>
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div class="srl" style="margin:0">🕹 RAWG</div>
+            <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('rawg')" type="button">❓ 說明</button>
+          </div>
+          <input class="fi" id="c-rawgkey" type="password" placeholder="API Key">
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn bo bw bs" style="flex:1" onclick="testRAWG()" type="button">測試</button>
+          </div>
+          <a href="https://rawg.io/apidocs" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 RAWG ↗</a>
+          <div class="shlp" style="margin-top:8px">rawg.io → 註冊帳號 → 於 API 頁面取得免費 API Key。特點：現代／獨立遊戲的高畫質封面與截圖庫存豐富，用來補強 IGDB 缺漏的圖片。</div>
+        </div>
+        <div class="srow" style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">📊 Barcode Lookup API</div>
             <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('barcode')" type="button">❓ 說明</button>
           </div>
@@ -2267,7 +2279,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.31';
+const APP_VERSION='v54.32';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3840,6 +3852,16 @@ var API_GUIDES = {
       '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費 API 有速率限制（建議每秒不超過 1 次請求）</span></div>'
     ]
   },
+  rawg: {
+    title: 'RAWG API',
+    link: 'https://rawg.io/apidocs',
+    steps: [
+      '<strong style="color:#00e5ff">第一步：RAWG 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://rawg.io</strong>。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立帳號或登入</strong><div style="margin-top:4px;color:#9fa8c8">點擊右上角「Sign up」→ 填寫資訊或用 Google/Steam 帳號登入。</div>',
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://rawg.io/apidocs</strong> → 「Get API key」→ 複製 <strong>API Key</strong>（免費方案）。</div>',
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。GameVault 用它補強現代／獨立遊戲的高畫質封面（IGDB 沒圖時的候補來源）。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費方案每月 20,000 次請求；基本搜尋結果不含開發商/發行商資訊</span></div>'
+    ]
+  },
   app_token: {
     title: '寫入保護 Token（APP_TOKEN）',
     noFooter: true,
@@ -3968,6 +3990,7 @@ function loadCfg(){
   if(cfg.region&&_REGION_LABELS[cfg.region])_region=cfg.region;
   _updateRegionBtns();
   if($('c-tgdbkey')&&cfg.tgdbkey)$('c-tgdbkey').value=cfg.tgdbkey;
+  if($('c-rawgkey')&&cfg.rawgkey)$('c-rawgkey').value=cfg.rawgkey;
   if($('c-blkey')&&cfg.blkey)$('c-blkey').value=cfg.blkey;
   if($('c-ssid')&&cfg.ssid)$('c-ssid').value=cfg.ssid;
   if($('c-sspass')&&cfg.sspass)$('c-sspass').value=cfg.sspass;
@@ -4446,6 +4469,7 @@ function saveCfg(){
     gbkey:($('c-gbkey')&&$('c-gbkey').value||'').trim(),
     mbkey:($('c-mbkey')&&$('c-mbkey').value||'').trim(),
     tgdbkey:($('c-tgdbkey')&&$('c-tgdbkey').value||'').trim(),
+    rawgkey:($('c-rawgkey')&&$('c-rawgkey').value||'').trim(),
     blkey:($('c-blkey')&&$('c-blkey').value||'').trim(),
     rktid:($('c-rktid')&&$('c-rktid').value||'').trim(),
     rktkey:($('c-rktkey')&&$('c-rktkey').value||'').trim(),
@@ -6262,6 +6286,10 @@ var DB_REGISTRY=[
    desc:'新世代／歐美收錄最全・名稱查詢',
    inputs:['name'],group:'west',cats:['game'],
    ready:function(){return !!(cfg.iid&&cfg.isec&&cfg.url);}},
+  {id:'rawg',name:'RAWG',icon:'🕹',
+   desc:'現代／獨立遊戲高畫質封面與截圖庫・補IGDB圖片缺漏・名稱查詢',
+   inputs:['name'],group:'west',cats:['game'],
+   ready:function(){return !!(cfg.rawgkey&&cfg.url);}},
   {id:'mobygames',name:'MobyGames',icon:'👾',
    desc:'復古全平台百科・名稱查詢（付費訂閱）',
    inputs:['name'],group:'west',cats:['game'],
@@ -6448,6 +6476,10 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
       .then(function(r){return r&&r.games&&r.games.length?{src:'igdb',data:r.games[0]}:null;})
       .catch(function(){return null;})
   );
+  // 4a. RAWG — 用名稱查，現代／獨立遊戲高畫質封面補強
+  if(cfg.rawgkey&&cfg.url&&nameQ&&_ok('rawg')) tasks.push(
+    rawgSearch(nameQ).then(function(r){return r?{src:'rawg',data:r}:null;}).catch(function(){return null;})
+  );
   // 4b. 楽天市場（日系）— JAN 條碼或名稱查
   if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQ)&&_ok('rakuten')) tasks.push(
     shPost({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
@@ -6543,15 +6575,15 @@ function mergeMultiDbResults(results){
 
   // 欄位優先來源定義
   var priority={
-    primary_name: ['igdb','screenscraper','tgdb','mobygames','giantbomb','barcode_lookup','rakuten'],
+    primary_name: ['igdb','screenscraper','tgdb','mobygames','giantbomb','barcode_lookup','rakuten','rawg'],
     jp_name:      ['screenscraper','rakuten'],
-    platform:     ['igdb','screenscraper','tgdb','mobygames','giantbomb'],
+    platform:     ['igdb','screenscraper','tgdb','mobygames','giantbomb','rawg'],
     developer:    ['igdb','screenscraper','mobygames','giantbomb','tgdb'],
     publisher:    ['igdb','screenscraper','mobygames','giantbomb','tgdb'],
-    release_date: ['screenscraper','igdb','tgdb','mobygames','giantbomb'],
-    genre:        ['igdb','screenscraper','mobygames','giantbomb','tgdb'],
+    release_date: ['screenscraper','igdb','tgdb','mobygames','giantbomb','rawg'],
+    genre:        ['igdb','screenscraper','mobygames','giantbomb','tgdb','rawg'],
     summary:      ['screenscraper','igdb','giantbomb','mobygames','tgdb'], // SS有中文synopsis
-    ref_link:     ['igdb','giantbomb','screenscraper','mobygames','tgdb'],
+    ref_link:     ['igdb','giantbomb','screenscraper','mobygames','tgdb','rawg'],
     players:      ['screenscraper','igdb'],
     age_rating:   ['screenscraper','igdb'],
   };
@@ -6608,6 +6640,7 @@ function mergeMultiDbResults(results){
     if(_ss.back_url)merged.back_url=_ss.back_url;
   }
   if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
+  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image)merged.cover_url=srcMap['rawg'].background_image;
   if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
   if(!merged.cover_url&&srcMap['barcode_lookup']){
     var _bli=extractField('barcode_lookup',srcMap['barcode_lookup'],'cover_url');
@@ -6718,6 +6751,16 @@ function extractField(src,data,field){
         back_url:data.back_url||''
       };
       return ssMap[field]||'';
+    case 'rawg':
+      var rgMap={
+        primary_name:data.name||'',
+        platform:(data.platforms&&data.platforms[0]&&data.platforms[0].platform&&data.platforms[0].platform.name)||'',
+        release_date:data.released||'',
+        genre:(data.genres&&data.genres.map(function(g){return g.name;}).join(', '))||'',
+        ref_link:data.slug?('https://rawg.io/games/'+data.slug):'',
+        cover_url:data.background_image||''
+      };
+      return rgMap[field]||'';
   }
   return '';
 }
@@ -6796,6 +6839,15 @@ function mobygamesSearch(q){
   return shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(d){return d&&d.games&&d.games.length?d.games[0]:null;})
+    .catch(function(){return null;});
+}
+
+function rawgSearch(q){
+  if(!cfg.rawgkey||!cfg.url)return Promise.resolve(null);
+  var params=new URLSearchParams({action:'rawg_search',q:q,rawgkey:cfg.rawgkey});
+  return shGetSecP(params)
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){return d&&d.results&&d.results.length?d.results[0]:null;})
     .catch(function(){return null;});
 }
 
@@ -7015,6 +7067,18 @@ function testTGDB(){
     if(r&&r.game_title)toast('✓ TheGamesDB 連線正常：'+r.game_title,'ok',4000);
     else toast('TheGamesDB 無回應，請確認 API Key 或 Apps Script 已更新','er',5000);
   }).catch(function(e){noLoad();toast('TheGamesDB 錯誤：'+_friendlyError(e.message),'er',5000);});
+}
+
+function testRAWG(){
+  var key=($('c-rawgkey')&&$('c-rawgkey').value||'').trim();
+  if(!key){toast('請先填入 RAWG API Key','er');return;}
+  cfg.rawgkey=key;
+  loading('測試 RAWG...');
+  rawgSearch('Final Fantasy').then(function(r){
+    noLoad();
+    if(r&&r.name)toast('✓ RAWG 連線正常：'+r.name,'ok',4000);
+    else toast('RAWG 無回應，請確認 API Key 或 Apps Script 已更新','er',5000);
+  }).catch(function(e){noLoad();toast('RAWG 錯誤：'+_friendlyError(e.message),'er',5000);});
 }
 
 function testRakuten(){
