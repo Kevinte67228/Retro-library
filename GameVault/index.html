@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.35';
+const APP_VERSION='v54.36';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13531,17 +13531,33 @@ var _rcPlatform=RC_PLATFORMS[0].id;
 var _rcLang=RC_LANGS[0].id;
 var _rcYear,_rcMonth; // 1-12
 // ══ v54.35：條碼查詢（帶入條碼開啟 Barcode Lookup 網頁版）══
+var _bcWebScan=createScanner({videoId:'barcode-web-video',
+  onDetect:function(bc){
+    bc=(bc||'').trim();
+    if(!bc)return;
+    var inp=$('barcode-web-input');if(inp)inp.value=bc;
+    try{if(navigator.vibrate)navigator.vibrate([80,40,80]);}catch(e){}
+    goBarcodeWebSearch();
+  },
+  onUnsupported:function(){var h=$('barcode-web-hint');if(h)h.textContent='裝置不支援即時掃描，請在下方手動輸入條碼';},
+  onError:function(){var h=$('barcode-web-hint');if(h)h.textContent='無法啟動相機，請在下方手動輸入條碼';}});
 function openBarcodeWebSearch(){
   var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
   var inp=$('barcode-web-input');
-  if(inp){inp.value='';setTimeout(function(){inp.focus();},80);}
+  if(inp)inp.value='';
+  var h=$('barcode-web-hint');if(h)h.textContent='對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 網頁版查詢結果。';
+  _bcWebScan.start();
 }
-function closeBarcodeWebSearch(){var ov=$('barcode-web-ov');if(ov)ov.style.display='none';}
+function closeBarcodeWebSearch(){
+  _bcWebScan.stop();
+  var ov=$('barcode-web-ov');if(ov)ov.style.display='none';
+}
 function goBarcodeWebSearch(){
   var raw=($('barcode-web-input')&&$('barcode-web-input').value||'').trim();
   var code=raw.replace(/[^0-9A-Za-z]/g,'');
-  if(!code){toast('請輸入條碼','er');return;}
+  if(!code){toast('請輸入或掃描條碼','er');return;}
   window.open('https://www.barcodelookup.com/'+encodeURIComponent(code),'_blank');
+  closeBarcodeWebSearch();
 }
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
@@ -14410,17 +14426,21 @@ function _imgToB64(src){
   </div>
 </div>
 
-<!-- ══ 條碼查詢 overlay（v54.35：帶入條碼直接開啟 Barcode Lookup 網頁版，取代已下架的付費API）══ -->
+<!-- ══ 條碼查詢 overlay（v54.36：改用即時掃描框，掃到自動帶入並開啟查詢）══ -->
 <div id="barcode-web-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column">
   <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div style="font-size:16px;font-weight:700;color:#69f0ae">🔎 條碼查詢</div>
     <button type="button" onclick="closeBarcodeWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
   </div>
   <div style="padding:20px 16px">
-    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6">輸入條碼，直接開啟 Barcode Lookup 網頁版查詢結果，不用手動再輸入一次條碼。</div>
+    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6" id="barcode-web-hint">對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 網頁版查詢結果。</div>
+    <div style="border-radius:12px;overflow:hidden;border:1.5px solid #69f0ae;background:#000;position:relative;margin-bottom:14px">
+      <video id="barcode-web-video" autoplay playsinline muted style="width:100%;display:block;max-height:280px;object-fit:cover"></video>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div class="scan-box"></div><div class="scan-line"></div></div>
+    </div>
     <div class="sw" style="margin:0 0 14px;position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
+      <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="或手動輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
     </div>
     <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" onclick="goBarcodeWebSearch()" type="button">前往 Barcode Lookup 查詢 ↗</button>
   </div>
