@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.41';
+const APP_VERSION='v54.42';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13568,7 +13568,35 @@ var RC_LANGS=[
 var _rcPlatform=RC_PLATFORMS[0].id;
 var _rcLang=RC_LANGS[0].id;
 var _rcYear,_rcMonth; // 1-12
-// ══ v54.35：條碼查詢（帶入條碼開啟 Barcode Lookup 網頁版）══
+// ══ v54.42：條碼查詢改為三個目的地可選（Barcode Lookup/Google搜尋/DeepSeek），
+// 使用者先選目的地，掃描或手動輸入條碼後開啟對應網頁並帶入條碼。
+// ⚠️ DeepSeek 網址帶入文字的做法沒有官方文件依據，是嘗試性質，需實測確認是否真的有效
+var BC_WEB_DESTS=[
+  {id:'barcodelookup',label:'Barcode Lookup'},
+  {id:'google',label:'Google 搜尋'},
+  {id:'deepseek',label:'DeepSeek'}
+];
+var _bcWebDest=BC_WEB_DESTS[0].id;
+function _bcWebRenderDestTabs(){
+  var wrap=$('bc-web-dest-tabs');if(!wrap)return;
+  wrap.innerHTML=BC_WEB_DESTS.map(function(d){
+    var on=d.id===_bcWebDest;
+    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="flex:1;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:700;'+
+      (on?'background:#69f0ae;color:#001018;border:none':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(d.label)+'</button>';
+  }).join('');
+}
+function setBarcodeWebDest(id){
+  _bcWebDest=id;
+  _bcWebRenderDestTabs();
+  var d=BC_WEB_DESTS.filter(function(x){return x.id===id;})[0];
+  var h=$('barcode-web-hint');
+  if(h)h.textContent='對準條碼自動掃描，掃到會直接開啟 '+(d?d.label:'')+' 查詢結果。';
+}
+function _bcWebBuildUrl(code){
+  if(_bcWebDest==='google')return 'https://www.google.com/search?q='+encodeURIComponent(code);
+  if(_bcWebDest==='deepseek')return 'https://chat.deepseek.com/?q='+encodeURIComponent('這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品');
+  return 'https://www.barcodelookup.com/'+encodeURIComponent(code);
+}
 var _bcWebScan=createScanner({videoId:'barcode-web-video',
   onDetect:function(bc){
     bc=(bc||'').trim();
@@ -13583,7 +13611,8 @@ function openBarcodeWebSearch(){
   var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
   var inp=$('barcode-web-input');
   if(inp)inp.value='';
-  var h=$('barcode-web-hint');if(h)h.textContent='對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 網頁版查詢結果。';
+  _bcWebRenderDestTabs();
+  setBarcodeWebDest(_bcWebDest);
   _bcWebScan.start();
 }
 function closeBarcodeWebSearch(){
@@ -13594,7 +13623,7 @@ function goBarcodeWebSearch(){
   var raw=($('barcode-web-input')&&$('barcode-web-input').value||'').trim();
   var code=raw.replace(/[^0-9A-Za-z]/g,'');
   if(!code){toast('請輸入或掃描條碼','er');return;}
-  window.open('https://www.barcodelookup.com/'+encodeURIComponent(code),'_blank');
+  window.open(_bcWebBuildUrl(code),'_blank');
   closeBarcodeWebSearch();
 }
 function openReleaseCal(){
@@ -14499,7 +14528,8 @@ function _imgToB64(src){
     <button type="button" onclick="closeBarcodeWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
   </div>
   <div style="padding:20px 16px">
-    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6" id="barcode-web-hint">對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 網頁版查詢結果。</div>
+    <div id="bc-web-dest-tabs" style="display:flex;gap:8px;margin-bottom:14px"></div>
+    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6" id="barcode-web-hint">對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 查詢結果。</div>
     <div style="border-radius:12px;overflow:hidden;border:1.5px solid #69f0ae;background:#000;position:relative;margin-bottom:14px">
       <video id="barcode-web-video" autoplay playsinline muted style="width:100%;display:block;max-height:280px;object-fit:cover"></video>
       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div class="scan-box"></div><div class="scan-line"></div></div>
@@ -14508,7 +14538,7 @@ function _imgToB64(src){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="或手動輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
     </div>
-    <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" onclick="goBarcodeWebSearch()" type="button">前往 Barcode Lookup 查詢 ↗</button>
+    <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" onclick="goBarcodeWebSearch()" type="button">前往查詢 ↗</button>
   </div>
 </div>
 
