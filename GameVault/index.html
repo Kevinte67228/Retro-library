@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.44';
+const APP_VERSION='v54.45';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13590,7 +13590,7 @@ function _bcWebRenderDestTabs(){
   function btnHtml(d){
     var on=d.id===_bcWebDest;
     var onColor=d.group===1?'#69f0ae':'#7c4dff';
-    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;line-height:1.2;'+
+    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="height:44px;padding:4px;border-radius:10px;font-size:10px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+
       (on?('background:'+onColor+';color:#001018;border:none'):'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(d.label)+'</button>';
   }
   wrap1.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===1;}).map(btnHtml).join('');
@@ -13657,9 +13657,10 @@ function goBarcodeWebSearch(){
   var code=raw.replace(/[^0-9A-Za-z]/g,'');
   if(!code){toast('請輸入或掃描條碼','er');return;}
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
-  if(d&&d.type==='copy'){_bcWebCopyAndOpen(code);closeBarcodeWebSearch();return;}
+  // v54.45：開啟外部網頁後不再自動關閉條碼查詢畫面，使用者從瀏覽器分頁切回來時
+  // 還停留在原本的查詢頁面（可以換個目的地或重新掃描），不會被送回尋寶首頁
+  if(d&&d.type==='copy'){_bcWebCopyAndOpen(code);return;}
   window.open(_bcWebBuildUrl(code),'_blank');
-  closeBarcodeWebSearch();
 }
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
