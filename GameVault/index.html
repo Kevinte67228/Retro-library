@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.43';
+const APP_VERSION='v54.44';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13568,68 +13568,64 @@ var RC_LANGS=[
 var _rcPlatform=RC_PLATFORMS[0].id;
 var _rcLang=RC_LANGS[0].id;
 var _rcYear,_rcMonth; // 1-12
-// ══ v54.42：條碼查詢改為三個目的地可選（Barcode Lookup/Google搜尋/DeepSeek），
-// 使用者先選目的地，掃描或手動輸入條碼後開啟對應網頁並帶入條碼。
-// ⚠️ DeepSeek 網址帶入文字的做法沒有官方文件依據，是嘗試性質，需實測確認是否真的有效
+// ══ v54.44：條碼查詢改為 8 個目的地，分兩排。
+// 第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）：標準網址查詢格式，直接開網頁帶入條碼。
+// 第二排 AI 助手（DeepSeek/GPT/Gemini/Claude）：實測證實 AI 聊天網頁不支援用網址帶入文字，
+// 且直接呼叫 API 用純文字查條碼會嚴重瞎猜（同一條碼查三次得到三個不同答案），改用既有的
+// 「複製查詢文字＋開啟AI網頁，使用者自行貼上送出」模式（沿用 copyAndPromptGemini 的做法）
 var BC_WEB_DESTS=[
-  {id:'barcodelookup',label:'Barcode Lookup'},
-  {id:'google',label:'Google 搜尋'},
-  {id:'deepseek',label:'DeepSeek'}
+  {id:'barcodelookup',label:'Barcode Lookup',type:'url',group:1},
+  {id:'google',label:'Google',type:'url',group:1},
+  {id:'bing',label:'Bing',type:'url',group:1},
+  {id:'yahoojp',label:'Yahoo!JAPAN',type:'url',group:1},
+  {id:'deepseek',label:'DeepSeek',type:'copy',group:2,homeUrl:'https://chat.deepseek.com/'},
+  {id:'gpt',label:'GPT',type:'copy',group:2,homeUrl:'https://chatgpt.com/'},
+  {id:'gemini',label:'Gemini',type:'copy',group:2,homeUrl:'https://gemini.google.com/'},
+  {id:'claude',label:'Claude',type:'copy',group:2,homeUrl:'https://claude.ai/new'}
 ];
 var _bcWebDest=BC_WEB_DESTS[0].id;
 function _bcWebRenderDestTabs(){
-  var wrap=$('bc-web-dest-tabs');if(!wrap)return;
-  wrap.innerHTML=BC_WEB_DESTS.map(function(d){
+  var wrap1=$('bc-web-dest-tabs-1'),wrap2=$('bc-web-dest-tabs-2');
+  if(!wrap1||!wrap2)return;
+  function btnHtml(d){
     var on=d.id===_bcWebDest;
-    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="flex:1;padding:9px 6px;border-radius:10px;font-size:12px;font-weight:700;'+
-      (on?'background:#69f0ae;color:#001018;border:none':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(d.label)+'</button>';
-  }).join('');
+    var onColor=d.group===1?'#69f0ae':'#7c4dff';
+    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;line-height:1.2;'+
+      (on?('background:'+onColor+';color:#001018;border:none'):'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(d.label)+'</button>';
+  }
+  wrap1.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===1;}).map(btnHtml).join('');
+  wrap2.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===2;}).map(btnHtml).join('');
 }
 function setBarcodeWebDest(id){
   _bcWebDest=id;
   _bcWebRenderDestTabs();
   var d=BC_WEB_DESTS.filter(function(x){return x.id===id;})[0];
   var h=$('barcode-web-hint');
-  var r=$('bc-web-result');if(r){r.style.display='none';r.innerHTML='';}
-  var btn=$('bc-web-go-btn');if(btn)btn.textContent=(id==='deepseek')?'查詢':'前往查詢 ↗';
-  if(h){
-    // v54.43：DeepSeek 網頁版實測不支援用網址參數帶入文字（?q= 直接被忽略），
-    // 改用既有的 DeepSeek API 直接查詢，結果顯示在畫面內，不再嘗試開網頁
-    h.textContent=(id==='deepseek')
-      ?'對準條碼自動掃描，掃到會直接呼叫 DeepSeek API 查詢，結果顯示在下方。'
-      :'對準條碼自動掃描，掃到會直接開啟 '+(d?d.label:'')+' 查詢結果。';
+  var btn=$('bc-web-go-btn');
+  if(d&&d.type==='copy'){
+    if(btn)btn.textContent='複製查詢文字並開啟 '+d.label;
+    if(h)h.textContent='對準條碼自動掃描，掃到會複製查詢文字，接著開啟 '+d.label+' 網頁，請自行貼上送出。';
+  }else{
+    if(btn)btn.textContent='前往查詢 ↗';
+    if(h)h.textContent='對準條碼自動掃描，掃到會直接開啟 '+(d?d.label:'')+' 查詢結果。';
   }
 }
 function _bcWebBuildUrl(code){
   if(_bcWebDest==='google')return 'https://www.google.com/search?q='+encodeURIComponent(code);
+  if(_bcWebDest==='bing')return 'https://www.bing.com/search?q='+encodeURIComponent(code);
+  if(_bcWebDest==='yahoojp')return 'https://search.yahoo.co.jp/search?p='+encodeURIComponent(code);
   return 'https://www.barcodelookup.com/'+encodeURIComponent(code);
 }
-// DeepSeek 條碼查詢：直接呼叫 API（沿用混合辨識已驗證可用的呼叫方式），結果顯示在 overlay 內
-function _bcDeepSeekQuery(code){
-  if(!cfg.dskey){toast('請先到設定頁填入 DeepSeek API 金鑰','er',4000);return;}
-  var r=$('bc-web-result');
-  if(r){r.style.display='block';r.innerHTML='<div style="color:#7986cb;font-size:12px">DeepSeek 查詢中…</div>';}
-  var sys='你是精通各類商品條碼辨識的專家。使用者會提供一個商品條碼（EAN/UPC/JAN），請盡力查出這個條碼對應的商品名稱與基本資訊，用繁體中文回答，100字以內。若查無法確定的資訊，請直接說明查無資料，不要臆測編造。';
-  fetch('https://api.deepseek.com/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.dskey},
-    body:JSON.stringify({
-      model:'deepseek-chat',
-      temperature:0.1,
-      max_tokens:300,
-      messages:[
-        {role:'system',content:sys},
-        {role:'user',content:'商品條碼：'+code}
-      ]
-    })
-  }).then(function(res){
-    if(!res.ok)return res.json().then(function(e){throw new Error((e&&e.error&&e.error.message)||('HTTP '+res.status));});
-    return res.json();
-  }).then(function(d){
-    var txt=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'').trim();
-    if(r)r.innerHTML='<div style="background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:12px;font-size:13px;color:#e8eaf6;line-height:1.6;white-space:pre-wrap">'+esc(txt||'查無資料')+'</div>';
-  }).catch(function(e){
-    if(r)r.innerHTML='<div style="color:#ff5252;font-size:12px">DeepSeek 查詢失敗：'+esc(e.message)+'</div>';
+// AI 助手：複製查詢文字＋開啟網頁，比照既有 copyAndPromptGemini() 的做法（已驗證可用的模式）
+function _bcWebCopyAndOpen(code){
+  var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
+  if(!d)return;
+  var prompt='這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品，並簡短說明。';
+  var notice='已複製查詢文字 ✓\n\n接下來會開啟 '+d.label+' 網頁，進入後請在輸入框「貼上」文字並送出，即可查詢。\n\n按「確定」開啟 '+d.label+'。';
+  navigator.clipboard.writeText(prompt).then(function(){
+    if(confirm(notice))window.open(d.homeUrl,'_blank');
+  }).catch(function(){
+    if(confirm('無法自動複製文字，請進入 '+d.label+' 後手動輸入查詢。\n\n按「確定」開啟 '+d.label+'。'))window.open(d.homeUrl,'_blank');
   });
 }
 var _bcWebScan=createScanner({videoId:'barcode-web-video',
@@ -13646,10 +13642,11 @@ function openBarcodeWebSearch(){
   var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
   var inp=$('barcode-web-input');
   if(inp)inp.value='';
-  var r=$('bc-web-result');if(r){r.style.display='none';r.innerHTML='';}
   _bcWebRenderDestTabs();
   setBarcodeWebDest(_bcWebDest);
-  _bcWebScan.start();
+  // v54.44：修正第二次開啟時掃描框黑屏的 bug——上一次的相機串流可能還沒完全釋放，
+  // 緊接著重新 getUserMedia() 容易拿到尚未就緒的串流。延遲一小段時間再啟動，讓硬體確實釋放。
+  setTimeout(function(){_bcWebScan.start();},250);
 }
 function closeBarcodeWebSearch(){
   _bcWebScan.stop();
@@ -13659,7 +13656,8 @@ function goBarcodeWebSearch(){
   var raw=($('barcode-web-input')&&$('barcode-web-input').value||'').trim();
   var code=raw.replace(/[^0-9A-Za-z]/g,'');
   if(!code){toast('請輸入或掃描條碼','er');return;}
-  if(_bcWebDest==='deepseek'){_bcDeepSeekQuery(code);return;} // App 內顯示結果，不關閉 overlay、不開新分頁
+  var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
+  if(d&&d.type==='copy'){_bcWebCopyAndOpen(code);closeBarcodeWebSearch();return;}
   window.open(_bcWebBuildUrl(code),'_blank');
   closeBarcodeWebSearch();
 }
@@ -14564,8 +14562,11 @@ function _imgToB64(src){
     <div style="font-size:16px;font-weight:700;color:#69f0ae">🔎 條碼查詢</div>
     <button type="button" onclick="closeBarcodeWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
   </div>
-  <div style="padding:20px 16px">
-    <div id="bc-web-dest-tabs" style="display:flex;gap:8px;margin-bottom:14px"></div>
+  <div style="padding:20px 16px;overflow-y:auto">
+    <div style="font-size:11px;color:#69f0ae;font-weight:700;margin-bottom:6px">🔍 商品搜尋（直接開網頁帶入條碼）</div>
+    <div id="bc-web-dest-tabs-1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px"></div>
+    <div style="font-size:11px;color:#7c4dff;font-weight:700;margin-bottom:6px">🤖 AI 助手（複製查詢文字，需自行貼上送出）</div>
+    <div id="bc-web-dest-tabs-2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px"></div>
     <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6" id="barcode-web-hint">對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 查詢結果。</div>
     <div style="border-radius:12px;overflow:hidden;border:1.5px solid #69f0ae;background:#000;position:relative;margin-bottom:14px">
       <video id="barcode-web-video" autoplay playsinline muted style="width:100%;display:block;max-height:280px;object-fit:cover"></video>
@@ -14576,7 +14577,6 @@ function _imgToB64(src){
       <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="或手動輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
     </div>
     <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" id="bc-web-go-btn" onclick="goBarcodeWebSearch()" type="button">前往查詢 ↗</button>
-    <div id="bc-web-result" style="display:none;margin-top:14px"></div>
   </div>
 </div>
 
