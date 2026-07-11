@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.39';
+const APP_VERSION='v54.40';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9149,6 +9149,20 @@ function _bindFormFocusScroll(){
     },80);
   });
 }
+// v54.40：主要名稱優先序修正（中文＞日文＞英文），比照尋寶轉入的邏輯。
+// AI/資料庫填欄時 primary_name 可能被填成任何語言（即使 zh_name 有更好的中文譯名也不會覆蓋回去），
+// 判斷時要注意日文大量使用漢字（跟中文共用同一個Unicode區段），純看漢字會誤判，需檢查有無假名。
+function _isLikelyJapaneseText(s){return /[\u3040-\u309F\u30A0-\u30FF]/.test(s||'');}
+function _pickBestPrimaryName(){
+  var cur=(entry.primary_name||'').trim();
+  var zh=(entry.zh_name||'').trim();
+  var jp=(entry.jp_name||'').trim();
+  var curIsProperChinese=cur&&!_isLikelyJapaneseText(cur)&&/[\u4e00-\u9fff]/.test(cur);
+  if(!curIsProperChinese){
+    if(zh)entry.primary_name=zh;
+    else if(!cur&&jp)entry.primary_name=jp;
+  }
+}
 function showForm(src){
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
@@ -9177,6 +9191,7 @@ function showForm(src){
   normalizeLanguageFields(entry);
   // 清理 notes（AI 可能過長）
   if(entry.notes&&entry.notes.length>200)entry.notes=entry.notes.slice(0,200);
+  _pickBestPrimaryName();
   // 自動產生參考連結（若尚未有值）
   if(!entry.ref_link){
     var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.en_name||'';
@@ -10017,7 +10032,18 @@ function quickCompPreset(preset){
   if(cn&&preset==='clear')cn.value='';
   if(cs)cs.value='無';
   onCompChange();
-  renderForm();
+}
+// v54.40：完整度摘要（藏品狀態徽章＋說明文字）輕量刷新，不重建整個表單，
+// 避免原本 quickCompPreset() 結尾呼叫 renderForm() 導致整個表單砍掉重建、
+// 各區塊展開/收合狀態被重置回預設值、捲動位置跳掉的問題
+function _refreshCompSummary(){
+  var grid=document.querySelector('.comp-grid');if(!grid)return;
+  var cat=grid.dataset.cat;
+  var st=compStatus(cat,entry.completeness);
+  var stateEl=document.querySelector('.comp-summary-state');
+  var lineEl=document.querySelector('.comp-summary-line');
+  if(stateEl){stateEl.className='comp-summary-state '+st.cls;stateEl.textContent=st.state;}
+  if(lineEl)lineEl.textContent=st.line;
 }
 // 配件完整度：彙整逐項目下拉 + 自定義，序列化後寫入 entry.completeness
 function onCompChange(){
@@ -10029,6 +10055,7 @@ function onCompChange(){
   map['__custom']=cs?cs.value:'無';
   var cn=document.getElementById('comp-custom-name');
   onFld('completeness',serializeComp(cat,map,cn?cn.value:''));
+  _refreshCompSummary();
 }
 // 儲存前把 region/media 自由文字正規化到固定選項（涵蓋未手動點選 chip 的匯入情況）
 function _normalizeEntryEnums(){
@@ -12916,7 +12943,7 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
     if((k==='buy_date'||k==='release_date'||k==='resale_date'||k==='test_date'||k==='market_value_updated_at')&&!displayDate(v))return;
     if(skipDef[k]&&skipDef[k]===v)return;
-    var full=k==='summary'||k==='notes'||k==='ref_link'||type==='area'||k==='related_code'||k==='applicable_platform'||k==='completeness';
+    var full=k==='summary'||k==='notes'||k==='ref_link'||type==='area'||k==='related_code'||k==='applicable_platform'||k==='completeness'||k==='features';
     var valHtml=_detailValHtml(k,v,isBook2);
     // 來源徽章：ai=AI辨識 db=資料庫 user=手動
     var srcMap=d._src||{};
