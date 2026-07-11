@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.45';
+const APP_VERSION='v54.46';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13616,6 +13616,17 @@ function _bcWebBuildUrl(code){
   if(_bcWebDest==='yahoojp')return 'https://search.yahoo.co.jp/search?p='+encodeURIComponent(code);
   return 'https://www.barcodelookup.com/'+encodeURIComponent(code);
 }
+// v54.46：改用建立<a>元素模擬點擊開啟外部連結，取代 window.open()。
+// 使用者實測確認 Google/Gemini 透過 window.open() 開啟時顯示桌面版網頁，直接在手機瀏覽器
+// 打開同樣網址則正常顯示手機版——推測是 PWA 用 window.open() 開新分頁時走系統內嵌瀏覽器元件，
+// 跟完整瀏覽器的裝置身分字串不同。這個做法是常見的嘗試方向，不保證一定有效，需要實測確認。
+function _openExternalLink(url){
+  var a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 // AI 助手：複製查詢文字＋開啟網頁，比照既有 copyAndPromptGemini() 的做法（已驗證可用的模式）
 function _bcWebCopyAndOpen(code){
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
@@ -13623,9 +13634,9 @@ function _bcWebCopyAndOpen(code){
   var prompt='這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品，並簡短說明。';
   var notice='已複製查詢文字 ✓\n\n接下來會開啟 '+d.label+' 網頁，進入後請在輸入框「貼上」文字並送出，即可查詢。\n\n按「確定」開啟 '+d.label+'。';
   navigator.clipboard.writeText(prompt).then(function(){
-    if(confirm(notice))window.open(d.homeUrl,'_blank');
+    if(confirm(notice))_openExternalLink(d.homeUrl);
   }).catch(function(){
-    if(confirm('無法自動複製文字，請進入 '+d.label+' 後手動輸入查詢。\n\n按「確定」開啟 '+d.label+'。'))window.open(d.homeUrl,'_blank');
+    if(confirm('無法自動複製文字，請進入 '+d.label+' 後手動輸入查詢。\n\n按「確定」開啟 '+d.label+'。'))_openExternalLink(d.homeUrl);
   });
 }
 var _bcWebScan=createScanner({videoId:'barcode-web-video',
@@ -13660,7 +13671,7 @@ function goBarcodeWebSearch(){
   // v54.45：開啟外部網頁後不再自動關閉條碼查詢畫面，使用者從瀏覽器分頁切回來時
   // 還停留在原本的查詢頁面（可以換個目的地或重新掃描），不會被送回尋寶首頁
   if(d&&d.type==='copy'){_bcWebCopyAndOpen(code);return;}
-  window.open(_bcWebBuildUrl(code),'_blank');
+  _openExternalLink(_bcWebBuildUrl(code));
 }
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
