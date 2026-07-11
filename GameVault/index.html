@@ -2281,7 +2281,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.46';
+const APP_VERSION='v54.47';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13670,8 +13670,12 @@ function goBarcodeWebSearch(){
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
   // v54.45：開啟外部網頁後不再自動關閉條碼查詢畫面，使用者從瀏覽器分頁切回來時
   // 還停留在原本的查詢頁面（可以換個目的地或重新掃描），不會被送回尋寶首頁
-  if(d&&d.type==='copy'){_bcWebCopyAndOpen(code);return;}
-  _openExternalLink(_bcWebBuildUrl(code));
+  if(d&&d.type==='copy')_bcWebCopyAndOpen(code);
+  else _openExternalLink(_bcWebBuildUrl(code));
+  // v54.47：畫面不關閉了，但掃描偵測成功時相機本來就會自動停止（螢幕變黑是正常的停止狀態），
+  // 之前因為整個 overlay 會關閉所以看不到黑畫面，現在畫面留著就藏不住了。
+  // 開完外部連結後重新啟動掃描器，讓使用者從外部分頁切回來時鏡頭仍是運作狀態。
+  setTimeout(function(){_bcWebScan.start();},250);
 }
 function openReleaseCal(){
   if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
