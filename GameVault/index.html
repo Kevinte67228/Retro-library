@@ -1057,7 +1057,15 @@ body{
             <div style="font-size:12px;color:#7986cb;margin-bottom:6px">輸入商品名稱、條碼或關鍵字</div>
             <div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">系統會自動帶入目前分類所需的欄位產生查詢提示詞</div>
             <input class="fi" id="aiweb-subject" type="text" placeholder="例如：薩爾達傳說 曠野之息"
-              style="font-size:14px;margin-bottom:10px">
+              style="font-size:14px;margin-bottom:8px">
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button type="button" onclick="aiWebScanBarcode()"
+                style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(121,134,203,.08);border:1.5px dashed rgba(121,134,203,.35);border-radius:10px;padding:10px 8px;cursor:pointer;color:#7986cb;font-size:12px;font-family:inherit">📷 掃描條碼</button>
+              <button type="button" onclick="document.getElementById('aiweb-name-cam').click()"
+                style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,229,255,.08);border:1.5px dashed rgba(0,229,255,.35);border-radius:10px;padding:10px 8px;cursor:pointer;color:#00e5ff;font-size:12px;font-family:inherit">📷 拍照辨識名稱</button>
+              <input type="file" accept="image/*" capture="environment" id="aiweb-name-cam" style="display:none"
+                onchange="nameFieldOCR(this,'aiweb-subject','zh')">
+            </div>
             <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手：自動複製提示詞並開啟其網頁，貼上送出後把回覆的 JSON 複製回來</div>
             <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
             <div style="font-size:11px;color:#444;margin-bottom:14px;line-height:1.5">將帶入的欄位：<span id="aiweb-fields-list"></span></div>
@@ -2306,7 +2314,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.59';
+const APP_VERSION='v54.60';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7973,6 +7981,15 @@ function _aiWebRenderDests(){
       'color:#7c4dff;border:1.5px solid #7c4dff;font-family:inherit;cursor:pointer">'+esc(d.label)+'</button>';
   }).join('');
 }
+// 條碼掃描：沿用既有 openFieldScanner 即時掃描機制（比照 barScanFromBtn）
+function aiWebScanBarcode(){
+  openFieldScanner({mode:'barcode',inputId:'aiweb-subject',
+    title:'掃描商品條碼',
+    subtitle:'對準包裝上的 EAN / JAN / ISBN',
+    openingText:'正在開啟相機...',
+    detectText:'正在偵測商品條碼',
+    resultToast:function(v){return '已帶入條碼：'+v;}});
+}
 function initAiWebMode(){
   pickTypeAndPlatform('aiweb',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
@@ -7982,6 +7999,7 @@ function initAiWebMode(){
     var sec=$('aiweb-sec');if(sec)sec.style.display='block';
     var inp=$('aiweb-subject');if(inp)inp.value='';
     var pa=$('aiweb-paste');if(pa)pa.value='';
+    var cam=$('aiweb-name-cam');if(cam)cam.value='';
     var st=$('aiweb-status');if(st){st.style.display='none';st.textContent='';}
     _aiWebRenderDests();
     var fl=$('aiweb-fields-list');
