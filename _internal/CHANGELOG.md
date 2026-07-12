@@ -1,3 +1,21 @@
+## v54.64 (2026-07-08)
+
+### 變更內容
+收藏「卡片」視圖的縮圖尺寸改成跟「分類」視圖一致：查到分類視圖的 `.shelf-cover` 是 104px 正方形、圓角 10px，卡片視圖原本是 70px（上一版剛放大過），直接改成同樣的 104px／圓角 10px，兩種視圖的縮圖視覺比例統一。
+
+### 影響檔案
+- index.html / GameVault_v54_64_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端配色/尺寸調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-63 → gamevault-v54-64
+
+### 對應備份
+- _internal/old/v54_63/
+
 ## v54.63 (2026-07-08)
 
 ### 變更內容
@@ -69,26 +87,4 @@
 
 ### 對應備份
 - _internal/old/v54_60/
-
-## v54.60 (2026-07-08)
-
-### 變更內容
-AI 網頁查詢建檔頁新增免手動輸入的兩個功能，**完全沿用既有機制，未重造輪子**：
-- **📷 掃描條碼**：新增 `aiWebScanBarcode()`，比照 `barScanFromBtn()` 的實作，呼叫既有的 `openFieldScanner({mode:'barcode'})` 即時掃描機制，掃到自動帶入查詢輸入框
-- **📷 拍照辨識名稱**：直接沿用既有的 `nameFieldOCR(this,'aiweb-subject','zh')`（隱藏 file input + `capture="environment"` 的既有模式），拍照後經 Gemini 視覺辨識帶出商品中文名稱（沿用既有 prompt：只要名稱、不要型號價格店名、看不清留空禁止腦補）
-- 進入模式時一併重置 file input，避免殘留上次選過的檔案
-- 驗證：語法檢查通過、依賴函式（`openFieldScanner`／`nameFieldOCR`）確認存在、新增的 7 個 `aiweb-*` id 皆無重複
-
-### 影響檔案
-- index.html / GameVault_v54_60_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端功能新增）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-59 → gamevault-v54-60
-
-### 對應備份
-- _internal/old/v54_59/
 
