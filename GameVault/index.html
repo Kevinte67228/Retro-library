@@ -564,23 +564,19 @@ body{
   height:auto;min-height:40px;
   padding:12px 18px;line-height:1.55;box-sizing:border-box;
 }
-/* 尋寶拍照辨識 FAB（v25.03，僅尋寶頁顯示） */
-#hunt-lens-fab{
-  position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));
-  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;z-index:300;
-  background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;line-height:1;
-  box-shadow:0 6px 18px rgba(255,77,126,.45);display:flex;align-items:center;justify-content:center;
+/* 尋寶功能 FAB（v54.66：合併成單一 ••• 主按鈕，點擊展開兩個子功能，避免常駐遮擋畫面） */
+#hunt-fab-wrap{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:300;display:flex;flex-direction:column-reverse;align-items:center;gap:12px}
+#hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:24px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;letter-spacing:1px}
+#hunt-fab-main:active{transform:scale(.93)}
+#hunt-lens-fab,#hunt-barcode-fab{
+  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
-#hunt-lens-fab svg{width:26px;height:26px}
-#hunt-lens-fab:active{transform:scale(.93)}
-#hunt-barcode-fab{
-  position:fixed;right:18px;bottom:calc(142px + env(safe-area-inset-bottom,0px));
-  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;z-index:300;
-  background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;line-height:1;
-  box-shadow:0 6px 18px rgba(105,240,174,.45);display:flex;align-items:center;justify-content:center;
-}
-#hunt-barcode-fab svg{width:26px;height:26px}
-#hunt-barcode-fab:active{transform:scale(.93)}
+#hunt-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
+#hunt-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
+#hunt-lens-fab svg,#hunt-barcode-fab svg{width:26px;height:26px}
+#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#hunt-fab-wrap.open #hunt-fab-main{transform:rotate(90deg)}
 #hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
 .hunt-actionbar{display:flex;gap:8px;align-items:center;padding:10px 16px 0}
@@ -1980,8 +1976,11 @@ body{
         </div>
       </div>
       <div id="hunt-body"></div>
-      <button id="hunt-barcode-fab" onclick="openBarcodeWebSearch()" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
-      <button id="hunt-lens-fab" onclick="huntLensStart()" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+      <div id="hunt-fab-wrap">
+        <button id="hunt-fab-main" onclick="toggleHuntFab()" aria-label="更多功能" type="button">•••</button>
+        <button id="hunt-barcode-fab" onclick="huntFabAction('openBarcodeWebSearch')" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
+        <button id="hunt-lens-fab" onclick="huntFabAction('huntLensStart')" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+      </div>
     </div>
 
   </div><!-- /content -->
@@ -2338,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.65';
+const APP_VERSION='v54.66';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13535,7 +13534,7 @@ window.onload=function(){
 // ══ 尋寶清單（二手比價）v06 — 完全獨立模組 ══
 //    自有狀態與掃描器，不碰收藏建檔的 entry / combo
 // ══════════════════════════════════════════════════════
-var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barcode','notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'];
+var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barcode','notes','cover_img','extra_images','sightings','hunt_status','uuid','created_at','jp_name','region','summary'];
 var hunt=[];                 // [{rowNum,uid,data:{...}}]
 var _huntEntry=null;         // 新增目標暫存
 var _huntPhoto='';           // 目標照片暫存（base64；空＝沿用舊照）
@@ -13767,8 +13766,8 @@ function huntCardHtml(h){
   }
   return '<div '+_huntPressAttr(h.uid)+' style="display:flex;gap:12px;background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
     (_huntSel?'<div style="flex-shrink:0;align-self:center;font-size:20px;color:'+((_huntSelSet.has(h.uid))?'#ff6e9c':'#5c6b8a')+'">'+(_huntSelSet.has(h.uid)?'☑':'☐')+'</div>':'')+
-    (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:52px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #1e2a45">'
-          :'<div style="width:52px;height:68px;border-radius:6px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:20px">🎮</div>')+
+    (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:104px;height:104px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1px solid #1e2a45">'
+          :'<div style="width:104px;height:104px;border-radius:10px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:32px">🎮</div>')+
     '<div style="flex:1;min-width:0">'+
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
         '<span style="font-size:9px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 5px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
@@ -13887,6 +13886,16 @@ var _bcWebScan=createScanner({videoId:'barcode-web-video',
   },
   onUnsupported:function(){var h=$('barcode-web-hint');if(h)h.textContent='裝置不支援即時掃描，請在下方手動輸入條碼';},
   onError:function(){var h=$('barcode-web-hint');if(h)h.textContent='無法啟動相機，請在下方手動輸入條碼';}});
+// v54.66：尋寶頁 ••• 主按鈕展開/收合子功能
+function toggleHuntFab(){
+  var wrap=document.getElementById('hunt-fab-wrap');
+  if(wrap)wrap.classList.toggle('open');
+}
+function huntFabAction(fn){
+  var wrap=document.getElementById('hunt-fab-wrap');
+  if(wrap)wrap.classList.remove('open'); // 選了子功能後自動收合
+  if(typeof window[fn]==='function')window[fn]();
+}
 function openBarcodeWebSearch(){
   var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
   var inp=$('barcode-web-input');
@@ -14342,6 +14351,13 @@ function huntFormStep(){
       '<button class="btn bp bw" onclick="huntSaveTarget()" type="button">儲存目標</button>'+
     '</div>';
 }
+// v54.66：仿照收藏 _entryFields() 的做法，額外送出 by-name 的 fields 物件，
+// 讓 extra_images 等新欄位不受 HUNT_HDR/試算表欄位順序限制，只要試算表有對應欄位標題即可寫入
+function _huntEntryFields(e){
+  var out={};
+  Object.keys(e||{}).forEach(function(k){if(k.charAt(0)!=='_')out[k]=e[k];});
+  return out;
+}
 function huntSaveTarget(){
   if(!cfg.url){toast('請先設定試算表 URL','er');return;}
   var e=_huntEntry||{};
@@ -14353,7 +14369,7 @@ function huntSaveTarget(){
   if(!e.created_at)e.created_at=tpeDateTime();
   var row=HUNT_HDR.map(function(k){return e[k]!==undefined?e[k]:'';});
   loading('儲存中...');
-  shPost({action:'add',row:row,category:'狩獵'}).then(function(res){
+  shPost({action:'add',row:row,fields:_huntEntryFields(e),category:'狩獵'}).then(function(res){
     if(!res.ok)throw new Error(res.error||'未知');
     var uid=res.uuid||('hunt:'+res.rowNum);
     if(res.imgs&&res.imgs.cover_img!==undefined)e.cover_img=res.imgs.cover_img;
@@ -14369,7 +14385,7 @@ function huntSaveTarget(){
 function huntUpdateRow(h){
   var d=h.data;
   var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
-  return shPost({action:'update',uuid:_huntValidUuid(d)||undefined,rowNum:h.uid,row:row,category:'狩獵'}).then(function(res){
+  return shPost({action:'update',uuid:_huntValidUuid(d)||undefined,rowNum:h.uid,row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
     if(!res.ok)throw new Error(res.error||'未知');
     if(res.imgs&&res.imgs.cover_img!==undefined)d.cover_img=res.imgs.cover_img;
     return res;
@@ -14388,12 +14404,31 @@ function huntDetail(uid){
   var _minTWD=Infinity;sorted.forEach(function(o){if(o.twd<_minTWD)_minTWD=o.twd;});
   var done=_huntDone(d);
   var cc=HUNT_CATCOLOR[catInternal(d.target_cat)]||'#00e5ff';
-  var photo=imgUrl(d.cover_img,400);
   var box=$('hunt-body');if(!box)return;
+  // v54.66：圖片改用跟收藏一樣的 gallery 機制（cover_img + extra_images，最多8張），
+  // 沿用既有的 hero-cover-gallery / openHeroLightbox / switchHeroCoverImg（完全通用，無需修改）
+  var _imgDefs=[];
+  if(hasImgVal(d.cover_img))_imgDefs.push({lbl:'主要照片',url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
+  var _extraArr=[];try{_extraArr=JSON.parse(d.extra_images||'[]');}catch(e){_extraArr=[];}
+  if(Array.isArray(_extraArr)){
+    _extraArr.forEach(function(item){
+      if(item&&hasImgVal(item.img))_imgDefs.push({lbl:item.label||'額外照片',url:imgUrl(item.img,300),full:imgUrl(item.img,1000),thumb:imgUrl(item.img,80)});
+    });
+  }
+  var _mainDef=_imgDefs[0];
+  window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
+  var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0" style="width:104px">'+
+    '<div class="vault-cover-main" id="hero-cover-main" style="width:104px;height:104px'+(_mainDef?';cursor:pointer':'')+'"'+(_mainDef?' onclick="openHeroLightbox()"':'')+'>'+
+    (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="" style="width:100%;height:100%;object-fit:cover">'):'🎮')+'</div>';
+  if(_imgDefs.length>1){
+    coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
+      return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
+    }).join('')+'</div>';
+  }
+  coverHtml+='</div>';
   var html='<div style="padding:10px 16px 6px"><button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="renderHuntList()" type="button">‹ 返回清單</button></div>';
   html+='<div class="card" style="display:flex;gap:14px">'+
-    (photo?'<img src="'+photo+'" alt="" style="width:90px;height:120px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid #1e2a45">'
-          :'<div style="width:90px;height:120px;border-radius:8px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:28px">🎮</div>')+
+    coverHtml+
     '<div style="flex:1;min-width:0">'+
       '<span style="font-size:10px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 6px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
       (done?' <span style="font-size:10px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 6px">已入手</span>':'')+
@@ -14578,6 +14613,21 @@ function huntPersistSights(uid,sights){
 function huntEditTarget(uid){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
   _huntPhoto='';
+  var extraArr=[];try{extraArr=JSON.parse(d.extra_images||'[]');}catch(e){extraArr=[];}
+  if(!Array.isArray(extraArr))extraArr=[];
+  var extraHtml='<div style="font-size:12px;color:#7986cb;margin:4px 0 6px">額外照片（'+extraArr.length+'/7，加封面最多8張）</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
+    extraArr.map(function(im,i){
+      return '<div style="position:relative;width:64px;height:64px">'+
+        '<img src="'+imgUrl(im.img,150)+'" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #1e2a45">'+
+        '<div onclick="huntRemoveExtraImg(\''+uid+'\','+i+')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#ff5252;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.4)">✕</div>'+
+      '</div>';
+    }).join('')+
+    (extraArr.length<7?
+      '<label style="width:64px;height:64px;border-radius:8px;border:1.5px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7986cb;font-size:22px">'+
+        '+<input type="file" accept="image/*" style="display:none" onchange="huntAddExtraImg(this,\''+uid+'\')"></label>'
+      :'')+
+    '</div>';
   var ov=_huntSheet();
   ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:90vh;overflow-y:auto">'+
     '<div style="text-align:center;margin-bottom:14px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
@@ -14592,8 +14642,37 @@ function huntEditTarget(uid){
         '<span>🖼</span><span>相簿</span>'+
         '<input type="file" accept="image/*" id="he-gal" style="display:none" onchange="huntEditPhoto(this)"></label>'+
     '</div>'+
+    extraHtml+
     '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntEditSave(\''+uid+'\')" type="button">儲存變更</button>'+
     '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()" type="button">取消</button></div>';
+}
+// 額外照片：新增/移除，比照收藏 addExtraImg/removeExtraImg 的模式，但操作對象是尋寶目標 d.extra_images
+function huntAddExtraImg(input,uid){
+  var f=input&&input.files&&input.files[0];if(!f)return;
+  input.value='';
+  var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
+  var arr=[];try{arr=JSON.parse(d.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr))arr=[];
+  if(arr.length>=7){toast('最多只能新增 7 張額外照片','er');return;}
+  cropImageFile(f).then(function(blob){
+    var r=new FileReader();
+    r.onload=function(){
+      compressImg(r.result,1000,0.85,function(compressed){
+        arr.push({label:'',img:compressed});
+        d.extra_images=JSON.stringify(arr);
+        huntEditTarget(uid); // 重繪編輯表單顯示新照片
+      });
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){});
+}
+function huntRemoveExtraImg(uid,idx){
+  var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
+  var arr=[];try{arr=JSON.parse(d.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr))return;
+  arr.splice(idx,1);
+  d.extra_images=JSON.stringify(arr);
+  huntEditTarget(uid);
 }
 function huntEditPhoto(input){
   var f=input.files&&input.files[0];if(!f)return;
