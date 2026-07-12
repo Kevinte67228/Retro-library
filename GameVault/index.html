@@ -404,9 +404,11 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
-.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer}
+.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative}
 .gc:active{border-color:#00e5ff}
-.gi{width:42px;height:42px;border-radius:8px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.gi{width:60px;height:60px;border-radius:8px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:26px}
+.gfav{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
+.gfav:active{transform:scale(.85)}
 .ginfo{flex:1;min-width:0}
 .gn{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gm{font-size:12px;color:#9fa8c8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2322,7 +2324,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.62';
+const APP_VERSION='v54.63';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11403,6 +11405,7 @@ function setF(f){activeF=f;_syncStatActive();filterCol();}
 // 組內 OR、跨組 AND；選項由現有收藏動態撈出，無資料的組自動隱藏
 var colFilters={}, _pmin='', _pmax='', _mvmin='', _mvmax='';
 var FACETS=[
+  {k:'favorite',label:'最愛',order:['是']},
   {k:'category',label:'分類',order:['遊戲','攻略','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔']},
   {k:'subtype',label:'類型'},
   {k:'platform',label:'平台',order:PLATFORMS.map(function(p){return p.v;})},
@@ -11448,6 +11451,7 @@ var FACETS=[
 ];
 function facetVals(f,d){
   var cat=catInternal(d.category)||'遊戲';
+  if(f.k==='favorite')return d.favorite==='Y'?['是']:[];
   // v54.02：動漫/美術設定集、公仔已改用獨立的 condition 欄位（非靠 completeness 推算），優先讀該欄位
   if(f.k==='__condition'){
     if((cat==='動漫/美術設定集'||cat==='公仔')&&d.condition)return [d.condition];
@@ -12102,7 +12106,7 @@ function renderGlist(){
     var _icon=_catMeta(cat,d.subtype).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
+      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
@@ -12130,6 +12134,7 @@ function renderGlist(){
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
     var dateLine=_glistMeta(d);
     return'<div class="gc" style="'+((_colSel&&_colSelSet.has(String(item.uid||item.rowNum)))?'box-shadow:0 0 0 2px #ff6e9c inset;':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
+      '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(item.uid||item.rowNum)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>'+
       (_colSel?'<div style="flex-shrink:0;align-self:center;font-size:24px;line-height:1;color:'+((_colSelSet.has(String(item.uid||item.rowNum)))?'#ff6e9c':'#5c6b8a')+'">'+((_colSelSet.has(String(item.uid||item.rowNum)))?'☑':'☐')+'</div>':'')+
       thumb+
       '<div class="ginfo">'+
@@ -12515,6 +12520,31 @@ function marketEstimatePayloadFromResult(r){
     _twdText:marketTwdText(twdAmount),
     _srcText:src||'市場資料'
   };
+}
+// v54.63：收藏卡片右上角最愛切換。採樂觀更新（先更新畫面+本地快取，背景送出後端，
+// 失敗才復原並提示）——愛心是高頻率的輕量操作，不適合每次都跳出 loading 阻擋畫面。
+function toggleFavorite(evt,rowNum){
+  if(evt){evt.stopPropagation();evt.preventDefault();}
+  var item=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
+  if(!item)return;
+  var wasOn=item.data.favorite==='Y';
+  item.data.favorite=wasOn?'':'Y';
+  localforage.setItem('gv_col',col).catch(function(){});
+  filterCol(); // 若「最愛」篩選啟用中，取消最愛要立即從清單消失
+  if(!cfg.url)return;
+  var updated=item.data;
+  var fields=fieldsFor(updated.category,updated.subtype);
+  var row=_rowFromFields(updated,fields);
+  var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:
+    (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
+  shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
+    if(!res||!res.ok)throw new Error((res&&res.error)||'更新失敗');
+  }).catch(function(e){
+    item.data.favorite=wasOn?'Y':''; // 失敗復原
+    localforage.setItem('gv_col',col).catch(function(){});
+    filterCol();
+    toast('最愛狀態儲存失敗：'+_friendlyError(e.message),'er',5000);
+  });
 }
 function marketSaveEstimate(rowNum,patch){
   var item=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
