@@ -571,6 +571,14 @@ body{
 }
 #hunt-lens-fab svg{width:26px;height:26px}
 #hunt-lens-fab:active{transform:scale(.93)}
+#hunt-barcode-fab{
+  position:fixed;right:18px;bottom:calc(142px + env(safe-area-inset-bottom,0px));
+  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;z-index:300;
+  background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;line-height:1;
+  box-shadow:0 6px 18px rgba(105,240,174,.45);display:flex;align-items:center;justify-content:center;
+}
+#hunt-barcode-fab svg{width:26px;height:26px}
+#hunt-barcode-fab:active{transform:scale(.93)}
 #hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
 .hunt-actionbar{display:flex;gap:8px;align-items:center;padding:10px 16px 0}
@@ -1955,7 +1963,6 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="openBarcodeWebSearch()" style="background:#141b30;border:1.5px solid #69f0ae;color:#69f0ae;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">🔎 條碼查詢</button>
               <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售</button>
             </div>
           </div>
@@ -1971,6 +1978,7 @@ body{
         </div>
       </div>
       <div id="hunt-body"></div>
+      <button id="hunt-barcode-fab" onclick="openBarcodeWebSearch()" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
       <button id="hunt-lens-fab" onclick="huntLensStart()" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
     </div>
 
@@ -2314,7 +2322,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.61';
+const APP_VERSION='v54.62';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
