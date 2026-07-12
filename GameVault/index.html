@@ -965,9 +965,13 @@ body{
                 <div class="mb-ico" style="background:rgba(206,147,216,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ce93d8" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/><circle cx="20" cy="5" r="2.5" fill="#ce93d8" stroke="none"/></svg></div>
                 <div class="mb-txt"><div class="ect">條碼＋照片</div><div class="ecd">最高準確度</div></div>
               </div>
-              <div class="ec-card mb-wide" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
+              <div class="ec-card" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
                 <div class="mb-ico" style="background:rgba(128,203,196,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#80cbc4" stroke-width="1.5"><rect x="3" y="7" width="10" height="10" rx="2"/><path d="M15 8h4M15 12h4M15 16h2"/><circle cx="20" cy="8" r="1.5" fill="#80cbc4" stroke="none"/></svg></div>
-                <div class="mb-txt"><div class="ect" id="mb-gcode-combo-title">編碼＋照片</div><div class="ecd" id="mb-gcode-combo-sub">精確比對</div></div>
+                <div class="ect" id="mb-gcode-combo-title">編碼＋照片</div><div class="ecd" id="mb-gcode-combo-sub">精確比對</div>
+              </div>
+              <div class="ec-card" id="mb-aiweb" onclick="pagePickMethod('initAiWebMode')">
+                <div class="mb-ico" style="background:rgba(124,77,255,.14)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7c4dff" stroke-width="1.5"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 3v4M15 3v4"/><circle cx="9" cy="13" r="1" fill="#7c4dff" stroke="none"/><circle cx="15" cy="13" r="1" fill="#7c4dff" stroke="none"/></svg></div>
+                <div class="ect">AI 網頁查詢</div><div class="ecd">貼上生成資料</div>
               </div>
             </div>
           </div>
@@ -2281,7 +2285,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.57';
+const APP_VERSION='v54.58';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7584,28 +7588,29 @@ function selectEntryCat(cat,_noSave){
 // v49.04：數位下載版的 4 種電子書子類型額外顯示「商品編碼」卡（此時走 ISBN 查詢，非商品編碼），
 // 抽成獨立函式供子類型變更時（openSubtypePicker）重新呼叫
 var _DIGI_BOOK_SUBS={'電子書（漫畫／單行本）':1,'電子書（畫冊／美術設定）':1,'電子書（攻略／公式書）':1,'電子書（雜誌／MOOK）':1};
-// v49.07：下載版遊戲／追加下載內容只有「圖片辨識/手動建檔/商店連結」3張卡，4欄格線會留空格，
-// 商店連結改成1x2填滿；其餘子類型（含其他分類）的商店連結維持1x1，不受影響
-var _DIGI_LINK_WIDE_SUBS={'下載版遊戲':1,'追加下載內容':1,'數位音源':1,'數位影音':1};
 // v49.07：改為明確傳入子類型參數（預設才退回全域變數），避免依賴呼叫當下全域 _selectedSubtype
 // 是否已同步更新造成排版忽寬忽窄的不一致（同一分類點兩次卻長不一樣）
+// v54.58：新增「AI網頁查詢」卡片後重新計算格數，維持每排4格整除、不留空格：
+//   一般分類：條碼1＋編碼1＋圖片1＋手動1＋條碼照片2(wide)＋編碼照片1＋AI網頁1 = 8格（2排滿）
+//   電子書子類型：ISBN照片1＋商店連結1＋手動1＋AI網頁1 = 4格（1排滿）
+//   其他數位子類型：圖片1＋商店連結1＋手動1＋AI網頁1 = 4格（1排滿；商店連結不再需要撐寬）
 function _refreshMethodButtons(cat,subtype){
   var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
-  var showLinkWide=isDigital&&_DIGI_LINK_WIDE_SUBS[sub];
   // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
   [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
-   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital]].forEach(function(p){
+   ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital],
+   ['mb-aiweb',true]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
   if(t)t.textContent=showIsbn?'ISBN＋照片':'編碼＋照片';
   if(s)s.textContent=showIsbn?'電子書精確比對':'精確比對';
-  // mb-gcode-combo 在遊戲/電子書情境都是 1x2（原生 HTML 已固定 mb-wide，這裡不需再切換）；
-  // mb-link 才需要依子類型明確設定寬窄，兩者互斥不會同時都是 wide 造成總欄數超過4欄換行
+  // v54.58：mb-gcode-combo 改為固定 1x1（HTML 已移除 mb-wide）；mb-link 也固定 1x1，
+  // 數位下載版的空格改由 mb-aiweb 補滿，不再需要動態切換寬窄
   var linkEl=$('mb-link');
-  if(linkEl)linkEl.classList.toggle('mb-wide',!!showLinkWide);
+  if(linkEl)linkEl.classList.remove('mb-wide');
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
@@ -7897,6 +7902,11 @@ function toggleHelp(step){
     if(srcBtn)srcBtn.classList.add('on');
     var content=panel.querySelector('div[style*="overflow-y"]');if(content)content.scrollTop=0;
   }
+}
+// v54.58 階段一：AI網頁查詢僅先做 UI 排版驗證，功能邏輯待階段二實作。
+// 這個佔位函式讓卡片點擊不會拋出「函式未定義」的錯誤。
+function initAiWebMode(){
+  toast('AI 網頁查詢功能開發中（階段二實作）','',3000);
 }
 function initManualMode(){
   pickTypeAndPlatform('manual',function(type,platform){
