@@ -406,7 +406,7 @@ body{
 }
 .gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative}
 .gc:active{border-color:#00e5ff}
-.gi{width:60px;height:60px;border-radius:8px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:26px}
+.gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
 .gfav{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
 .gfav:active{transform:scale(.85)}
 .ginfo{flex:1;min-width:0}
@@ -2324,7 +2324,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.63';
+const APP_VERSION='v54.64';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12106,7 +12106,7 @@ function renderGlist(){
     var _icon=_catMeta(cat,d.subtype).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
+      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:104px;height:104px;border-radius:10px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
