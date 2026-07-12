@@ -1,3 +1,30 @@
+## v54.63 (2026-07-08)
+
+### 變更內容
+收藏卡片視覺調整＋新增最愛功能：
+
+- **縮圖放大**：卡片列表縮圖從 48px 放大到 70px（中等放大，卡片高度不會大幅增加），emoji 預設圖示比照放大到 60px
+- **最愛功能**：卡片右上角新增❤️/🤍愛心圖示，點擊切換最愛狀態，採樂觀更新（先更新畫面與本地快取、背景送出後端，失敗才復原並提示，避免高頻率操作每次都要等待 loading）；點擊愛心會阻止事件冒泡，不會誤觸開啟詳情頁
+- **最愛篩選**：加入進階篩選的 FACETS 清單，可篩選只顯示已收藏最愛的項目
+
+### ⚠️ 需要使用者手動處理
+後端寫入邏輯是依照 Google 試算表既有的欄位標題對應寫入（`headers.map(h => fields[h])`），沒有的欄位不會被寫入。**使用者已確認會自行在 30 個分類分頁（Games/Books/Consoles/...等，不含 Hunt）手動加上 `favorite` 欄位標題**，加好之前最愛狀態只會存在 App 本地快取，重新同步後會遺失。
+
+自我檢查：facetVals 對 favorite 的特殊分支、toggleFavorite 的樂觀更新切換邏輯均已驗證通過。
+
+### 影響檔案
+- index.html / GameVault_v54_63_index.html
+- sw.js
+
+### GS 版本
+- 無變更（v65，`favorite` 欄位靠試算表既有的動態欄位對應機制自動支援，不需修改 GAS 程式碼，只需使用者手動加欄位標題）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v54-62 → gamevault-v54-63
+
+### 對應備份
+- _internal/old/v54_62/
+
 ## v54.62 (2026-07-08)
 
 ### 變更內容
@@ -64,29 +91,4 @@ AI 網頁查詢建檔頁新增免手動輸入的兩個功能，**完全沿用既
 
 ### 對應備份
 - _internal/old/v54_59/
-
-## v54.59 (2026-07-08)
-
-### 變更內容
-**【階段二：AI網頁查詢功能邏輯完整實作】**（階段一 UI 排版已驗收正常，確認 UI 層安全後才進行）
-
-- **架構決策**：`aiweb-sec` 區塊放在 `#pg-scan` 內、預設 `display:none`、納入 `hideAllSecs()` 管理，**完全比照 `digital-link-sec`（商店連結模式）的既有模式**。刻意不用 v54.49 那次的獨立 fixed overlay（該 overlay 是當時唯一沒受災的畫面，反而模糊了問題定位）
-- **完整對齊既有架構**：`initAiWebMode()` 比照 `initDigitalLinkMode()` 的實作（`pickTypeAndPlatform` → `setMbActive` → `enterMode` → `hideAllSecs` → 顯示自己的 sec）；`_METHOD_MB` 加入 `initAiWebMode:'aiweb'`（建檔方式記憶）；`setMbActive()` 加入 aiweb 的高亮色（#7c4dff）
-- **動態 Prompt 產生**：直接呼叫既有的 `fieldsFor(category, subtype)` 取得該分類欄位定義，篩選出核心識別欄位（排除個人記錄／收藏狀態／品相完整度／關聯商品／圖片類）；Prompt 中帶入 Step1~3 已選的分類／子類型／商品區域／平台作為已知條件，並強制約束 AI 只回傳純 JSON、key 完全對應 entry 欄位、查無資料一律留空不可臆測
-- **AI 助手跳轉**：DeepSeek／GPT／Gemini／Claude 四個按鈕，沿用 v54.46 已驗證可用的 `<a>` 模擬點擊開啟方式（避免 PWA 內嵌瀏覽器把 Google 服務開成桌面版）
-- **貼上匯入**：使用既有的 `extractJson()` 容錯機制（自動剔除 markdown 標籤／前後廢話／修尾逗號／單引號），解析成功後預填進手動建檔表單
-- **自我檢查全部通過**：核心欄位篩選（驗證個人記錄等欄位確實被排除）、`extractJson()` 對 4 種 AI 髒回覆格式的容錯、匯入時空值/「無」/「未知」的過濾
-
-### 影響檔案
-- index.html / GameVault_v54_59_index.html
-- sw.js
-
-### GS 版本
-- 無（AI 呼叫走使用者自行複製貼上，不經 API，無後端異動）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-58 → gamevault-v54-59
-
-### 對應備份
-- _internal/old/v54_58/
 
