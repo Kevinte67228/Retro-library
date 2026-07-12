@@ -2076,13 +2076,20 @@ const FIELDS=[
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
   ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['market_value','目前估值','price','收藏狀態'],
-  ['market_value_updated_at','估值更新日','date','收藏狀態'],
-  ['market_value_source','估值來源','txt','收藏狀態'],
-  ['market_value_confidence','估值信心','sel','收藏狀態'],
-  ['market_value_notes','估值備註','area','收藏狀態'],
-  ['market_value_currency','估值原幣','hidden','收藏狀態'],
-  ['market_value_foreign_amount','原幣估值','hidden','收藏狀態'],
+  ['market_value','目前估值','price','估值資訊'],
+
+  ['market_value_updated_at','估值更新日','date','估值資訊'],
+
+  ['market_value_source','估值來源','txt','估值資訊'],
+
+  ['market_value_confidence','估值信心','sel','估值資訊'],
+
+  ['market_value_notes','估值備註','area','估值資訊'],
+
+  ['market_value_currency','估值原幣','hidden','估值資訊'],
+
+  ['market_value_foreign_amount','原幣估值','hidden','估值資訊'],
+
   ['resale_price','出售價格','price','收藏狀態'],
   ['resale_date','出售日期','date','收藏狀態'],
   ['play_status','遊玩狀態','sel','個人記錄'],
@@ -2267,13 +2274,20 @@ const BOOK_FIELDS=[
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
   ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['market_value','目前估值','price','收藏狀態'],
-  ['market_value_updated_at','估值更新日','date','收藏狀態'],
-  ['market_value_source','估值來源','txt','收藏狀態'],
-  ['market_value_confidence','估值信心','sel','收藏狀態'],
-  ['market_value_notes','估值備註','area','收藏狀態'],
-  ['market_value_currency','估值原幣','hidden','收藏狀態'],
-  ['market_value_foreign_amount','原幣估值','hidden','收藏狀態'],
+  ['market_value','目前估值','price','估值資訊'],
+
+  ['market_value_updated_at','估值更新日','date','估值資訊'],
+
+  ['market_value_source','估值來源','txt','估值資訊'],
+
+  ['market_value_confidence','估值信心','sel','估值資訊'],
+
+  ['market_value_notes','估值備註','area','估值資訊'],
+
+  ['market_value_currency','估值原幣','hidden','估值資訊'],
+
+  ['market_value_foreign_amount','原幣估值','hidden','估值資訊'],
+
   ['resale_price','出售價格','price','收藏狀態'],
   ['resale_date','出售日期','date','收藏狀態'],
   ['rating','個人評分','hidden','個人記錄'],
@@ -2298,7 +2312,7 @@ const BOOK_SELECTS={
   binding:['平裝','精裝','騎馬釘','盒裝','其他'],
   market_value_confidence:['N/A','高','中','低'],
 };
-const BOOK_GROUPS=['圖片紀錄','書籍資訊','出版資訊','編碼條碼','收藏狀態','品相完整度','關聯商品','補充資訊'];
+const BOOK_GROUPS=['圖片紀錄','書籍資訊','出版資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','關聯商品','補充資訊'];
 const BOOK_DEFAULTS={
   category:'攻略',collect_status:'收藏中',
   bundle:'書本',buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',buy_source:'全新購入',
@@ -2306,7 +2320,7 @@ const BOOK_DEFAULTS={
   market_value_currency:'',market_value_foreign_amount:'',
   resale_price:'0',resale_date:'2099/01/01',cover_img:'',back_img:'',spine_img:'',ref_link:'',
 };
-const BOOK_GCOL={'書籍資訊':'#ce93d8','出版資訊':'#69f0ae','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const BOOK_GCOL={'書籍資訊':'#ce93d8','出版資訊':'#69f0ae','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 // 攻略：語言版本（單選晶片）
 const BOOK_LANG_OPTS=['日文','繁中','簡中','英文'];
 // 攻略：適用平台（複選晶片，主流平台 + 其他帶備註）；晶片顯示 s（縮寫），儲存 v（全名），以「、」分隔
@@ -2324,9 +2338,9 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.64';
-const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
-const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const APP_VERSION='v54.65';
+const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
+const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
 const OCR_TEXT_F=new Set(['developer','publisher','model_no']);
 
@@ -2357,13 +2371,20 @@ const CONSOLE_FIELDS=[
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
   ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['market_value','目前估值','price','收藏狀態'],
-  ['market_value_updated_at','估值更新日','date','收藏狀態'],
-  ['market_value_source','估值來源','txt','收藏狀態'],
-  ['market_value_confidence','估值信心','sel','收藏狀態'],
-  ['market_value_notes','估值備註','area','收藏狀態'],
-  ['market_value_currency','估值原幣','hidden','收藏狀態'],
-  ['market_value_foreign_amount','原幣估值','hidden','收藏狀態'],
+  ['market_value','目前估值','price','估值資訊'],
+
+  ['market_value_updated_at','估值更新日','date','估值資訊'],
+
+  ['market_value_source','估值來源','txt','估值資訊'],
+
+  ['market_value_confidence','估值信心','sel','估值資訊'],
+
+  ['market_value_notes','估值備註','area','估值資訊'],
+
+  ['market_value_currency','估值原幣','hidden','估值資訊'],
+
+  ['market_value_foreign_amount','原幣估值','hidden','估值資訊'],
+
   ['resale_price','出售價格','price','收藏狀態'],
   ['resale_date','出售日期','date','收藏狀態'],
   ['working_status','運作狀態','sel','運作狀態'],
@@ -2390,7 +2411,7 @@ const CONSOLE_SELECTS={
   warranty_status:['N/A','保固中','已過保','無保固','不明'],
   market_value_confidence:['N/A','高','中','低'],
 };
-const CONSOLE_GROUPS=['圖片紀錄','主機資訊','硬體規格','編碼條碼','收藏狀態','品相完整度','運作狀態','關聯商品','補充資訊'];
+const CONSOLE_GROUPS=['圖片紀錄','主機資訊','硬體規格','編碼條碼','收藏狀態','估值資訊','品相完整度','運作狀態','關聯商品','補充資訊'];
 const CONSOLE_DEFAULTS={
   category:'主機',collect_status:'收藏中',
   bundle:'主機本體',buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',buy_source:'全新購入',
@@ -2399,7 +2420,7 @@ const CONSOLE_DEFAULTS={
   market_value_currency:'',market_value_foreign_amount:'',
   resale_price:'0',resale_date:'2099/01/01',cover_img:'',back_img:'',spine_img:'',ref_link:'',brand:'',series:'',
 };
-const CONSOLE_GCOL={'主機資訊':'#69f0ae','硬體規格':'#80deea','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','運作狀態':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const CONSOLE_GCOL={'主機資訊':'#69f0ae','硬體規格':'#80deea','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','運作狀態':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
 // ── 週邊（Peripheral）專屬欄位 ──
 const PERIPH_FIELDS=[
@@ -2427,13 +2448,20 @@ const PERIPH_FIELDS=[
   ['buy_price','購入價格','price','收藏狀態'],
   ['buy_source','入手來源','sel','收藏狀態'],
   ['storage_location','保管位置','storagesel','收藏狀態'],
-  ['market_value','目前估值','price','收藏狀態'],
-  ['market_value_updated_at','估值更新日','date','收藏狀態'],
-  ['market_value_source','估值來源','txt','收藏狀態'],
-  ['market_value_confidence','估值信心','sel','收藏狀態'],
-  ['market_value_notes','估值備註','area','收藏狀態'],
-  ['market_value_currency','估值原幣','hidden','收藏狀態'],
-  ['market_value_foreign_amount','原幣估值','hidden','收藏狀態'],
+  ['market_value','目前估值','price','估值資訊'],
+
+  ['market_value_updated_at','估值更新日','date','估值資訊'],
+
+  ['market_value_source','估值來源','txt','估值資訊'],
+
+  ['market_value_confidence','估值信心','sel','估值資訊'],
+
+  ['market_value_notes','估值備註','area','估值資訊'],
+
+  ['market_value_currency','估值原幣','hidden','估值資訊'],
+
+  ['market_value_foreign_amount','原幣估值','hidden','估值資訊'],
+
   ['resale_price','出售價格','price','收藏狀態'],
   ['resale_date','出售日期','date','收藏狀態'],
   ['working_status','運作狀態','sel','運作狀態'],
@@ -2461,7 +2489,7 @@ const PERIPH_SELECTS={
   warranty_status:['N/A','保固中','已過保','無保固','不明'],
   market_value_confidence:['N/A','高','中','低'],
 };
-const PERIPH_GROUPS=['圖片紀錄','週邊資訊','規格','編碼條碼','收藏狀態','品相完整度','運作狀態','關聯商品','補充資訊'];
+const PERIPH_GROUPS=['圖片紀錄','週邊資訊','規格','編碼條碼','收藏狀態','估值資訊','品相完整度','運作狀態','關聯商品','補充資訊'];
 const PERIPH_DEFAULTS={
   category:'週邊',collect_status:'收藏中',
   bundle:'週邊本體',buy_date:'2099/01/01',buy_price:'0',suggest_price:'0',buy_source:'全新購入',
@@ -2470,7 +2498,7 @@ const PERIPH_DEFAULTS={
   market_value_currency:'',market_value_foreign_amount:'',
   resale_price:'0',resale_date:'2099/01/01',cover_img:'',back_img:'',spine_img:'',ref_link:'',brand:'',series:'',
 };
-const PERIPH_GCOL={'週邊資訊':'#ffab40','規格':'#80deea','編碼條碼':'#ffee58','收藏狀態':'#69f0ae','品相完整度':'#26c6da','運作狀態':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const PERIPH_GCOL={'週邊資訊':'#ffab40','規格':'#80deea','編碼條碼':'#ffee58','收藏狀態':'#69f0ae','估值資訊':'#ffd54f','品相完整度':'#26c6da','運作狀態':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 
 // ── 數位版遊戲（Digital）專屬欄位（v42.14）：無實體，拿掉條碼/品相/保管位置，改為商店/帳號/DLC ──
 // ══ 數位下載版（v43.01 新增，v46.01 欄位重整，v47.01 依子類型拆表：遊戲/DLC/電子書x4/音源/影音各自量身欄位 ══
@@ -2685,8 +2713,10 @@ function _osTail(){
     ['buy_price','原幣價格','price','收藏狀態'],
     ['local_cost','台幣實付（含運費）','price','收藏狀態'],
     ['bonus_items','特典附錄','area','收藏狀態'],
-    ['market_value','目前估值','price','個人記錄'],
-    ['market_value_confidence','估值信心','sel','個人記錄'],
+    ['market_value','目前估值','price','估值資訊'],
+
+    ['market_value_confidence','估值信心','sel','估值資訊'],
+
     ['summary','簡介','area','補充資訊'],
     ['ref_link','參考連結','autolink','補充資訊'],
     ['cover_img','封面圖檔','imgupload','圖片紀錄'],
@@ -2709,7 +2739,7 @@ const OS_SHARED_SELECTS={
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
 };
-const OS_SHARED_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const OS_SHARED_GCOL={'識別資訊':'#00e5ff','音樂資訊':'#ff8a65','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const OS_SHARED_DEFAULTS={collect_status:'收藏中',obi_status:'',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',release_date:'',cover_img:'',back_img:'',spine_img:'',format:'CD',edition_type:''};
 
 // ── 1. 原聲帶(OST) ──
@@ -2719,7 +2749,7 @@ const OSTMAIN_FIELDS=_osHead().concat([
   ['track_count','收錄曲數','txt','音樂資訊'],
 ]).concat(_osTail());
 const OSTMAIN_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
-const OSTMAIN_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTMAIN_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const OSTMAIN_GCOL=Object.assign({},OS_SHARED_GCOL,{});
 const OSTMAIN_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'原聲帶'});
 
@@ -2730,7 +2760,7 @@ const OSTSINGLE_FIELDS=_osHead().concat([
   ['track_count','收錄曲數','txt','音樂資訊'],
 ]).concat(_osTail());
 const OSTSINGLE_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
-const OSTSINGLE_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTSINGLE_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const OSTSINGLE_GCOL=Object.assign({},OS_SHARED_GCOL,{});
 const OSTSINGLE_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'主題曲／單曲'});
 
@@ -2741,7 +2771,7 @@ const OSTCHAR_FIELDS=_osHead().concat([
   ['composer','作曲／編曲','txt','音樂資訊'],
 ]).concat(_osTail());
 const OSTCHAR_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
-const OSTCHAR_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTCHAR_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const OSTCHAR_GCOL=Object.assign({},OS_SHARED_GCOL,{});
 const OSTCHAR_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'角色歌曲／印象集'});
 
@@ -2751,7 +2781,7 @@ const OSTDRAMA_FIELDS=_osHead().concat([
   ['script_writer','腳本','txt','音樂資訊'],
 ]).concat(_osTail());
 const OSTDRAMA_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
-const OSTDRAMA_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTDRAMA_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const OSTDRAMA_GCOL=Object.assign({},OS_SHARED_GCOL,{});
 const OSTDRAMA_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'廣播劇CD'});
 
@@ -2762,7 +2792,7 @@ const OSTLIVE_FIELDS=_osHead().concat([
   ['performers','演出者','txt','音樂資訊'],
 ]).concat(_osTail());
 const OSTLIVE_SELECTS=Object.assign({},OS_SHARED_SELECTS,{});
-const OSTLIVE_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const OSTLIVE_GROUPS=['圖片紀錄','識別資訊','音樂資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const OSTLIVE_GCOL=Object.assign({},OS_SHARED_GCOL,{});
 const OSTLIVE_DEFAULTS=Object.assign({},OS_SHARED_DEFAULTS,{category:'原聲帶',subtype:'演唱會音源／其他'});
 
@@ -2811,8 +2841,10 @@ function _anTail(){
     ['buy_source','取得方式','sel','收藏狀態'],
     ['buy_price','原幣價格','price','收藏狀態'],
     ['local_cost','台幣實付（含運費）','price','收藏狀態'],
-    ['market_value','目前估值','price','個人記錄'],
-    ['market_value_confidence','估值信心','sel','個人記錄'],
+    ['market_value','目前估值','price','估值資訊'],
+
+    ['market_value_confidence','估值信心','sel','估值資訊'],
+
     ['summary','簡介','area','補充資訊'],
     ['ref_link','參考連結','autolink','補充資訊'],
     ['cover_img','封面圖檔','imgupload','圖片紀錄'],
@@ -2834,7 +2866,7 @@ const AN_SHARED_SELECTS={
   market_value_confidence:['高','中','低','N/A'],
   binding:['平裝書','精裝書','Blu-ray','DVD','CD','數位版'],
 };
-const AN_SHARED_GCOL={'識別資訊':'#00e5ff','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const AN_SHARED_GCOL={'識別資訊':'#00e5ff','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const AN_SHARED_DEFAULTS={collect_status:'已入庫',condition:'',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',release_date:'',cover_img:'',back_img:'',spine_img:''};
 
 // ── 1. 漫畫／單行本 ──
@@ -2844,7 +2876,7 @@ const ANMANGA_FIELDS=_anHead().concat([
   ['page_count','頁數','txt','內容資訊'],
 ]).concat(_anTail());
 const ANMANGA_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANMANGA_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANMANGA_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANMANGA_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANMANGA_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'漫畫／單行本'});
 
@@ -2854,7 +2886,7 @@ const ANARTBOOK_FIELDS=_anHead().concat([
   ['page_count','頁數','txt','內容資訊'],
 ]).concat(_anTail());
 const ANARTBOOK_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANARTBOOK_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANARTBOOK_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANARTBOOK_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANARTBOOK_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'畫冊／插畫集'});
 
@@ -2864,7 +2896,7 @@ const ANSETTING_FIELDS=_anHead().concat([
   ['page_count','頁數','txt','內容資訊'],
 ]).concat(_anTail());
 const ANSETTING_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANSETTING_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANSETTING_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANSETTING_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANSETTING_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'設定集／公式資料集'});
 
@@ -2874,7 +2906,7 @@ const ANKEYFRAME_FIELDS=_anHead().concat([
   ['page_count','頁數','txt','內容資訊'],
 ]).concat(_anTail());
 const ANKEYFRAME_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANKEYFRAME_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANKEYFRAME_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANKEYFRAME_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANKEYFRAME_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'原畫集／分鏡集'});
 
@@ -2885,7 +2917,7 @@ const ANMAG_FIELDS=_anHead().concat([
   ['page_count','頁數','txt','內容資訊'],
 ]).concat(_anTail());
 const ANMAG_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANMAG_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANMAG_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANMAG_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANMAG_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'雜誌／MOOK／同人誌'});
 
@@ -2897,7 +2929,7 @@ const ANTV_FIELDS=_anHead().concat([
   ['binding','載體格式','sel','內容資訊'],
 ]).concat(_anTail());
 const ANTV_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANTV_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANTV_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANTV_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANTV_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'動畫影集',binding:''});
 
@@ -2908,14 +2940,14 @@ const ANMOVIE_FIELDS=_anHead().concat([
   ['binding','載體格式','sel','內容資訊'],
 ]).concat(_anTail());
 const ANMOVIE_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANMOVIE_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANMOVIE_GROUPS=['圖片紀錄','識別資訊','內容資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANMOVIE_GCOL=Object.assign({},AN_SHARED_GCOL,{'內容資訊':'#aed581'});
 const ANMOVIE_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'動畫電影／劇場版',binding:''});
 
 // ── 8. 周邊／其他 ──
 const ANOTHER_FIELDS=_anHead().concat([]).concat(_anTail());
 const ANOTHER_SELECTS=Object.assign({},AN_SHARED_SELECTS,{});
-const ANOTHER_GROUPS=['圖片紀錄','識別資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const ANOTHER_GROUPS=['圖片紀錄','識別資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const ANOTHER_GCOL=Object.assign({},AN_SHARED_GCOL,{});
 const ANOTHER_DEFAULTS=Object.assign({},AN_SHARED_DEFAULTS,{category:'動漫/美術設定集',subtype:'周邊／其他'});
 
@@ -2970,8 +3002,10 @@ function _figTail(){
     ['buy_source','取得方式','sel','收藏狀態'],
     ['buy_price','原幣價格','price','收藏狀態'],
     ['local_cost','台幣實付（含運費）','price','收藏狀態'],
-    ['market_value','目前估值','price','個人記錄'],
-    ['market_value_confidence','估值信心','sel','個人記錄'],
+    ['market_value','目前估值','price','估值資訊'],
+
+    ['market_value_confidence','估值信心','sel','估值資訊'],
+
     ['summary','簡介','area','補充資訊'],
     ['ref_link','參考連結','autolink','補充資訊'],
     ['cover_img','正面圖檔','imgupload','圖片紀錄'],
@@ -2993,7 +3027,7 @@ const FIG_SHARED_SELECTS={
   buy_source:['全新購入','二手購入','贈送','其他'],
   market_value_confidence:['高','中','低','N/A'],
 };
-const FIG_SHARED_GCOL={'識別資訊':'#00e5ff','模型資訊':'#f06292','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
+const FIG_SHARED_GCOL={'識別資訊':'#00e5ff','模型資訊':'#f06292','發行資訊':'#ce93d8','編碼條碼':'#ffab40','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const FIG_SHARED_DEFAULTS={collect_status:'收藏中',box_condition:'',condition:'',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',local_cost:'0',market_value:'0',market_value_confidence:'N/A',release_date:'',cover_img:'',back_img:'',spine_img:''};
 
 // ── 1. 比例模型 ──
@@ -3003,7 +3037,7 @@ const FIGSCALE_FIELDS=_figHead().concat([
   ['sculptor','原型師','txt','模型資訊'],
 ]).concat(_figTail());
 const FIGSCALE_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
-const FIGSCALE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGSCALE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const FIGSCALE_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
 const FIGSCALE_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'比例模型'});
 
@@ -3013,7 +3047,7 @@ const FIGACTION_FIELDS=_figHead().concat([
   ['accessories','配件清單','area','模型資訊'],
 ]).concat(_figTail());
 const FIGACTION_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
-const FIGACTION_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGACTION_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const FIGACTION_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
 const FIGACTION_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'可動模型'});
 
@@ -3022,7 +3056,7 @@ const FIGNENDO_FIELDS=_figHead().concat([
   ['accessories','配件清單','area','模型資訊'],
 ]).concat(_figTail());
 const FIGNENDO_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
-const FIGNENDO_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGNENDO_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const FIGNENDO_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
 const FIGNENDO_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'黏土人／Q版'});
 
@@ -3032,7 +3066,7 @@ const FIGPRIZE_FIELDS=_figHead().concat([
   ['event_name','活動名稱','txt','模型資訊'],
 ]).concat(_figTail());
 const FIGPRIZE_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
-const FIGPRIZE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGPRIZE_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const FIGPRIZE_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
 const FIGPRIZE_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'景品／一番賞'});
 
@@ -3042,7 +3076,7 @@ const FIGGUNPLA_FIELDS=_figHead().concat([
   ['scale','比例','txt','模型資訊'],
 ]).concat(_figTail());
 const FIGGUNPLA_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
-const FIGGUNPLA_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGGUNPLA_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const FIGGUNPLA_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
 const FIGGUNPLA_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'組裝模型'});
 
@@ -3053,7 +3087,7 @@ const FIGGK_FIELDS=_figHead().concat([
   ['sculptor','原型師','txt','模型資訊'],
 ]).concat(_figTail());
 const FIGGK_SELECTS=Object.assign({},FIG_SHARED_SELECTS,{});
-const FIGGK_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
+const FIGGK_GROUPS=['圖片紀錄','識別資訊','模型資訊','發行資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const FIGGK_GCOL=Object.assign({},FIG_SHARED_GCOL,{});
 const FIGGK_DEFAULTS=Object.assign({},FIG_SHARED_DEFAULTS,{category:'公仔',subtype:'GK雕像'});
 
