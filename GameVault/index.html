@@ -1055,7 +1055,7 @@ body{
           <!-- AI 網頁查詢（v54.59）：帶入該分類核心欄位產生 Prompt → 複製並開啟 AI 網頁 → 貼回 JSON 解析匯入手動建檔 -->
           <div style="padding:0 16px">
             <div style="font-size:12px;color:#7986cb;margin-bottom:6px">輸入商品名稱、條碼或關鍵字</div>
-            <div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">系統會自動帶入目前分類所需的欄位產生查詢提示詞</div>
+            <div style="font-size:11px;color:#9fa8c8;margin-bottom:10px;line-height:1.5">系統會自動帶入目前分類所需的欄位產生查詢提示詞</div>
             <input class="fi" id="aiweb-subject" type="text" placeholder="例如：薩爾達傳說 曠野之息"
               style="font-size:14px;margin-bottom:8px">
             <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -1068,7 +1068,7 @@ body{
             </div>
             <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手：自動複製提示詞並開啟其網頁，貼上送出後把回覆的 JSON 複製回來</div>
             <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
-            <div style="font-size:11px;color:#444;margin-bottom:14px;line-height:1.5">將帶入的欄位：<span id="aiweb-fields-list"></span></div>
+            <div style="font-size:11px;color:#9fa8c8;margin-bottom:14px;line-height:1.5">將帶入的欄位：<span id="aiweb-fields-list"></span></div>
             <div style="font-size:12px;color:#7986cb;margin-bottom:6px">📋 貼上 AI 回覆的 JSON 內容</div>
             <textarea class="ft" id="aiweb-paste" placeholder='{"primary_name":"...","platform":"...", ...}'
               style="min-height:110px;margin-bottom:10px;font-size:13px"></textarea>
@@ -1080,7 +1080,7 @@ body{
           <!-- 數位下載版：貼上商店頁網址自動抓資料（v42.14）-->
           <div style="padding:0 16px">
             <div style="font-size:12px;color:#7986cb;margin-bottom:6px">貼上商店頁網址（PSN／Nintendo eShop／Steam／Xbox Store／Epic Games 等商品頁）</div>
-            <div style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">例如：https://store.steampowered.com/app/...</div>
+            <div style="font-size:11px;color:#9fa8c8;margin-bottom:10px;line-height:1.5">例如：https://store.steampowered.com/app/...</div>
             <input class="fi" id="digital-link-inp" type="url" inputmode="url" placeholder="https://..."
               style="font-size:14px;margin-bottom:10px">
             <div style="font-size:11px;color:#7986cb;margin-bottom:10px">ℹ️ 部分商店頁（如 PSN 網頁版）內容由 JS 動態載入，可能抓不到資料；若失敗請改用手動建檔。</div>
@@ -1092,7 +1092,7 @@ body{
           <!-- 商品條碼模式（v26.06）：輸入優先，版面比照「商品編碼」 -->
           <div style="padding:0 16px">
             <div id="bar-hint" style="font-size:12px;color:#7986cb;margin-bottom:6px">輸入商品條碼（包裝盒上的 EAN／JAN 數字；書籍可填 ISBN）</div>
-            <div id="bar-examples" style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">
+            <div id="bar-examples" style="font-size:11px;color:#9fa8c8;margin-bottom:10px;line-height:1.5">
               例如：EAN-13 → 4988601009000　UPC-A → 711719500000<br>
               ISBN-13 → 978-4-04-735985-6
             </div>
@@ -1154,7 +1154,7 @@ body{
             <div style="font-size:12px;color:#ef5350;font-weight:700;margin-bottom:6px;line-height:1.6">
               ⚠️ 請先選擇正確的「平台」與「區域」，再進行編碼辨識！
             </div>
-            <div id="gcode-examples" style="font-size:11px;color:#444;margin-bottom:10px;line-height:1.5">
+            <div id="gcode-examples" style="font-size:11px;color:#9fa8c8;margin-bottom:10px;line-height:1.5">
               例如：PS4 → CUSA-00001　PS3 → BLUS-00001<br>
               Switch → HAC-001　PS1 → SLUS-00001
             </div>
@@ -2314,7 +2314,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.60';
+const APP_VERSION='v54.61';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
