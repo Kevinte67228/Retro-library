@@ -2337,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.68';
+const APP_VERSION='v54.69';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9889,23 +9889,50 @@ function clearImg(k){
   _setImgBtnActive(k,true); // 清除後重置高亮回預設（拍照）
 }
 // v47.04：自訂圖片（extra_images，最多5張，各自帶名稱）新增/移除/命名
+// v54.69：支援相簿一次選取多張圖片。單張選取維持原本互動式裁切流程（可精細調整取景範圍）；
+// 多張批次選取時跳過裁切、直接壓縮使用，避免N張圖片要逐張跳出裁切視窗卡住流程
 function addExtraImg(input){
-  var f=input&&input.files&&input.files[0];if(!f)return;
+  var files=input&&input.files?Array.prototype.slice.call(input.files):[];
+  if(!files.length)return;
   input.value='';
   var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
   if(!Array.isArray(arr))arr=[];
   if(arr.length>=5){toast('最多只能新增 5 張自訂圖片','er');return;}
-  cropImageFile(f).then(function(blob){
+  if(files.length===1){
+    cropImageFile(files[0]).then(function(blob){
+      var r=new FileReader();
+      r.onload=function(){
+        compressImg(r.result,1000,0.85,function(compressed){
+          arr.push({label:'',img:compressed});
+          onFld('extra_images',JSON.stringify(arr));
+          renderForm();_bindFormFocusScroll();
+        });
+      };
+      r.readAsDataURL(blob);
+    }).catch(function(){});
+    return;
+  }
+  // 多張批次：跳過裁切，依序壓縮後加入，超過上限的部分捨棄並提示
+  var room=5-arr.length;
+  var toAdd=files.slice(0,room);
+  var skipped=files.length-toAdd.length;
+  var done=0;
+  toAdd.forEach(function(f){
     var r=new FileReader();
     r.onload=function(){
       compressImg(r.result,1000,0.85,function(compressed){
         arr.push({label:'',img:compressed});
-        onFld('extra_images',JSON.stringify(arr));
-        renderForm();_bindFormFocusScroll();
+        done++;
+        if(done===toAdd.length){
+          onFld('extra_images',JSON.stringify(arr));
+          renderForm();_bindFormFocusScroll();
+          if(skipped>0)toast('已新增 '+toAdd.length+' 張，'+skipped+' 張超過上限未加入','',4000);
+          else toast('已新增 '+toAdd.length+' 張圖片 ✓','ok');
+        }
       });
     };
-    r.readAsDataURL(blob);
-  }).catch(function(){});
+    r.readAsDataURL(f);
+  });
 }
 function removeExtraImg(idx){
   var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
@@ -10177,7 +10204,7 @@ function renderFld(f){
           '</label>'+
           '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#7986cb">'+
             '<span>🖼</span><span>相簿新增</span>'+
-            '<input type="file" accept="image/*" style="display:none" onchange="addExtraImg(this)">'+
+            '<input type="file" accept="image/*" multiple style="display:none" onchange="addExtraImg(this)">'+
           '</label>'+
         '</div>'
       ):'<div style="font-size:11px;color:#7986cb;text-align:center;padding:6px">已達 5 張上限，如需新增請先移除其他圖片</div>')+
@@ -14474,7 +14501,7 @@ function huntDetail(uid){
   var lowestKpi=_huntLowestPriceKpi(d);
   var targetKpi=_huntTargetKpi(d);
   var countdownKpi=_huntCountdownKpi(d);
-  var kpisHtml='<div class="vault-kpis">'+
+  var kpisHtml='<div class="vault-kpis" style="margin-top:8px">'+
     _detailKpi('最低價',lowestKpi.value,lowestKpi.color,lowestKpi.sub)+
     _detailKpi('目標價',targetKpi.value,targetKpi.color,targetKpi.sub)+
     _detailKpi('收藏慾望',desireKpi.value,desireKpi.color)+
@@ -14488,10 +14515,10 @@ function huntDetail(uid){
       (desireKpi.value?' <span style="font-size:10px;color:'+desireKpi.color+';border:1px solid '+desireKpi.color+';border-radius:4px;padding:1px 6px">慾望：'+esc(desireKpi.value)+'</span>':'')+
       '<div style="font-size:17px;font-weight:700;color:#e8eaf6;margin:6px 0 2px">'+esc(d.primary_name||'未命名')+'</div>'+
       '<div style="font-size:12px;color:#7986cb">'+esc(d.platform||d.subtype||'')+(d.region?' · '+esc(mapRegion(d.region)||d.region):'')+(d.barcode?' · <span class="mono">'+esc(d.barcode)+'</span>':'')+'</div>'+
-      (d.summary?'<div style="font-size:12px;color:#aab4d4;line-height:1.55;margin-top:6px;max-height:120px;overflow-y:auto">'+esc(d.summary)+'</div>':'')+
+      kpisHtml+
+      (d.summary?'<div style="font-size:12px;color:#aab4d4;line-height:1.55;margin-top:8px;max-height:120px;overflow-y:auto">'+esc(d.summary)+'</div>':'')+
       (d.notes?'<div style="font-size:12px;color:#9fa8c8;margin-top:6px">'+esc(d.notes)+'</div>':'')+
     '</div></div>';
-  html+='<div style="padding:0 16px 10px">'+kpisHtml+'</div>';
   html+='<div style="display:flex;gap:8px;padding:0 16px 10px">'+
     '<button class="btn bo bs" style="flex:1" onclick="huntEditTarget(\''+uid+'\')" type="button">編輯目標</button>'+
     '<button class="btn bo bs" style="flex:1;color:#ff5252;border-color:#5a2a2a" onclick="huntDeleteTarget(\''+uid+'\')" type="button">刪除</button></div>';
@@ -14680,7 +14707,7 @@ function huntEditTarget(uid){
     }).join('')+
     (extraArr.length<7?
       '<label style="width:64px;height:64px;border-radius:8px;border:1.5px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7986cb;font-size:22px">'+
-        '+<input type="file" accept="image/*" style="display:none" onchange="huntAddExtraImg(this,\''+uid+'\')"></label>'
+        '+<input type="file" accept="image/*" multiple style="display:none" onchange="huntAddExtraImg(this,\''+uid+'\')"></label>'
       :'')+
     '</div>';
   var ov=_huntSheet();
@@ -14702,24 +14729,49 @@ function huntEditTarget(uid){
     '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()" type="button">取消</button></div>';
 }
 // 額外照片：新增/移除，比照收藏 addExtraImg/removeExtraImg 的模式，但操作對象是尋寶目標 d.extra_images
+// v54.69：支援相簿一次選取多張圖片，比照收藏 addExtraImg 的做法
 function huntAddExtraImg(input,uid){
-  var f=input&&input.files&&input.files[0];if(!f)return;
+  var files=input&&input.files?Array.prototype.slice.call(input.files):[];
+  if(!files.length)return;
   input.value='';
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
   var arr=[];try{arr=JSON.parse(d.extra_images||'[]');}catch(e){arr=[];}
   if(!Array.isArray(arr))arr=[];
   if(arr.length>=7){toast('最多只能新增 7 張額外照片','er');return;}
-  cropImageFile(f).then(function(blob){
+  if(files.length===1){
+    cropImageFile(files[0]).then(function(blob){
+      var r=new FileReader();
+      r.onload=function(){
+        compressImg(r.result,1000,0.85,function(compressed){
+          arr.push({label:'',img:compressed});
+          d.extra_images=JSON.stringify(arr);
+          huntEditTarget(uid);
+        });
+      };
+      r.readAsDataURL(blob);
+    }).catch(function(){});
+    return;
+  }
+  var room=7-arr.length;
+  var toAdd=files.slice(0,room);
+  var skipped=files.length-toAdd.length;
+  var done=0;
+  toAdd.forEach(function(f){
     var r=new FileReader();
     r.onload=function(){
       compressImg(r.result,1000,0.85,function(compressed){
         arr.push({label:'',img:compressed});
-        d.extra_images=JSON.stringify(arr);
-        huntEditTarget(uid); // 重繪編輯表單顯示新照片
+        done++;
+        if(done===toAdd.length){
+          d.extra_images=JSON.stringify(arr);
+          huntEditTarget(uid);
+          if(skipped>0)toast('已新增 '+toAdd.length+' 張，'+skipped+' 張超過上限未加入','',4000);
+          else toast('已新增 '+toAdd.length+' 張圖片 ✓','ok');
+        }
       });
     };
-    r.readAsDataURL(blob);
-  }).catch(function(){});
+    r.readAsDataURL(f);
+  });
 }
 function huntRemoveExtraImg(uid,idx){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
