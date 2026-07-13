@@ -1,8 +1,8 @@
-const CACHE_NAME = 'gamevault-v54-66';
+const CACHE_NAME = 'gamevault-v54-67';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './GameVault_v54_66_index.html',
+  './GameVault_v54_67_index.html',
   './manifest.json',
   './manual.html'
 ];
