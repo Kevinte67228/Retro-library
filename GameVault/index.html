@@ -2337,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v66.02';
+const APP_VERSION='v66.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14551,11 +14551,13 @@ function huntDetail(uid){
           '</div></div>'+
         (s.cond?'<div style="font-size:12px;color:#9fa8c8;margin-top:4px">品況：'+esc(s.cond)+'</div>':'')+
         (s.note?'<div style="font-size:12px;color:#9fa8c8;margin-top:4px">備註：'+esc(s.note)+'</div>':'')+
-        (!_huntIsOnline(s)&&huntMapThumb(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="display:block;margin-top:8px"><img src="'+esc(huntMapThumb(s))+'" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1px solid #1e2a45;display:block"></a>':'')+
+        (_huntShowMap(s)&&huntMapThumb(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="display:block;margin-top:8px"><img src="'+esc(huntMapThumb(s))+'" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'" style="width:100%;height:120px;object-fit:cover;border-radius:8px;border:1px solid #1e2a45;display:block"></a>':'')+
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
           '<div style="display:flex;align-items:center;gap:12px;min-width:0">'+
             '<span style="font-size:10px;color:#5c6b8a;flex-shrink:0">'+esc(s.date||'')+'</span>'+
-            (_huntIsOnline(s)?'<span style="font-size:11px;color:#7986cb;flex-shrink:0">🛒 線上通路</span>':(huntMapUrl(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="color:#00e5ff;font-size:12px;text-decoration:none;flex-shrink:0">📍 地圖</a>':''))+
+            (_huntIsOnline(s)?'<span style="font-size:11px;color:#7986cb;flex-shrink:0">🛒 線上通路</span>':
+              (_huntShowMap(s)?(huntMapUrl(s)?'<a href="'+esc(huntMapUrl(s))+'" target="_blank" rel="noopener" style="color:#00e5ff;font-size:12px;text-decoration:none;flex-shrink:0">📍 地圖</a>':''):
+              '<span style="font-size:11px;color:#7986cb;flex-shrink:0">🏪 實體店面</span>'))+
           '</div>'+
           '<div style="display:flex;gap:18px;flex-shrink:0">'+
             '<button onclick="huntSightForm(\''+uid+'\','+o.i+')" style="background:none;border:none;color:#7986cb;font-size:12px;cursor:pointer" type="button">編輯</button>'+
@@ -14581,6 +14583,13 @@ function huntMapUrl(s){
 }
 // 通路類型判定：線上（電商/網址）不顯示地圖（v25.10）
 function _huntIsOnline(s){if(!s)return false;if(s.chan)return s.chan==='online';return !!((''+(s.url||'')).trim());}
+// v54.71：是否要產生地圖縮圖（會呼叫 Google Static Maps API 消耗額度）。
+// 三種通路類型：store(實體店面，顯示地圖)／store_nomap(實體店面，不顯示地圖，不呼叫API)／online(線上通路)
+function _huntShowMap(s){
+  if(!s)return false;
+  if(s.chan)return s.chan==='store';
+  return !((''+(s.url||'')).trim()); // 舊資料無chan時，沿用舊邏輯：沒有網址視為實體店面(顯示地圖)
+}
 // Static Maps 縮圖（M1）：需在設定填入 Google 地圖 API Key；無 key 或無地點文字則不顯示
 function huntMapThumb(s){
   if(!s)return '';
@@ -14618,7 +14627,7 @@ function huntSightForm(uid,idx){
   var sights=huntSights(h.data);
   var s=(idx>=0&&sights[idx])?sights[idx]:{loc:'',url:'',mapUrl:'',price:'',cond:'',note:'',date:tpeDate()};
   // 通路類型：既有資料無 chan 時，有網址視為線上、否則實體（v25.10）
-  var _chanOnline=s.chan?(s.chan==='online'):!!((''+(s.url||'')).trim());
+  var _chanVal=s.chan||(((''+(s.url||'')).trim())?'online':'store');
   var ov=_huntSheet();
   ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:90vh;overflow-y:auto">'+
     '<div style="text-align:center;margin-bottom:14px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
@@ -14626,8 +14635,9 @@ function huntSightForm(uid,idx){
     '<div class="fg"><label class="fl">地點 / 店名 / 平台</label><input class="fi" id="hs-loc" value="'+esc(s.loc||'')+'" placeholder="例：秋葉原 Super Potato"></div>'+
     '<div class="fg"><label class="fl">網址（選填，點了可直接開）</label><input class="fi" id="hs-url" value="'+esc(s.url||'')+'" placeholder="https://…" inputmode="url"></div>'+
     '<div class="fg"><label class="fl">通路類型</label><select class="fsel" id="hs-chan">'+
-      '<option value="store"'+(_chanOnline?'':' selected')+'>實體店面（顯示地圖）</option>'+
-      '<option value="online"'+(_chanOnline?' selected':'')+'>線上通路（電商／網址，不顯示地圖）</option>'+
+      '<option value="store"'+(_chanVal==='store'?' selected':'')+'>實體店面（顯示地圖）</option>'+
+      '<option value="store_nomap"'+(_chanVal==='store_nomap'?' selected':'')+'>實體店面（不顯示地圖）</option>'+
+      '<option value="online"'+(_chanVal==='online'?' selected':'')+'>線上通路（電商／網址，不顯示地圖）</option>'+
     '</select></div>'+
     '<div class="fg"><label class="fl">Google 地圖（選填，貼分享連結最精準；留空則用上方地點搜尋）</label>'+
       '<input class="fi" id="hs-mapurl" value="'+esc(s.mapUrl||'')+'" placeholder="貼 Google 地圖連結，或留空" inputmode="url">'+
