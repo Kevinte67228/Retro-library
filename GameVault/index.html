@@ -566,7 +566,7 @@ body{
 }
 /* 尋寶功能 FAB（v54.66：合併成單一 ••• 主按鈕，點擊展開兩個子功能，避免常駐遮擋畫面） */
 #hunt-fab-wrap{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:300;display:flex;flex-direction:column-reverse;align-items:center;gap:12px}
-#hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:24px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;letter-spacing:1px}
+#hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #hunt-fab-main:active{transform:scale(.93)}
 #hunt-lens-fab,#hunt-barcode-fab{
   width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
@@ -2337,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.69';
+const APP_VERSION='v54.70';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14516,9 +14516,14 @@ function huntDetail(uid){
       '<div style="font-size:17px;font-weight:700;color:#e8eaf6;margin:6px 0 2px">'+esc(d.primary_name||'未命名')+'</div>'+
       '<div style="font-size:12px;color:#7986cb">'+esc(d.platform||d.subtype||'')+(d.region?' · '+esc(mapRegion(d.region)||d.region):'')+(d.barcode?' · <span class="mono">'+esc(d.barcode)+'</span>':'')+'</div>'+
       kpisHtml+
-      (d.summary?'<div style="font-size:12px;color:#aab4d4;line-height:1.55;margin-top:8px;max-height:120px;overflow-y:auto">'+esc(d.summary)+'</div>':'')+
-      (d.notes?'<div style="font-size:12px;color:#9fa8c8;margin-top:6px">'+esc(d.notes)+'</div>':'')+
     '</div></div>';
+  // v54.70：簡介／備註改成獨立區塊，不再跟圖片／KPI混在同一張卡片內
+  if(d.summary||d.notes){
+    html+='<div class="card" style="margin-top:10px">'+
+      (d.summary?'<div style="font-size:11px;color:#7986cb;margin-bottom:4px">簡介</div><div style="font-size:12px;color:#aab4d4;line-height:1.6;margin-bottom:'+(d.notes?'10px':'0')+'">'+esc(d.summary)+'</div>':'')+
+      (d.notes?'<div style="font-size:11px;color:#7986cb;margin-bottom:4px">備註</div><div style="font-size:12px;color:#9fa8c8;line-height:1.6">'+esc(d.notes)+'</div>':'')+
+    '</div>';
+  }
   html+='<div style="display:flex;gap:8px;padding:0 16px 10px">'+
     '<button class="btn bo bs" style="flex:1" onclick="huntEditTarget(\''+uid+'\')" type="button">編輯目標</button>'+
     '<button class="btn bo bs" style="flex:1;color:#ff5252;border-color:#5a2a2a" onclick="huntDeleteTarget(\''+uid+'\')" type="button">刪除</button></div>';
@@ -14695,38 +14700,99 @@ function huntPersistSights(uid,sights){
 function huntEditTarget(uid){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
   _huntPhoto='';
+  var hasImg=hasImgVal(d.cover_img);
   var extraArr=[];try{extraArr=JSON.parse(d.extra_images||'[]');}catch(e){extraArr=[];}
   if(!Array.isArray(extraArr))extraArr=[];
-  var extraHtml='<div style="font-size:12px;color:#7986cb;margin:4px 0 6px">額外照片（'+extraArr.length+'/7，加封面最多8張）</div>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">'+
-    extraArr.map(function(im,i){
-      return '<div style="position:relative;width:64px;height:64px">'+
-        '<img src="'+imgUrl(im.img,150)+'" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #1e2a45">'+
-        '<div onclick="huntRemoveExtraImg(\''+uid+'\','+i+')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#ff5252;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.4)">✕</div>'+
-      '</div>';
-    }).join('')+
-    (extraArr.length<7?
-      '<label style="width:64px;height:64px;border-radius:8px;border:1.5px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7986cb;font-size:22px">'+
-        '+<input type="file" accept="image/*" multiple style="display:none" onchange="huntAddExtraImg(this,\''+uid+'\')"></label>'
-      :'')+
+  // v54.70：改用跟收藏完全一致的樣板（exti-grid/exti-item），封面照片改成立即寫入預覽，
+  // 不再等「儲存變更」才套用暫存值，操作邏輯與視覺呈現跟收藏編輯表單一致
+  var exItems=extraArr.map(function(item,idx){
+    var eurl=hasImgVal(item&&item.img)?imgUrl(item.img,300):'';
+    return '<div class="exti-item">'+
+      '<img src="'+eurl+'" alt="" onclick="huntOpenExtraImgLightbox(\''+uid+'\','+idx+')">'+
+      '<input type="text" class="exti-label" placeholder="圖片名稱" value="'+esc((item&&item.label)||'')+'" oninput="huntOnExtraImgLabel(\''+uid+'\','+idx+',this.value)">'+
+      '<button type="button" onclick="huntRemoveExtraImg(\''+uid+'\','+idx+')">✕ 移除</button>'+
     '</div>';
+  }).join('');
+  var exCanAdd=extraArr.length<7;
+  var extraHtml='<div class="fg"><label class="fl">額外照片（最多7張，加封面最多8張，目前 '+extraArr.length+'/7）</label>'+
+    (exItems?'<div class="exti-grid">'+exItems+'</div>':'')+
+    (exCanAdd?(
+      '<div style="display:flex;gap:6px">'+
+        '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #00e5ff;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#00e5ff">'+
+          '<span>📷</span><span>拍照新增</span>'+
+          '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="huntAddExtraImg(this,\''+uid+'\')">'+
+        '</label>'+
+        '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#7986cb">'+
+          '<span>🖼</span><span>相簿新增</span>'+
+          '<input type="file" accept="image/*" multiple style="display:none" onchange="huntAddExtraImg(this,\''+uid+'\')">'+
+        '</label>'+
+      '</div>'
+    ):'<div style="font-size:11px;color:#7986cb;text-align:center;padding:6px">已達 7 張上限，如需新增請先移除其他圖片</div>')+
+  '</div>';
+  var coverHtml2='<div class="fg"><label class="fl">封面照片</label>'+
+    '<img id="he-cover-prev" src="'+(hasImg?imgUrl(d.cover_img,500):'')+'" alt="封面預覽" style="width:100%;border-radius:8px;margin-bottom:6px;border:1px solid #1e2a45;display:'+(hasImg?'block':'none')+'">'+
+    '<div style="display:flex;gap:6px;margin-bottom:6px">'+
+      '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #00e5ff;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#00e5ff">'+
+        '<span>📷</span><span>拍照新增</span>'+
+        '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="huntCoverUpload(\''+uid+'\',this)">'+
+      '</label>'+
+      '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:8px;padding:10px;cursor:pointer;font-size:13px;color:#7986cb">'+
+        '<span>🖼</span><span>相簿新增</span>'+
+        '<input type="file" accept="image/*" style="display:none" onchange="huntCoverUpload(\''+uid+'\',this)">'+
+      '</label>'+
+    '</div>'+
+    '<div id="he-cover-lbl" style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:4px;display:'+(hasImg?'block':'none')+'">'+(hasImg?'已上傳':'')+'</div>'+
+    '<button id="he-cover-clr" class="btn bo bs" style="width:100%;color:#ff5252;border-color:#ff5252;display:'+(hasImg?'block':'none')+'" onclick="huntClearCover(\''+uid+'\')" type="button">✕ 移除圖片</button>'+
+  '</div>';
   var ov=_huntSheet();
   ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:90vh;overflow-y:auto">'+
     '<div style="text-align:center;margin-bottom:14px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:15px;font-weight:700;color:#ff6e9c">編輯目標</div></div>'+
     _huntFormFieldsHtml(d,'he')+
-    '<div id="he-photo-status" style="font-size:11px;color:#7986cb;margin-bottom:8px">'+(d.cover_img?'已有照片':'無照片')+'</div>'+
-    '<div style="display:flex;gap:8px;margin-bottom:8px">'+
-      '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px solid #ff6e9c;border-radius:10px;padding:11px;cursor:pointer;color:#ff6e9c;font-size:13px;font-weight:600">'+
-        '<span>📷</span><span>拍照</span>'+
-        '<input type="file" accept="image/*" capture="environment" id="he-cam" style="display:none" onchange="huntEditPhoto(this)"></label>'+
-      '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #2a3a5a;border-radius:10px;padding:11px;cursor:pointer;color:#7986cb;font-size:13px;font-weight:600">'+
-        '<span>🖼</span><span>相簿</span>'+
-        '<input type="file" accept="image/*" id="he-gal" style="display:none" onchange="huntEditPhoto(this)"></label>'+
-    '</div>'+
+    coverHtml2+
     extraHtml+
     '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntEditSave(\''+uid+'\')" type="button">儲存變更</button>'+
     '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()" type="button">取消</button></div>';
+}
+// 封面照片：立即寫入（比照收藏 onImgUpload 的行為），不再等「儲存變更」才套用暫存值
+function huntCoverUpload(uid,input){
+  var f=input.files&&input.files[0];if(!f)return;
+  input.value='';
+  var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
+  cropImageFile(f).then(function(blob){
+    var r=new FileReader();
+    r.onload=function(){
+      compressImg(r.result,1000,0.85,function(compressed){
+        d.cover_img=compressed;
+        var prev=$('he-cover-prev');if(prev){prev.src=compressed;prev.style.display='block';}
+        var lbl=$('he-cover-lbl');if(lbl){lbl.style.display='block';lbl.textContent='已上傳';}
+        var clr=$('he-cover-clr');if(clr)clr.style.display='block';
+      },'cover');
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){});
+}
+function huntClearCover(uid){
+  var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
+  d.cover_img='';
+  var prev=$('he-cover-prev');if(prev){prev.src='';prev.style.display='none';}
+  var lbl=$('he-cover-lbl');if(lbl)lbl.style.display='none';
+  var clr=$('he-cover-clr');if(clr)clr.style.display='none';
+}
+function huntOnExtraImgLabel(uid,idx,val){
+  var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
+  var arr=[];try{arr=JSON.parse(d.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr)||!arr[idx])return;
+  arr[idx].label=val;
+  d.extra_images=JSON.stringify(arr);
+}
+function huntOpenExtraImgLightbox(uid,idx){
+  var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
+  var arr=[];try{arr=JSON.parse(d.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr)||!arr.length)return;
+  window._heroLbImages=arr.filter(function(item){return item&&hasImgVal(item.img);})
+    .map(function(item){return {url:imgUrl(item.img,1000),label:item.label||'額外照片'};});
+  openImgLightbox(idx);
 }
 // 額外照片：新增/移除，比照收藏 addExtraImg/removeExtraImg 的模式，但操作對象是尋寶目標 d.extra_images
 // v54.69：支援相簿一次選取多張圖片，比照收藏 addExtraImg 的做法
@@ -14781,23 +14847,13 @@ function huntRemoveExtraImg(uid,idx){
   d.extra_images=JSON.stringify(arr);
   huntEditTarget(uid);
 }
-function huntEditPhoto(input){
-  var f=input.files&&input.files[0];if(!f)return;
-  input.value='';
-  cropImageFile(f).then(function(blob){
-    var r=new FileReader();
-    r.onload=function(){compressImg(r.result,1000,0.8,function(out){_huntPhoto=out;var st=$('he-photo-status');if(st){st.style.color='#ff6e9c';st.textContent='新照片已選取（儲存後生效）';}});};
-    r.readAsDataURL(blob);
-  }).catch(function(){});
-}
 function huntEditSave(uid){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
   _huntReadFormFields(d,'he');
   if(!d.primary_name){toast('請輸入名稱','er');return;}
-  if(_huntPhoto)d.cover_img=_huntPhoto;
   loading('儲存中...');
   huntUpdateRow(h).then(function(){
-    _huntPhoto='';huntSheetClose();localforage.setItem('gv_hunt',hunt).catch(function(){});
+    huntSheetClose();localforage.setItem('gv_hunt',hunt).catch(function(){});
     renderHuntList();huntDetail(uid);
   }).catch(function(e){toast('儲存失敗：'+e.message,'er');}).finally(noLoad);
 }
