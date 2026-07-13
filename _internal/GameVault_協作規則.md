@@ -120,7 +120,11 @@ GAS 後端目前共 **32 張工作表**：Games／Books／Consoles／Peripherals
 
 ### 自訂圖片（extra_images）
 
-所有分類（含 8+8+6+5 個子類型）的欄位表都有 `extra_images` 欄位：JSON 陣列 `[{label, img}]`，最多 5 張，每張圖可自訂名稱（作為圖片燈箱的說明文字）。GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣列內每張圖的 Drive 上傳與孤兒檔回收，跟單一欄位的 `IMG_COLS`（cover_img/back_img/spine_img）邏輯是分開的，不要混用。
+所有分類（含 8+8+6+5 個子類型）的欄位表都有 `extra_images` 欄位：JSON 陣列 `[{label, img}]`，每張圖可自訂名稱（作為圖片燈箱的說明文字）。**張數上限依有無 back_img／spine_img 而不同，但都是湊到「封面＋額外＝8 張」的總數**：
+- **收藏類別**（遊戲/書籍/主機/週邊及各子類型）：有 cover_img/back_img/spine_img 3 個固定圖檔欄位，`extra_images` 上限 **5 張**，3+5=8。
+- **尋寶**：只有 cover_img 1 個固定圖檔欄位（沒有背面/側邊的概念），`extra_images` 上限 **7 張**，1+7=8。
+
+GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣列內每張圖的 Drive 上傳與孤兒檔回收，跟單一欄位的 `IMG_COLS`（cover_img/back_img/spine_img）邏輯是分開的，不要混用。
 
 ---
 
@@ -133,6 +137,7 @@ GAS 後端目前共 **32 張工作表**：Games／Books／Consoles／Peripherals
 
 **主版號（XX）異動條件：**
 - Apps Script 後端邏輯有實質變更時，XX 遞增，YY 歸零重從 01 開始。
+  - **「實質變更」認定標準：只有實際影響行為的程式邏輯異動才算**（新增/修改函式邏輯、改變資料流程、新增欄位定義等）。**純註解、格式排版、無邏輯影響的文字調整不算**，不需要觸發前端版號歸零。
 - 使用者明確要求主版號升級時。
 - 純前端、UI、PWA 快取、文件或手冊更新，不可變更主版號。
 
@@ -155,17 +160,19 @@ GAS 後端目前共 **32 張工作表**：Games／Books／Consoles／Peripherals
 
 **Apps Script 版本檔命名：**
 - 部署用統一檔名：`GameVault_AppsScript.gs`
-- 封存用：`GameVault_v40_AppsScript.gs.txt`
+- 封存用：`GameVault_v66_AppsScript.gs.txt`
 - 只有後端程式有修改，或使用者明確要求時才生成。
 
 **當前版本狀態（2026-07-13）：**
 - GS 後端：`v66`
-- HTML 前端：`v54.70`
+- HTML 前端：`v66.01`
 - GitHub repo：`Kevinte67228/Retro-library`
 - Netlify：`reteogame.netlify.app`（從 `GameVault/` 資料夾部署）
 - GAS 後端：GitHub Actions 自動部署（詳見「GAS 後端 CI/CD 自動部署」章節），不再需要手動貼到 Apps Script 編輯器
 
-**永久備份例外：** `_internal/old/v42_20a1/`、`_internal/old/v54_48/` 是使用者要求的永久備份，5 版輪替清理時一律跳過，除非使用者明確要求刪除。
+**版號重整記錄（2026-07-13）：** 前端曾長期未依主版號規則歸零（GAS 從 v62 一路到 v66，前端仍沿用舊的 `v54.x` 序號未重新計起），已於本次修正回歸嚴格遵守：前端重新命名為 `v66.01`。**這是一次性追趕處置**，不代表往後每次 GAS 有任何異動都要重整——見下方「主版號（XX）異動條件」對「實質變更」的定義。
+
+**永久備份例外：** `_internal/old/v42_20a1/`、`_internal/old/v66_01/` 是使用者要求的永久備份，5 版輪替清理時一律跳過，除非使用者明確要求刪除。（`v66_01` 取代了先前的 `v54_48`／`v54_70` 標記，永久基準改用版號重整後的新制命名。）
 
 ---
 
@@ -188,12 +195,13 @@ Retro-library/
     ├── CHANGELOG.md        ← 版本更新記錄（最近 4 筆）
     ├── GameVault_協作規則.md
     ├── github_deploy.py    ← 自動部署腳本（不含 token）
-    └── old/                ← 版本備份（最近 5 個，僅一般 vXX.YY 正式版；子版號/debug 版不備份）
-        ├── v40_43/
-        ├── v40_44/
-        ├── v40_45/
-        ├── v40_46/
-        └── v40_47/
+    └── old/                ← 版本備份（最近 5 個一般版，僅一般 vXX.YY 正式版；子版號/debug 版不備份；另有永久保留例外）
+        ├── v42_20a1/       ← 永久保留例外
+        ├── v66_01/         ← 永久保留例外（版號重整基準）
+        ├── v66_02/
+        ├── v66_03/
+        ├── v66_04/
+        └── v66_05/
 ```
 
 **重要：**
@@ -277,10 +285,10 @@ GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script
 
 每次產生新版時，依序執行：
 
-1. 在 Claude 容器建立新版本資料夾，例如 `/home/claude/v40_34/`。
-2. 修改 `index.html` 與 `GameVault_v40_34_index.html`（兩者內容完全一致）。
-3. 更新 `APP_VERSION='v40.34'`。
-4. 更新 `sw.js` 的 `CACHE_NAME`，例如 `gamevault-v40-34`。
+1. 在 Claude 容器建立新版本資料夾，例如 `/home/claude/v66_02/`。
+2. 修改 `index.html` 與 `GameVault_v66_02_index.html`（兩者內容完全一致）。
+3. 更新 `APP_VERSION='v66.02'`。
+4. 更新 `sw.js` 的 `CACHE_NAME`，例如 `gamevault-v66-02`。
 5. 更新 `sw.js` 預先快取清單（相對路徑，不寫資料夾前綴）。
 6. 確認 `manifest.json` 的 `start_url` 為 `./`。
 7. 執行驗證清單。
@@ -290,7 +298,7 @@ GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script
 **子版號（`vXX.YYaN`）簡化流程：**
 
 1. 直接修改 `index.html`（沿用既有的 `GameVault_vXX_YY_index.html`，同步更新內容使兩者一致）。
-2. 更新 `APP_VERSION='vXX.YYaN'`（如 `v40.43a1`）。
+2. 更新 `APP_VERSION='vXX.YYaN'`（如 `v66.02a1`）。
 3. 更新 `sw.js` 的 `CACHE_NAME`（仍需遞增以強制更新快取）。
 4. 執行驗證清單。
 5. 透過 GitHub API 推送（**跳過備份與清理步驟**），更新 CHANGELOG（一行簡記）。
