@@ -407,12 +407,12 @@ body{
 .gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative}
 .gc:active{border-color:#00e5ff}
 .gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
-.gfav{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
+.gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
 .gfav:active{transform:scale(.85)}
 .ginfo{flex:1;min-width:0}
 .gn{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gm{font-size:12px;color:#9fa8c8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gbadges{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;align-items:center}
+.gbadges{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;align-items:center;min-height:49px}
 .gd{font-size:10px;color:#5c6b8a;margin-top:4px;font-family:'Share Tech Mono','Courier New',monospace}
 .bk{font-size:10px;min-height:22px;padding:3px 7px;border-radius:6px;font-family:'Share Tech Mono','Courier New',monospace;background:#0f1525;border:1px solid #1e2a45;color:#7986cb;display:inline-flex;align-items:center;max-width:100%;line-height:1.1}
 .bk-cat{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:11px;letter-spacing:.5px;color:#aab4d4;border-color:#2a3a5a;background:rgba(42,58,90,.24)}
@@ -2337,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v66.01';
+const APP_VERSION='v66.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14700,6 +14700,10 @@ function huntPersistSights(uid,sights){
 function huntEditTarget(uid){
   var h=hunt.find(function(x){return x.uid===uid;});if(!h)return;var d=h.data;
   _huntPhoto='';
+  // v54.71：修正每次刪除/新增照片都要整個重繪表單、導致可捲動容器被整個砍掉重建、捲動位置歸零跳回頂部的問題。
+  // 重繪前先記住目前的捲動位置，重繪後還原（比照收藏 renderForm() 保留區塊展開狀態的同類手法）
+  var _prevScroll=$('he-scroll');
+  var _savedScrollTop=_prevScroll?_prevScroll.scrollTop:0;
   var hasImg=hasImgVal(d.cover_img);
   var extraArr=[];try{extraArr=JSON.parse(d.extra_images||'[]');}catch(e){extraArr=[];}
   if(!Array.isArray(extraArr))extraArr=[];
@@ -14745,7 +14749,7 @@ function huntEditTarget(uid){
     '<button id="he-cover-clr" class="btn bo bs" style="width:100%;color:#ff5252;border-color:#ff5252;display:'+(hasImg?'block':'none')+'" onclick="huntClearCover(\''+uid+'\')" type="button">✕ 移除圖片</button>'+
   '</div>';
   var ov=_huntSheet();
-  ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:90vh;overflow-y:auto">'+
+  ov.innerHTML='<div id="he-scroll" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:18px 18px 28px;max-height:90vh;overflow-y:auto">'+
     '<div style="text-align:center;margin-bottom:14px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:15px;font-weight:700;color:#ff6e9c">編輯目標</div></div>'+
     _huntFormFieldsHtml(d,'he')+
@@ -14753,6 +14757,8 @@ function huntEditTarget(uid){
     extraHtml+
     '<button class="btn bp bw" style="margin-bottom:8px" onclick="huntEditSave(\''+uid+'\')" type="button">儲存變更</button>'+
     '<button class="btn bo bw bs" style="color:#7986cb" onclick="huntSheetClose()" type="button">取消</button></div>';
+  var _newScroll=$('he-scroll');
+  if(_newScroll)_newScroll.scrollTop=_savedScrollTop;
 }
 // 封面照片：立即寫入（比照收藏 onImgUpload 的行為），不再等「儲存變更」才套用暫存值
 function huntCoverUpload(uid,input){
