@@ -78,7 +78,7 @@ const GAME_HEADERS = [
   'storage_location','market_value','resale_price','resale_date','dlc_status','bonus_code_status',
   'voice_language','subtitle_language',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
-  'market_value_currency','market_value_foreign_amount'
+  'market_value_currency','market_value_foreign_amount','favorite'
 ];
  
 // ── 攻略本/書籍欄位──
@@ -96,7 +96,7 @@ const BOOK_HEADERS = [
   'storage_location','market_value','resale_price','resale_date',
   'page_count','book_size','binding','print_run',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
-  'market_value_currency','market_value_foreign_amount'
+  'market_value_currency','market_value_foreign_amount','favorite'
 ];
  
 // ── 主機欄位 ─────────────────────────────────
@@ -112,7 +112,7 @@ const CONSOLE_HEADERS = [
   'storage_location','market_value','resale_price','resale_date',
   'warranty_status','test_date','fault_notes',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
-  'market_value_currency','market_value_foreign_amount'
+  'market_value_currency','market_value_foreign_amount','favorite'
 ];
  
 // ── 週邊欄位 ─────────────────────────────────
@@ -129,7 +129,7 @@ const PERIPH_HEADERS = [
   'storage_location','market_value','resale_price','resale_date',
   'warranty_status','test_date','fault_notes',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
-  'market_value_currency','market_value_foreign_amount'
+  'market_value_currency','market_value_foreign_amount','favorite'
 ];
  
 // ── 狩獵清單欄位 ──
@@ -140,7 +140,8 @@ const PERIPH_HEADERS = [
 //  hunt_status 追蹤中 / 已收手
 const HUNT_HEADERS = [
   'category','target_cat','primary_name','platform','subtype','barcode',
-  'notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary'
+  'notes','cover_img','sightings','hunt_status','uuid','created_at','jp_name','region','summary',
+  'extra_images','target_price','desire_level','release_date'
 ];
 
 // ── 數位下載版（v43.01 新增，v46.01 擴充授權/檔案專屬欄位，v47.01 依子類型拆為 8 張表，比照前端 8 組 FIELDS）──
@@ -154,7 +155,7 @@ const _DIGI_TAIL = [
   'file_format','download_size','file_storage_location',
   'release_date','suggest_price','region','edition',
   'collect_status','buy_date','buy_price','redemption_key',
-  'summary','ref_link','cover_img','extra_images','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','extra_images','related_code','notes','uuid','created_at','favorite'
 ];
 // 1. 下載版遊戲
 const DIGIGAME_HEADERS = _DIGI_HEAD.concat([
@@ -198,7 +199,7 @@ const _OS_TAIL = [
   'barcode','code','collect_status','obi_status','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost','bonus_items',
   'market_value','market_value_confidence',
-  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
 ];
 const OSTMAIN_HEADERS = _OS_HEAD.concat(['composer','disc_count','track_count']).concat(_OS_TAIL);
 const OSTSINGLE_HEADERS = _OS_HEAD.concat(['artist','composer','track_count']).concat(_OS_TAIL);
@@ -213,7 +214,7 @@ const _AN_TAIL = [
   'barcode','code','collect_status','condition','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
-  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
 ];
 const ANMANGA_HEADERS = _AN_HEAD.concat(['volume','illustrator','page_count']).concat(_AN_TAIL);
 const ANARTBOOK_HEADERS = _AN_HEAD.concat(['illustrator','page_count']).concat(_AN_TAIL);
@@ -231,7 +232,7 @@ const _FIG_TAIL = [
   'barcode','code','collect_status','box_condition','condition','completeness','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
-  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at'
+  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
 ];
 const FIGSCALE_HEADERS = _FIG_HEAD.concat(['scale','material','sculptor']).concat(_FIG_TAIL);
 const FIGACTION_HEADERS = _FIG_HEAD.concat(['joint_info','accessories']).concat(_FIG_TAIL);
