@@ -2337,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.66';
+const APP_VERSION='v54.67';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14417,8 +14417,8 @@ function huntDetail(uid){
   }
   var _mainDef=_imgDefs[0];
   window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
-  var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0" style="width:104px">'+
-    '<div class="vault-cover-main" id="hero-cover-main" style="width:104px;height:104px'+(_mainDef?';cursor:pointer':'')+'"'+(_mainDef?' onclick="openHeroLightbox()"':'')+'>'+
+  var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
+    '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()" style="cursor:pointer"':'')+'>'+
     (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="" style="width:100%;height:100%;object-fit:cover">'):'🎮')+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
