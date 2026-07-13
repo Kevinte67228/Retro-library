@@ -2337,7 +2337,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v54.67';
+const APP_VERSION='v54.68';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13534,7 +13534,7 @@ window.onload=function(){
 // ══ 尋寶清單（二手比價）v06 — 完全獨立模組 ══
 //    自有狀態與掃描器，不碰收藏建檔的 entry / combo
 // ══════════════════════════════════════════════════════
-var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barcode','notes','cover_img','extra_images','sightings','hunt_status','uuid','created_at','jp_name','region','summary'];
+var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barcode','notes','cover_img','extra_images','sightings','hunt_status','uuid','created_at','jp_name','region','summary','target_price','desire_level','release_date'];
 var hunt=[];                 // [{rowNum,uid,data:{...}}]
 var _huntEntry=null;         // 新增目標暫存
 var _huntPhoto='';           // 目標照片暫存（base64；空＝沿用舊照）
@@ -13544,6 +13544,41 @@ var _huntConvertUid=null;     // #4：尋寶轉入收藏進行中的來源目標
 var _huntSel=false,_huntSelSet=new Set();   // #5：尋寶批次選取
 var HUNT_CATCOLOR={'遊戲':'#00e5ff','攻略':'#ff6e9c','主機':'#69f0ae','週邊':'#ffab40'};
 
+// v54.68：尋寶詳情頁 KPI 計算（最低價／目標價／收藏慾望／發售倒數）
+function _huntLowestPriceKpi(d){
+  var sights=huntSights(d);
+  if(!sights.length)return {value:'',color:'#7986cb'};
+  var curs=Object.keys(huntCurCount(sights));
+  var minBy=huntMinByCur(sights);
+  if(curs.length===1)return {value:huntCurPrefix(curs[0])+minBy[curs[0]],color:'#ff6e9c'};
+  var twds=sights.map(huntToTWD),allConv=twds.length&&twds.every(function(t){return t!=null;});
+  if(allConv)return {value:'≈NT$'+Math.min.apply(null,twds),sub:sights.length+' 筆/多幣別',color:'#ff6e9c'};
+  return {value:sights.length+' 筆報價',sub:'多幣別',color:'#ff6e9c'};
+}
+function _huntTargetKpi(d){
+  var t=parseFloat(d.target_price);
+  if(isNaN(t)||!d.target_price)return {value:'',color:'#7986cb'};
+  var sights=huntSights(d);
+  var twds=sights.map(huntToTWD).filter(function(x){return x!=null;});
+  var lowestTWD=twds.length?Math.min.apply(null,twds):null;
+  var hit=(lowestTWD!=null&&lowestTWD<=t);
+  return {value:'NT$'+t,sub:hit?'✓ 已達標':'',color:hit?'#69f0ae':'#ffd54f'};
+}
+function _huntDesireKpi(d){
+  var lvl=d.desire_level||'';
+  var colorMap={'高':'#ff6e9c','中':'#ffd54f','低':'#7986cb'};
+  return {value:lvl,color:colorMap[lvl]||'#7986cb'};
+}
+function _huntCountdownKpi(d){
+  if(!d.release_date)return {value:'',color:'#7986cb'};
+  var rd=new Date(d.release_date);
+  if(isNaN(rd.getTime()))return {value:'',color:'#7986cb'};
+  var today=new Date();today.setHours(0,0,0,0);rd.setHours(0,0,0,0);
+  var diffDays=Math.round((rd-today)/86400000);
+  if(diffDays>0)return {value:'還有'+diffDays+'天',color:'#00e5ff'};
+  if(diffDays===0)return {value:'今天發售！',color:'#ff6e9c'};
+  return {value:'已發售',color:'#69f0ae'};
+}
 function huntSights(d){
   if(!d||!d.sightings)return [];
   if(Array.isArray(d.sightings))return d.sightings;
@@ -14305,6 +14340,11 @@ function _huntFormFieldsHtml(e,p){
     '<div class="fg"><label class="fl">區域</label><select class="fsel" id="'+p+'-region">'+regSel+'</select></div>'+
     '<div class="fg"><label class="fl">條碼 <button type="button" class="ocr-btn" onclick="huntBarcodeScan(\''+p+'-bc\')">📷 OCR</button></label><input class="fi mono" id="'+p+'-bc" value="'+esc(e.barcode||'')+'" placeholder="（選填）"></div>'+
     '<div class="fg"><label class="fl">遊戲簡介</label><textarea class="ft" id="'+p+'-summary" placeholder="商品／遊戲簡介（拍照辨識會自動帶入）" style="min-height:84px">'+esc(e.summary||'')+'</textarea></div>'+
+    '<div class="fg"><label class="fl">目標價</label><input class="fi" type="number" inputmode="decimal" id="'+p+'-target" value="'+esc(e.target_price||'')+'" placeholder="心理價位，達標時會標示"></div>'+
+    '<div class="fg"><label class="fl">收藏慾望</label><select class="fsel" id="'+p+'-desire">'+
+      ['','高','中','低'].map(function(v){return '<option value="'+v+'"'+(v===(e.desire_level||'')?' selected':'')+'>'+(v||'— 不指定 —')+'</option>';}).join('')+
+    '</select></div>'+
+    '<div class="fg"><label class="fl">發售日</label><input class="fi" type="date" id="'+p+'-release" value="'+esc((e.release_date||'').split('T')[0])+'" placeholder="供發售倒數計算"></div>'+
     '<div class="fg"><label class="fl">備註</label><textarea class="ft" id="'+p+'-notes" placeholder="想找的版本／追蹤原因…">'+esc(e.notes||'')+'</textarea></div>';
 }
 // 依分類取得子類型 <option> HTML（無子類型分類回傳空字串）
@@ -14337,6 +14377,9 @@ function _huntReadFormFields(e,p){
   e.region=val('region');
   e.barcode=val('bc');
   e.summary=val('summary');
+  e.target_price=val('target');
+  e.desire_level=val('desire');
+  e.release_date=val('release');
   e.notes=val('notes');
   return e;
 }
@@ -14427,16 +14470,28 @@ function huntDetail(uid){
   }
   coverHtml+='</div>';
   var html='<div style="padding:10px 16px 6px"><button class="btn bo bs" style="color:#00e5ff;border-color:#00e5ff" onclick="renderHuntList()" type="button">‹ 返回清單</button></div>';
+  var desireKpi=_huntDesireKpi(d);
+  var lowestKpi=_huntLowestPriceKpi(d);
+  var targetKpi=_huntTargetKpi(d);
+  var countdownKpi=_huntCountdownKpi(d);
+  var kpisHtml='<div class="vault-kpis">'+
+    _detailKpi('最低價',lowestKpi.value,lowestKpi.color,lowestKpi.sub)+
+    _detailKpi('目標價',targetKpi.value,targetKpi.color,targetKpi.sub)+
+    _detailKpi('收藏慾望',desireKpi.value,desireKpi.color)+
+    _detailKpi('發售倒數',countdownKpi.value,countdownKpi.color)+
+  '</div>';
   html+='<div class="card" style="display:flex;gap:14px">'+
     coverHtml+
     '<div style="flex:1;min-width:0">'+
       '<span style="font-size:10px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 6px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
       (done?' <span style="font-size:10px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 6px">已入手</span>':'')+
+      (desireKpi.value?' <span style="font-size:10px;color:'+desireKpi.color+';border:1px solid '+desireKpi.color+';border-radius:4px;padding:1px 6px">慾望：'+esc(desireKpi.value)+'</span>':'')+
       '<div style="font-size:17px;font-weight:700;color:#e8eaf6;margin:6px 0 2px">'+esc(d.primary_name||'未命名')+'</div>'+
       '<div style="font-size:12px;color:#7986cb">'+esc(d.platform||d.subtype||'')+(d.region?' · '+esc(mapRegion(d.region)||d.region):'')+(d.barcode?' · <span class="mono">'+esc(d.barcode)+'</span>':'')+'</div>'+
       (d.summary?'<div style="font-size:12px;color:#aab4d4;line-height:1.55;margin-top:6px;max-height:120px;overflow-y:auto">'+esc(d.summary)+'</div>':'')+
       (d.notes?'<div style="font-size:12px;color:#9fa8c8;margin-top:6px">'+esc(d.notes)+'</div>':'')+
     '</div></div>';
+  html+='<div style="padding:0 16px 10px">'+kpisHtml+'</div>';
   html+='<div style="display:flex;gap:8px;padding:0 16px 10px">'+
     '<button class="btn bo bs" style="flex:1" onclick="huntEditTarget(\''+uid+'\')" type="button">編輯目標</button>'+
     '<button class="btn bo bs" style="flex:1;color:#ff5252;border-color:#5a2a2a" onclick="huntDeleteTarget(\''+uid+'\')" type="button">刪除</button></div>';
