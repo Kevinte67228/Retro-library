@@ -1,3 +1,30 @@
+## v66.04 (2026-07-13)
+
+### 變更內容
+修正 App 開啟時的短暫黑屏問題。使用者提供螢幕錄影，用 ffmpeg 逐格擷取比對後，確認開機畫面淡出跟主畫面出現之間確實有一格黑屏空窗。
+
+**根因**：`body` 的背景圖是從外部網域 `raw.githubusercontent.com` 載入（`https://raw.githubusercontent.com/.../bg.webp`），不是本地相對路徑。這個跨網域請求：
+- 需要額外的 DNS 查詢＋TLS 交握＋跨網域下載，不像同源請求那麼快
+- 不受 Service Worker 的預先快取保護（`fetch` 事件只處理同源請求）
+- 開機畫面的淡出是**固定 2.5 秒計時器**，不是等實際內容就緒才觸發——如果這個外部圖片請求比 2.5 秒慢，就會出現「開機畫面淡出了，但背景圖還沒載入完成」的空窗，肉眼看起來就是黑屏閃一下
+
+**修正**：`body` 背景圖改回本地相對路徑 `./bg.webp`（該檔案本來就已經部署在 Netlify 上，跟 `index.html` 同源），並加進 Service Worker 的 `STATIC_ASSETS` 預先快取清單。修正後背景圖載入變成同源請求，且第二次以後開啟會直接吃快取，不會再有這個空窗。
+
+manifest 圖示、市場圖示等其他外部連結維持不動——這些不在 App 開啟當下的關鍵路徑上，不影響這次的黑屏症狀。
+
+### 影響檔案
+- index.html / GameVault_v66_04_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端修正，非實質後端變更，不觸發版號歸零）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v66-03 → gamevault-v66-04（新增 `./bg.webp` 至預先快取清單）
+
+### 對應備份
+- _internal/old/v66_03/
+
 ## v66.03 (2026-07-13)
 
 ### 變更內容
@@ -68,30 +95,4 @@
 
 ### 對應備份
 - _internal/old/v54_70/（版號重整前最後一版，已設為新的永久保留基準，取代原本的 v54_48）
-
-## v54.70 (2026-07-08)
-
-### 變更內容
-三項修正：
-
-**1. 尋寶編輯圖片模組改用收藏樣板**：完整比照收藏編輯表單的封面圖片＋額外照片區塊 HTML/CSS（`.exti-grid`/`.exti-item`），封面照片改成拍照/相簿選取後**立即寫入預覽**（比照收藏 `onImgUpload` 的行為），不再等「儲存變更」才套用暫存值。新增 `huntCoverUpload()`／`huntClearCover()`／`huntOnExtraImgLabel()`／`huntOpenExtraImgLightbox()` 四個 Hunt 專屬處理函式（既有的 `onImgUpload`／`clearImg` 等函式綁定在 Collection 全域 `entry`，無法直接沿用，改寫對應版本）；移除因此變成孤兒程式碼的 `huntEditPhoto()`。
-
-**關於圖片重整後消失**：這是預期中的行為——後端寫入邏輯依照試算表既有欄位標題對應，Hunt 分頁若還沒加上 `extra_images`（含前幾版的 `target_price`／`desire_level`／`release_date`）欄位標題，資料就不會真正寫入試算表，只存在 App 本地快取，重新同步後會遺失。麻煩確認這幾個欄位標題是否都已經加到 Hunt 分頁。
-
-**2. 修正「•••」主按鈕文字可能溢出圓形邊界**：字級從 24px 縮小到 18px、移除多餘字距，並加上 `overflow:hidden` 確保內容絕對不會超出 54px 圓形按鈕範圍。
-
-**3. 簡介／備註改為獨立區塊**：原本跟圖片／KPI 卡片混在同一張卡片內，現在拆成卡片下方的獨立區塊，分別加上「簡介」「備註」小標題。
-
-### 影響檔案
-- index.html / GameVault_v54_70_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v54-69 → gamevault-v54-70
-
-### 對應備份
-- _internal/old/v54_69/
 
