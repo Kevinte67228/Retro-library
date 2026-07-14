@@ -1,13 +1,15 @@
-const CACHE_NAME = 'gamevault-v66-03';
+const CACHE_NAME = 'gamevault-v66-04';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './GameVault_v66_03_index.html',
+  './GameVault_v66_04_index.html',
   './manifest.json',
-  './manual.html'
+  './manual.html',
+  './bg.webp'
 ];
-// 註：bg.webp 與各 icon（含 mkt-*）已改由 GitHub(raw) 提供，屬跨網域資源，
-// 不納入 service worker 預先快取（fetch 事件亦只處理同源），改由瀏覽器自行快取。
+// 註：v54.71 起 bg.webp 改回本地相對路徑，納入預先快取——原本從 GitHub(raw) 跨網域載入，
+// 該請求不受此處快取保護，若比開機畫面淡出的固定延遲還慢，會出現淡出後背景圖尚未就緒的短暫黑屏空窗。
+// icon（含 mkt-*）維持外部連結不變，這些不在 App 開啟當下的關鍵路徑上，不受影響。
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
