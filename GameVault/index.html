@@ -2340,7 +2340,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v66.10';
+const APP_VERSION='v66.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14445,7 +14445,10 @@ function huntSaveTarget(){
   shPost({action:'add',row:row,fields:_huntEntryFields(e),category:'狩獵'}).then(function(res){
     if(!res.ok)throw new Error(res.error||'未知');
     var uid=res.uuid||('hunt:'+res.rowNum);
-    if(res.imgs&&res.imgs.cover_img!==undefined)e.cover_img=res.imgs.cover_img;
+    if(res.imgs){
+      if(res.imgs.cover_img!==undefined)e.cover_img=res.imgs.cover_img;
+      if(res.imgs.extra_images!==undefined)e.extra_images=res.imgs.extra_images; // v54.76：補上遺漏的自訂圖片回寫
+    }
     hunt.push({rowNum:res.rowNum,uid:uid,data:Object.assign({},e)});
     localforage.setItem('gv_hunt',hunt).catch(function(){});
     toast('已新增尋寶目標 ✓','ok');
@@ -14460,7 +14463,10 @@ function huntUpdateRow(h){
   var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
   return shPost({action:'update',uuid:_huntValidUuid(d)||undefined,rowNum:h.uid,row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
     if(!res.ok)throw new Error(res.error||'未知');
-    if(res.imgs&&res.imgs.cover_img!==undefined)d.cover_img=res.imgs.cover_img;
+    if(res.imgs){
+      if(res.imgs.cover_img!==undefined)d.cover_img=res.imgs.cover_img;
+      if(res.imgs.extra_images!==undefined)d.extra_images=res.imgs.extra_images; // v54.76：補上遺漏的自訂圖片回寫（根因：base64原始資料留在本地，重整後跟後端實際存的Drive ID對不上）
+    }
     return res;
   });
 }
