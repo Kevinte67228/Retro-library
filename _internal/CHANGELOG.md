@@ -1,3 +1,29 @@
+## v66.11 (2026-07-13)
+
+### 變更內容
+修正尋寶額外照片儲存後重整就消失的問題。
+
+**根因**：比對收藏跟尋寶的存檔邏輯，發現收藏的存檔流程（`onFld`儲存路徑）在後端回應後，會把 `res.imgs.extra_images`（後端已把 base64 原始資料上傳到 Drive、轉換成檔案 ID 後的正確結果）讀回本地端的 `entry.extra_images`；但尋寶的 `huntSaveTarget()`／`huntUpdateRow()` 兩個存檔函式**只處理了 `res.imgs.cover_img`，完全漏掉 `res.imgs.extra_images`**。
+
+**已排除的可能性**：確認 GAS 後端的 `processExtraImages()` 呼叫邏輯是通用的（用 `headers.indexOf('extra_images')` 判斷，不分類別），Hunt 分頁只要有這個欄位標題（使用者已確認執行過「修復工作表標題列」），後端就會正確處理圖片上傳並回傳結果——問題完全出在前端沒接住這個回傳值。
+
+**實際影響**：存檔當下本地端仍留著上傳前的原始 base64 資料（未讀取後端回傳的 Drive ID 版本），跟試算表實際存的內容不一致，下次重新整理（重新從後端同步）時就會跟正確資料對不上，看起來像是照片消失了。
+
+**修正**：`huntSaveTarget()`（新增）與 `huntUpdateRow()`（編輯儲存）都補上 `res.imgs.extra_images` 的回寫，比照收藏既有的正確做法。
+
+### 影響檔案
+- index.html / GameVault_v66_11_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端修正，後端邏輯本來就是對的）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v66-10 → gamevault-v66-11
+
+### 對應備份
+- _internal/old/v66_10/
+
 ## v66.10 (2026-07-13)
 
 ### 變更內容
@@ -61,22 +87,4 @@
 
 ### 對應備份
 - _internal/old/v66_07/
-
-## v66.07 (2026-07-13)
-
-### 變更內容
-尋寶詳情頁動作按鈕列改用跟收藏詳情頁 `#dact` 完全相同的樣式規格（同一套 `.btn.bo.bs` class、刪除紅色 `#ff5252`）：3 欄等份排列 **✕（=返回清單）／編輯／刪除**。「✕」取代原本的文字版「‹ 返回清單」，比照收藏詳情頁關閉按鈕的圖示風格。
-
-### 影響檔案
-- index.html / GameVault_v66_07_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端排版調整，非實質後端變更，不觸發版號歸零）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v66-06 → gamevault-v66-07
-
-### 對應備份
-- _internal/old/v66_06/
 
