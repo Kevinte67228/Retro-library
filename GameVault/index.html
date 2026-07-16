@@ -654,6 +654,13 @@ body{
 .abbr-list{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 12px 12px;font-size:12px;color:#9fa8c8}
 .abbr-list span{white-space:nowrap}
 .abbr-list b{color:#e8eaf6;font-weight:700;margin-right:2px}
+/* v54.78：類型晶片分組（預設收合，比照 abbr-legend 的視覺語言但更明顯一些，畢竟是主要選取入口） */
+.genre-group{margin-bottom:8px;border:1px solid #1e2a45;border-radius:8px;background:#0f1525;overflow:hidden}
+.genre-group>summary{padding:9px 12px;font-size:13px;font-weight:600;color:#e8eaf6;cursor:pointer;list-style:none;user-select:none}
+.genre-group>summary::-webkit-details-marker{display:none}
+.genre-group>summary::before{content:'▸ ';color:#00e5ff}
+.genre-group[open]>summary::before{content:'▾ '}
+.genre-group .genre-chips{padding:4px 10px 10px}
 /* ── 圖片裁切器 ── */
 #crop-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;flex-direction:column;touch-action:none;opacity:0;transition:opacity .28s ease}
 #crop-ov.on{display:flex}
@@ -2118,6 +2125,16 @@ const GENRES=[
   'TBL 桌遊','TD 塔防','TPS 第三人稱射擊','VN 視覺小說','VR 虛擬實境',
   'OTHER 其他'
 ];
+// v54.78：類型晶片分層分組（僅供 UI 分組顯示用，不影響 GENRES／matchGenre 等既有比對邏輯，
+// 兩者内容集合完全一致，只是這裡多了分類層級）。參考 Steam 分類邏輯整理，使用者確認不精簡合併既有類型。
+const GENRE_GROUPS=[
+  {label:'🎯 動作',items:['ACT 動作','AADV 動作冒險','PLT 平台跳躍','FTG 格鬥','H&S 無雙類','STH 潛行','SHT 射擊','FPS 第一人稱射擊','TPS 第三人稱射擊','STG 飛機射擊']},
+  {label:'⚔️ 角色扮演',items:['RPG 角色扮演','ARPG 動作角色扮演','SRPG 戰略角色扮演','RAI 養成']},
+  {label:'🏗️ 策略／模擬',items:['RTS 即時戰略','SLG 模擬','TD 塔防','CARD 卡牌','SAND 沙盒','SVL 生存']},
+  {label:'📖 冒險／故事',items:['ADV 冒險','PZL 益智·解謎','AVG 文字冒險','VN 視覺小說','LVG 戀愛模擬','FMV 互動影像','HOR 恐怖']},
+  {label:'🎉 休閒／運動／社交',items:['FAM 闔家同樂','PARTY 派對','TBL 桌遊','SPT 運動','RAC 競速','MUS 音樂節奏','EDU 教育']},
+  {label:'🌐 多人／其他',items:['MOBA 多人競技','VR 虛擬實境','OTHER 其他']}
+];
 // 把 AI/DB 回傳的類型文字對應到標準清單
 function matchGenre(v){
   if(!v)return '';
@@ -2340,7 +2357,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.01';
+const APP_VERSION='v67.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10102,13 +10119,20 @@ function renderFld(f){
   if(type==='genresel'){
     // 複選：用與卡片相同的正規化（matchGenreMulti 已處理 、 , / 分隔並標準化）
     var curList=matchGenreMulti(v).split('、').filter(Boolean);
-    var chk='<div class="genre-chips" data-k="'+k+'">';
-    GENRES.forEach(function(g){
-      var on=curList.indexOf(g)>=0;
-      var code=g.split(' ')[0]; // 晶片只顯示縮寫
-      chk+='<label class="genre-chip'+(on?' on':'')+'"><input type="checkbox" value="'+g+'" '+(on?'checked':'')+' onchange="onGenreToggle(this)" style="display:none"><span>'+code+'</span></label>';
+    // v54.78：改用 GENRE_GROUPS 分層分組顯示，每組預設收合（不加 open 屬性），
+    // 標題附上目前已勾選數量，收合狀態下也能一眼看出哪組有選過
+    var chk='';
+    GENRE_GROUPS.forEach(function(grp){
+      var selCount=grp.items.filter(function(g){return curList.indexOf(g)>=0;}).length;
+      chk+='<details class="genre-group"><summary>'+esc(grp.label)+(selCount?' <span style="color:#00e5ff;font-weight:700">('+selCount+')</span>':'')+'</summary>'+
+        '<div class="genre-chips" data-k="'+k+'">'+
+        grp.items.map(function(g){
+          var on=curList.indexOf(g)>=0;
+          var code=g.split(' ')[0]; // 晶片只顯示縮寫
+          return '<label class="genre-chip'+(on?' on':'')+'"><input type="checkbox" value="'+g+'" '+(on?'checked':'')+' onchange="onGenreToggle(this)" style="display:none"><span>'+code+'</span></label>';
+        }).join('')+
+        '</div></details>';
     });
-    chk+='</div>';
     // 折疊式縮寫對照表
     var legend='<details class="abbr-legend"><summary>縮寫說明對照</summary><div class="abbr-list">'+
       GENRES.map(function(g){var p=g.split(' ');return '<span><b>'+p[0]+'</b> '+p.slice(1).join(' ')+'</span>';}).join('')+
@@ -10235,13 +10259,15 @@ function onGenreToggle(cb){
   var wrap=cb.closest('.genre-chips');
   if(!wrap)return;
   var k=wrap.dataset.k;
-  // 收集所有勾選的類型
+  // v54.78：類型改分組顯示後，同一欄位(k)可能對應多個 .genre-chips 容器（各分組各一個獨立區塊），
+  // 改成跨所有同 key 的容器收集勾選值，避免只收集到目前這組、覆蓋掉其他組已勾選的項目
   var checked=[];
-  wrap.querySelectorAll('input[type=checkbox]').forEach(function(c){
-    if(c.checked)checked.push(c.value);
-    // 更新 chip 樣式
-    var lbl=c.closest('.genre-chip');
-    if(lbl)lbl.classList.toggle('on',c.checked);
+  document.querySelectorAll('.genre-chips[data-k="'+k+'"]').forEach(function(w){
+    w.querySelectorAll('input[type=checkbox]').forEach(function(c){
+      if(c.checked)checked.push(c.value);
+      var lbl=c.closest('.genre-chip');
+      if(lbl)lbl.classList.toggle('on',c.checked);
+    });
   });
   onFld(k,checked.join('、'));
 }
