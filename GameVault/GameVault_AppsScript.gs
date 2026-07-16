@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v66            ║
+// ║  GameVault — Google Apps Script 後端  v67            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -2765,7 +2765,9 @@ function backfillUuids() {
     const uuidData = sheet.getRange(2, uuidCol + 1, last - 1, 1).getValues();
     const updates = [];
     for (let i = 0; i < uuidData.length; i++) {
-      if (!uuidData[i][0] || String(uuidData[i][0]).length < 8) {
+      const _curUuid = uuidData[i][0];
+      const _uuidValid = _curUuid && String(_curUuid).length >= 30 && String(_curUuid).indexOf('-') > 0; // v54.77：改成跟前端 isValidUuid 判斷一致，避免長度8~29或無破折號的邊緣情況被誤判為已有效而漏補
+      if (!_uuidValid) {
         updates.push([Utilities.getUuid()]);
         filled++;
       } else {
