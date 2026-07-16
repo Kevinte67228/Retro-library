@@ -1720,7 +1720,8 @@ body{
         <div class="srow" style="margin-top:8px">
           <div class="srl">🔀 市場顯示設定</div>
           <div id="mkt-vis-list" style="margin-top:4px"></div>
-          <div class="shlp" style="margin-top:8px">取消勾選可以在「二手估值市場參考」區塊隱藏該市場（含內建 8 個與你自訂的市場），不會刪除資料，隨時可以再勾選回來。</div>
+          <div class="shlp" style="margin-top:8px">取消勾選可以在「二手估值市場參考」區塊隱藏該市場（含內建 8 個與你自訂的市場），不會刪除資料，隨時可以再勾選回來。用 ↑↓ 按鈕可以調整顯示順序。</div>
+          <div class="shlp" style="margin-top:6px">搜尋時會依分類自動加入限定詞提高準確度：遊戲/主機帶入平台；週邊/書籍/原聲帶/動漫美術/公仔帶入分類關鍵字（依市場語言自動切換中/日文）。</div>
         </div>
         <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
           </div>
@@ -2364,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.05';
+const APP_VERSION='v67.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4223,16 +4224,47 @@ function _marketHiddenSet(){
   var set={};arr.forEach(function(n){set[n]=1;});
   return set;
 }
+// v54.82：市場自訂排序，存 cfg.marketOrder（市場名稱陣列，依序排列）。
+// 未出現在 marketOrder 裡的市場（例如新加入的自訂市場）維持原本相對順序，附加在已排序項目後面。
+function _marketAllNames(){
+  return BUILTIN_MARKETS.concat(_cmList().map(function(m){return m.n||'';}).filter(Boolean));
+}
+function _marketOrderedList(){
+  var all=_marketAllNames();
+  var order=(cfg&&Array.isArray(cfg.marketOrder))?cfg.marketOrder:[];
+  var ordered=order.filter(function(n){return all.indexOf(n)>=0;});
+  var rest=all.filter(function(n){return ordered.indexOf(n)<0;});
+  return ordered.concat(rest);
+}
 function mktVisRenderList(){
   var box=$('mkt-vis-list');if(!box)return;
   var hidden=_marketHiddenSet();
-  var all=BUILTIN_MARKETS.concat(_cmList().map(function(m){return m.n||'';}).filter(Boolean));
-  box.innerHTML=all.map(function(n){
+  var list=_marketOrderedList();
+  box.innerHTML=list.map(function(n,i){
     var on=!hidden[n];
-    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
-      '<input type="checkbox" data-name="'+esc(n)+'" '+(on?'checked':'')+' onchange="mktVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
-      '<span>'+esc(n)+'</span></label>';
+    var atTop=i===0,atBottom=i===list.length-1;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+
+      '<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#e8eaf6;flex:1;min-width:0">'+
+        '<input type="checkbox" data-name="'+esc(n)+'" '+(on?'checked':'')+' onchange="mktVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
+        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n)+'</span>'+
+      '</label>'+
+      '<button type="button" data-name="'+esc(n)+'" data-dir="-1" onclick="mktVisMove(this)" '+(atTop?'disabled':'')+' style="width:30px;height:30px;flex-shrink:0;border-radius:6px;border:1px solid #2a3a5a;background:#141b30;color:'+(atTop?'#3a4b72':'#9fa8c8')+';font-size:14px;font-family:inherit;cursor:pointer">↑</button>'+
+      '<button type="button" data-name="'+esc(n)+'" data-dir="1" onclick="mktVisMove(this)" '+(atBottom?'disabled':'')+' style="width:30px;height:30px;flex-shrink:0;border-radius:6px;border:1px solid #2a3a5a;background:#141b30;color:'+(atBottom?'#3a4b72':'#9fa8c8')+';font-size:14px;font-family:inherit;cursor:pointer">↓</button>'+
+    '</div>';
   }).join('');
+}
+function mktVisMove(btn){
+  var name=btn.dataset.name;var dir=parseInt(btn.dataset.dir,10);
+  if(!name||!dir)return;
+  var list=_marketOrderedList();
+  var idx=list.indexOf(name);
+  if(idx<0)return;
+  var newIdx=idx+dir;
+  if(newIdx<0||newIdx>=list.length)return;
+  var tmp=list[idx];list[idx]=list[newIdx];list[newIdx]=tmp;
+  cfg.marketOrder=list;
+  _persistCfg();
+  mktVisRenderList();
 }
 function mktVisToggle(cb){
   var name=cb.dataset.name;if(!name)return;
@@ -12491,6 +12523,23 @@ function marketConfidenceText(d){
   if(!c||c==='N/A')return '信心：未評級';
   return '信心：'+c;
 }
+// v54.82：二手估值市場查詢字串加入限定詞，提高搜尋準確度。
+// 遊戲/主機沿用平台（marketAutoPlatform，不修改其邏輯避免影響其他既有用途）；
+// 週邊/書籍/原聲帶/動漫美術設定集/公仔改用「分類關鍵字」中日對照表，比平台更能精確篩出對的品項類型。
+var MARKET_CAT_KEYWORD={
+  '週邊':{tw:'週邊',jp:'周辺機器'},
+  '書籍':{tw:'書籍',jp:'本'},
+  '原聲帶':{tw:'原聲帶',jp:'サントラ'},
+  '動漫/美術設定集':{tw:'畫集',jp:'画集'},
+  '公仔':{tw:'公仔',jp:'フィギュア'}
+};
+function marketQueryQualifier(d,lang){
+  d=d||{};
+  var cat=catInternal(d.category)||'遊戲';
+  if(cat==='遊戲'||cat==='主機')return marketAutoPlatform(d)||'';
+  var kw=MARKET_CAT_KEYWORD[cat];
+  return kw?(kw[lang]||''):'';
+}
 function marketAutoPlatform(d){
   d=d||{};
   var cat=catInternal(d.category)||'遊戲';
@@ -12506,15 +12555,19 @@ function marketAutoModel(d){
   if(cat==='週邊')return d.model_no||d.code||'';
   return '';
 }
-// 台灣站查詢：不分區域一律用中文名（露天/蝦皮等以中文標題為主）；無中文名才退回其他名稱
+// 台灣站查詢：不分區域一律用中文名（露天/蝦皮等以中文標題為主）；無中文名才退回其他名稱；加入分類限定詞提高準確度
 function marketTwQuery(d){
   d=d||{};
-  return (d.zh_name||d.primary_name||d.en_name||d.jp_name||'').trim();
+  var name=(d.zh_name||d.primary_name||d.en_name||d.jp_name||'').trim();
+  var q=marketQueryQualifier(d,'tw');
+  return q?(name+' '+q).trim():name;
 }
-// 日本站查詢：一律用日文名（比照估值預設以日文為依據）；無日文名才退回其他名稱
+// 日本站查詢：一律用日文名（比照估值預設以日文為依據）；無日文名才退回其他名稱；加入分類限定詞（日文）提高準確度
 function marketJpQuery(d){
   d=d||{};
-  return (d.jp_name||d.primary_name||d.zh_name||d.en_name||'').trim();
+  var name=(d.jp_name||d.primary_name||d.zh_name||d.en_name||'').trim();
+  var q=marketQueryQualifier(d,'jp');
+  return q?(name+' '+q).trim():name;
 }
 // 靜態圖檔改由 GitHub 提供（Retro-library/main 根目錄）；未來換 host 只需改此處
 var GH_ASSET_BASE='https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/';
@@ -12578,6 +12631,15 @@ function marketReferenceHtml(d){
   // v54.81：過濾掉使用者在「設定」頁勾選隱藏的市場（cfg.marketHidden）
   var _hidden=_marketHiddenSet();
   sites=sites.filter(function(s){return !_hidden[s.n];});
+  // v54.82：依使用者自訂排序（cfg.marketOrder）排列，未設定順序的市場維持原本相對順序
+  var _order=(cfg&&Array.isArray(cfg.marketOrder))?cfg.marketOrder:[];
+  if(_order.length){
+    var _oi={};_order.forEach(function(n,i){_oi[n]=i;});
+    sites=sites.slice().sort(function(a,b){
+      var ai=_oi.hasOwnProperty(a.n)?_oi[a.n]:9999,bi=_oi.hasOwnProperty(b.n)?_oi[b.n]:9999;
+      return ai-bi;
+    });
+  }
   return sites.length?_refLinks('二手估值市場參考',sites):'';
 }
 // v40.31：把 cfg.customMarkets 轉成可渲染的 site 物件陣列（已套入查詢字串）
