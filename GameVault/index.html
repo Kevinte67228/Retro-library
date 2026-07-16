@@ -2359,7 +2359,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.03';
+const APP_VERSION='v67.04';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10140,9 +10140,9 @@ function renderFld(f){
     tabs+='</div>';
     panels+='</div>';
     var chk=tabs+panels;
-    // 折疊式縮寫對照表（維持原樣不變）
+    // 縮寫說明對照：只顯示目前作用中分組的縮寫，切換頁籤時同步更新（見 switchGenreTab）
     var legend='<details class="abbr-legend"><summary>縮寫說明對照</summary><div class="abbr-list">'+
-      GENRES.map(function(g){var p=g.split(' ');return '<span><b>'+p[0]+'</b> '+p.slice(1).join(' ')+'</span>';}).join('')+
+      GENRE_GROUPS[0].items.map(function(g){var p=g.split(' ');return '<span><b>'+p[0]+'</b> '+p.slice(1).join(' ')+'</span>';}).join('')+
       '</div></details>';
     return wrap+'<label class="fl">'+lbl+'<span style="font-size:10px;color:#7986cb;margin-left:6px">可多選</span></label>'+chk+legend+'</div>';
   }
@@ -10266,11 +10266,21 @@ function renderFld(f){
 function switchGenreTab(btn){
   var tabsWrap=btn.parentNode;
   var gi=btn.dataset.gi;
+  var k=tabsWrap.dataset.k;
   tabsWrap.querySelectorAll('.genre-tab').forEach(function(t){t.classList.toggle('on',t===btn);});
   var panelsWrap=tabsWrap.nextElementSibling;
   if(panelsWrap)panelsWrap.querySelectorAll('.genre-chips[data-gi]').forEach(function(p){
     p.style.display=(p.dataset.gi===gi)?'flex':'none';
   });
+  // v54.80：切換頁籤時同步更新「縮寫說明對照」，只顯示目前作用中分組的縮寫
+  var fgEl=$('fg-'+k);
+  var grp=GENRE_GROUPS[gi];
+  if(fgEl&&grp){
+    var abbrList=fgEl.querySelector('.abbr-list');
+    if(abbrList){
+      abbrList.innerHTML=grp.items.map(function(g){var p=g.split(' ');return '<span><b>'+p[0]+'</b> '+p.slice(1).join(' ')+'</span>';}).join('');
+    }
+  }
 }
 function onGenreToggle(cb){
   var wrap=cb.closest('.genre-chips');
