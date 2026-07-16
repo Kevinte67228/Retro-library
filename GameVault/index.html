@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.06';
+const APP_VERSION='v67.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13985,12 +13985,14 @@ function huntCardHtml(h){
     var _cheapMark=(chanItems.length>=2&&chanItems[0].sortVal!==Infinity);
     var chanRows=chanItems.slice(0,3).map(function(x,xi){
       var tag=(_cheapMark&&xi===0)?' <span style="font-size:8px;color:#ff6e9c;border:1px solid #ff6e9c;border-radius:3px;padding:0 3px;vertical-align:middle">最低</span>':'';
-      return '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px"><span style="color:#7986cb">'+esc(x.name)+'</span> · <span style="color:#ff6e9c">'+x.priceStr+'</span>'+tag+'</div>';
+      return '<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:#7986cb">'+esc(x.name)+'</span> · <span style="color:#ff6e9c">'+x.priceStr+'</span>'+tag+'</div>';
     }).join('');
     var chanMore=chanItems.length>3?'<div style="color:#5c6b8a">+'+(chanItems.length-3)+' 通路</div>':'';
-    notesCol='<div style="flex:1;min-width:0;align-self:stretch;overflow:hidden;font-size:11px;color:#9fa8c8;line-height:1.4;border-left:1px solid #1e2a45;padding-left:10px">'+chanRows+chanMore+'</div>';
+    // v54.83：通路明細改成卡片下段獨立一列(全寬)，不再跟左側資訊擠同一排導致文字被截斷
+    notesCol='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e2a45;font-size:11px;color:#9fa8c8;line-height:1.5;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:2px 12px">'+chanRows+chanMore+'</div>';
   }
-  return '<div '+_huntPressAttr(h.uid)+' style="display:flex;gap:12px;background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
+  return '<div '+_huntPressAttr(h.uid)+' style="background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
+    '<div style="display:flex;gap:12px">'+
     (_huntSel?'<div style="flex-shrink:0;align-self:center;font-size:20px;color:'+((_huntSelSet.has(h.uid))?'#ff6e9c':'#5c6b8a')+'">'+(_huntSelSet.has(h.uid)?'☑':'☐')+'</div>':'')+
     (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:104px;height:104px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:104px;height:104px;border-radius:10px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:32px">🎮</div>')+
@@ -14003,6 +14005,7 @@ function huntCardHtml(h){
       '<div style="font-size:11px;color:#7986cb;margin-top:2px">'+esc(d.platform||d.subtype||'')+'</div>'+
       '<div style="font-size:11px;margin-top:4px">'+priceLine+
         '<span style="color:#5c6b8a"> · '+sights.length+' 個通路</span></div>'+
+    '</div>'+
     '</div>'+
     notesCol+
     '</div>';
