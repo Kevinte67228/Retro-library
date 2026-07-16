@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.10';
+const APP_VERSION='v67.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11961,6 +11961,7 @@ function exportCsvByType(){
 }
 // 觸發匯入檔案選擇
 function triggerImportCsv(){
+  if(!confirm('匯入 CSV 說明：\n\n• 圖片不含在 CSV 內（檔案太大不適合），匯入後的項目沒有照片，需要另外補拍/上傳\n• 匯入的每一筆都會直接寫回雲端試算表\n\n按「確定」選擇要匯入的 CSV 檔案。'))return;
   var inp=document.getElementById('import-csv-input');
   if(inp){inp.value='';inp.click();}
 }
@@ -11969,6 +11970,7 @@ function importCsv(input){
   var files=Array.from(input.files||[]);
   if(!files.length)return;
   var total=0,skip=0;
+  var newlyAdded=[]; // v54.87：追蹤這次匯入新增的紀錄({rec,isHunt})，解析完後需要逐筆同步寫回後端試算表
   var existUuids={};
   col.forEach(function(r){if(r.uid)existUuids[r.uid]=1;});
   hunt.forEach(function(r){if(r.uid)existUuids[r.uid]=1;});
@@ -12017,16 +12019,15 @@ function importCsv(input){
       var newRec={rowNum:null,uid:uid,data:obj};
       if(isHunt){hunt.push(newRec);}
       else{col.push(newRec);}
+      newlyAdded.push({rec:newRec,isHunt:isHunt});
       total++;
     }
   }
   function readNext(idx){
     if(idx>=files.length){
       if(total>0){
-        localforage.setItem('gv_col',col).catch(function(){});
-        localforage.setItem('gv_hunt',hunt).catch(function(){});
-        updateStats();renderColList();
-        toast('匯入完成：'+total+' 筆（跳過重複 '+skip+' 筆）✓','ok',4000);
+        toast('已解析 '+total+' 筆，同步雲端中...','',3000);
+        _syncImportedRecords(newlyAdded,0,skip,total);
       } else {
         toast('沒有新資料匯入（全部重複或格式錯誤）','er');
       }
@@ -12052,6 +12053,41 @@ function importCsv(input){
     }
   }
   readNext(0);
+}
+// v54.87：CSV 匯入後，把解析出的每一筆新紀錄依序寫回後端試算表。
+// 根因：原本匯入只把資料存進本機 localforage 快取，從未呼叫後端 API 新增資料列，
+// 導致重新整理（重新從後端同步）後，這些從未真正寫入試算表的項目就會消失，看起來像整筆不見了。
+function _syncImportedRecords(list,idx,skip,total){
+  if(idx>=list.length){
+    localforage.setItem('gv_col',col).catch(function(){});
+    localforage.setItem('gv_hunt',hunt).catch(function(){});
+    updateStats();renderColList();
+    toast('匯入完成：'+total+' 筆已同步雲端（跳過重複 '+skip+' 筆）✓','ok',4500);
+    return;
+  }
+  var item=list[idx],d=item.rec.data;
+  function next(){_syncImportedRecords(list,idx+1,skip,total);}
+  if(item.isHunt){
+    if(!d.hunt_status)d.hunt_status='追蹤中';
+    if(!d.sightings)d.sightings='[]';
+    var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
+    shPost({action:'add',row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
+      if(res&&res.ok){
+        item.rec.rowNum=res.rowNum;
+        if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}
+      }
+    }).catch(function(){}).finally(next);
+  } else {
+    var cat=catInternal(d.category)||'遊戲';
+    var fields=fieldsFor(cat,d.subtype);
+    var row=_rowFromFields(d,fields);
+    shPost({action:'add',row:row,fields:_entryFields(d),category:cat}).then(function(res){
+      if(res&&res.ok){
+        item.rec.rowNum=res.rowNum;
+        if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}
+      }
+    }).catch(function(){}).finally(next);
+  }
 }
 // 解析日期為可比較的時間戳；未填、2099 佔位、無法解析 → NaN（視為空值）
 function _sortTs(v){
