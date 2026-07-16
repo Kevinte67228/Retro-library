@@ -1717,6 +1717,11 @@ body{
           <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="cmOpenEditor(-1)" type="button">＋ 新增市場</button>
           <div class="shlp" style="margin-top:8px">在商品詳情與尋寶頁的「二手估值市場參考」加入自己常用的查價網站；該區塊改為可左右滑動。最多 12 個，僅存於本機（隨「匯出／匯入設定」攜帶）。</div>
         </div>
+        <div class="srow" style="margin-top:8px">
+          <div class="srl">🔀 市場顯示設定</div>
+          <div id="mkt-vis-list" style="margin-top:4px"></div>
+          <div class="shlp" style="margin-top:8px">取消勾選可以在「二手估值市場參考」區塊隱藏該市場（含內建 8 個與你自訂的市場），不會刪除資料，隨時可以再勾選回來。</div>
+        </div>
         <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
           </div>
         </div>
@@ -2359,7 +2364,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.04';
+const APP_VERSION='v67.05';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4210,9 +4215,38 @@ function _cmPersist(){
   cfg.customMarkets=_cmList();
   _persistCfg();
 }
+// ══ 市場顯示/隱藏設定（v54.81）：存 cfg.marketHidden（隱藏的市場名稱陣列），僅本機 ══
+// 內建 8 個市場的固定清單，需跟 marketReferenceHtml() 裡實際定義的名稱保持一致
+var BUILTIN_MARKETS=['露天','Yahoo拍賣','蝦皮','旋轉拍賣','Mercari','ヤフオク','Buyee','日本樂天'];
+function _marketHiddenSet(){
+  var arr=(cfg&&Array.isArray(cfg.marketHidden))?cfg.marketHidden:[];
+  var set={};arr.forEach(function(n){set[n]=1;});
+  return set;
+}
+function mktVisRenderList(){
+  var box=$('mkt-vis-list');if(!box)return;
+  var hidden=_marketHiddenSet();
+  var all=BUILTIN_MARKETS.concat(_cmList().map(function(m){return m.n||'';}).filter(Boolean));
+  box.innerHTML=all.map(function(n){
+    var on=!hidden[n];
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
+      '<input type="checkbox" data-name="'+esc(n)+'" '+(on?'checked':'')+' onchange="mktVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
+      '<span>'+esc(n)+'</span></label>';
+  }).join('');
+}
+function mktVisToggle(cb){
+  var name=cb.dataset.name;if(!name)return;
+  var arr=(cfg&&Array.isArray(cfg.marketHidden))?cfg.marketHidden.slice():[];
+  if(cb.checked){arr=arr.filter(function(n){return n!==name;});}
+  else if(arr.indexOf(name)<0){arr.push(name);}
+  cfg.marketHidden=arr;
+  _persistCfg();
+}
 // 設定頁列表渲染
 function cmRenderList(){
-  var box=$('cm-list');if(!box)return;
+  var box=$('cm-list');
+  mktVisRenderList(); // v54.81：自訂市場清單有異動時，同步更新「市場顯示設定」清單（放最前面，不受下方早期 return 影響）
+  if(!box)return;
   var list=_cmList();
   if(!list.length){box.innerHTML='<div class="shlp" style="margin:4px 0">尚未新增任何自訂市場。</div>';return;}
   box.innerHTML=list.map(function(m,i){
@@ -12541,6 +12575,9 @@ function marketReferenceHtml(d){
   // v40.31：附加使用者自訂市場（存於 cfg.customMarkets）。
   // 連結模板以 __Q__ 為查詢佔位符；lang 決定查詢字串來源：tw=中文名、jp=日文名、auto=主名稱。
   sites=sites.concat(customMarketSites(d));
+  // v54.81：過濾掉使用者在「設定」頁勾選隱藏的市場（cfg.marketHidden）
+  var _hidden=_marketHiddenSet();
+  sites=sites.filter(function(s){return !_hidden[s.n];});
   return sites.length?_refLinks('二手估值市場參考',sites):'';
 }
 // v40.31：把 cfg.customMarkets 轉成可渲染的 site 物件陣列（已套入查詢字串）
