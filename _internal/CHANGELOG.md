@@ -1,3 +1,27 @@
+## v67.03 (2026-07-16)
+
+### 變更內容
+遊戲類型分組排版從「垂直摺疊區塊（`<details>`）」改成「橫向可滑動頁籤」：
+- 頂部一排可橫向滑動的分組頁籤（🎯動作／⚔️角色扮演／🏗️策略・模擬／📖冒險・故事／🎉休閒・運動・社交／🌐多人・其他），點選後下方顯示該組晶片（自動換行陳列）
+- 各分組的 checkbox **全部保留在 DOM 中**（用 `display:none` 切換顯示/隱藏，不是條件式渲染／移除），確保切到別組時，原本組別已勾選的項目不會因為「不在畫面上」而被 `onGenreToggle()` 的跨分組收集邏輯漏掉
+- 切換勾選時同步更新頁籤上的已勾選數量標籤，不用整個表單重繪
+- 移除 v67.02 版的 `<details>` 摺疊樣式（`.genre-group`），改用新的頁籤樣式（`.genre-tabs`／`.genre-tab`／`.genre-tab-panels`）
+
+自我檢查：模擬隱藏分組面板的已勾選項目仍能被正確收集（不會因為 `display:none` 而漏掉）、頁籤數量標籤計算邏輯，皆已驗證通過。
+
+### 影響檔案
+- index.html / GameVault_v67_03_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端 UI 排版調整，非實質後端變更，不觸發版號歸零）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v67-02 → gamevault-v67-03
+
+### 對應備份
+- _internal/old/v67_02/
+
 ## v67.02 (2026-07-16)
 
 ### 變更內容
@@ -76,30 +100,4 @@
 
 ### 對應備份
 - _internal/old/v66_11/
-
-## v66.11 (2026-07-13)
-
-### 變更內容
-修正尋寶額外照片儲存後重整就消失的問題。
-
-**根因**：比對收藏跟尋寶的存檔邏輯，發現收藏的存檔流程（`onFld`儲存路徑）在後端回應後，會把 `res.imgs.extra_images`（後端已把 base64 原始資料上傳到 Drive、轉換成檔案 ID 後的正確結果）讀回本地端的 `entry.extra_images`；但尋寶的 `huntSaveTarget()`／`huntUpdateRow()` 兩個存檔函式**只處理了 `res.imgs.cover_img`，完全漏掉 `res.imgs.extra_images`**。
-
-**已排除的可能性**：確認 GAS 後端的 `processExtraImages()` 呼叫邏輯是通用的（用 `headers.indexOf('extra_images')` 判斷，不分類別），Hunt 分頁只要有這個欄位標題（使用者已確認執行過「修復工作表標題列」），後端就會正確處理圖片上傳並回傳結果——問題完全出在前端沒接住這個回傳值。
-
-**實際影響**：存檔當下本地端仍留著上傳前的原始 base64 資料（未讀取後端回傳的 Drive ID 版本），跟試算表實際存的內容不一致，下次重新整理（重新從後端同步）時就會跟正確資料對不上，看起來像是照片消失了。
-
-**修正**：`huntSaveTarget()`（新增）與 `huntUpdateRow()`（編輯儲存）都補上 `res.imgs.extra_images` 的回寫，比照收藏既有的正確做法。
-
-### 影響檔案
-- index.html / GameVault_v66_11_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端修正，後端邏輯本來就是對的）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v66-10 → gamevault-v66-11
-
-### 對應備份
-- _internal/old/v66_10/
 
