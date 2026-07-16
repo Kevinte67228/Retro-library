@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.08';
+const APP_VERSION='v67.09';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11920,19 +11920,26 @@ function exportCsvByType(){
     if(g.subtype)lbl+='_'+g.subtype;
     var cols;
     if(g.isHunt){
-      cols=HUNT_HDR.filter(function(k){return k!=='uuid'&&k!=='cover_img';}).map(function(k){return [k,k,'text'];});
+      // v54.85：uuid 補回匯出（原本被排除，造成匯入無法去重）
+      cols=HUNT_HDR.filter(function(k){return k!=='cover_img';}).map(function(k){return [k,k,'text'];});
     } else {
-      var seen={};cols=[];
+      var seen={uuid:1};cols=[['uuid','UUID','text']]; // v54.85：uuid 補回匯出（原本被排除，造成匯入無法去重）
       fieldsFor(g.cat,g.subtype).forEach(function(f){
-        if(f[2]==='imgupload'||f[0]==='uuid'||seen[f[0]])return;
+        if(f[2]==='imgupload'||seen[f[0]])return;
         seen[f[0]]=1;cols.push(f);
       });
     }
-    var lines=[cols.map(function(f){return cell(f[1]||f[0]);}).join(',')];
+    // v54.85：雙標題列——第一列是內部欄位鍵值（匯入用，確保能正確對回資料欄位，
+    // 舊版用顯示名稱當標題匯入時對不回內部鍵值，實質上除了 CSV 檔案裡的分類/UUID判斷失效外，
+    // 其餘欄位匯入後也會對不到正確的內部鍵值），第二列是顯示名稱（方便人工用 Excel/試算表開啟時閱讀）
+    var lines=[
+      cols.map(function(f){return cell(f[0]);}).join(','),
+      cols.map(function(f){return cell(f[1]||f[0]);}).join(',')
+    ];
     typeRows.forEach(function(c){
       var d=c.data||{};
       lines.push(cols.map(function(f){
-        var v=d[f[0]];
+        var v=(f[0]==='uuid')?((c.uid&&c.uid.length>=30&&c.uid.indexOf('-')>0)?c.uid:(d.uuid||'')):d[f[0]];
         if(f[2]==='comp')v=compReadable(v);
         else if((f[0]==='buy_date'||f[0]==='resale_date')&&v==='2099/01/01')v='';
         return cell(v);
@@ -11989,7 +11996,11 @@ function importCsv(input){
     var headers=parseLine(headerLine);
     var catIdx=headers.indexOf('category');
     var uuidIdx=headers.indexOf('uuid');
-    for(var i=1;i<lines.length;i++){
+    // v54.85：新格式是雙標題列（第一列內部鍵值供匯入辨識、第二列顯示名稱供人閱讀），
+    // 第一列出現 'category' 鍵值即代表新格式，資料從第3行開始（跳過第2行顯示名稱）；
+    // 找不到則視為舊格式（單一標題列、顯示名稱當標題），資料從第2行開始，保留有限度的向下相容
+    var dataStartIdx=(catIdx>=0)?2:1;
+    for(var i=dataStartIdx;i<lines.length;i++){
       var line=lines[i].trim();
       if(!line)continue;
       var vals=parseLine(line);
