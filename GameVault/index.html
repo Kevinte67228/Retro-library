@@ -2340,7 +2340,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v66.11';
+const APP_VERSION='v66.12';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13187,7 +13187,7 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   var prevBtn=$('dprev-float'),nextBtn=$('dnext-float');
   if(prevBtn){prevBtn.classList.toggle('off',!_hasPrev);prevBtn.onclick=function(){if(_hasPrev)detailPrev();};}
   if(nextBtn){nextBtn.classList.toggle('off',!_hasNext);nextBtn.onclick=function(){if(_hasNext)detailNext();};}
-  var skip={category:1,uuid:1,_src:1,market_value_currency:1,market_value_foreign_amount:1};  // 隱藏欄位不顯示
+  var skip={category:1,uuid:1,_src:1,market_value_currency:1,market_value_foreign_amount:1,extra_images:1};  // 隱藏欄位不顯示（extra_images 是JSON陣列，有專屬圖片管理UI，不該原始顯示）
   var skipDef={collect_status:'收藏中',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',resale_price:'0',resale_date:'2099/01/01',rating:'N/A',play_status:'未遊玩',bonus_code_status:'N/A',warranty_status:'N/A'};
   var html=detailHeroHtml(d,rowNum);
   // v47.03：圖片顯示已整合進 detailHeroHtml 的 hero 封面區（主圖+縮圖列+拍照/相簿），
