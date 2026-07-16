@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.11';
+const APP_VERSION='v67.12';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11921,11 +11921,13 @@ function exportCsvByType(){
     var cols;
     if(g.isHunt){
       // v54.85：uuid 補回匯出（原本被排除，造成匯入無法去重）
-      cols=HUNT_HDR.filter(function(k){return k!=='cover_img';}).map(function(k){return [k,k,'text'];});
+      // v54.88：cover_img 改成正常匯出——欄位存的是 Drive 檔案 ID 這種短字串，不是圖片本身，
+      // 照樣匯出成文字即可，匯入後圖片連結才能保留，不會消失
+      cols=HUNT_HDR.map(function(k){return [k,k,'text'];});
     } else {
       var seen={uuid:1};cols=[['uuid','UUID','text']]; // v54.85：uuid 補回匯出（原本被排除，造成匯入無法去重）
       fieldsFor(g.cat,g.subtype).forEach(function(f){
-        if(f[2]==='imgupload'||seen[f[0]])return;
+        if(seen[f[0]])return; // v54.88：imgupload 欄位(cover_img/back_img/spine_img)改成正常匯出，同上理由
         seen[f[0]]=1;cols.push(f);
       });
     }
@@ -11961,7 +11963,7 @@ function exportCsvByType(){
 }
 // 觸發匯入檔案選擇
 function triggerImportCsv(){
-  if(!confirm('匯入 CSV 說明：\n\n• 圖片不含在 CSV 內（檔案太大不適合），匯入後的項目沒有照片，需要另外補拍/上傳\n• 匯入的每一筆都會直接寫回雲端試算表\n\n按「確定」選擇要匯入的 CSV 檔案。'))return;
+  if(!confirm('匯入 CSV 說明：\n\n• 圖片連結會保留（沿用原本的雲端圖片，CSV 本身不含圖片檔案）\n• 匯入的每一筆都會直接寫回雲端試算表\n\n按「確定」選擇要匯入的 CSV 檔案。'))return;
   var inp=document.getElementById('import-csv-input');
   if(inp){inp.value='';inp.click();}
 }
