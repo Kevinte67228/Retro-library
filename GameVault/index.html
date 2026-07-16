@@ -625,6 +625,15 @@ body{
 .genre-chip{display:inline-flex;align-items:center;padding:7px 12px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
 .genre-chip:active{transform:scale(.95)}
 .genre-chip.on{background:#00e5ff;border-color:#00e5ff;color:#000;font-weight:600}
+/* v54.79：遊戲類型分組頁籤——橫向可滑動，點選後下方顯示該組晶片 */
+.genre-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 6px;margin-top:6px;scrollbar-width:none}
+.genre-tabs::-webkit-scrollbar{display:none}
+.genre-tab{flex-shrink:0;white-space:nowrap;padding:8px 13px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;user-select:none}
+.genre-tab b{font-weight:700}
+.genre-tab.on{background:#7c4dff;border-color:#7c4dff;color:#fff}
+.genre-tab.on b{color:#fff}
+.genre-tab:not(.on) b{color:#00e5ff}
+.genre-tab-panels{border:1px solid #1e2a45;border-radius:10px;background:#0f1525;padding:10px}
 /* 配件完整度：逐項目評級 */
 .comp-grid{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .comp-row{display:flex;align-items:center;gap:8px}
@@ -654,13 +663,6 @@ body{
 .abbr-list{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 12px 12px;font-size:12px;color:#9fa8c8}
 .abbr-list span{white-space:nowrap}
 .abbr-list b{color:#e8eaf6;font-weight:700;margin-right:2px}
-/* v54.78：類型晶片分組（預設收合，比照 abbr-legend 的視覺語言但更明顯一些，畢竟是主要選取入口） */
-.genre-group{margin-bottom:8px;border:1px solid #1e2a45;border-radius:8px;background:#0f1525;overflow:hidden}
-.genre-group>summary{padding:9px 12px;font-size:13px;font-weight:600;color:#e8eaf6;cursor:pointer;list-style:none;user-select:none}
-.genre-group>summary::-webkit-details-marker{display:none}
-.genre-group>summary::before{content:'▸ ';color:#00e5ff}
-.genre-group[open]>summary::before{content:'▾ '}
-.genre-group .genre-chips{padding:4px 10px 10px}
 /* ── 圖片裁切器 ── */
 #crop-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;flex-direction:column;touch-action:none;opacity:0;transition:opacity .28s ease}
 #crop-ov.on{display:flex}
@@ -2357,7 +2359,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.02';
+const APP_VERSION='v67.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10119,21 +10121,26 @@ function renderFld(f){
   if(type==='genresel'){
     // 複選：用與卡片相同的正規化（matchGenreMulti 已處理 、 , / 分隔並標準化）
     var curList=matchGenreMulti(v).split('、').filter(Boolean);
-    // v54.78：改用 GENRE_GROUPS 分層分組顯示，每組預設收合（不加 open 屬性），
-    // 標題附上目前已勾選數量，收合狀態下也能一眼看出哪組有選過
-    var chk='';
-    GENRE_GROUPS.forEach(function(grp){
+    // v54.79：改成橫向可滑動頁籤＋下方垂直陳列晶片。頁籤列橫向捲動選分組，
+    // 點擊後下方顯示該組晶片。所有分組的 checkbox 仍保留在 DOM（用 display 切換顯示/隱藏，
+    // 不是條件式渲染），確保 onGenreToggle 跨分組收集邏輯能找到未顯示分組裡已勾選的項目。
+    var tabs='<div class="genre-tabs" data-k="'+k+'">';
+    var panels='<div class="genre-tab-panels">';
+    GENRE_GROUPS.forEach(function(grp,gi){
       var selCount=grp.items.filter(function(g){return curList.indexOf(g)>=0;}).length;
-      chk+='<details class="genre-group"><summary>'+esc(grp.label)+(selCount?' <span style="color:#00e5ff;font-weight:700">('+selCount+')</span>':'')+'</summary>'+
-        '<div class="genre-chips" data-k="'+k+'">'+
+      tabs+='<button type="button" class="genre-tab'+(gi===0?' on':'')+'" data-gi="'+gi+'" onclick="switchGenreTab(this)">'+esc(grp.label)+(selCount?' <b>('+selCount+')</b>':'')+'</button>';
+      panels+='<div class="genre-chips" data-k="'+k+'" data-gi="'+gi+'" style="display:'+(gi===0?'flex':'none')+'">'+
         grp.items.map(function(g){
           var on=curList.indexOf(g)>=0;
           var code=g.split(' ')[0]; // 晶片只顯示縮寫
           return '<label class="genre-chip'+(on?' on':'')+'"><input type="checkbox" value="'+g+'" '+(on?'checked':'')+' onchange="onGenreToggle(this)" style="display:none"><span>'+code+'</span></label>';
         }).join('')+
-        '</div></details>';
+        '</div>';
     });
-    // 折疊式縮寫對照表
+    tabs+='</div>';
+    panels+='</div>';
+    var chk=tabs+panels;
+    // 折疊式縮寫對照表（維持原樣不變）
     var legend='<details class="abbr-legend"><summary>縮寫說明對照</summary><div class="abbr-list">'+
       GENRES.map(function(g){var p=g.split(' ');return '<span><b>'+p[0]+'</b> '+p.slice(1).join(' ')+'</span>';}).join('')+
       '</div></details>';
@@ -10255,6 +10262,16 @@ function renderFld(f){
   return wrap+'<label class="fl">'+lbl+tag+'</label>'+
     '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'" oninput="onFld(this.dataset.k,this.value)">'+extraInp+'</div>';
 }
+// v54.79：橫向頁籤切換——只切換顯示/隱藏(display)，不移除DOM，確保未顯示分組的已勾選checkbox仍在文件中可被收集到
+function switchGenreTab(btn){
+  var tabsWrap=btn.parentNode;
+  var gi=btn.dataset.gi;
+  tabsWrap.querySelectorAll('.genre-tab').forEach(function(t){t.classList.toggle('on',t===btn);});
+  var panelsWrap=tabsWrap.nextElementSibling;
+  if(panelsWrap)panelsWrap.querySelectorAll('.genre-chips[data-gi]').forEach(function(p){
+    p.style.display=(p.dataset.gi===gi)?'flex':'none';
+  });
+}
 function onGenreToggle(cb){
   var wrap=cb.closest('.genre-chips');
   if(!wrap)return;
@@ -10270,6 +10287,15 @@ function onGenreToggle(cb){
     });
   });
   onFld(k,checked.join('、'));
+  // v54.79：同步更新頁籤上的已勾選數量標籤，不用整個表單重繪
+  var tabsWrap=document.querySelector('.genre-tabs[data-k="'+k+'"]');
+  if(tabsWrap&&GENRE_GROUPS){
+    tabsWrap.querySelectorAll('.genre-tab').forEach(function(tabBtn,gi){
+      var grp=GENRE_GROUPS[gi];if(!grp)return;
+      var n=grp.items.filter(function(g){return checked.indexOf(g)>=0;}).length;
+      tabBtn.innerHTML=esc(grp.label)+(n?' <b>('+n+')</b>':'');
+    });
+  }
 }
 
 // 媒體類型／區域：單選 highlight
