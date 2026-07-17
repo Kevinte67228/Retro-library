@@ -141,7 +141,7 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
   <div class="badge">USER MANUAL</div>
   <h1>GameVault</h1>
   <div class="sub">電玩／動漫迷的收藏基地——完整使用手冊</div>
-  <div class="meta">v67.12 · 最後更新 2026-07-16</div>
+  <div class="meta">v67.16 · 最後更新 2026-07-17</div>
 </div>
 
 <nav class="toc-nav">
@@ -150,7 +150,7 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
     <div class="toc-grid">
       <a class="toc-item" href="#s01"><span class="n">01</span> 三分鐘認識</a>
       <a class="toc-item" href="#s02"><span class="n">02</span> 事前準備</a>
-      <a class="toc-item" href="#s03"><span class="n">03</span> 部署四步驟</a>
+      <a class="toc-item" href="#s03"><span class="n">03</span> 建立後端</a>
       <a class="toc-item" href="#s04"><span class="n">04</span> API 金鑰</a>
       <a class="toc-item" href="#s05"><span class="n">05</span> 八大資料庫</a>
       <a class="toc-item" href="#s06"><span class="n">06</span> 設定頁</a>
@@ -175,21 +175,19 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
   <h2>這是什麼？<span class="em">三分鐘快速認識</span></h2>
   <p class="lead">GameVault 是一個以「單一網頁」運作的 PWA（Progressive Web App）收藏管理工具，專為電玩、動漫周邊的實體收藏設計。核心理念是：<strong>資料完全歸你所有</strong>——所有收藏記錄實際存放在你自己的 Google 試算表裡，照片存在你自己的 Google Drive，App 本身只是操作介面，不經過任何第三方伺服器儲存你的資料。</p>
 
-  <h3><span class="ic">🧩</span>三個核心元件</h3>
+  <h3><span class="ic">🧩</span>兩個部分：前端用現成的、後端自己建</h3>
+  <p>GameVault 由兩個部分組成，理解這個分工就懂為什麼你的資料是獨立的：</p>
   <div class="feat-grid">
     <div class="feat-card">
-      <h5>📱 前端網頁（App）</h5>
-      <p>單一 HTML 檔案，負責所有畫面操作，可安裝到手機主畫面像原生 App 一樣使用。</p>
+      <h5>📱 前端（PWA 網頁）</h5>
+      <p>就是你操作的這個 App 畫面。<strong>直接用分享給你的網址即可</strong>，不需要自己架設。所有人共用同一份前端程式，但各自連到自己的資料庫。</p>
     </div>
     <div class="feat-card">
-      <h5>⚙️ Google Apps Script</h5>
-      <p>作為前端與試算表之間的橋樑，處理所有資料讀寫、圖片上傳到 Drive 等後端邏輯。</p>
-    </div>
-    <div class="feat-card">
-      <h5>📊 Google 試算表</h5>
-      <p>真正的資料庫，8 大分類共用一份試算表、分別存放在不同工作表分頁。</p>
+      <h5>⚙️📊 後端（你自己的資料庫）</h5>
+      <p>Google Apps Script（橋樑）＋ Google 試算表（真正存資料的地方）＋ Google Drive（存照片）。<strong>這部分要你自己建一份</strong>，只需設定一次，之後你的收藏資料就完全存在你自己的 Google 帳號裡。</p>
     </div>
   </div>
+  <p>換句話說：<strong>前端 App 是共用的操作介面，後端資料庫是你私人的</strong>。你建好自己的後端、把它的網址填進 App，資料就只屬於你，別人看不到也動不了。</p>
 
   <h3><span class="ic">📦</span>能管理哪些收藏</h3>
   <p>8 大分類：<strong>遊戲、書籍／攻略、主機、週邊、原聲帶、動漫／美術設定集、公仔／模型、數位下載版</strong>，另有獨立的「<strong>尋寶清單</strong>」追蹤還沒入手、正在比價中的目標商品。</p>
@@ -211,83 +209,100 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
 
   <div class="note info">
     <div class="ic">💡</div>
-    <div>這份手冊依「使用情境」編排：第 2-4 節是給要<strong>自己部署一份</strong>的人看的（帳號申請、部署步驟、API 金鑰）；如果你只是要<strong>使用既有的 GameVault</strong>，可以直接跳到第 5 節開始看功能操作。</div>
+    <div>你會拿到 <strong>PWA 網址</strong>（開 App 用）。第一次使用只要做一件事：<strong>建立自己的資料庫後端</strong>（第 3 節，約 5 分鐘），把後端網址填進設定頁就能開始用。第 2-3 節就是在教這個；之後的第 5 節起是各功能操作說明。</div>
   </div>
 </section>
 
 <section id="s02">
   <div class="sec-num">SECTION 02</div>
-  <h2>事前準備 <span class="em">你需要的帳號與工具</span></h2>
-  <p class="lead">GameVault 是開源自架的工具，要擁有一份「屬於自己」的 GameVault，需要準備以下帳號與資源。如果你是使用別人已經部署好、分享給你的連結，這節可以跳過。</p>
+  <h2>事前準備 <span class="em">你需要什麼</span></h2>
+  <p class="lead">你已經拿到 <strong>PWA 網址</strong>（開 App 用），前端不需要自己架設。開始前只需準備以下項目，用來建立「屬於你自己」的資料庫後端。</p>
 
   <h3><span class="ic">✅</span>必要條件清單</h3>
   <div class="btn-list">
     <div class="btn-row">
+      <div class="bname">你拿到的 PWA 網址 <span class="tag tag-req">必要</span></div>
+      <div class="bdesc">開啟 GameVault App 的網址，直接在瀏覽器打開即可，也可以「加到主畫面」像原生 App 使用（詳見第 6 節）。<b>前端不用自己架，用這個現成網址就好。</b></div>
+    </div>
+    <div class="btn-row">
       <div class="bname">Google 帳號 <span class="tag tag-req">必要</span></div>
-      <div class="bdesc">用來建立 Google 試算表（資料庫）、Google Drive（存放照片）、Google Apps Script（後端程式）。全部都是 Google 帳號內建的免費服務。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">GitHub 帳號 <span class="tag tag-req">必要</span></div>
-      <div class="bdesc">存放前端網頁原始碼與部署到 Netlify 的來源。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">Netlify 帳號 <span class="tag tag-req">必要</span></div>
-      <div class="bdesc">免費的靜態網頁託管服務，把 GitHub 上的前端網頁部署成可用瀏覽器開啟的網址。</div>
+      <div class="bdesc">用來建立你自己的資料庫後端：Google 試算表（存資料）＋ Google Drive（存照片）＋ Google Apps Script（後端橋樑）。全部是 Google 帳號內建的免費服務。設定方式見第 3 節。</div>
     </div>
     <div class="btn-row">
       <div class="bname">Google Gemini API 金鑰 <span class="tag tag-opt">選用</span></div>
-      <div class="bdesc">如果要使用「圖片辨識」「AI 網頁查詢」等 AI 自動填寫功能才需要，純手動建檔可以不用申請。詳見第 4 節。</div>
+      <div class="bdesc">如果要使用「圖片辨識」「AI 網頁查詢」等 AI 自動填寫功能才需要，純手動建檔可以不用申請。要用的話自己申請一組，詳見第 4 節。</div>
     </div>
   </div>
 
-  <h3><span class="ic">💰</span>費用</h3>
-  <p>Google 試算表／Drive／Apps Script、GitHub、Netlify 的基本使用額度都是<span class="tag tag-free">免費</span>的，個人收藏規模的資料量與存取頻率完全在免費額度內。Gemini API 目前有免費額度可供 AI 辨識功能使用。</p>
+  <div class="note info">
+    <div class="ic">💡</div>
+    <div>為什麼後端要自己建？因為這樣你的收藏資料完全存在<strong>你自己的 Google 帳號</strong>裡，不跟別人共用、不經過第三方伺服器。每個使用者都有一份獨立的資料庫，各自私密。</div>
+  </div>
 
-  
+  <h3><span class="ic">💰</span>費用</h3>
+  <p>Google 試算表／Drive／Apps Script 的基本使用額度都是<span class="tag tag-free">免費</span>的，個人收藏規模的資料量與存取頻率完全在免費額度內。Gemini API 目前也有免費額度可供 AI 辨識功能使用。</p>
 </section>
 
 <section id="s03">
   <div class="sec-num">SECTION 03</div>
-  <h2>部署四步驟 <span class="em">建立你自己的 GameVault</span></h2>
-  <p class="lead">完成第 2 節的帳號準備後，依下列四個步驟即可擁有一份完全屬於自己、資料自主的 GameVault。</p>
+  <h2>建立你的資料庫後端 <span class="em">一次性設定，約 5 分鐘</span></h2>
+  <p class="lead">前端 App 用你拿到的網址就好，這節教你建立<strong>屬於自己的後端資料庫</strong>。App 的「設定」頁裡有內建的「首次設定向導」會一步步引導，這裡的步驟跟它一致，照著做即可。</p>
+
+  <div class="note tip">
+    <div class="ic">💡</div>
+    <div>最快的做法：打開 App →「設定」頁 → 點「首次設定向導」的「展開詳細步驟」，跟著畫面上的 6 個步驟操作。以下是同一套流程的文字說明。</div>
+  </div>
 
   <div class="steps">
     <div class="step">
       <div class="num">1</div>
       <div class="body">
-        <h5>建立 Google 試算表 ＋ Apps Script 專案</h5>
-        <p>新增一份 Google 試算表作為資料庫，在裡面開啟「擴充功能 → Apps Script」，把 <code>GameVault_AppsScript.gs</code> 的完整內容貼入，儲存。這份程式碼負責回應前端的讀寫請求，並自動建立/管理所有分類需要的工作表分頁。</p>
+        <h5>建立 Google 試算表</h5>
+        <p>打開 <a href="https://sheets.google.com" target="_blank">Google 試算表</a> → 點「建立新試算表」→ 命名為「GameVault」或你喜歡的名字。這份試算表就是你私人的資料庫。</p>
       </div>
     </div>
     <div class="step">
       <div class="num">2</div>
       <div class="body">
-        <h5>部署為 Web App</h5>
-        <p>在 Apps Script 編輯器右上角「部署 → 新增部署作業」，類型選「網頁應用程式」，執行身分設「我」，存取權設「所有人」。部署完成會得到一組 Web App 網址，這組網址就是前端 App 溝通後端的唯一管道，請妥善保存。</p>
+        <h5>開啟 Apps Script 編輯器</h5>
+        <p>在試算表中點菜單「擴充功能」→ 選「Apps Script」→ 會打開編輯器視窗。</p>
       </div>
     </div>
     <div class="step">
       <div class="num">3</div>
       <div class="body">
-        <h5>取得前端網頁並部署到 Netlify</h5>
-        <p>Fork 或下載 GameVault 的前端原始碼（<code>index.html</code> 等檔案）到自己的 GitHub repo，在 Netlify 建立新站台、連結這個 repo，設定 Publish directory 為存放 <code>index.html</code> 的資料夾。Netlify 會自動幫你產生一個可以直接用瀏覽器開啟的網址。</p>
+        <h5>貼入後端程式碼</h5>
+        <p>到 App 的「設定」頁，點「<strong>後端程式檔（下載）</strong>」連結下載 <code>GameVault_AppsScript.gs</code>，把檔案內容全選複製，貼進 Apps Script 編輯器中（取代原本的空白內容），儲存。這份程式碼會自動建立/管理所有分類需要的工作表分頁。</p>
       </div>
     </div>
     <div class="step">
       <div class="num">4</div>
       <div class="body">
-        <h5>在 App 內完成連線設定</h5>
-        <p>打開 Netlify 部署好的網址，進入「設定」頁，貼上步驟 2 拿到的 Web App 網址並儲存，點「🩺 連線自檢」確認可以正常讀寫。完成後就可以開始建檔使用了。</p>
+        <h5>部署為網頁應用程式</h5>
+        <p>點編輯器上方「部署」→ 選「新增部署作業」→ 類型選「網頁應用程式」→ 執行身分改為「我」→ 存取權選「所有人」→ 點「部署」。過程中 Google 會要求授權，依指示允許即可。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">5</div>
+      <div class="body">
+        <h5>複製部署網址</h5>
+        <p>部署完成會顯示一個很長的網址（開頭是 <code>https://script.google.com/macros/s/...</code>），複製這個網址。這就是你專屬的後端網址。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">6</div>
+      <div class="body">
+        <h5>填入 App 的設定頁</h5>
+        <p>回到 App「設定」頁，把複製的網址貼到「Google 試算表 — Apps Script URL」輸入框，點「🩺 測試連線 / 連線自檢」驗證是否成功。看到成功提示就完成了，可以開始建檔使用。</p>
       </div>
     </div>
   </div>
 
-  
-  <div class="phone-wrap"><div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/0004.jpg" alt="App 內連線設定欄位"></div><div class="phone-label">App 內連線設定欄位</div></div>
+  <div class="phone-wrap"><div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/0004.jpg" alt="App 內設定頁：首次設定向導與連線設定"></div><div class="phone-label">設定頁：首次設定向導與 Apps Script URL 連線設定</div></div>
 
   <div class="note warn">
     <div class="ic">⚠️</div>
-    <div>Web App 網址一旦確立，之後更新 Apps Script 程式碼時務必用「管理部署作業 → 編輯現有部署」更新版本，而不是每次都新增部署作業，否則網址會改變、需要重新回 App 內修改連線設定。GameVault 專案本身已經設定 GitHub Actions 自動化部署（透過 clasp 工具），一般更新不需要手動操作這一步。</div>
+    <div>後端網址跟「你這一份試算表」綁定，所以是每個人各自建、各自私密。之後若要更新後端程式碼，用「部署 → 管理部署作業 → 編輯現有部署」更新版本，網址不變；若改按「新增部署作業」會產生新網址、需要重新回設定頁換掉。一般使用者建好一次就不用再動了。</div>
   </div>
 </section>
 
