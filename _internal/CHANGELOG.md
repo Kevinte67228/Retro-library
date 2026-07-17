@@ -1,3 +1,27 @@
+## v67.16 (2026-07-16)
+
+### 變更內容
+把「預設樣本藏品」改成使用者實際匯出的兩份 CSV 內容：
+- SAMPLE_ITEMS 換成遊戲 CSV 的 5 筆收藏（超級瑪利歐銀河1+2、天穗之咲稻姬、FF7 Rebirth 等），改用正確的內部欄位鍵名（原本樣本用的是 media_type/version/voice_lang 等舊鍵名，與實際欄位不符；新資料直接採 CSV 匯出的真實鍵名 media/edition/voice_language 等）
+- 新增 SAMPLE_HUNT_ITEMS：尋寶 CSV 的 6 筆狩獵目標（軒轅劍柒、FRONT MISSION 3rd Remake 等，含完整報價 sightings）
+- loadSamples() 改為同時載入收藏（col）與尋寶（hunt）：保留原始 uuid（讓關聯商品連結有效）、加入 uuid 去重防護（重複點擊會略過不重複匯入）、尋寶寫入 hunt 陣列並呼叫 renderHuntList()
+- 按鈕文字「匯入 5 筆樣本藏品」→「匯入樣本藏品（收藏＋尋寶）」；首次啟動提示文字同步更新
+
+自我檢查：樣本筆數（收藏5+尋寶6）、每筆 primary_name/uuid、尋寶 category=狩獵、首次匯入11筆、重複點擊略過、關聯連結保留等皆驗證通過。
+
+### 影響檔案
+- index.html / GameVault_v67_16_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端樣本資料與載入邏輯，本機操作不動試算表）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v67-15 → gamevault-v67-16
+
+### 對應備份
+- _internal/old/v67_15/
+
 ## v67.15 (2026-07-16)
 
 ### 變更內容
@@ -63,27 +87,4 @@
 
 ### 對應備份
 - _internal/old/v67_12/
-
-## v67.12 (2026-07-16)
-
-### 變更內容
-澄清使用者需求：CSV 匯出不需要真的包含圖片檔案，圖片欄位（`cover_img`／`back_img`／`spine_img`）存的其實只是 Drive 檔案 ID 這種短字串（不是圖片本身），照樣匯出成文字即可——原本的排除邏輯是多慮了。
-
-- 移除匯出時對 `imgupload` 型別欄位的排除，改成跟其他文字欄位一樣正常匯出
-- 尋寶的 `cover_img` 同樣改成正常匯出
-- 這樣匯入後，圖片欄位裡的 Drive 檔案 ID 會正確還原，圖片連結不會消失（因為原本的圖片檔案還在雲端，只是重新接上同一個 ID 參照）
-- 更新匯入前的確認提示文字，改成準確說明「圖片連結會保留」而非先前誤導的「圖片不含在 CSV 內」
-
-### 影響檔案
-- index.html / GameVault_v67_12_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端 CSV 欄位篩選調整，不影響試算表本身）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v67-11 → gamevault-v67-12
-
-### 對應備份
-- _internal/old/v67_11/
 
