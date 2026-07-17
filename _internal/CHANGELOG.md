@@ -1,3 +1,27 @@
+## v67.14 (2026-07-16)
+
+### 變更內容
+尋寶頁比照收藏頁，新增「•••」更多功能選單，把「從雲端同步、匯出 CSV、匯入 CSV」整合進去：
+- 原本尋寶工具列的「同步」icon 改成「•••」選單按鈕，點開含三項：從雲端同步（huntRefresh）、匯出 CSV、匯入 CSV；「大量刪除」icon 維持獨立（比照收藏頁把垃圾桶獨立在選單外）
+- 新增 exportHuntCsv()：讀 huntFiltered()，單一檔案、HUNT_HDR 雙標題列格式（第一列內部鍵值、第二列顯示名稱）、含 BOM，uuid 欄位比照收藏頁邏輯（正常 uid 直接輸出、不合格則退回 data.uuid）
+- 匯入沿用既有 triggerImportCsv()／importCsv()（本來就會自動偵測「狩獵」分類寫入 hunt 陣列並同步後端），僅補上匯入完成後也呼叫 renderHuntList()，讓尋寶頁匯入後畫面即時更新
+- 新增選單開關函式 toggleHuntMenu()／closeHuntMenu()／_huntMenuOutside()（比照 toggleColMenu 系列，點外部自動關閉）
+
+自我檢查：exportHuntCsv 的 CSV 格式（BOM、雙標題列、欄位對應、正常/不合格 uuid 處理、逗號引號跳脫）皆驗證正確。
+
+### 影響檔案
+- index.html / GameVault_v67_14_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端新功能，沿用既有後端 add 動作，不觸發版號歸零）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v67-13 → gamevault-v67-14
+
+### 對應備份
+- _internal/old/v67_13/
+
 ## v67.13 (2026-07-16)
 
 ### 變更內容
@@ -70,31 +94,4 @@
 
 ### 對應備份
 - _internal/old/v67_10/
-
-## v67.10 (2026-07-16)
-
-### 變更內容
-修正 CSV 匯入選完檔案後 App 完全沒有反應的問題。
-
-**根因**：`FileReader` 完全沒有 `onerror` 處理。原本的流程是 `reader.onload` 觸發後才會呼叫 `parseOneCsv()` 並繼續處理下一個檔案（`readNext(idx+1)`）；但如果讀檔失敗（`onload` 不會觸發），`readNext` 也永遠不會被呼叫，整個匯入流程就會無聲無息卡住——不會顯示任何錯誤或完成提示，使用者只會看到「選完檔案後什麼都沒發生」。
-
-**已排除的可能性**：拿使用者實際上傳的 CSV 檔案（舊格式、單一標題列）實際跑過一次解析邏輯，確認能正確判斷為舊格式並解析出資料，不是解析邏輯本身的問題。
-
-**修正**：
-- 補上 `reader.onerror`，讀檔失敗時顯示錯誤提示並繼續處理下一個檔案（不會卡住整個流程）
-- `reader.readAsText()` 呼叫本身也包一層 try/catch，避免呼叫瞬間丟出的例外也造成同樣的卡住
-- 既有的解析失敗提示補上 `err.message` 顯示具體錯誤原因，方便之後排查
-
-### 影響檔案
-- index.html / GameVault_v67_10_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端錯誤處理修正，非實質後端變更，不觸發版號歸零）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v67-09 → gamevault-v67-10
-
-### 對應備份
-- _internal/old/v67_09/
 
