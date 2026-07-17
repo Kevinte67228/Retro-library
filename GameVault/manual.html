@@ -21,7 +21,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--txt)
 .wrap{max-width:920px;margin:0 auto;padding:0 20px}
 code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mint);background:rgba(105,240,174,.08);padding:1px 5px;border-radius:3px}
 
-/* ── Hero ── */
 .hero{text-align:center;padding:64px 20px 44px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center top,rgba(0,229,255,.1),transparent 60%);pointer-events:none}
 .hero .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--cyan);border:1px solid var(--cyan);padding:4px 14px;border-radius:20px;margin-bottom:20px;background:rgba(0,229,255,.06)}
@@ -29,22 +28,20 @@ code{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mint);bac
 .hero .sub{font-size:16px;color:var(--txt2);max-width:520px;margin:0 auto}
 .hero .meta{margin-top:22px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt3)}
 
-/* ── 目錄導覽 ── */
-.toc-nav{background:var(--bg2);border-bottom:1px solid var(--line);padding:22px 20px 26px;position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:rgba(15,21,37,.92)}
+.toc-nav{background:var(--bg2);border-bottom:1px solid var(--line);padding:22px 20px 26px;position:sticky;top:0;z-index:50;background:rgba(15,21,37,.94);backdrop-filter:blur(10px)}
 .toc-nav .wrap{padding:0 20px}
 .toc-title{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt3);letter-spacing:2px;margin-bottom:10px}
-.toc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
-.toc-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--txt2);text-decoration:none;font-size:13px;font-weight:700;transition:all .15s}
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;max-height:180px;overflow-y:auto}
+.toc-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;background:var(--card);border:1px solid var(--line);color:var(--txt2);text-decoration:none;font-size:12.5px;font-weight:700;transition:all .15s}
 .toc-item:hover{border-color:var(--cyan);color:var(--cyan);text-decoration:none}
 .toc-item .n{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-size:11px}
 
-/* ── Section 通用 ── */
 section{padding:52px 0;border-bottom:1px solid var(--line)}
 .sec-num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cyan);letter-spacing:3px;margin-bottom:6px}
-h2{font-size:clamp(24px,4vw,34px);font-weight:900;margin-bottom:8px;letter-spacing:-.5px;scroll-margin-top:90px}
+h2{font-size:clamp(24px,4vw,34px);font-weight:900;margin-bottom:8px;letter-spacing:-.5px;scroll-margin-top:200px}
 h2 .em{color:var(--cyan)}
 .lead{color:var(--txt2);font-size:15px;margin-bottom:28px;max-width:680px}
-h3{font-size:20px;font-weight:700;margin:36px 0 12px;color:var(--txt);display:flex;align-items:center;gap:10px;scroll-margin-top:90px}
+h3{font-size:20px;font-weight:700;margin:36px 0 12px;color:var(--txt);display:flex;align-items:center;gap:10px;scroll-margin-top:200px}
 h3 .ic{font-size:22px}
 h4{font-size:15px;font-weight:700;margin:20px 0 8px;color:var(--cyan);display:flex;align-items:center;gap:8px}
 h5{font-size:13px;font-weight:700;margin:14px 0 6px;color:var(--txt)}
@@ -57,7 +54,6 @@ li{margin-bottom:5px;font-size:14.5px}
 li strong{color:var(--txt)}
 li::marker{color:var(--cyan)}
 
-/* ── 提示框 ── */
 .note{padding:13px 16px;border-radius:10px;margin:14px 0;font-size:13.5px;border:1px solid;display:flex;gap:10px;align-items:flex-start}
 .note .ic{font-size:18px;flex-shrink:0;line-height:1.5}
 .note.info{background:rgba(0,229,255,.06);border-color:rgba(0,229,255,.3);color:#b3ecff}
@@ -66,14 +62,12 @@ li::marker{color:var(--cyan)}
 .note.danger{background:rgba(255,82,82,.06);border-color:rgba(255,82,82,.3);color:#ffc4c4}
 .note strong{color:inherit}
 
-/* ── 表格 ── */
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0;border-radius:10px;border:1px solid var(--line)}
 .tbl{width:100%;border-collapse:collapse;font-size:13px}
 .tbl th{background:var(--card2);color:var(--cyan);padding:10px 12px;text-align:left;font-weight:700;white-space:nowrap}
 .tbl td{padding:10px 12px;border-top:1px solid var(--line);color:var(--txt2);vertical-align:top}
 .tbl tr:nth-child(even) td{background:rgba(255,255,255,.015)}
 
-/* ── 標籤 ── */
 .tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;white-space:nowrap}
 .tag-free{background:rgba(105,240,174,.15);color:var(--mint);border:1px solid rgba(105,240,174,.4)}
 .tag-paid{background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.4)}
@@ -81,39 +75,38 @@ li::marker{color:var(--cyan)}
 .tag-rec{background:rgba(255,183,77,.15);color:var(--amber);border:1px solid rgba(255,183,77,.4)}
 .tag-opt{background:rgba(121,134,203,.15);color:var(--indigo);border:1px solid rgba(121,134,203,.4)}
 
-/* ── 手機截圖框 ── */
 .phone-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:24px 0}
 .phone{width:100%;max-width:280px;background:#000;border:6px solid #1a2138;border-radius:32px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.6)}
 .phone img{width:100%;display:block}
 .phone-label{color:var(--txt3);font-size:12px;font-weight:700;letter-spacing:.3px;text-align:center;max-width:280px}
 .phones{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;margin:28px 0}
-.shots{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:22px 0}
-.shot-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-.shot{width:210px;background:#000;border:5px solid #1a2138;border-radius:28px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.6)}
-.shot img{width:100%;display:block}
-.shot-label{color:var(--txt3);font-size:11.5px;text-align:center;max-width:210px}
 
-/* ── 步驟卡片 ── */
+/* ── 圖片待補佔位框 ── */
+.img-ph{display:flex;flex-direction:column;align-items:center;gap:8px;margin:22px auto;width:100%;max-width:280px}
+.img-ph-box{width:100%;aspect-ratio:9/16;border:2.5px dashed var(--line2);border-radius:24px;background:repeating-linear-gradient(135deg,rgba(255,255,255,.02) 0 10px,transparent 10px 20px),var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px}
+.img-ph-box .ic{font-size:38px;opacity:.4}
+.img-ph-box .code{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--amber);letter-spacing:2px;background:rgba(255,183,77,.1);border:1px solid rgba(255,183,77,.4);padding:4px 14px;border-radius:8px}
+.img-ph-box .want{font-size:12px;color:var(--txt3);text-align:center;padding:0 10px}
+.img-ph-label{color:var(--txt3);font-size:12px;text-align:center;max-width:280px}
+.img-ph-inline{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--amber);background:rgba(255,183,77,.1);border:1px solid rgba(255,183,77,.35);padding:2px 8px;border-radius:6px;white-space:nowrap}
+
 .steps{display:flex;flex-direction:column;gap:14px;margin:18px 0}
 .step{display:flex;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
 .step .num{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#000}
 .step .body h5{margin-top:0;color:var(--txt);font-size:15px}
 .step .body p{margin-bottom:0}
 
-/* ── 功能卡片網格 ── */
 .feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:18px 0}
 .feat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
 .feat-card h5{color:var(--cyan);font-size:14px;margin-top:0;display:flex;align-items:center;gap:8px}
 .feat-card p{font-size:13.5px;margin-bottom:0}
 
-/* ── 按鈕說明清單 ── */
 .btn-list{display:flex;flex-direction:column;gap:10px;margin:16px 0}
 .btn-row{display:flex;gap:14px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;align-items:flex-start}
-.btn-row .bname{flex-shrink:0;min-width:120px;font-weight:700;color:var(--txt);font-size:13.5px;padding:3px 0}
+.btn-row .bname{flex-shrink:0;min-width:130px;font-weight:700;color:var(--txt);font-size:13.5px;padding:3px 0}
 .btn-row .bdesc{color:var(--txt2);font-size:13.5px;flex:1}
 .btn-row .bdesc b{color:var(--txt)}
 
-/* ── 摺疊詳情 ── */
 details.exp{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden}
 details.exp>summary{padding:12px 16px;cursor:pointer;font-weight:700;color:var(--txt);list-style:none;font-size:14px;display:flex;align-items:center;gap:8px}
 details.exp>summary::-webkit-details-marker{display:none}
@@ -121,13 +114,13 @@ details.exp>summary::before{content:'▸';color:var(--cyan);transition:transform
 details.exp[open]>summary::before{transform:rotate(90deg)}
 details.exp .expbody{padding:0 16px 16px}
 
-/* ── 章節內導覽 ── */
 .subnav{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 8px}
 .subnav a{font-size:12.5px;padding:6px 12px;border-radius:20px;background:var(--card2);color:var(--txt2);border:1px solid var(--line)}
 .subnav a:hover{color:var(--cyan);border-color:var(--cyan);text-decoration:none}
 
-/* ── Callout數字圈 ── */
-.callout{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--cyan);color:#000;font-weight:900;font-size:11.5px;flex-shrink:0}
+.api-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+.api-card h5{color:var(--cyan);font-size:15px;margin-top:0;display:flex;align-items:center;gap:8px}
+.api-card .url{font-family:'JetBrains Mono',monospace;font-size:12.5px;word-break:break-all;background:var(--bg2);padding:8px 10px;border-radius:6px;margin:8px 0;color:var(--mint)}
 
 footer{padding:40px 20px 50px;text-align:center;color:var(--txt3);font-size:13px}
 footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
@@ -150,215 +143,286 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
 
 <nav class="toc-nav">
   <div class="wrap">
-    <div class="toc-title">導覽</div>
+    <div class="toc-title">導覽（共 16 節）</div>
     <div class="toc-grid">
-      <a class="toc-item" href="#ch1"><span class="n">01</span> 快速上手</a>
-      <a class="toc-item" href="#ch2"><span class="n">02</span> 建檔頁</a>
-      <a class="toc-item" href="#ch3"><span class="n">03</span> 收藏頁</a>
-      <a class="toc-item" href="#ch4"><span class="n">04</span> 尋寶頁</a>
-      <a class="toc-item" href="#ch5"><span class="n">05</span> 統計頁</a>
-      <a class="toc-item" href="#ch6"><span class="n">06</span> 設定頁</a>
-      <a class="toc-item" href="#ch7"><span class="n">07</span> 附錄</a>
+      <a class="toc-item" href="#s01"><span class="n">01</span> 三分鐘認識</a>
+      <a class="toc-item" href="#s02"><span class="n">02</span> 事前準備</a>
+      <a class="toc-item" href="#s03"><span class="n">03</span> 部署四步驟</a>
+      <a class="toc-item" href="#s04"><span class="n">04</span> API 金鑰</a>
+      <a class="toc-item" href="#s05"><span class="n">05</span> 八大資料庫</a>
+      <a class="toc-item" href="#s06"><span class="n">06</span> 設定頁</a>
+      <a class="toc-item" href="#s07"><span class="n">07</span> 安裝到主畫面</a>
+      <a class="toc-item" href="#s08"><span class="n">08</span> 建檔模式</a>
+      <a class="toc-item" href="#s09"><span class="n">09</span> 判斷分路流程</a>
+      <a class="toc-item" href="#s10"><span class="n">10</span> 收藏列表</a>
+      <a class="toc-item" href="#s11"><span class="n">11</span> 詳細頁</a>
+      <a class="toc-item" href="#s12"><span class="n">12</span> 攻略本管理</a>
+      <a class="toc-item" href="#s13"><span class="n">13</span> 狩獵清單</a>
+      <a class="toc-item" href="#s14"><span class="n">14</span> 統計儀表板</a>
+      <a class="toc-item" href="#s15"><span class="n">15</span> 換機備份</a>
+      <a class="toc-item" href="#s16"><span class="n">16</span> 常見問題</a>
     </div>
   </div>
 </nav>
 
 <div class="wrap">
-<section id="ch1">
-  <div class="sec-num">CHAPTER 01</div>
-  <h2>快速上手 <span class="em">Getting Started</span></h2>
-  <p class="lead">GameVault 是一個以「單一網頁」運作的 PWA（Progressive Web App）收藏管理工具，資料實際存放在你自己的 Google 試算表裡，App 本身只是操作介面。第一次使用只需要幾個步驟就能開始建檔。</p>
+<!--BODY-->
+<section id="s01">
+  <div class="sec-num">SECTION 01</div>
+  <h2>這是什麼？<span class="em">三分鐘快速認識</span></h2>
+  <p class="lead">GameVault 是一個以「單一網頁」運作的 PWA（Progressive Web App）收藏管理工具，專為電玩、動漫周邊的實體收藏設計。核心理念是：<strong>資料完全歸你所有</strong>——所有收藏記錄實際存放在你自己的 Google 試算表裡，照片存在你自己的 Google Drive，App 本身只是操作介面，不經過任何第三方伺服器儲存你的資料。</p>
 
-  <h3><span class="ic">📱</span>什麼是 GameVault</h3>
-  <p>GameVault 專為電玩、動漫周邊的實體收藏管理設計，涵蓋 <strong>8 大分類</strong>：遊戲、書籍／攻略、主機、週邊、原聲帶、動漫／美術設定集、公仔、數位下載版，另外還有獨立的「尋寶清單」可以追蹤還沒入手、但已經在比價中的目標商品。</p>
-  <p>所有資料都寫在你自己的 Google 試算表裡（不是存在某個第三方伺服器），照片存在你自己的 Google Drive。這代表你的收藏資料完全歸你所有，也可以隨時直接打開試算表查看或編輯原始資料。</p>
+  <h3><span class="ic">🧩</span>三個核心元件</h3>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <h5>📱 前端網頁（App）</h5>
+      <p>單一 HTML 檔案，負責所有畫面操作，可安裝到手機主畫面像原生 App 一樣使用。</p>
+    </div>
+    <div class="feat-card">
+      <h5>⚙️ Google Apps Script</h5>
+      <p>作為前端與試算表之間的橋樑，處理所有資料讀寫、圖片上傳到 Drive 等後端邏輯。</p>
+    </div>
+    <div class="feat-card">
+      <h5>📊 Google 試算表</h5>
+      <p>真正的資料庫，8 大分類共用一份試算表、分別存放在不同工作表分頁。</p>
+    </div>
+  </div>
+
+  <h3><span class="ic">📦</span>能管理哪些收藏</h3>
+  <p>8 大分類：<strong>遊戲、書籍／攻略、主機、週邊、原聲帶、動漫／美術設定集、公仔／模型、數位下載版</strong>，另有獨立的「<strong>尋寶清單</strong>」追蹤還沒入手、正在比價中的目標商品。</p>
+
+  <h3><span class="ic">🧭</span>五大主頁籤</h3>
+  <p>畫面最下方固定導覽列，貫穿整個 App：</p>
+  <div class="feat-grid">
+    <div class="feat-card"><h5>📷 建檔</h5><p>新增收藏品，8 種建檔方式可選（詳見第 8 節）。</p></div>
+    <div class="feat-card"><h5>🗂️ 收藏</h5><p>瀏覽、搜尋、篩選、編輯已收藏品項（詳見第 10-11 節）。</p></div>
+    <div class="feat-card"><h5>🎯 尋寶</h5><p>追蹤比價中的目標商品（詳見第 13 節）。</p></div>
+    <div class="feat-card"><h5>📊 統計</h5><p>收藏數量、金額等視覺化統計（詳見第 14 節）。</p></div>
+    <div class="feat-card"><h5>⚙️ 設定</h5><p>連線、市場管理、備份等維護功能（詳見第 6 節）。</p></div>
+  </div>
 
   <div class="phone-wrap">
     <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7665.jpg" alt="GameVault 啟動畫面"></div>
-    <div class="phone-label">開啟 App 時的啟動畫面</div>
+    <div class="phone-label">App 啟動畫面</div>
   </div>
 
-  <h3><span class="ic">🧭</span>五大主頁籤</h3>
-  <p>畫面最下方是固定的導覽列，五個頁籤貫穿整個 App：</p>
-  <div class="feat-grid">
-    <div class="feat-card">
-      <h5>📷 建檔</h5>
-      <p>新增收藏品到資料庫，提供 8 種建檔方式（AI 圖片辨識、條碼查詢、編碼查詢、手動輸入及其組合）。</p>
+  <div class="note info">
+    <div class="ic">💡</div>
+    <div>這份手冊依「使用情境」編排：第 2-4 節是給要<strong>自己部署一份</strong>的人看的（帳號申請、部署步驟、API 金鑰）；如果你只是要<strong>使用既有的 GameVault</strong>，可以直接跳到第 5 節開始看功能操作。</div>
+  </div>
+</section>
+
+<section id="s02">
+  <div class="sec-num">SECTION 02</div>
+  <h2>事前準備 <span class="em">你需要的帳號與工具</span></h2>
+  <p class="lead">GameVault 是開源自架的工具，要擁有一份「屬於自己」的 GameVault，需要準備以下帳號與資源。如果你是使用別人已經部署好、分享給你的連結，這節可以跳過。</p>
+
+  <h3><span class="ic">✅</span>必要條件清單</h3>
+  <div class="btn-list">
+    <div class="btn-row">
+      <div class="bname">Google 帳號 <span class="tag tag-req">必要</span></div>
+      <div class="bdesc">用來建立 Google 試算表（資料庫）、Google Drive（存放照片）、Google Apps Script（後端程式）。全部都是 Google 帳號內建的免費服務。</div>
     </div>
-    <div class="feat-card">
-      <h5>🗂️ 收藏</h5>
-      <p>瀏覽、搜尋、篩選已收藏的品項，卡片檢視或分類檢視兩種模式，點進去看詳情、編輯、估值。</p>
+    <div class="btn-row">
+      <div class="bname">GitHub 帳號 <span class="tag tag-req">必要</span></div>
+      <div class="bdesc">存放前端網頁原始碼與部署到 Netlify 的來源。</div>
     </div>
-    <div class="feat-card">
-      <h5>🎯 尋寶</h5>
-      <p>追蹤還沒入手的目標商品，記錄不同通路的報價，自動換算比價，找到最划算的入手時機。</p>
+    <div class="btn-row">
+      <div class="bname">Netlify 帳號 <span class="tag tag-req">必要</span></div>
+      <div class="bdesc">免費的靜態網頁託管服務，把 GitHub 上的前端網頁部署成可用瀏覽器開啟的網址。</div>
     </div>
-    <div class="feat-card">
-      <h5>📊 統計</h5>
-      <p>收藏數量、金額、分類佔比等視覺化統計，掌握收藏規模與花費概況。</p>
-    </div>
-    <div class="feat-card">
-      <h5>⚙️ 設定</h5>
-      <p>後端連線設定、市場顯示與排序、CSV 匯出匯入、系統自檢等維護功能都在這裡。</p>
+    <div class="btn-row">
+      <div class="bname">Google Gemini API 金鑰 <span class="tag tag-opt">選用</span></div>
+      <div class="bdesc">如果要使用「圖片辨識」「AI 網頁查詢」等 AI 自動填寫功能才需要，純手動建檔可以不用申請。詳見第 4 節。</div>
     </div>
   </div>
 
-  <h3><span class="ic">🔌</span>後端連線（Google Apps Script）</h3>
-  <p>GameVault 需要連接到你自己部署的 Google Apps Script Web App，才能讀寫你的 Google 試算表資料庫。這是一次性的設定：</p>
+  <h3><span class="ic">💰</span>費用</h3>
+  <p>Google 試算表／Drive／Apps Script、GitHub、Netlify 的基本使用額度都是<span class="tag tag-free">免費</span>的，個人收藏規模的資料量與存取頻率完全在免費額度內。Gemini API 目前有免費額度可供 AI 辨識功能使用。</p>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0002</div><div class="want">Google帳號/GitHub/Netlify等帳號準備畫面示意（如果原manual有相關截圖）</div></div>
+    <div class="img-ph-label">準備帳號示意</div>
+  </div>
+</section>
+
+<section id="s03">
+  <div class="sec-num">SECTION 03</div>
+  <h2>部署四步驟 <span class="em">建立你自己的 GameVault</span></h2>
+  <p class="lead">完成第 2 節的帳號準備後，依下列四個步驟即可擁有一份完全屬於自己、資料自主的 GameVault。</p>
+
   <div class="steps">
     <div class="step">
       <div class="num">1</div>
       <div class="body">
-        <h5>取得 Web App 網址</h5>
-        <p>在 Google Apps Script 專案中部署 <code>GameVault_AppsScript.gs</code>（可從「設定」頁下載最新版本檔案），部署後會得到一組 Web App URL。</p>
+        <h5>建立 Google 試算表 ＋ Apps Script 專案</h5>
+        <p>新增一份 Google 試算表作為資料庫，在裡面開啟「擴充功能 → Apps Script」，把 <code>GameVault_AppsScript.gs</code> 的完整內容貼入，儲存。這份程式碼負責回應前端的讀寫請求，並自動建立/管理所有分類需要的工作表分頁。</p>
       </div>
     </div>
     <div class="step">
       <div class="num">2</div>
       <div class="body">
-        <h5>在 App 內貼上網址</h5>
-        <p>到「設定」頁的連線設定區塊，貼上 Web App URL 並儲存。</p>
+        <h5>部署為 Web App</h5>
+        <p>在 Apps Script 編輯器右上角「部署 → 新增部署作業」，類型選「網頁應用程式」，執行身分設「我」，存取權設「所有人」。部署完成會得到一組 Web App 網址，這組網址就是前端 App 溝通後端的唯一管道，請妥善保存。</p>
       </div>
     </div>
     <div class="step">
       <div class="num">3</div>
       <div class="body">
-        <h5>執行連線自檢</h5>
-        <p>點「🩺 連線自檢」按鈕，確認後端連線正常、具備寫入權限。第一次設定或懷疑資料同步有問題時都建議跑一次。</p>
+        <h5>取得前端網頁並部署到 Netlify</h5>
+        <p>Fork 或下載 GameVault 的前端原始碼（<code>index.html</code> 等檔案）到自己的 GitHub repo，在 Netlify 建立新站台、連結這個 repo，設定 Publish directory 為存放 <code>index.html</code> 的資料夾。Netlify 會自動幫你產生一個可以直接用瀏覽器開啟的網址。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="body">
+        <h5>在 App 內完成連線設定</h5>
+        <p>打開 Netlify 部署好的網址，進入「設定」頁，貼上步驟 2 拿到的 Web App 網址並儲存，點「🩺 連線自檢」確認可以正常讀寫。完成後就可以開始建檔使用了。</p>
       </div>
     </div>
   </div>
-  <div class="note info">
-    <div class="ic">💡</div>
-    <div>後端程式碼透過 GitHub Actions 自動部署，一般使用者不需要碰這塊；如果你是把這個專案 fork 來自用，才需要自行設定 Google Apps Script 專案與試算表。</div>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0003</div><div class="want">Apps Script部署對話框畫面（類型/執行身分/存取權設定）</div></div>
+    <div class="img-ph-label">Apps Script「新增部署作業」設定畫面</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0004</div><div class="want">App內「設定」頁的連線設定欄位（貼上Web App網址處）</div></div>
+    <div class="img-ph-label">App 內連線設定欄位</div>
   </div>
 
-  <h3><span class="ic">🌓</span>離線與快取</h3>
-  <p>GameVault 是 PWA，支援加到手機主畫面、離線瀏覽已快取的資料。收藏資料會快取在本機（透過 <code>localforage</code>），每次開啟會嘗試跟後端同步最新資料；沒有網路時仍可瀏覽先前載入過的內容，但無法新增/編輯（需要網路寫回試算表）。</p>
-
+  <div class="note warn">
+    <div class="ic">⚠️</div>
+    <div>Web App 網址一旦確立，之後更新 Apps Script 程式碼時務必用「管理部署作業 → 編輯現有部署」更新版本，而不是每次都新增部署作業，否則網址會改變、需要重新回 App 內修改連線設定。GameVault 專案本身已經設定 GitHub Actions 自動化部署（透過 clasp 工具），一般更新不需要手動操作這一步。</div>
+  </div>
 </section>
-<section id="ch2">
-  <div class="sec-num">CHAPTER 02</div>
-  <h2>建檔頁 <span class="em">Add New Item</span></h2>
-  <p class="lead">建檔頁是把實體收藏品登錄進資料庫的入口，提供多種建檔方式，從「拍張照讓 AI 自動填寫」到「完全手動輸入」都支援。整個流程分成四個步驟。</p>
 
-  <div class="subnav">
-    <a href="#c2-step1">Step1 選分類</a>
-    <a href="#c2-step2">Step2 選區域</a>
-    <a href="#c2-step3">Step3 選平台</a>
-    <a href="#c2-step4">Step4 建檔方式</a>
-    <a href="#c2-form">完整表單欄位</a>
+<section id="s04">
+  <div class="sec-num">SECTION 04</div>
+  <h2>API 金鑰 <span class="em">AI 辨識引擎</span></h2>
+  <p class="lead">「圖片辨識」「AI 網頁查詢」等自動辨識/填寫功能，背後是呼叫 <strong>Google Gemini</strong> 的多模態 AI 模型。純手動建檔或使用條碼/編碼查詢資料庫的人可以跳過這節。</p>
+
+  <div class="api-card">
+    <h5>🔑 Google Gemini API</h5>
+    <p>前往 Google AI Studio 申請免費的 API 金鑰，用於呼叫 Gemini 模型辨識照片內容、生成商品資訊摘要。目前提供免費額度，個人建檔的使用量通常在額度內。</p>
+    <div class="url">https://aistudio.google.com/apikey</div>
+    <p>申請到金鑰後，在 App「設定」頁對應欄位貼上金鑰即可啟用 AI 辨識相關功能（圖片辨識、AI 網頁查詢、條碼+照片、編碼+照片皆需要這組金鑰）。</p>
   </div>
 
-  <h3 id="c2-step1"><span class="ic">①</span>Step 1 · 選擇分類</h3>
-  <p>共 8 個分類，點選後會決定後續表單出現哪些專屬欄位（例如遊戲會有「平台」「遊戲類型」，主機會有「型號」「機身序號」）：</p>
-  <ul>
-    <li><strong>遊戲</strong>（Games）</li>
-    <li><strong>書籍</strong>（Books，含攻略本）</li>
-    <li><strong>主機</strong>（Consoles）</li>
-    <li><strong>週邊</strong>（Peripherals，控制器、周邊配件）</li>
-    <li><strong>動漫／美術</strong>（Anime/Art，底下再分 8 個子類型：漫畫／單行本、畫冊／插畫集、設定集／公式資料集、原畫集／分鏡集、雜誌／MOOK／同人誌、動畫影集、動畫電影／劇場版、周邊／其他）</li>
-    <li><strong>公仔／模型</strong>（Figure，底下再分 6 個子類型：比例模型、可動模型、黏土人／Q版、景品／一番賞、組裝模型、GK雕像）</li>
-    <li><strong>原聲帶</strong>（Soundtrack，底下再分 5 個子類型：原聲帶、主題曲／單曲、角色歌曲／印象集、廣播劇CD、演唱會音源／其他）</li>
-    <li><strong>數位下載版</strong>（Digital DL，底下再分 8 個子類型：下載版遊戲、追加下載內容、電子書等）</li>
-  </ul>
-  <p>選了「動漫／美術」「公仔」「原聲帶」「數位下載版」這 4 個分類後，會再多一個子類型選單，因為它們各自子類型的欄位差異很大（漫畫需要「集數」、動畫影集需要「載體格式」），所以資料庫用不同工作表分開儲存，選對子類型才能對到正確的欄位組合。</p>
-
-  <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7667.jpg" alt="建檔頁 Step1-3"></div>
-    <div class="phone-label">Step 1 選擇分類 → Step 2 選擇商品區域 → Step 3 平台選擇</div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0005</div><div class="want">Google AI Studio申請API金鑰畫面</div></div>
+    <div class="img-ph-label">Google AI Studio 申請 API 金鑰</div>
   </div>
-
-  <h3 id="c2-step2"><span class="ic">②</span>Step 2 · 商品區域</h3>
-  <p>選擇這個商品是哪個地區的版本：<strong>日本</strong>、<strong>亞洲</strong>、<strong>美國</strong>、<strong>其他</strong>。這會影響 AI 辨識與資料庫查詢時參考的語言與資料來源（例如日版遊戲的封面文字是日文，AI 會知道要往日文資料庫比對）。</p>
-
-  <h3 id="c2-step3"><span class="ic">③</span>Step 3 · 平台選擇</h3>
-  <p><span class="tag tag-opt">選填</span> 選擇平台（如 PlayStation、Switch、Xbox 等）可以提升 AI 辨識與編碼查詢的準確率，尤其是「商品編碼」建檔方式，因為同樣的編碼格式在不同平台代表完全不同的商品（例如 PS4 是 CUSA-XXXXX、Switch 是 HAC-XXX），沒選平台編碼查詢會查不準。</p>
-  <div class="note tip">
-    <div class="ic">💡</div>
-    <div>不確定平台或懶得選也沒關係，這一步可以跳過直接進 Step 4，只是 AI 辨識準確率會稍微打折扣，事後也可以在表單裡手動修正。</div>
-  </div>
-
-  <h3 id="c2-step4"><span class="ic">④</span>Step 4 · 建檔方式</h3>
-  <p>共 8 種建檔方式，依準確度與所需操作分成兩排。上排是單一方式，下排是組合方式（準確度較高）：</p>
-
-  <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7669.jpg" alt="建檔方式選擇"></div>
-    <div class="phone-label">Step 4：8 種建檔方式</div>
-  </div>
-
-  <div class="btn-list">
-    <div class="btn-row">
-      <div class="bname">📼 商品條碼</div>
-      <div class="bdesc"><b>資料庫查詢。</b>輸入包裝盒上的 EAN／JAN／UPC 條碼數字，或用相機掃描，向內建資料庫查詢商品資訊自動帶入表單。目前資料庫主要涵蓋日版（樂天）商品，台/港/韓/中/美版條碼可能查無資料，遇到查無資料時建議改用拍照辨識或手動輸入。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">🔢 商品編碼</div>
-      <div class="bdesc"><b>序號／ISBN 查詢。</b>輸入碟片/卡帶上印的產品代碼（如 PS4 的 CUSA-00001、Switch 的 HAC-001）或書籍的 ISBN，查詢遊戲資料庫。<strong>務必先選好 Step3 的平台與 Step2 的區域</strong>，否則同樣格式的編碼在不同平台意義不同，查詢會不準。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">🖼️ 圖片辨識</div>
-      <div class="bdesc"><b>AI 自動填寫。</b>拍攝或從相簿選取封面／封底／側邊照片，由 AI（Gemini，免費）辨識照片內容，自動填入商品名稱、平台、發行商等欄位。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">✏️ 手動建檔</div>
-      <div class="bdesc"><b>直接填寫。</b>完全跳過自動辨識，直接進入空白表單自行輸入所有欄位，適合資料庫查無資料或罕見品項。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">📼 條碼＋照片 <span class="tag tag-rec">推薦</span></div>
-      <div class="bdesc"><b>最高準確度。</b>條碼查詢資料庫抓基本資訊，同時拍攝封面照片讓 AI 補齊/校正細節欄位，兩種來源互相佐證，是準確率最高的組合。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">🔢 編碼＋照片</div>
-      <div class="bdesc"><b>精確比對。</b>編碼查詢＋照片辨識雙重比對，適合條碼查詢容易失準（如冷門地區版本）但你知道正確編碼的情況。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">🤖 AI 網頁查詢</div>
-      <div class="bdesc">貼上你自己在網路上找到的商品資訊文字（例如從其他購物網站複製的商品說明），AI 會解析並生成結構化資料自動帶入表單。適合條碼/編碼都查無資料、但你手邊有現成商品頁面內容可以貼上參考的情況。</div>
-    </div>
-    <div class="btn-row">
-      <div class="bname">🔀 查詢資料來源：自動分流</div>
-      <div class="bdesc">系統會依你輸入的條碼/編碼格式，自動判斷要查詢哪一個資料來源（日版樂天庫、遊戲資料庫等），不需要自己判斷要選哪個查詢管道。</div>
-    </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0006</div><div class="want">App設定頁貼上Gemini API金鑰的欄位</div></div>
+    <div class="img-ph-label">App 內填入 API 金鑰欄位</div>
   </div>
 
   <div class="note info">
     <div class="ic">ℹ️</div>
-    <div>不管選哪種建檔方式，辨識/查詢完成後都會進入<strong>同一份完整表單</strong>，讓你檢查、修正、補完欄位後再儲存——AI 或資料庫查詢只是幫你把表單先「填一半」，不會自動存檔。</div>
+    <div>API 金鑰屬於機敏資訊，只會存在你自己的瀏覽器本機設定裡，不會上傳到任何第三方伺服器（除了呼叫 Gemini API 本身當下必要的傳輸）。</div>
+  </div>
+</section>
+
+<section id="s05">
+  <div class="sec-num">SECTION 05</div>
+  <h2>八大資料庫 <span class="em">完整說明</span></h2>
+  <p class="lead">GameVault 用 8 個分類（外加尋寶清單）分別管理不同性質的收藏品，每個分類在試算表裡對應獨立的工作表結構。這節詳細說明每個分類的專屬欄位，以及所有分類共用的欄位群組。</p>
+
+  <div class="subnav">
+    <a href="#s05-common">共用欄位群組</a>
+    <a href="#s05-games">遊戲</a>
+    <a href="#s05-books">書籍</a>
+    <a href="#s05-console">主機</a>
+    <a href="#s05-peri">週邊</a>
+    <a href="#s05-ost">原聲帶</a>
+    <a href="#s05-art">動漫／美術設定集</a>
+    <a href="#s05-figure">公仔／模型</a>
+    <a href="#s05-digital">數位下載版</a>
   </div>
 
-  <h4>📼 商品條碼輸入畫面</h4>
-  <p>輸入 EAN／JAN／UPC／ISBN 數字，或點「用相機掃描條碼（AI 自動識別）」讓相機直接對準條碼拍照辨識，再按「查詢資料庫」。</p>
+  <h3 id="s05-common"><span class="ic">🧱</span>所有分類共用的欄位群組</h3>
+  <p>不管哪個分類，建檔／編輯表單都會有以下共用欄位群組（各分類差異主要在「版本規格」與規格類群組）：</p>
+
+  <details class="exp" open>
+    <summary>🖼️ 圖片紀錄</summary>
+    <div class="expbody">
+      <ul>
+        <li><strong>封面圖檔</strong>／<strong>封底圖檔</strong>／<strong>側邊圖檔</strong>：各限一張，「拍照」直接開相機或「相簿」選取既有照片</li>
+        <li><strong>自訂圖片</strong>：最多 5 張（尋寶清單最多 7 張），每張可自訂名稱標籤，用於燈箱瀏覽的說明文字</li>
+      </ul>
+    </div>
+  </details>
+  <details class="exp">
+    <summary>🏷️ 識別資訊</summary>
+    <div class="expbody">
+      <ul>
+        <li><strong>資料類別</strong>：所屬分類</li>
+        <li><strong>主要名稱／日文名稱／中文名稱／英文名稱</strong>：多語言名稱，估值查詢時依市場語言自動選用對應名稱</li>
+        <li><strong>系列名稱</strong>：所屬作品系列，方便用系列篩選</li>
+      </ul>
+    </div>
+  </details>
+  <details class="exp">
+    <summary>🔖 編碼條碼</summary>
+    <div class="expbody">
+      <ul>
+        <li><strong>商品編碼</strong>：碟片/卡帶/包裝上的產品代碼</li>
+        <li><strong>條碼 Barcode</strong>：EAN／JAN／UPC／ISBN</li>
+      </ul>
+      <p>這兩個欄位也是「關聯商品」判斷是否為同一項商品的重要依據。</p>
+    </div>
+  </details>
+  <details class="exp">
+    <summary>🏢 發行廠商</summary>
+    <div class="expbody"><ul><li><strong>開發商／發行商</strong></li><li><strong>發行時間</strong></li></ul></div>
+  </details>
+  <details class="exp">
+    <summary>📦 收藏狀態</summary>
+    <div class="expbody">
+      <ul>
+        <li><strong>收藏狀態</strong>：收藏中／已出售／預購中等</li>
+        <li><strong>特典／附件說明</strong></li>
+        <li><strong>DLC 狀態</strong>：已過期／可兌換／已兌換</li>
+        <li><strong>購入日期／購入價格</strong>（含幣別）</li>
+        <li><strong>入手來源</strong>：全新購入／二手購入／贈與</li>
+        <li><strong>保管位置</strong>：自訂收納地點標籤</li>
+      </ul>
+    </div>
+  </details>
   <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7670.jpg" alt="商品條碼輸入畫面"></div>
-    <div class="phone-label">商品條碼輸入</div>
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7700.jpg" alt="收藏狀態欄位群組"></div>
+    <div class="phone-label">「收藏狀態」欄位群組展開實際畫面範例</div>
   </div>
 
-  <h4>🔢 商品編碼輸入畫面</h4>
-  <p>輸入碟片/卡帶上的產品代碼，畫面會依照你在 Step2/Step3 選的區域＋平台顯示對應格式範例（如 PS4 → CUSA-00001）。同樣可以用相機拍攝編碼讓 AI 辨識。若沒有先選平台/區域，畫面會有紅字提醒「請先選擇正確的平台與區域，再進行編碼辨識」。</p>
-  <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7671.jpg" alt="商品編碼輸入畫面"></div>
-    <div class="phone-label">商品編碼輸入（範例：PS4 CUSA-00001）</div>
-  </div>
+  <details class="exp">
+    <summary>💰 估值資訊</summary>
+    <div class="expbody">
+      <ul>
+        <li><strong>目前估值／估值更新日／估值來源／估值信心／估值備註</strong></li>
+        <li><strong>估值原幣／原幣估值</strong>：保留原始查詢幣別金額不用手動換算</li>
+        <li><strong>出售價格／出售日期</strong>：轉售時記錄實際成交價</li>
+      </ul>
+    </div>
+  </details>
+  <details class="exp">
+    <summary>🧩 品相完整度</summary>
+    <div class="expbody"><p><strong>品相</strong>／<strong>完整度</strong>整體評級，另有逐項目評級細項（外盒、說明書、保固卡等各自獨立評等）。</p></div>
+  </details>
+  <details class="exp">
+    <summary>📝 個人記錄</summary>
+    <div class="expbody"><p>記錄個人心得、收藏緣由等主觀筆記。</p></div>
+  </details>
+  <details class="exp">
+    <summary>🔗 關聯商品</summary>
+    <div class="expbody"><p>把這個項目跟收藏庫裡其他項目建立關聯（如遊戲本體跟攻略本），可複選。顯示「（未在收藏）」代表關聯目標找不到，通常需要到「設定」頁跑一次「修復工作表標題列」補齊 UUID 後重新連結。</p></div>
+  </details>
+  <details class="exp">
+    <summary>📎 補充資訊</summary>
+    <div class="expbody"><ul><li><strong>簡介</strong>（可由 AI 辨識自動生成）</li><li><strong>參考連結</strong></li><li><strong>備註</strong></li><li><strong>建檔時間</strong>（自動產生）</li></ul></div>
+  </details>
 
-  <h4>🖼️ 圖片辨識畫面</h4>
-  <p>先選擇要拍攝的部位（封面／封底／側邊），再選「拍照」或「相簿」上傳照片。每個部位可以各自上傳一張，右下角會顯示目前已選取哪個部位。全部照片準備好後按「✨ AI 辨識（Gemini 免費）」，已上傳的圖片會自動存入對應欄位。</p>
-  <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7672.jpg" alt="圖片辨識畫面"></div>
-    <div class="phone-label">圖片辨識：選擇部位＋拍照／相簿＋AI 辨識</div>
-  </div>
-
-  <h4>📼＋🖼️ 條碼＋照片組合模式</h4>
-  <p>先掃描/輸入條碼，再拍攝封面照片，最後按「✨ 資料庫查詢＋AI 辨識」一次完成兩種來源比對。</p>
-  <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7676.jpg" alt="條碼加照片組合模式"></div>
-    <div class="phone-label">條碼＋照片：①掃描條碼 ②拍攝封面 → 資料庫查詢＋AI辨識</div>
-  </div>
-
-  <h3 id="c2-form"><span class="ic">📋</span>完整表單欄位說明</h3>
-  <p>不管用哪種建檔方式，最後都會進入這份表單。表單依用途分成好幾個可摺疊的欄位群組，點群組標題可以展開/收合。以下逐一說明每個群組的欄位與用途（部分欄位僅特定分類才會出現）。</p>
-
-  <div class="phone-wrap">
+    <div class="phone-wrap">
     <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7674.jpg" alt="表單欄位群組列表(上)"></div>
     <div class="phone-label">表單欄位群組總覽（上半部）</div>
   </div>
@@ -366,404 +430,632 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
     <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7675.jpg" alt="表單欄位群組列表(下)"></div>
     <div class="phone-label">表單欄位群組總覽（下半部）</div>
   </div>
-
-  <details class="exp" open>
-    <summary>🖼️ 圖片紀錄</summary>
-    <div class="expbody">
-      <p>管理這個收藏品的所有照片，每張都可以用「拍照」直接開相機，或「相簿」從既有照片選取：</p>
-      <ul>
-        <li><strong>封面圖檔</strong>／<strong>封底圖檔</strong>／<strong>側邊圖檔</strong>：三個固定欄位，各限一張</li>
-        <li><strong>自訂圖片</strong>：最多 <strong>5 張</strong>（尋寶清單則是最多 7 張，因為尋寶沒有封底/側邊欄位），每張可以自訂名稱標籤，用於燈箱瀏覽時的說明文字</li>
-      </ul>
-      <p>詳情頁會把封面＋自訂圖片組成一個可左右滑動的相簿（gallery），點圖可放大用燈箱瀏覽。</p>
-    </div>
-  </details>
-
   <div class="phone-wrap">
     <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7673.jpg" alt="圖片紀錄欄位群組"></div>
-    <div class="phone-label">展開後的「圖片紀錄」欄位群組</div>
+    <div class="phone-label">展開後的「圖片紀錄」欄位群組展示範例</div>
   </div>
 
-  <details class="exp">
-    <summary>🏷️ 識別資訊</summary>
-    <div class="expbody">
-      <ul>
-        <li><strong>資料類別</strong>：分類（遊戲/書籍/主機…），建檔時已選定，這裡可再次確認或修改</li>
-        <li><strong>主要名稱</strong>：卡片與列表顯示用的主要標題</li>
-        <li><strong>日文名稱／中文名稱／英文名稱</strong>：多語言名稱，用於估值查詢時依市場語言自動選用對應名稱搜尋</li>
-        <li><strong>系列名稱</strong>：所屬作品系列（例如「勇者鬥惡龍」系列），方便日後用系列篩選收藏</li>
-      </ul>
-    </div>
-  </details>
 
-  <details class="exp">
-    <summary>📀 版本規格</summary>
-    <div class="expbody">
-      <p>依分類不同會有差異，以遊戲為例：</p>
-      <ul>
-        <li><strong>平台</strong>：Nintendo DS、PlayStation 5 等</li>
-        <li><strong>媒體類型</strong>：卡匣（ROM卡帶）、光碟等</li>
-        <li><strong>遊戲區域</strong>：日本／北美／歐洲／中文版等</li>
-        <li><strong>版本說明</strong>：普通版／限定版／特典版等</li>
-        <li><strong>語音語言</strong>／<strong>字幕語言</strong></li>
-        <li><strong>年齡分級</strong>：CERO／ESRB／PEGI 分級</li>
-      </ul>
-      <p>主機分類則會改成型號、世代、機身顏色、儲存容量等對應欄位；書籍分類會是出版社、ISBN、頁數等。</p>
-    </div>
-  </details>
+  <h3 id="s05-games"><span class="ic">🎮</span>遊戲</h3>
+  <h4>版本規格</h4>
+  <ul>
+    <li><strong>平台</strong>（Nintendo DS、PlayStation 5…）</li>
+    <li><strong>媒體類型</strong>（卡匣/ROM卡帶、光碟…）</li>
+    <li><strong>遊戲區域</strong>（日本／北美／歐洲／中文版…）</li>
+    <li><strong>版本說明</strong>（普通版／限定版／特典版）</li>
+    <li><strong>語音語言／字幕語言</strong></li>
+    <li><strong>年齡分級</strong>（CERO／ESRB／PEGI）</li>
+  </ul>
+  <h4>遊戲規格</h4>
+  <p><strong>遊戲類型</strong>（genre）為可複選晶片，參考 Steam 分類邏輯整理成 6 大分組，用橫向可滑動頁籤呈現：</p>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <tr><th>分組</th><th>包含類型（縮寫）</th></tr>
+      <tr><td>🎯 動作</td><td>ACT／AADV／PLT／FTG／H&amp;S／STH／SHT／FPS／TPS／STG（10項）</td></tr>
+      <tr><td>⚔️ 角色扮演</td><td>RPG／ARPG／SRPG／RAI（4項）</td></tr>
+      <tr><td>🏗️ 策略／模擬</td><td>RTS／SLG／TD／CARD／SAND／SVL（6項）</td></tr>
+      <tr><td>📖 冒險／故事</td><td>ADV／PZL／AVG／VN／LVG／FMV／HOR（7項）</td></tr>
+      <tr><td>🎉 休閒／運動／社交</td><td>FAM／PARTY／TBL／SPT／RAC／MUS／EDU（7項）</td></tr>
+      <tr><td>🌐 多人／其他</td><td>MOBA／VR／OTHER（3項）</td></tr>
+    </table>
+  </div>
+  <p>點頁籤切換分組、下方顯示該組晶片供勾選，可跨分組複選，頁籤會顯示已勾選數量。晶片顯示縮寫代碼，下方「縮寫說明對照」會跟著目前頁籤連動顯示完整中文對照（完整代碼對照表見第 16 節附錄）。其他欄位：<strong>遊戲人數</strong>、<strong>主要支援功能</strong>（如支援觸控筆）。</p>
 
-  <details class="exp">
-    <summary>🎮 遊戲規格</summary>
-    <div class="expbody">
-      <p><strong>遊戲類型</strong>（genre）欄位是<strong>可複選</strong>的晶片清單，參考 Steam 分類邏輯整理成 6 大分組，用橫向可滑動頁籤呈現：</p>
-      <ul>
-        <li>🎯 動作（ACT／AADV／PLT／FTG／H&amp;S／STH／SHT／FPS／TPS／STG，共10項）</li>
-        <li>⚔️ 角色扮演（RPG／ARPG／SRPG／RAI，共4項）</li>
-        <li>🏗️ 策略／模擬（RTS／SLG／TD／CARD／SAND／SVL，共6項）</li>
-        <li>📖 冒險／故事（ADV／PZL／AVG／VN／LVG／FMV／HOR，共7項）</li>
-        <li>🎉 休閒／運動／社交（FAM／PARTY／TBL／SPT／RAC／MUS／EDU，共7項）</li>
-        <li>🌐 多人／其他（MOBA／VR／OTHER，共3項）</li>
-      </ul>
-      <p>點頁籤切換分組，下方會顯示該組的晶片供勾選，可以跨分組複選（例如同時勾「動作」組的 ACT 跟「角色扮演」組的 RPG）。頁籤上會顯示該組目前已勾選的數量。晶片顯示的是英文縮寫代碼，下方有「縮寫說明對照」可展開查看完整中文對照，且對照內容會跟著目前選取的頁籤連動，只顯示該組的縮寫說明。</p>
-      <p>其他欄位：<strong>遊戲人數</strong>、<strong>主要支援功能</strong>（如支援觸控筆）等。</p>
-    </div>
-  </details>
-
-  <details class="exp">
-    <summary>🔖 編碼條碼</summary>
-    <div class="expbody">
-      <ul>
-        <li><strong>遊戲編碼</strong>：碟片/卡帶上的產品代碼，格式依平台不同（如 NTR-P-CG7J(JPN)）</li>
-        <li><strong>條碼 Barcode</strong>：EAN／JAN／UPC 條碼數字</li>
-      </ul>
-      <p>這兩個欄位也是「關聯商品」功能判斷是否為同一項商品的重要依據之一。</p>
-    </div>
-  </details>
-
-  <details class="exp">
-    <summary>🏢 發行廠商</summary>
-    <div class="expbody">
-      <ul>
-        <li><strong>開發商</strong>／<strong>發行商</strong>：製作與發行公司</li>
-        <li><strong>發行時間</strong>：商品原始發售日期</li>
-      </ul>
-    </div>
-  </details>
-
-  <details class="exp">
-    <summary>📦 收藏狀態</summary>
-    <div class="expbody">
-      <ul>
-        <li><strong>收藏狀態</strong>：收藏中／已出售／預購中等</li>
-        <li><strong>特典／附件說明</strong>：隨貨附贈的特典內容文字說明</li>
-        <li><strong>DLC 狀態</strong>：已過期／可兌換／已兌換等（數位內容適用）</li>
-        <li><strong>購入日期</strong>／<strong>購入價格</strong>（含幣別選擇，如 TWD）</li>
-        <li><strong>入手來源</strong>：全新購入／二手購入／贈與等</li>
-        <li><strong>保管位置</strong>：自訂收納地點標籤，方便實體尋找</li>
-      </ul>
-    </div>
-  </details>
-
-  <div class="phone-wrap">
-    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7700.jpg" alt="收藏狀態欄位群組"></div>
-    <div class="phone-label">「收藏狀態」欄位群組展開畫面</div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0008</div><div class="want">遊戲類型分組頁籤選取畫面</div></div>
+    <div class="img-ph-label">遊戲類型分組頁籤</div>
   </div>
 
-  <details class="exp">
-    <summary>💰 估值資訊</summary>
-    <div class="expbody">
-      <ul>
-        <li><strong>目前估值</strong>：手動輸入或參考「二手估值市場參考」查詢結果後填入</li>
-        <li><strong>估值更新日</strong>／<strong>估值來源</strong>／<strong>估值信心</strong>（未評級／低／中／高）／<strong>估值備註</strong></li>
-        <li><strong>估值原幣</strong>／<strong>原幣估值</strong>：如果參考的是日幣報價，可以保留原幣金額，不用手動換算</li>
-        <li><strong>出售價格</strong>／<strong>出售日期</strong>：若日後轉售，記錄實際成交價，方便回顧損益</li>
-      </ul>
-    </div>
-  </details>
+  <h3 id="s05-books"><span class="ic">📚</span>書籍／攻略</h3>
+  <p>版本規格群組包含出版社、ISBN、頁數、裝訂方式、對應遊戲平台等書籍專屬欄位。攻略本另有專屬管理邏輯，詳見<a href="#s12">第 12 節</a>。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0009</div><div class="want">書籍分類的版本規格欄位群組展開畫面</div></div>
+    <div class="img-ph-label">書籍分類專屬欄位</div>
+  </div>
 
-  <details class="exp">
-    <summary>🧩 品相完整度</summary>
-    <div class="expbody">
-      <p><strong>品相</strong>與<strong>完整度</strong>整體評級之外，還有「逐項目評級」的細項評分（例如外盒完整、說明書、保固卡等各自獨立評等，最後綜合呈現），方便精確記錄二手品的實際狀況。</p>
-    </div>
-  </details>
+  <h3 id="s05-console"><span class="ic">🕹️</span>主機</h3>
+  <ul>
+    <li><strong>型號</strong>（如 SCPH-1000）／<strong>平台系列</strong>／<strong>世代</strong></li>
+    <li><strong>機身顏色</strong>／<strong>儲存容量</strong></li>
+    <li><strong>主機地區</strong>／<strong>版本說明</strong>／<strong>機身序號</strong></li>
+    <li><strong>運作狀態</strong>／<strong>韌體版本</strong>／<strong>保固狀態</strong>／<strong>測試日期</strong>／<strong>故障或維修描述</strong>：主機特有的硬體狀態記錄欄位</li>
+  </ul>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0010</div><div class="want">主機分類的版本規格欄位群組展開畫面</div></div>
+    <div class="img-ph-label">主機分類專屬欄位</div>
+  </div>
 
-  <details class="exp">
-    <summary>📝 個人記錄</summary>
-    <div class="expbody">
-      <p>個人化的收藏筆記欄位，記錄自己的心得、收藏緣由等主觀資訊，跟客觀的商品規格資料區隔開來。</p>
-    </div>
-  </details>
+  <h3 id="s05-peri"><span class="ic">🎧</span>週邊</h3>
+  <ul>
+    <li><strong>相容平台</strong>：這個週邊適用哪些主機平台</li>
+    <li><strong>型號</strong>／<strong>週邊類型</strong>（手把/控制器、無線/有線等特徵標籤）</li>
+  </ul>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0011</div><div class="want">週邊分類的版本規格欄位群組展開畫面</div></div>
+    <div class="img-ph-label">週邊分類專屬欄位</div>
+  </div>
 
-  <details class="exp">
-    <summary>🔗 關聯商品</summary>
-    <div class="expbody">
-      <p>把這個收藏品跟收藏庫裡的<strong>其他項目</strong>建立關聯（例如遊戲本體跟它的攻略本、或同系列的不同作品）。點「＋ 關聯商品」從收藏庫挑選要連結的項目，可複選，每個已連結項目旁邊都有 ✕ 可以移除。</p>
-      <p>連結顯示商品名稱；如果顯示「（未在收藏）」代表這個關聯的目標項目目前不在收藏庫中找得到，通常是識別碼不穩定造成的舊資料殘留，把它移除、重新用「＋ 關聯商品」挑選一次即可修復。</p>
-    </div>
-  </details>
+  <h3 id="s05-ost"><span class="ic">🎵</span>原聲帶</h3>
+  <p>選擇「原聲帶」分類後，需要再選擇 <strong>5 個子類型之一</strong>：原聲帶、主題曲／單曲、角色歌曲／印象集、廣播劇CD、演唱會音源／其他。不同子類型有各自量身設計的欄位（例如「廣播劇CD」會有聲優陣容欄位，「原聲帶」會有曲目清單欄位），因為欄位差異大，資料庫用不同工作表分開儲存，選對子類型才能對到正確欄位。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0012</div><div class="want">原聲帶分類的子類型選單與專屬欄位畫面</div></div>
+    <div class="img-ph-label">原聲帶子類型選單</div>
+  </div>
 
-  <details class="exp">
-    <summary>📎 補充資訊</summary>
-    <div class="expbody">
-      <ul>
-        <li><strong>簡介</strong>：商品的介紹文字（可由 AI 辨識自動生成）</li>
-        <li><strong>參考連結</strong>：查詢這個商品的網路資料連結</li>
-        <li><strong>備註</strong>：任何其他要記錄的文字</li>
-        <li><strong>建檔時間</strong>：這筆資料建立的時間戳記，自動產生不可編輯</li>
-      </ul>
-    </div>
-  </details>
+  <h3 id="s05-art"><span class="ic">🎨</span>動漫／美術設定集</h3>
+  <p>共 <strong>8 個子類型</strong>：漫畫／單行本、畫冊／插畫集、設定集／公式資料集、原畫集／分鏡集、雜誌／MOOK／同人誌、動畫影集、動畫電影／劇場版、周邊／其他。例如「漫畫／單行本」需要「集數」欄位、「動畫影集」需要「載體格式」欄位，各子類型專屬設計。這個分類另外有依子類型分派的 AI 圖片辨識規格，辨識準確度會依你選的子類型調整判斷標準。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0013</div><div class="want">動漫美術設定集分類的子類型選單與專屬欄位畫面</div></div>
+    <div class="img-ph-label">動漫／美術設定集子類型選單</div>
+  </div>
 
-  <h4>儲存</h4>
-  <p>表單最下方固定顯示「<strong>取消</strong>」與「<strong>儲存至收藏</strong>」（編輯已存在的項目時按鈕文字會變成「更新記錄」）按鈕。儲存時會把新增的照片上傳到 Google Drive、資料寫入試算表，完成後會回到收藏列表並自動跳轉到剛建立的項目詳情頁。</p>
+  <h3 id="s05-figure"><span class="ic">🧸</span>公仔／模型</h3>
+  <p>共 <strong>6 個子類型</strong>：比例模型、可動模型、黏土人／Q版、景品／一番賞、組裝模型、GK雕像。各子類型有專屬欄位（如比例模型需要「縮尺比例」、GK雕像需要「原型師」等）。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0014</div><div class="want">公仔/模型分類的子類型選單與專屬欄位畫面</div></div>
+    <div class="img-ph-label">公仔／模型子類型選單</div>
+  </div>
 
+  <h3 id="s05-digital"><span class="ic">💾</span>數位下載版</h3>
+  <p>共 <strong>8 個子類型</strong>：下載版遊戲、追加下載內容、電子書（漫畫／單行本）、電子書（畫冊／美術設定）、電子書（攻略／公式書）、電子書（雜誌／MOOK）、數位音源、數位影音。這個分類的商品沒有實體，因此「二手估值市場參考」區塊不會顯示（數位內容通常沒有二手市場可比價）。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0015</div><div class="want">數位下載版分類的子類型選單與專屬欄位畫面</div></div>
+    <div class="img-ph-label">數位下載版子類型選單</div>
+  </div>
+
+  <div class="note tip">
+    <div class="ic">💡</div>
+    <div>所有分類（含子類型）的圖片欄位都有「自訂圖片」，張數上限一律湊到「封面＋額外＝8 張」的總數：收藏類別有封面/封底/側邊 3 個固定欄位，自訂圖片上限 5 張；尋寶只有封面 1 個固定欄位，自訂圖片上限 7 張。</div>
+  </div>
 </section>
 
-<section id="ch3">
-  <div class="sec-num">CHAPTER 03</div>
-  <h2>收藏頁 <span class="em">My Collection</span></h2>
-  <p class="lead">瀏覽、搜尋、篩選所有已收藏的品項，是平常使用頻率最高的頁面。</p>
-
-  <div class="subnav">
-    <a href="#c3-view">檢視模式</a>
-    <a href="#c3-search">搜尋與篩選</a>
-    <a href="#c3-card">卡片說明</a>
-    <a href="#c3-detail">詳情頁</a>
-    <a href="#c3-edit">編輯與估值</a>
-  </div>
-
-  <h3 id="c3-view"><span class="ic">🗂️</span>頁面總覽與檢視模式</h3>
-  <p>頁面頂部左上角「我的收藏」標題旁有兩個檢視模式切換：</p>
-  <ul>
-    <li><strong>卡片</strong>：每個收藏品用一張卡片呈現封面圖與重點資訊，適合瀏覽</li>
-    <li><strong>分類</strong>：改用清單方式依分類分組顯示，適合快速掃視數量</li>
-  </ul>
-  <p>右上角有兩個圖示按鈕：🗑️ <strong>垃圾桶</strong>（進入多選模式，可以批次刪除多筆收藏）、<strong>⋯ 更多選項</strong>（額外功能選單，包含匯出/匯入 CSV 等）。</p>
-  <p>標題下方是一排統計數字：<strong>總計</strong>與各分類的數量（遊戲／書籍／主機／週邊…），點擊任一個數字可以直接篩選只顯示該分類的項目，再點一次取消篩選。</p>
-
-  <h3 id="c3-search"><span class="ic">🔍</span>搜尋與篩選</h3>
-  <p>搜尋列可以用<strong>名稱、平台、條碼</strong>關鍵字快速找到項目。搜尋列右側有幾個功能圖示：</p>
-  <ul>
-    <li><strong>條碼掃描圖示</strong>：直接開相機掃描條碼來搜尋對應項目</li>
-    <li><strong>圖片搜尋圖示</strong>：用照片比對收藏庫裡的項目</li>
-    <li><strong>篩選漏斗圖示</strong>：開啟進階篩選面板</li>
-  </ul>
-  <p>搜尋列下方是一排可橫向滑動的<strong>快速篩選晶片</strong>：評分、平台、保管位置、收藏狀態、運作狀態、類型等，點選後可以疊加篩選條件（例如同時篩「PlayStation」平台＋「收藏中」狀態）。</p>
-
-  <h3 id="c3-card"><span class="ic">🃏</span>卡片內容說明</h3>
-  <p>每張收藏卡片包含：</p>
-  <ul>
-    <li>左側：<strong>封面縮圖</strong>（104px 正方形）</li>
-    <li>右側：<strong>商品名稱</strong>、<strong>平台／地區</strong>資訊列</li>
-    <li>下方標籤列：<strong>分類標籤</strong>（如「週邊」，四大分類遊戲/書籍/主機/週邊各有專屬顏色方便辨識）、<strong>子類型或平台細節標籤</strong>、<strong>收藏狀態標籤</strong>（收藏中／已出售等，用顏色區分）</li>
-    <li>再下方：<strong>保管位置</strong>（如果有填）與<strong>評分</strong>標籤</li>
-    <li>右下角：<strong>♡ 收藏愛心圖示</strong>，點擊可以把這個項目加入「最愛」快速標記，方便之後篩選常翻看的收藏</li>
-  </ul>
-  <p>點擊卡片本體即可進入該項目的<strong>詳情頁</strong>。</p>
-
-  <h3 id="c3-detail"><span class="ic">📄</span>詳情頁</h3>
-  <p>詳情頁以類似手機底部彈出的面板呈現，可以上下滑動瀏覽，左右兩側有 ‹ › 浮動箭頭按鈕，可以直接切換到收藏庫裡的上一筆／下一筆，不用退回列表再重新點選。</p>
-  <p>頂部固定操作列（5 欄等份排列）：</p>
-  <div class="btn-list">
-    <div class="btn-row"><div class="bname">💡</div><div class="bdesc">顯示與此商品相關的提示或建議資訊</div></div>
-    <div class="btn-row"><div class="bname">估值</div><div class="bdesc">開啟快速估值面板，可以直接輸入或參考市場報價更新「目前估值」</div></div>
-    <div class="btn-row"><div class="bname">編輯</div><div class="bdesc">進入編輯表單，欄位跟建檔表單完全相同</div></div>
-    <div class="btn-row"><div class="bname">刪除</div><div class="bdesc"><span style="color:var(--red)">紅色文字</span>，刪除這筆收藏記錄（含雲端試算表資料與圖片）</div></div>
-    <div class="btn-row"><div class="bname">✕</div><div class="bdesc">關閉詳情頁，返回收藏列表</div></div>
-  </div>
-  <p>再往下是圖片相簿（封面＋自訂圖片可左右滑動瀏覽，點圖放大燈箱檢視）、商品名稱與分類/地區/版本標籤、收藏狀態徽章、品相／完整度／保管／估值等 KPI 卡片，接著是「<strong>二手估值市場參考</strong>」快速連結區塊（詳見<a href="#ch6">第 6 章設定頁</a>的市場管理說明），最後是跟建檔表單相同的各欄位群組（識別資訊、版本規格…）依序唯讀展示。</p>
-
-  <h3 id="c3-edit"><span class="ic">✏️</span>編輯與估值</h3>
-  <p>點「編輯」進入的表單跟建檔頁的表單是同一套邏輯與欄位，差異只在按鈕文字變成「更新記錄」、且已有的資料會預先填入。</p>
-  <p>點「估值」開啟的面板可以快速輸入新的估值金額、幣別、來源與信心程度，不需要進整份編輯表單，適合定期更新市場行情時快速操作。</p>
-
-</section>
-
-<section id="ch4">
-  <div class="sec-num">CHAPTER 04</div>
-  <h2>尋寶頁 <span class="em">Hunt List</span></h2>
-  <p class="lead">「尋寶清單」用來追蹤還沒入手、但已經在關注比價的目標商品——看到店家報價先拍照記下來，等找到最划算的通路再出手，避免事後找不到當初看到的價格。</p>
-
-  <div class="subnav">
-    <a href="#c4-list">清單頁</a>
-    <a href="#c4-add">新增目標</a>
-    <a href="#c4-detail">詳情頁</a>
-    <a href="#c4-quote">新增／編輯報價</a>
-    <a href="#c4-convert">轉入收藏庫</a>
-  </div>
-
-  <h3 id="c4-list"><span class="ic">📋</span>清單頁</h3>
-  <p>頂部「📅 近期發售」按鈕可以快速篩選出即將發售、值得留意的目標。搜尋列可用名稱、平台、條碼查詢，旁邊有「＋ 新增」「🗑️ 刪除」「🔄 重新整理」三個按鈕。「追蹤中（N）」顯示目前總共追蹤幾個目標。</p>
-  <p>每張卡片分成上下兩段：</p>
-  <ul>
-    <li><strong>上段</strong>：封面圖＋分類標籤／已入手標籤、商品名稱、平台、最低價摘要（換算成台幣統一比較）與通路數量</li>
-    <li><strong>下段</strong>：各通路報價明細，全寬顯示店名與價格，最低價會標示「<span class="tag" style="background:rgba(255,110,156,.15);color:var(--pink);border:1px solid rgba(255,110,156,.4)">最低</span>」徽章；超過 3 筆會顯示「+N 通路」</li>
-  </ul>
-  <p>點擊卡片右上角「•••」浮動按鈕會展開更多功能選單（консolidated FAB，把常用動作集中在一個按鈕底下）。</p>
-
-  <h3 id="c4-add"><span class="ic">➕</span>新增目標</h3>
-  <p>新增表單跟收藏頁建檔表單邏輯相同，額外多了尋寶專屬欄位：</p>
-  <ul>
-    <li><strong>收藏慾望</strong>：主觀評分，記錄自己有多想要這個商品</li>
-    <li><strong>發售倒數</strong>／<strong>發售日期</strong>：尚未發售的商品可以設定日期，清單頁會顯示倒數天數</li>
-    <li><strong>目標價格</strong>：設定心理預算，方便跟實際報價比較</li>
-  </ul>
-
-  <h3 id="c4-detail"><span class="ic">📄</span>詳情頁</h3>
-  <p>跟收藏頁一樣支援左右滑動切換上一筆/下一筆。頂部固定操作列是 5 欄等份（跟收藏頁 <code>#dact</code> 完全一致的排版比例）：<strong>空／空／編輯／刪除／✕</strong>（尋寶不需要 💡 提示與估值按鈕，所以前兩格留空維持版面對齊，✕ 是返回清單）。</p>
-  <p>圖片相簿、KPI 卡片（收藏慾望／發售倒數）、簡介與備註區塊之後，是「🔍 參考連結 — 查詢網路相關資料」快速連結，接著是「二手估值市場參考」（跟收藏頁共用同一套市場管理設定），最後是本章重點功能：<strong>各通路報價</strong>清單。</p>
-
-  <h3 id="c4-quote"><span class="ic">💴</span>新增／編輯報價</h3>
-  <p>點「＋ 新增報價」或既有報價旁的「編輯」開啟報價表單：</p>
-  <div class="btn-list">
-    <div class="btn-row"><div class="bname">地點／店名／平台</div><div class="bdesc">文字輸入，記錄看到這個報價的地方</div></div>
-    <div class="btn-row"><div class="bname">網址</div><div class="bdesc"><span class="tag tag-opt">選填</span>該報價頁面的連結，填了之後在清單/詳情頁可以直接點開</div></div>
-    <div class="btn-row"><div class="bname">通路類型</div><div class="bdesc">下拉選單，三選一：<b>網路商店</b>（線上通路）、<b>實體店面</b>（顯示地圖縮圖）、<b>實體店面（不顯示地圖）</b>（不顯示大地圖縮圖，但仍保留小小的「📍地圖」可點連結）</div></div>
-    <div class="btn-row"><div class="bname">Google 地圖</div><div class="bdesc"><span class="tag tag-opt">選填</span>貼分享連結最精準；留空則用地點欄位文字去搜尋。下方有「📍 在地圖確認」連結可以直接開地圖核對位置對不對</div></div>
-    <div class="btn-row"><div class="bname">價格</div><div class="bdesc">金額＋幣別（可選台幣／日幣等），系統會自動換算成台幣統一比價</div></div>
-    <div class="btn-row"><div class="bname">品況</div><div class="bdesc">例：盒書完整，片面薄刮</div></div>
-    <div class="btn-row"><div class="bname">備註</div><div class="bdesc">此通路專用備註，例：可議價、老闆保留三天、只剩一片</div></div>
-    <div class="btn-row"><div class="bname">看到日期</div><div class="bdesc">記錄何時看到這個報價，方便回顧價格是否還有效</div></div>
-  </div>
-  <p>各通路報價清單會自動把所有幣別換算成台幣後由低到高排序，最低價的通路會浮到最上面並框起來標示。</p>
-
-  <h3 id="c4-convert"><span class="ic">✅</span>轉入收藏庫</h3>
-  <p>決定入手之後，點詳情頁最下方的「✓ 已購入，轉入收藏庫」按鈕，這筆尋寶目標會自動轉換成正式的收藏項目（帶著原本已填的圖片與資訊），不用重新輸入一次資料，同時從尋寶清單移除。</p>
-
-</section>
-
-<section id="ch5">
-  <div class="sec-num">CHAPTER 05</div>
-  <h2>統計頁 <span class="em">Statistics</span></h2>
-  <p class="lead">以視覺化圖表呈現整體收藏規模與花費概況，幫助掌握收藏習慣與資產分佈。</p>
-
-  <div class="note warn">
-    <div class="ic">⚠️</div>
-    <div>本章節內容尚未逐一比對實際畫面截圖核對細節，如發現跟你 App 內看到的統計項目不一致，請告訴我對應的截圖編號，我會立即修正。</div>
-  </div>
-
-  <h3><span class="ic">📊</span>統計面向</h3>
-  <div class="feat-grid">
-    <div class="feat-card">
-      <h5>總覽數字</h5>
-      <p>收藏總件數、總花費金額、總估值等關鍵數字一覽。</p>
-    </div>
-    <div class="feat-card">
-      <h5>分類佔比</h5>
-      <p>各分類（遊戲/書籍/主機/週邊…）的數量或金額佔比圖表，了解收藏偏好集中在哪個領域。</p>
-    </div>
-    <div class="feat-card">
-      <h5>平台分佈</h5>
-      <p>依平台統計收藏數量，掌握哪個主機平台的收藏最豐富。</p>
-    </div>
-    <div class="feat-card">
-      <h5>收支概況</h5>
-      <p>購入花費與估值/出售金額的對照，概略掌握收藏的資產變化。</p>
-    </div>
-  </div>
-  <p>統計數字會即時反映收藏庫的最新狀態，隨著建檔頁新增資料或收藏頁編輯資料自動更新。</p>
-
-</section>
-
-<section id="ch6">
-  <div class="sec-num">CHAPTER 06</div>
-  <h2>設定頁 <span class="em">Settings</span></h2>
+<section id="s06">
+  <div class="sec-num">SECTION 06</div>
+  <h2>設定頁 <span class="em">完整說明</span></h2>
   <p class="lead">後端連線、市場資料管理、匯出匯入、系統維護等所有設定與維護功能都集中在這裡。</p>
 
   <div class="subnav">
-    <a href="#c6-conn">連線設定</a>
-    <a href="#c6-check">連線自檢</a>
-    <a href="#c6-market">市場管理</a>
-    <a href="#c6-csv">CSV 匯出匯入</a>
-    <a href="#c6-cfgio">設定匯出匯入</a>
-    <a href="#c6-misc">其他工具</a>
+    <a href="#s06-conn">連線設定</a>
+    <a href="#s06-check">連線自檢</a>
+    <a href="#s06-market">市場管理</a>
+    <a href="#s06-csv">CSV 匯出匯入</a>
+    <a href="#s06-misc">其他工具</a>
   </div>
 
-  <h3 id="c6-conn"><span class="ic">🔌</span>連線設定</h3>
-  <p>貼上 Google Apps Script Web App 網址並儲存，這是 App 讀寫你自己 Google 試算表資料的唯一管道。首次使用或更換部署網址時才需要修改。</p>
+  <h3 id="s06-conn"><span class="ic">🔌</span>連線設定</h3>
+  <p>貼上 Google Apps Script Web App 網址並儲存，這是 App 讀寫你自己 Google 試算表資料的唯一管道。首次使用或更換部署網址時才需要修改（詳見第 3 節）。這裡也是填入第 4 節申請的 Gemini API 金鑰的地方。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0016</div><div class="want">設定頁最上方連線設定區塊完整畫面</div></div>
+    <div class="img-ph-label">連線設定區塊</div>
+  </div>
 
-  <h3 id="c6-check"><span class="ic">🩺</span>連線自檢 &amp; 修復工作表標題列</h3>
-  <p>「🩺 連線自檢」會檢測後端連線是否正常、是否具備寫入權限，出現連線異常、資料同步不正常時可以先跑一次這個確認問題出在哪。</p>
-  <p>「🔧 修復工作表標題列」是維護試算表結構的重要工具，功能包含：</p>
-  <ul>
-    <li>自動補齊各分類/子類型工作表缺少的欄位標題（新版本新增欄位後，舊試算表需要跑一次這個才會補上對應欄位）</li>
-    <li>自動幫沒有正常 UUID（唯一識別碼）的舊資料列補上有效的 UUID，這對「關聯商品」連結的穩定性很重要——沒有正常 UUID 的項目，關聯連結會退回用不穩定的識別方式，試算表列數異動時容易失效</li>
-  </ul>
+  <h3 id="s06-check"><span class="ic">🩺</span>連線自檢 &amp; 修復工作表標題列</h3>
+  <div class="btn-list">
+    <div class="btn-row">
+      <div class="bname">🩺 連線自檢</div>
+      <div class="bdesc">檢測後端連線是否正常、是否具備寫入權限。出現連線異常、資料同步不正常時可以先跑一次確認問題出在哪一環。</div>
+    </div>
+    <div class="btn-row">
+      <div class="bname">🔧 修復工作表標題列</div>
+      <div class="bdesc">維護試算表結構的重要工具：<b>①</b>自動補齊各分類/子類型工作表缺少的欄位標題（新版本新增欄位後，舊試算表需要跑一次這個才會補上對應欄位）；<b>②</b>自動幫沒有正常 UUID 的舊資料列補上有效的 UUID，這對「關聯商品」連結的穩定性很重要。</div>
+    </div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0017</div><div class="want">連線自檢執行中/完成後的結果畫面</div></div>
+    <div class="img-ph-label">連線自檢結果</div>
+  </div>
   <div class="note tip">
     <div class="ic">💡</div>
     <div>更新 App 版本後，如果發現新欄位沒有作用、或關聯商品顯示異常，先跑一次「修復工作表標題列」通常就能解決。</div>
   </div>
 
-  <h3 id="c6-market"><span class="ic">🏪</span>二手估值市場管理</h3>
-  <p>「二手估值市場參考」是收藏詳情頁與尋寶詳情頁都會用到的快速比價連結區塊，內建 8 個台日查價網站（露天、Yahoo拍賣、蝦皮、旋轉拍賣、Mercari、ヤフオク、Buyee、日本樂天），設定頁提供三種管理功能：</p>
+  <h3 id="s06-market"><span class="ic">🏪</span>二手估值市場管理</h3>
+  <p>「二手估值市場參考」是收藏詳情頁與尋寶詳情頁都會用到的快速比價連結區塊，內建 8 個台日查價網站（露天、Yahoo拍賣、蝦皮、旋轉拍賣、Mercari、ヤフオク、Buyee、日本樂天）。</p>
 
   <h4>🏷️ 自訂市場連結</h4>
-  <p>點「＋ 新增市場」可以加入自己常用的查價網站（最多 12 個），加入後「二手估值市場參考」區塊會改成可左右滑動瀏覽。資料只存在本機，會隨「匯出／匯入設定」一起攜帶。</p>
+  <p>點「＋ 新增市場」加入自己常用的查價網站（最多 12 個），加入後「二手估值市場參考」區塊會改成可左右滑動瀏覽。資料只存本機，隨「匯出／匯入設定」一起攜帶。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0018</div><div class="want">自訂市場連結列表與新增市場表單畫面</div></div>
+    <div class="img-ph-label">自訂市場連結管理</div>
+  </div>
 
   <h4>🔀 市場顯示設定</h4>
-  <p>列出所有市場（內建 8 個＋你自訂的），每個都可以：</p>
   <ul>
-    <li><strong>勾選／取消勾選</strong>：控制要不要顯示這個市場，取消勾選不會刪除資料，只是不顯示，隨時可以再勾回來</li>
-    <li><strong>↑↓ 按鈕</strong>：調整顯示順序，新加入的自訂市場會維持原本相對順序接在已排序項目後面，不會突然跳到奇怪的位置</li>
+    <li><strong>勾選／取消勾選</strong>：控制顯示與否，取消不會刪除資料，隨時可再勾回來</li>
+    <li><strong>↑↓ 按鈕</strong>：調整顯示順序，新加入的自訂市場維持相對順序接在已排序項目後面</li>
   </ul>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0019</div><div class="want">市場顯示設定的勾選清單與上下移動按鈕畫面</div></div>
+    <div class="img-ph-label">市場顯示設定</div>
+  </div>
 
   <h4>搜尋準確度優化</h4>
-  <p>點市場圖示查詢時，系統會依商品分類自動加入限定詞，讓搜尋結果更精準：</p>
+  <p>點市場圖示查詢時，系統依商品分類自動加入限定詞：</p>
   <div class="tbl-wrap">
     <table class="tbl">
-      <tr><th>分類</th><th>加入的限定詞</th><th>範例</th></tr>
+      <tr><th>分類</th><th>限定詞</th><th>範例</th></tr>
       <tr><td>遊戲／主機</td><td>平台名稱</td><td>「薩爾達傳說 Switch」</td></tr>
-      <tr><td>週邊</td><td>分類關鍵字（週邊／周辺機器）</td><td>「XX手把 週邊」</td></tr>
-      <tr><td>書籍</td><td>分類關鍵字（書籍／本）</td><td>「XX攻略本 書籍」</td></tr>
-      <tr><td>原聲帶</td><td>分類關鍵字（原聲帶／サントラ）</td><td>「XX原聲帶 サントラ」</td></tr>
-      <tr><td>動漫／美術設定集</td><td>分類關鍵字（畫集／画集）</td><td>「XX畫冊 画集」</td></tr>
-      <tr><td>公仔</td><td>分類關鍵字（公仔／フィギュア）</td><td>「XX 公仔」（台）／「XX フィギュア」（日）</td></tr>
+      <tr><td>週邊</td><td>週邊／周辺機器</td><td>「XX手把 週邊」</td></tr>
+      <tr><td>書籍</td><td>書籍／本</td><td>「XX攻略本 書籍」</td></tr>
+      <tr><td>原聲帶</td><td>原聲帶／サントラ</td><td>「XX原聲帶 サントラ」</td></tr>
+      <tr><td>動漫／美術設定集</td><td>畫集／画集</td><td>「XX畫冊 画集」</td></tr>
+      <tr><td>公仔</td><td>公仔／フィギュア</td><td>「XX フィギュア」</td></tr>
     </table>
   </div>
-  <p>台灣站查詢用中文限定詞，日本站查詢會自動切換成對應的日文限定詞，不需要自己手動翻譯。</p>
 
-  <h3 id="c6-csv"><span class="ic">📤</span>CSV 匯出／匯入</h3>
-  <p>收藏頁右上角「⋯」選單裡的「匯出 CSV」「匯入 CSV」，用於批次備份或還原收藏資料。</p>
+  <h3 id="s06-csv"><span class="ic">📤</span>CSV 匯出／匯入</h3>
+  <p>收藏頁右上角「⋯」選單裡的「匯出 CSV」「匯入 CSV」，用於批次備份或還原收藏資料，詳細操作見<a href="#s15">第 15 節換手機／備份與還原</a>。</p>
 
-  <h4>匯出</h4>
-  <p>依「分類＋子類型」自動分成多個檔案（避免不同子類型的欄位混在同一檔案裡錯位），每個檔案採<strong>雙標題列格式</strong>：</p>
+  <h3 id="s06-misc"><span class="ic">🧰</span>其他工具</h3>
   <ul>
-    <li>第一列：內部欄位鍵值（供匯入程式辨識用）</li>
-    <li>第二列：中文顯示名稱（方便你用 Excel／Google試算表開啟時閱讀）</li>
-    <li>第三列開始才是實際資料</li>
-  </ul>
-  <p>圖片欄位（封面/封底/側邊）會正常匯出——存的是 Google Drive 檔案 ID 這種短字串（不是圖片檔案本身），所以匯入後圖片連結能正確保留。</p>
-
-  <h4>匯入</h4>
-  <p>點「匯入 CSV」會先跳出說明提示（圖片連結會保留、每筆資料會直接寫回雲端試算表），確認後選擇檔案（支援一次選多個檔案）。匯入時會：</p>
-  <ul>
-    <li>自動偵測分類與子類型</li>
-    <li>用 UUID 判斷是否為重複資料，重複的會跳過不重複匯入</li>
-    <li>每一筆新資料都會實際寫回你的 Google 試算表（不是只存在手機本機），確保重新整理後資料不會消失</li>
-    <li>支援舊格式（單一標題列）CSV 匯入，但建議都用最新版重新匯出的格式，資料完整性更有保障</li>
-  </ul>
-  <div class="note warn">
-    <div class="ic">⚠️</div>
-    <div>匯入是逐筆寫入雲端，資料量大時需要一點時間，請耐心等待「匯入完成」的提示出現再離開頁面。</div>
-  </div>
-
-  <h3 id="c6-cfgio"><span class="ic">⚙️</span>設定匯出／匯入</h3>
-  <p>跟 CSV 不同，這裡匯出的是 App 本身的<strong>設定</strong>（連線網址、自訂市場清單、市場顯示與排序偏好等本機設定），不是收藏資料本身。換手機或重灌 App 時可以用這個快速還原所有個人化設定。</p>
-
-  <h3 id="c6-misc"><span class="ic">🧰</span>其他工具</h3>
-  <ul>
-    <li><strong>匯入 5 筆樣本藏品</strong>：快速載入示範資料，適合第一次使用想先熟悉介面操作的情況</li>
+    <li><strong>匯入 5 筆樣本藏品</strong>：快速載入示範資料，適合第一次使用想先熟悉介面操作</li>
     <li><strong>說明／關於</strong>：App 版本資訊與功能說明文字</li>
   </ul>
-
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0020</div><div class="want">設定頁最下方其他工具區塊(樣本資料/說明關於)畫面</div></div>
+    <div class="img-ph-label">其他工具區塊</div>
+  </div>
 </section>
 
-<section id="ch7">
-  <div class="sec-num">CHAPTER 07</div>
-  <h2>附錄 <span class="em">Appendix</span></h2>
+<section id="s07">
+  <div class="sec-num">SECTION 07</div>
+  <h2>安裝到手機主畫面 <span class="em">PWA</span></h2>
+  <p class="lead">GameVault 是 PWA（Progressive Web App），可以「安裝」到手機主畫面，開啟體驗跟原生 App 幾乎一樣（全螢幕、獨立圖示、支援離線瀏覽），不需要透過 App Store／Google Play。</p>
 
-  <h3><span class="ic">📚</span>分類與子類型對照</h3>
+  <h3><span class="ic">🤖</span>Android（Chrome）</h3>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><div class="body"><h5>用 Chrome 開啟 GameVault 網址</h5></div></div>
+    <div class="step"><div class="num">2</div><div class="body"><h5>點右上角「⋮」選單</h5><p>選擇「加到主畫面」或「安裝應用程式」</p></div></div>
+    <div class="step"><div class="num">3</div><div class="body"><h5>確認安裝</h5><p>主畫面會出現 GameVault 圖示，點擊即可全螢幕開啟</p></div></div>
+  </div>
+
+  <h3><span class="ic">🍎</span>iOS（Safari）</h3>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><div class="body"><h5>用 Safari 開啟 GameVault 網址</h5><p>注意：必須用 Safari，其他瀏覽器（如 iOS 版 Chrome）不支援加入主畫面的 PWA 安裝功能</p></div></div>
+    <div class="step"><div class="num">2</div><div class="body"><h5>點底部分享圖示 ⬆️</h5></div></div>
+    <div class="step"><div class="num">3</div><div class="body"><h5>選「加入主畫面」</h5><p>確認名稱後點「加入」，主畫面就會出現 GameVault 圖示</p></div></div>
+  </div>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0021</div><div class="want">Android加到主畫面選單截圖</div></div>
+    <div class="img-ph-label">Android「加到主畫面」</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0022</div><div class="want">iOS Safari加入主畫面截圖</div></div>
+    <div class="img-ph-label">iOS Safari「加入主畫面」</div>
+  </div>
+
+  <h3><span class="ic">📶</span>離線與快取</h3>
+  <p>收藏資料會快取在本機（透過 <code>localforage</code>），每次開啟會嘗試跟後端同步最新資料；沒有網路時仍可瀏覽先前載入過的內容，但無法新增/編輯（需要網路寫回試算表）。App 更新時，Service Worker 會自動更新快取版本，通常重新開啟 App 就會套用最新版本。</p>
+</section>
+
+<section id="s08">
+  <div class="sec-num">SECTION 08</div>
+  <h2>建檔模式 <span class="em">詳解</span></h2>
+  <p class="lead">建檔頁把收藏品登錄進資料庫的完整流程，分成四個步驟。</p>
+
+  <h3><span class="ic">①</span>Step 1 · 選擇分類</h3>
+  <p>共 8 個分類，詳細欄位差異見<a href="#s05">第 5 節</a>。動漫／美術、公仔、原聲帶、數位下載版這 4 個分類選了之後，會再多一個子類型選單。</p>
+  <div class="phone-wrap">
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7667.jpg" alt="建檔頁 Step1-3"></div>
+    <div class="phone-label">Step 1 選分類 → Step 2 選區域 → Step 3 選平台</div>
+  </div>
+
+  <h3><span class="ic">②</span>Step 2 · 商品區域</h3>
+  <p>日本／亞洲／美國／其他，影響 AI 辨識與資料庫查詢參考的語言與資料來源。</p>
+
+  <h3><span class="ic">③</span>Step 3 · 平台選擇</h3>
+  <p><span class="tag tag-opt">選填</span>提升 AI 辨識與編碼查詢準確率，尤其「商品編碼」建檔方式必須先選好平台才能查得準。</p>
+
+  <h3><span class="ic">④</span>Step 4 · 建檔方式（8 種）</h3>
+  <div class="btn-list">
+    <div class="btn-row"><div class="bname">📼 商品條碼</div><div class="bdesc">輸入 EAN／JAN／UPC 條碼或掃描，查詢內建資料庫自動帶入。目前主要涵蓋日版（樂天）商品。</div></div>
+    <div class="btn-row"><div class="bname">🔢 商品編碼</div><div class="bdesc">輸入碟片/卡帶產品代碼或書籍 ISBN，<b>務必先選平台與區域</b>。</div></div>
+    <div class="btn-row"><div class="bname">🖼️ 圖片辨識</div><div class="bdesc">拍攝或選取照片，AI（Gemini）辨識內容自動填入欄位。</div></div>
+    <div class="btn-row"><div class="bname">✏️ 手動建檔</div><div class="bdesc">直接進入空白表單自行輸入所有欄位。</div></div>
+    <div class="btn-row"><div class="bname">📼＋🖼️ 條碼＋照片 <span class="tag tag-rec">推薦</span></div><div class="bdesc">最高準確度，條碼查基本資訊＋照片補齊/校正細節。</div></div>
+    <div class="btn-row"><div class="bname">🔢＋🖼️ 編碼＋照片</div><div class="bdesc">精確比對，適合條碼易失準但知道正確編碼的情況。</div></div>
+    <div class="btn-row"><div class="bname">🤖 AI 網頁查詢</div><div class="bdesc">貼上網路商品資訊文字，AI 解析生成結構化資料。</div></div>
+    <div class="btn-row"><div class="bname">🔀 自動分流</div><div class="bdesc">依輸入格式自動判斷查詢哪個資料來源。</div></div>
+  </div>
+
+  <h4>各方式實際操作畫面</h4>
+  <div class="phone-wrap">
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7670.jpg" alt="商品條碼輸入畫面"></div>
+    <div class="phone-label">📼 商品條碼輸入</div>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7671.jpg" alt="商品編碼輸入畫面"></div>
+    <div class="phone-label">🔢 商品編碼輸入（範例：PS4 CUSA-00001）</div>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7672.jpg" alt="圖片辨識畫面"></div>
+    <div class="phone-label">🖼️ 圖片辨識：選部位＋拍照/相簿＋AI辨識</div>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7676.jpg" alt="條碼加照片組合模式"></div>
+    <div class="phone-label">📼＋🖼️ 條碼＋照片組合模式</div>
+  </div>
+
+  <div class="phone-wrap">
+    <div class="phone"><img src="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/Photo/7669.jpg" alt="建檔方式選擇"></div>
+    <div class="phone-label">Step 4：8 種建檔方式</div>
+  </div>
+
+  <p>完整表單欄位說明見<a href="#s05">第 5 節</a>；不管哪種方式，辨識/查詢完成後都會進入同一份完整表單讓你檢查修正後再儲存。</p>
+</section>
+
+<section id="s09">
+  <div class="sec-num">SECTION 09</div>
+  <h2>系統判斷分路流程圖</h2>
+  <p class="lead">說明系統在不同建檔情境下，如何自動判斷要查詢哪一個資料來源、走哪一條處理路徑。</p>
+
+  <h3><span class="ic">🔀</span>條碼／編碼查詢分流邏輯</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="num">1</div>
+      <div class="body"><h5>判斷輸入格式</h5><p>系統先檢查輸入的是條碼數字格式（EAN/JAN/UPC/ISBN）還是商品編碼格式（如 CUSA-XXXXX、HAC-XXX）。</p></div>
+    </div>
+    <div class="step">
+      <div class="num">2</div>
+      <div class="body"><h5>比對平台／區域</h5><p>若走「商品編碼」路徑，會依 Step2／Step3 選定的區域與平台，決定用哪套編碼格式規則解析與查詢。</p></div>
+    </div>
+    <div class="step">
+      <div class="num">3</div>
+      <div class="body"><h5>查詢對應資料來源</h5><p>條碼查詢優先比對日版（樂天）商品資料庫；查無資料時提示改用照片辨識或手動輸入。</p></div>
+    </div>
+    <div class="step">
+      <div class="num">4</div>
+      <div class="body"><h5>合併結果進入表單</h5><p>不管走哪條路徑，查詢/辨識到的欄位都會統一帶入同一份表單，供使用者確認與補完。</p></div>
+    </div>
+  </div>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0025</div><div class="want">「查詢資料來源:自動分流」按鈕點擊後的判斷結果/提示畫面</div></div>
+    <div class="img-ph-label">自動分流判斷結果</div>
+  </div>
+
+  <div class="note info">
+    <div class="ic">ℹ️</div>
+    <div>選擇「🔀 查詢資料來源：自動分流」建檔方式時，不需要自己判斷要用條碼查詢還是編碼查詢，系統會依你輸入的內容格式自動選擇合適的查詢管道。</div>
+  </div>
+</section>
+
+<section id="s10">
+  <div class="sec-num">SECTION 10</div>
+  <h2>收藏列表 <span class="em">操作</span></h2>
+  <p class="lead">收藏頁是瀏覽、搜尋、篩選已收藏品項的主要頁面。</p>
+
+  <div class="subnav">
+    <a href="#s10-view">檢視模式</a>
+    <a href="#s10-search">搜尋與篩選</a>
+    <a href="#s10-card">卡片說明</a>
+    <a href="#s10-batch">批次操作</a>
+  </div>
+
+  <h3 id="s10-view"><span class="ic">🗂️</span>頁面總覽與檢視模式</h3>
+  <p>「我的收藏」標題旁有兩個檢視模式：</p>
+  <ul>
+    <li><strong>卡片</strong>：每個收藏品用卡片呈現封面圖與重點資訊，適合瀏覽</li>
+    <li><strong>分類</strong>：改用清單依分類分組顯示，適合快速掃視數量</li>
+  </ul>
+  <p>右上角：🗑️ <strong>垃圾桶</strong>（進入多選模式批次刪除）、<strong>⋯ 更多選項</strong>（含匯出/匯入 CSV）。</p>
+  <p>標題下方統計數字列：總計與各分類數量，點擊可直接篩選該分類，再點一次取消。</p>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0026</div><div class="want">收藏頁卡片檢視完整畫面(含統計數字列)</div></div>
+    <div class="img-ph-label">收藏頁：卡片檢視</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0027</div><div class="want">收藏頁分類檢視完整畫面</div></div>
+    <div class="img-ph-label">收藏頁：分類檢視</div>
+  </div>
+
+  <h3 id="s10-search"><span class="ic">🔍</span>搜尋與篩選</h3>
+  <p>搜尋列可用<strong>名稱、平台、條碼</strong>關鍵字快速查找，右側圖示：</p>
+  <div class="btn-list">
+    <div class="btn-row"><div class="bname">📷 條碼掃描</div><div class="bdesc">開相機掃描條碼搜尋對應項目</div></div>
+    <div class="btn-row"><div class="bname">🖼️ 圖片搜尋</div><div class="bdesc">用照片比對收藏庫項目</div></div>
+    <div class="btn-row"><div class="bname">🔽 篩選漏斗</div><div class="bdesc">開啟進階篩選面板</div></div>
+  </div>
+  <p>搜尋列下方是可橫向滑動的快速篩選晶片：<strong>評分、平台、保管位置、收藏狀態、運作狀態、類型</strong>等，可疊加多個篩選條件。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0028</div><div class="want">搜尋列與快速篩選晶片列完整畫面</div></div>
+    <div class="img-ph-label">搜尋與快速篩選</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0029</div><div class="want">進階篩選面板展開畫面</div></div>
+    <div class="img-ph-label">進階篩選面板</div>
+  </div>
+
+  <h3 id="s10-card"><span class="ic">🃏</span>卡片內容說明</h3>
+  <ul>
+    <li>左側：<strong>封面縮圖</strong>（104px）</li>
+    <li>右側：<strong>商品名稱</strong>、<strong>平台／地區</strong></li>
+    <li>標籤列：<strong>分類標籤</strong>（四大分類各有專屬顏色）、<strong>子類型/平台細節</strong>、<strong>收藏狀態</strong></li>
+    <li><strong>保管位置</strong>與<strong>評分</strong>標籤</li>
+    <li>右下角：<strong>♡ 最愛</strong>圖示，點擊快速標記</li>
+  </ul>
+  <p>點卡片本體進入詳情頁（見<a href="#s11">第 11 節</a>）。</p>
+
+  <h3 id="s10-batch"><span class="ic">☑️</span>批次操作</h3>
+  <p>點右上角 🗑️ 進入多選模式，卡片會出現選取框，可以勾選多筆後一次刪除，適合整理大量重複或不需要的資料。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0030</div><div class="want">批次刪除多選模式畫面</div></div>
+    <div class="img-ph-label">批次刪除多選模式</div>
+  </div>
+</section>
+
+<section id="s11">
+  <div class="sec-num">SECTION 11</div>
+  <h2>詳細頁 <span class="em">操作</span></h2>
+  <p class="lead">點擊任一收藏卡片後開啟的完整資訊頁面。</p>
+
+  <h3><span class="ic">📄</span>頁面結構</h3>
+  <p>以類似手機底部彈出面板呈現，可上下滑動瀏覽；左右兩側 ‹ › 浮動箭頭可直接切換上一筆／下一筆，不用退回列表重新點選。</p>
+
+  <h4>頂部操作列（5 欄等份）</h4>
+  <div class="btn-list">
+    <div class="btn-row"><div class="bname">💡</div><div class="bdesc">顯示與此商品相關的提示或建議資訊</div></div>
+    <div class="btn-row"><div class="bname">估值</div><div class="bdesc">開啟快速估值面板，可直接輸入或參考市場報價更新「目前估值」，不用進整份編輯表單</div></div>
+    <div class="btn-row"><div class="bname">編輯</div><div class="bdesc">進入編輯表單，欄位跟建檔表單完全相同（見第 5 節）</div></div>
+    <div class="btn-row"><div class="bname">刪除</div><div class="bdesc"><span style="color:var(--red)">紅色文字</span>，刪除這筆收藏記錄（含雲端試算表資料與圖片）</div></div>
+    <div class="btn-row"><div class="bname">✕</div><div class="bdesc">關閉詳情頁，返回收藏列表</div></div>
+  </div>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0031</div><div class="want">詳情頁頂部操作列與標題區完整畫面</div></div>
+    <div class="img-ph-label">詳情頁頂部操作列</div>
+  </div>
+
+  <h4>圖片相簿</h4>
+  <p>封面＋自訂圖片組成可左右滑動的相簿，點圖放大燈箱檢視。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0032</div><div class="want">詳情頁圖片相簿與燈箱放大瀏覽畫面</div></div>
+    <div class="img-ph-label">圖片相簿與燈箱</div>
+  </div>
+
+  <h4>資訊區塊</h4>
+  <p>商品名稱與分類/地區/版本標籤、收藏狀態徽章、品相／完整度／保管／估值等 KPI 卡片，接著「二手估值市場參考」快速連結區塊，最後是跟建檔表單相同的各欄位群組依序唯讀展示（見<a href="#s05">第 5 節</a>）。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0033</div><div class="want">詳情頁KPI卡片(品相/完整度/保管/估值)畫面</div></div>
+    <div class="img-ph-label">詳情頁 KPI 卡片</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0034</div><div class="want">詳情頁二手估值市場參考區塊畫面</div></div>
+    <div class="img-ph-label">二手估值市場參考</div>
+  </div>
+
+  <h3><span class="ic">✏️</span>編輯與快速估值</h3>
+  <p>「編輯」進入的表單跟建檔表單同一套邏輯與欄位，差異只在按鈕文字變成「更新記錄」、已有資料預先填入。「估值」面板可快速輸入新估值金額、幣別、來源與信心程度，適合定期更新市場行情。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0035</div><div class="want">快速估值面板畫面</div></div>
+    <div class="img-ph-label">快速估值面板</div>
+  </div>
+</section>
+
+<section id="s12">
+  <div class="sec-num">SECTION 12</div>
+  <h2>攻略本管理</h2>
+  <p class="lead">「書籍／攻略」分類底下，攻略本是使用頻率較高的一種子項目，這節說明攻略本相關的管理方式。</p>
+
+  <h3><span class="ic">📖</span>攻略本的建檔重點</h3>
+  <ul>
+    <li>建檔時分類選「書籍」，版本規格群組會出現對應遊戲的<strong>適用平台</strong>欄位，方便日後搜尋時能同時用平台篩選攻略本</li>
+    <li>可以透過「<strong>關聯商品</strong>」欄位把攻略本連結到對應的遊戲本體，兩者互相參照，在遊戲的詳情頁也能看到「已連結」的攻略本</li>
+    <li>ISBN／條碼查詢對書籍類的資料庫命中率通常較高，建議優先嘗試「商品條碼」建檔方式</li>
+  </ul>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0036</div><div class="want">攻略本建檔或詳情頁畫面，特別是關聯商品連結到對應遊戲的畫面</div></div>
+    <div class="img-ph-label">攻略本關聯商品範例</div>
+  </div>
+
+  <div class="note tip">
+    <div class="ic">💡</div>
+    <div>攻略本與遊戲本體互相關聯後，之後想找「這款遊戲有沒有攻略本」或「這本攻略本是配哪款遊戲」都可以直接從關聯商品欄位查到，不用另外用搜尋比對名稱。</div>
+  </div>
+</section>
+
+<section id="s13">
+  <div class="sec-num">SECTION 13</div>
+  <h2>狩獵清單 <span class="em">二手比價</span></h2>
+  <p class="lead">「尋寶清單」用來追蹤還沒入手、但已經在關注比價的目標商品——看到店家報價先拍照記下來，等找到最划算的通路再出手，避免事後找不到當初看到的價格。</p>
+
+  <div class="subnav">
+    <a href="#s13-list">清單頁</a>
+    <a href="#s13-add">新增目標</a>
+    <a href="#s13-detail">詳情頁</a>
+    <a href="#s13-quote">新增／編輯報價</a>
+    <a href="#s13-convert">轉入收藏庫</a>
+  </div>
+
+  <h3 id="s13-list"><span class="ic">📋</span>清單頁</h3>
+  <p>頂部「📅 近期發售」按鈕快速篩選即將發售、值得留意的目標。搜尋列可用名稱、平台、條碼查詢，旁邊有「＋新增」「🗑️刪除」「🔄重新整理」按鈕。「追蹤中（N）」顯示目前追蹤總數。</p>
+  <p>每張卡片分上下兩段：</p>
+  <ul>
+    <li><strong>上段</strong>：封面圖＋分類標籤／已入手標籤、商品名稱、平台、最低價摘要（換算台幣統一比較）與通路數量</li>
+    <li><strong>下段</strong>：各通路報價明細，全寬顯示店名與價格，最低價標示「最低」徽章；超過 3 筆顯示「+N 通路」</li>
+  </ul>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0037</div><div class="want">尋寶清單頁完整畫面(含追蹤中卡片列表)</div></div>
+    <div class="img-ph-label">尋寶清單頁</div>
+  </div>
+
+  <h3 id="s13-add"><span class="ic">➕</span>新增目標</h3>
+  <p>表單邏輯跟收藏頁建檔表單相同，額外多了尋寶專屬欄位：</p>
+  <ul>
+    <li><strong>收藏慾望</strong>：主觀評分，記錄想要程度</li>
+    <li><strong>發售倒數／發售日期</strong>：尚未發售的商品可設定日期，清單頁顯示倒數天數</li>
+    <li><strong>目標價格</strong>：設定心理預算，方便跟實際報價比較</li>
+  </ul>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0038</div><div class="want">尋寶新增目標表單，特別是收藏慾望/發售倒數/目標價格欄位</div></div>
+    <div class="img-ph-label">尋寶專屬欄位</div>
+  </div>
+
+  <h3 id="s13-detail"><span class="ic">📄</span>詳情頁</h3>
+  <p>支援左右滑動切換上一筆／下一筆。頂部固定操作列 5 欄等份（跟收藏頁 <code>#dact</code> 完全一致的排版比例）：<strong>空／空／編輯／刪除／✕</strong>（尋寶不需要 💡 提示與估值按鈕，前兩格留空維持版面對齊，✕ 是返回清單）。</p>
+  <p>圖片相簿、KPI 卡片（收藏慾望／發售倒數）、簡介與備註之後，是「🔍 參考連結」快速連結，接著「二手估值市場參考」（跟收藏頁共用同一套市場管理設定，見<a href="#s06-market">第 6 節</a>），最後是本節重點：<strong>各通路報價</strong>清單。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0039</div><div class="want">尋寶詳情頁完整畫面(頂部操作列+KPI卡片)</div></div>
+    <div class="img-ph-label">尋寶詳情頁</div>
+  </div>
+
+  <h3 id="s13-quote"><span class="ic">💴</span>新增／編輯報價</h3>
+  <div class="btn-list">
+    <div class="btn-row"><div class="bname">地點／店名／平台</div><div class="bdesc">記錄看到這個報價的地方</div></div>
+    <div class="btn-row"><div class="bname">網址</div><div class="bdesc"><span class="tag tag-opt">選填</span>報價頁面連結，填了可直接點開</div></div>
+    <div class="btn-row"><div class="bname">通路類型</div><div class="bdesc">三選一：<b>網路商店</b>（線上）、<b>實體店面</b>（顯示地圖縮圖）、<b>實體店面（不顯示地圖）</b>（不顯示大縮圖但保留小地圖連結）</div></div>
+    <div class="btn-row"><div class="bname">Google 地圖</div><div class="bdesc"><span class="tag tag-opt">選填</span>貼分享連結最精準；留空則用地點文字搜尋，下方「📍在地圖確認」可直接開圖核對</div></div>
+    <div class="btn-row"><div class="bname">價格</div><div class="bdesc">金額＋幣別，自動換算台幣統一比價</div></div>
+    <div class="btn-row"><div class="bname">品況</div><div class="bdesc">例：盒書完整，片面薄刮</div></div>
+    <div class="btn-row"><div class="bname">備註</div><div class="bdesc">此通路專用備註，例：可議價、老闆保留三天</div></div>
+    <div class="btn-row"><div class="bname">看到日期</div><div class="bdesc">記錄何時看到這個報價</div></div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0040</div><div class="want">新增/編輯報價表單完整畫面</div></div>
+    <div class="img-ph-label">新增／編輯報價表單</div>
+  </div>
+  <p>各通路報價清單自動換算台幣後由低到高排序，最低價通路浮到最上面並框起來標示。</p>
+
+  <h3 id="s13-convert"><span class="ic">✅</span>轉入收藏庫</h3>
+  <p>決定入手後，點詳情頁最下方「✓ 已購入，轉入收藏庫」，這筆尋寶目標自動轉換成正式收藏項目（帶原本已填的圖片與資訊），不用重新輸入，同時從尋寶清單移除。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0041</div><div class="want">已購入轉入收藏庫按鈕與轉換後確認畫面</div></div>
+    <div class="img-ph-label">轉入收藏庫</div>
+  </div>
+</section>
+
+
+<section id="s14">
+  <div class="sec-num">SECTION 14</div>
+  <h2>統計儀表板</h2>
+  <p class="lead">以視覺化圖表呈現整體收藏規模與花費概況，幫助掌握收藏習慣與資產分佈。</p>
+
+  <div class="note warn">
+    <div class="ic">⚠️</div>
+    <div>本節內容尚未逐一比對實際畫面截圖核對細節，圖片待補後會依實際畫面調整文字說明。</div>
+  </div>
+
+  <h3><span class="ic">📊</span>統計面向</h3>
+  <div class="feat-grid">
+    <div class="feat-card"><h5>總覽數字</h5><p>收藏總件數、總花費金額、總估值等關鍵數字一覽。</p></div>
+    <div class="feat-card"><h5>分類佔比</h5><p>各分類（遊戲/書籍/主機/週邊…）的數量或金額佔比圖表。</p></div>
+    <div class="feat-card"><h5>平台分佈</h5><p>依平台統計收藏數量，掌握哪個主機平台的收藏最豐富。</p></div>
+    <div class="feat-card"><h5>收支概況</h5><p>購入花費與估值/出售金額的對照，概略掌握資產變化。</p></div>
+  </div>
+
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0042</div><div class="want">統計頁整體畫面(總覽數字區塊)</div></div>
+    <div class="img-ph-label">統計頁：總覽數字</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0043</div><div class="want">統計頁分類佔比圖表畫面</div></div>
+    <div class="img-ph-label">統計頁：分類佔比圖表</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0044</div><div class="want">統計頁平台分佈圖表畫面</div></div>
+    <div class="img-ph-label">統計頁：平台分佈圖表</div>
+  </div>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0045</div><div class="want">統計頁收支概況圖表畫面</div></div>
+    <div class="img-ph-label">統計頁：收支概況</div>
+  </div>
+
+  <p>統計數字即時反映收藏庫的最新狀態，隨著建檔頁新增資料或收藏頁編輯資料自動更新。</p>
+</section>
+
+<section id="s15">
+  <div class="sec-num">SECTION 15</div>
+  <h2>換手機／備份與還原</h2>
+  <p class="lead">因為資料存在你自己的 Google 試算表，換手機或重新安裝 App 幾乎不會遺失資料，但仍建議了解以下幾種備份還原方式。</p>
+
+  <div class="subnav">
+    <a href="#s15-nodata">資料本身不需要搬移</a>
+    <a href="#s15-cfg">設定匯出匯入</a>
+    <a href="#s15-csv">CSV 匯出匯入</a>
+  </div>
+
+  <h3 id="s15-nodata"><span class="ic">☁️</span>資料本身不需要搬移</h3>
+  <p>因為所有收藏資料存在 Google 試算表、照片存在 Google Drive，換一支手機只要重新開啟 GameVault 的網址（或重新安裝 PWA，見<a href="#s07">第 7 節</a>），在「設定」頁填入同一組 Web App 連線網址，就能立刻看到所有原本的收藏資料，<strong>不需要額外搬移收藏資料本身</strong>。</p>
+  <div class="note tip">
+    <div class="ic">💡</div>
+    <div>真正需要「備份還原」的是<strong>本機端的個人化設定</strong>（連線網址、自訂市場清單、市場顯示排序偏好）——這些不是存在試算表裡，換裝置需要重新設定或用下方的「設定匯出匯入」功能快速還原。</div>
+  </div>
+
+  <h3 id="s15-cfg"><span class="ic">⚙️</span>設定匯出／匯入</h3>
+  <p>「設定」頁的匯出／匯入設定功能，備份的是 App 本身的<strong>設定</strong>（連線網址、自訂市場清單、市場顯示與排序偏好等本機設定），不是收藏資料本身。換手機或重灌 App 時可以用這個快速還原所有個人化設定，不用一個一個重新設定。</p>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0046</div><div class="want">設定頁「匯出/匯入設定」按鈕與操作畫面</div></div>
+    <div class="img-ph-label">設定匯出／匯入</div>
+  </div>
+
+  <h3 id="s15-csv"><span class="ic">📤</span>CSV 匯出／匯入（收藏資料備份）</h3>
+  <p>雖然資料本身存在試算表不會遺失，但如果想要一份離線、額外的收藏資料備份（例如要遷移到別的系統、或單純想留一份 Excel 檔案），可以用收藏頁「⋯」選單裡的「匯出 CSV」。</p>
+
+  <h4>匯出</h4>
+  <p>依「分類＋子類型」自動分成多個檔案（避免不同子類型欄位混在同一檔案錯位），採<strong>雙標題列格式</strong>：</p>
+  <ul>
+    <li>第一列：內部欄位鍵值（供匯入程式辨識）</li>
+    <li>第二列：中文顯示名稱（方便用 Excel／Google試算表閱讀）</li>
+    <li>第三列起才是實際資料</li>
+  </ul>
+  <p>圖片欄位會正常匯出（存的是 Google Drive 檔案 ID 短字串，不是圖片檔案本身），匯入後圖片連結能正確保留。</p>
+
+  <h4>匯入</h4>
+  <p>點「匯入 CSV」會先跳出說明提示，確認後選擇檔案（支援一次選多個）。匯入時會：</p>
+  <ul>
+    <li>自動偵測分類與子類型</li>
+    <li>用 UUID 判斷是否重複，重複的自動跳過</li>
+    <li>每一筆新資料都會實際寫回 Google 試算表（不只是存在手機本機），確保重新整理後資料不會消失</li>
+    <li>支援舊格式（單一標題列）CSV 匯入，但建議都用最新版重新匯出的格式，資料完整性更有保障</li>
+  </ul>
+  <div class="img-ph">
+    <div class="img-ph-box"><div class="ic">🖼️</div><div class="code">0047</div><div class="want">CSV匯出/匯入選單與匯入前確認提示畫面</div></div>
+    <div class="img-ph-label">CSV 匯出／匯入</div>
+  </div>
+
+  <div class="note warn">
+    <div class="ic">⚠️</div>
+    <div>匯入是逐筆寫入雲端，資料量大時需要一點時間，請耐心等待「匯入完成」提示出現再離開頁面。</div>
+  </div>
+</section>
+
+<section id="s16">
+  <div class="sec-num">SECTION 16</div>
+  <h2>新手必讀 <span class="em">注意事項與常見問題</span></h2>
+
+  <h3><span class="ic">⚠️</span>使用注意事項</h3>
+  <ul>
+    <li>App 需要網路才能新增／編輯資料（資料要即時寫回 Google 試算表），沒有網路只能瀏覽先前已快取的內容</li>
+    <li>Web App 連線網址、Gemini API 金鑰屬於機敏資訊，不要分享給不信任的對象</li>
+    <li>刪除收藏記錄是無法復原的動作，刪除前請再三確認</li>
+    <li>建議偶爾使用「連線自檢」確認後端運作正常，尤其是更新 App 版本或很久沒開啟之後</li>
+  </ul>
+
+  <h3><span class="ic">📚</span>分類與子類型代碼對照</h3>
   <div class="tbl-wrap">
     <table class="tbl">
       <tr><th>分類</th><th>子類型數</th><th>子類型拆表</th><th>子類型清單</th></tr>
@@ -777,7 +1069,6 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
       <tr><td>數位下載版</td><td>8</td><td>是</td><td>下載版遊戲、追加下載內容、電子書（漫畫／單行本）、電子書（畫冊／美術設定）、電子書（攻略／公式書）、電子書（雜誌／MOOK）、數位音源、數位影音</td></tr>
     </table>
   </div>
-  <p>選了會拆表的 4 個分類，記得同時選對子類型，否則欄位會對不上對應的資料庫工作表。</p>
 
   <h3><span class="ic">🏷️</span>遊戲類型縮寫對照</h3>
   <div class="tbl-wrap">
@@ -796,27 +1087,32 @@ footer .logo{font-size:20px;font-weight:900;background:var(--grad);-webkit-backg
 
   <details class="exp">
     <summary>條碼查詢不到資料怎麼辦？</summary>
-    <div class="expbody"><p>目前內建條碼資料庫主要涵蓋日版（樂天）商品，台/港/韓/中/美版條碼經常查無資料。遇到這種情況建議改用「圖片辨識」拍封面讓 AI 辨識，或直接「手動建檔」輸入。</p></div>
+    <div class="expbody"><p>目前內建條碼資料庫主要涵蓋日版（樂天）商品，台/港/韓/中/美版條碼經常查無資料。建議改用「圖片辨識」拍封面讓 AI 辨識，或直接「手動建檔」輸入。</p></div>
   </details>
 
   <details class="exp">
     <summary>關聯商品顯示一串英文/數字亂碼而不是商品名稱？</summary>
-    <div class="expbody"><p>這代表該關聯連結使用的識別碼不穩定（通常是目標項目當時還沒有正常 UUID）。到「設定」頁點「🔧 修復工作表標題列」補齊所有項目的 UUID，然後回到關聯商品欄位，把顯示異常的項目移除、用「＋ 關聯商品」重新選一次即可修復（重新連結後會改用穩定的 UUID）。</p></div>
+    <div class="expbody"><p>代表該關聯連結使用的識別碼不穩定（目標項目當時還沒有正常 UUID）。到「設定」頁點「🔧 修復工作表標題列」補齊所有項目的 UUID，回到關聯商品欄位把顯示異常的項目移除、用「＋ 關聯商品」重新選一次即可修復。</p></div>
   </details>
 
   <details class="exp">
     <summary>CSV 匯入後選完檔案沒有任何反應？</summary>
-    <div class="expbody"><p>請確認選取的是有效的 CSV 檔案且內容完整；若持續沒有反應，可以先用「連線自檢」確認後端連線正常，因為匯入資料需要即時寫回雲端試算表，網路不穩也可能導致延遲。</p></div>
+    <div class="expbody"><p>請確認選取的是有效的 CSV 檔案且內容完整；若持續沒有反應，可先用「連線自檢」確認後端連線正常，因為匯入需要即時寫回雲端試算表，網路不穩也可能導致延遲。</p></div>
   </details>
 
   <details class="exp">
     <summary>圖片載入速度變慢？</summary>
-    <div class="expbody"><p>圖片是直接向 Google Drive 縮圖服務請求，載入速度會受 Drive 服務狀態、你的網路環境、以及單一頁面內圖片數量影響（例如一個項目有多張自訂圖片時，同時載入的圖片數量會增加）。這部分不是 App 本身能完全控制的環節。</p></div>
+    <div class="expbody"><p>圖片是直接向 Google Drive 縮圖服務請求，載入速度會受 Drive 服務狀態、你的網路環境、以及單一頁面內圖片數量影響。這部分不是 App 本身能完全控制的環節。</p></div>
   </details>
 
   <details class="exp">
     <summary>估值市場的搜尋結果不夠精準？</summary>
-    <div class="expbody"><p>系統會依分類自動帶入平台或分類關鍵字提升準確度（詳見<a href="#c6-market">第 6 章市場管理</a>），但仍是關鍵字搜尋，無法保證每次都完全精準，建議把搜尋結果當作比價參考起點，仍需自行核對商品是否相符。</p></div>
+    <div class="expbody"><p>系統會依分類自動帶入平台或分類關鍵字提升準確度（詳見<a href="#s06-market">第 6 節市場管理</a>），但仍是關鍵字搜尋，無法保證每次都完全精準，建議把搜尋結果當作比價參考起點，仍需自行核對商品是否相符。</p></div>
+  </details>
+
+  <details class="exp">
+    <summary>為什麼有些操作沒有網路就不能用？</summary>
+    <div class="expbody"><p>因為資料實際存在雲端的 Google 試算表，新增/編輯/刪除都需要即時寫回試算表，沒有網路無法完成寫入動作。已經載入過的資料仍可離線瀏覽。</p></div>
   </details>
 
 </section>
