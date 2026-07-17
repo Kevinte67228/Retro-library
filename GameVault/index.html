@@ -1940,7 +1940,7 @@ body{
         <div class="stitle">測試樣本</div>
         <div class="srow">
           <div class="srl">📦 預設樣本</div>
-          <button class="btn bp bw bs" onclick="loadSamples()" type="button">匯入 5 筆樣本藏品</button>
+          <button class="btn bp bw bs" onclick="loadSamples()" type="button">匯入樣本藏品（收藏＋尋寶）</button>
           <div class="shlp">內含遊戲、攻略等多個類別的範例藏品，可用於體驗 App 功能。任何時刻都可重複匯入。</div>
         </div>
         <div class="stitle">說明文件</div>
@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v67.15';
+const APP_VERSION='v67.16';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4783,78 +4783,62 @@ function _genUuid(){
 
 // ══ 樣本藏品資料 ══
 var SAMPLE_ITEMS=[
-  {
-    category:'遊戲',primary_name:'MLB The Show 26',jp_name:'MLB The Show 26',zh_name:'MLB The Show 26',en_name:'MLB The Show 26',
-    platform:'Nintendo 3DS',media_type:'光碟（CD/DVD/BD）',region:'日本',version:'標準版',voice_lang:'英文',subtitle_lang:'日文/英文',
-    product_code:null,barcode:null,developer:'San Diego Studio',publisher:'Sony Interactive Entertainment',genre:'SPT運動',
-    collection_status:'收藏中',accessories:null,purchase_date:'2098-12-31T16:00:00.000Z',purchase_price:0,buy_source:'全新購入',
-    storage_location:null,play_status:'未遊玩',personal_rating:'N/A',
-    description:'《MLB The Show 26》是一款由San Diego Studio開發，Sony Interactive Entertainment發行的棒球模擬遊戲。作為《MLB The Show》系列的最新作品，遊戲將繼續提供逼真的棒球體驗，包含美國職棒大聯盟的最新球隊、球員名單和賽季內容。玩家可以體驗多種遊戲模式，包括生涯模式、鑽石王朝模式和線上對戰，享受沉浸式的棒球樂趣。',
-    reference_link:'https://www.google.com/search?q=MLB%20The%20Show%2026%20Nintendo%203DS',notes:null
-  },
-  {
-    category:'攻略',primary_name:'時空幻境 世界傳奇 閃耀神話3',jp_name:'テイルズオブザワールドレディアントマイソロジー3世界を守護する書',
-    zh_name:'時空幻境 世界傳奇 閃耀神話3',en_name:'Tales of the World: Radiant Mythology 3 Fans Bible',
-    platform:null,media_type:null,region:'日本',version:null,voice_lang:'日文',subtitle_lang:'日文',
-    product_code:null,barcode:null,developer:'週刊ファミ通編集部',publisher:'KADOKAWA Game Linkage',genre:null,
-    collection_status:'收藏中',accessories:null,purchase_date:'2026-06-20T16:00:00.000Z',purchase_price:null,buy_source:'秋葉原',
-    storage_location:null,play_status:null,personal_rating:'N/A',
-    description:'本書是《時空幻境 世界傳奇 閃耀神話3》的粉絲書，深入探討遊戲中登場的80多位人氣角色、世界觀的魅力。內容包含角色關鍵字、使命、美麗的視覺圖、角色間的短劇解說，以及卡農諾、拉薩里斯等角色和裝備品的珍貴設定畫。',
-    reference_link:'https://www.google.com/search?q=%E3%83%86%E3%82%A4%E3%83%AB%E3%82%BA%20%E3%82%AA%E3%83%96%20%E3%82%B6%20%E3%83%AF%E3%83%BC%E3%83%AB%E3%83%89%20%E3%83%AC%E3%83%87%E3%82%A3%E3%82%A2%E3%83%B3%E3%83%88%20%E3%83%9E%E3%82%A4%E3%82%BD%E3%83%AD%E3%82%B8%E3%83%BC3%20PlayStation%20Portable',
-    notes:null
-  },
-  {
-    category:'遊戲',primary_name:'しあわせ荘の管理人さん。',jp_name:'しあわせ荘の管理人さん。',zh_name:'幸福莊的管理員',en_name:'Shiawase Sou no Kanrinin-san',
-    platform:'PlayStation 4',media_type:'光碟（CD/DVD/BD）',region:'日本',version:'初回封入特典：追加服裝「華咲高校指定夏服・半袖」3色套組產品代碼',
-    voice_lang:'日文',subtitle_lang:'日文',product_code:'PLJS-70054',barcode:4527823998155,developer:'Tamsoft',publisher:'D3 Publisher',
-    genre:'ADV 冒險、LVG 戀愛模擬',collection_status:'收藏中',accessories:null,purchase_date:'2026-06-17T16:00:00.000Z',purchase_price:0,
-    buy_source:'全新購入',storage_location:null,play_status:'未遊玩',personal_rating:'N/A',
-    description:'《幸福莊的管理員》是一款由D3 Publisher發行的戀愛模擬遊戲。玩家將扮演幸福莊的管理員，與三位性格各異的美少女房客展開互動。遊戲中玩家需要管理公寓的日常事務，同時透過對話、事件選擇和贈送禮物等方式，逐步加深與房客們的關係。遊戲以其獨特的VR模式和豐富的互動內容為特色，讓玩家能更身歷其境地體驗與美少女們的同居生活。',
-    reference_link:'https://www.google.com/search?q=%E3%83%87%E3%82%A3%E3%83%BC%E3%82%B9%E3%83%AA%E3%83%BC%E3%83%BB%E3%83%91%E3%83%96%E3%83%AA%E3%83%83%E3%82%B7%E3%83%A3%E3%83%BC%E3%80%80PS4%E3%82%B2%E3%83%BC%E3%83%A0%E3%82%BD%E3%83%95%E3%83%88%E3%80%80%E3%81%97%E3%81%82%E3%82%8F%E3%81%9B%E8%8D%98%E3%81%AE%E7%AE%A1%E7%90%86%E4%BA%BA%E3%81%95%E3%82%93%E3%80%82%20PlayStation%204',
-    notes:null
-  },
-  {
-    category:'攻略',primary_name:'増補版 美少女脱衣麻雀スーパーガイド アーケード編',jp_name:'増補版 美少女脱衣麻雀スーパーガイド アーケード編',
-    zh_name:'增補版 美少女脫衣麻雀超級指南 街機篇',en_name:null,platform:null,media_type:null,region:'日本',version:'増補版',
-    voice_lang:'日文',subtitle_lang:'日文',product_code:1929476020000,barcode:9784867174456,developer:'前田尋之・監修',
-    publisher:'ジーウォーク',genre:null,collection_status:'收藏中',accessories:null,purchase_date:'2098-12-31T16:00:00.000Z',
-    purchase_price:0,buy_source:'全新購入',storage_location:null,play_status:null,personal_rating:'N/A',
-    description:'本書為《美少女脫衣麻雀超級指南》的增補版，專為街機遊戲設計。內容涵蓋多款經典美少女脫衣麻雀遊戲的攻略，包括角色介紹、牌型分析、特殊技巧等，旨在幫助玩家掌握遊戲精髓，輕鬆擊敗對手。書中收錄了豐富的遊戲畫面與插圖，是麻雀遊戲愛好者不可或缺的參考指南。',
-    reference_link:'https://www.google.com/search?q=%E5%A2%97%E8%A3%9C%E7%89%88%20%E7%BE%8E%E5%B0%91%E5%A5%B3%E8%84%B1%E8%A1%A3%E9%BA%BB%E9%9B%80%E3%82%B9%E3%83%BC%E3%83%91%E3%83%BC%E3%82%AC%E3%82%A4%E3%83%89%20%E3%82%A2%E3%83%BC%E3%82%B1%E3%83%BC%E3%83%89%E7%B7%A8',
-    notes:null
-  },
-  {
-    category:'遊戲',primary_name:'職棒球隊創造！2',jp_name:'プロ野球チームをつくろう！2',zh_name:'職棒球隊創造！2',en_name:'Pro Yakyuu Team wo Tsukurou! 2',
-    platform:'PlayStation 2',media_type:'光碟（CD/DVD/BD）',region:'日本',version:'NTSC-J',voice_lang:'日文',subtitle_lang:'日文',
-    product_code:'SLPM-62300',barcode:4974365863005,developer:'Smilebit',publisher:'SEGA',genre:'SLG',collection_status:'收藏中',
-    accessories:null,purchase_date:'2003-09-16T16:00:00.000Z',purchase_price:null,buy_source:'全新購入',storage_location:null,
-    play_status:'未遊玩',personal_rating:'N/A',
-    description:'《職棒球隊創造！2》是SEGA旗下Smilebit開發的棒球模擬經營遊戲，於PlayStation 2平台推出。玩家將扮演一支職棒球隊的總經理，從零開始打造屬於自己的夢幻球隊。遊戲內容涵蓋了球員選秀、交易、訓練、戰術制定以及球場經營等多個面向，玩家需要運用智慧和策略，帶領球隊在激烈的職棒聯賽中脫穎而出，爭奪總冠軍的榮耀。遊戲中收錄了日本職棒的真實球隊和球員數據，讓玩家能夠體驗到高度擬真的職棒世界。',
-    reference_link:'https://www.google.com/search?q=%E8%81%B7%E6%A3%92%E7%90%83%E9%9A%8A%E5%89%B5%E9%80%A0%EF%BC%812%20PlayStation%202',
-    notes:null
-  }
+  {"uuid": "8a545fbe-cbe0-4cf9-8846-9c930a434b60", "category": "遊戲", "primary_name": "超級瑪利歐銀河1+2", "jp_name": "スーパーマリオ ギャラクシー 1+2", "zh_name": "超級瑪利歐銀河 + 超級瑪利歐銀河 2", "en_name": "Super Mario Galaxy 1+2", "series": "超級瑪利歐", "platform": "Nintendo Switch", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "一般版", "voice_language": "繁中", "subtitle_language": "2026-06-20T16:00:00.000Z", "age_rating": "GSRR 保護級", "barcode": "4.71128E+12", "developer": "Nintendo", "publisher": "Nintendo", "release_date": "2025-10-01T16:00:00.000Z", "genre": "ACT 動作", "players": "2026-01-01T16:00:00.000Z", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "繁中", "buy_date": "2025-10-01T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "1409", "market_value": "319", "market_value_updated_at": "2026-07-08T16:00:00.000Z", "market_value_source": "Rakuten JP 8 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥500 - ¥6,468（約 NT$98 - NT$1,268）；樣本 8 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "1628", "play_status": "未遊玩", "rating": "N/A", "summary": "《超級瑪利歐銀河》與《超級瑪利歐銀河 2》是兩款經典的3D平台動作遊戲，最初在Wii平台發行。本作將兩款遊戲合而為一，讓玩家在Nintendo Switch上體驗瑪利歐在浩瀚宇宙中冒險的樂趣。玩家將操控瑪利歐在各種獨特的星球上跳躍、奔跑，收集星星以拯救碧姬公主。遊戲以其創新的重力機制、豐富的關卡設計和充滿想像力的宇宙世界觀而聞名，提供單人或雙人合作模式，適合所有年齡層的玩家。", "ref_link": "https://www.google.com/search?q=%E8%B6%85%E7%B4%9A%E7%91%AA%E5%88%A9%E6%AD%90%E9%8A%80%E6%B2%B3%20%2B%20%E8%B6%85%E7%B4%9A%E7%91%AA%E5%88%A9%E6%AD%90%E9%8A%80%E6%B2%B3%202%20Nintendo%20Switch", "cover_img": "12c5b5Wq_cJxVWHbcRtISwFcwRqqvwuCL", "notes": "45f23e43-cfd4-4bb1-8274-a34619c9b7c8"},
+  {"uuid": "7f25eef4-ff4e-4dcd-bd15-32d1c1baed0f", "category": "遊戲", "primary_name": "天穗之咲稻姬", "jp_name": "天穂のサクナヒメ", "zh_name": "天穗之咲稻姬", "en_name": "Sakuna: Of Rice and Ruin", "series": "天穗之咲稻姬", "platform": "Nintendo Switch", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "標準版", "voice_language": "日文", "subtitle_language": "繁中", "age_rating": "GSRR 普", "barcode": "4.53551E+12", "developer": "Edelweiss", "publisher": "Marvelous", "release_date": "2020-11-11T16:00:00.000Z", "genre": "SLG 模擬", "players": "1", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "buy_date": "2020-11-11T16:00:00.000Z", "buy_source": "全新購入", "market_value": "75", "market_value_updated_at": "2026-07-15T16:00:00.000Z", "market_value_source": "Rakuten JP 33 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥220 - ¥440（約 NT$43 - NT$86）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "380", "play_status": "未遊玩", "rating": "N/A", "summary": "《天穗之咲稻姬》是一款結合了和風動作RPG與種稻模擬的遊戲。玩家將扮演豐穰神「佐久名」，因故被貶至妖魔跋扈的「日之惠島」。為了開拓荒島並驅逐妖魔，佐久名必須透過種稻來提升自己的神力。遊戲中，玩家需要親手進行插秧、施肥、收割等一系列農務，並在種稻的過程中學習各種農業知識。同時，佐久名也將在島上與人類夥伴們一同生活，透過戰鬥來擊敗妖魔，逐步揭開日之惠島的秘密。遊戲以其獨特的種稻系統和爽快的動作戰鬥，為玩家帶來豐富的遊戲體驗。", "ref_link": "https://www.google.com/search?q=%E5%A4%A9%E7%A9%97%E4%B9%8B%E5%92%B2%E7%A8%BB%E5%A7%AC%20Nintendo%20Switch%202", "cover_img": "13WWRalsji9mDgmZWH3XKd019zexO50_R", "notes": "6bc00504-b949-4a43-9586-5439cf81344e"},
+  {"uuid": "3a84bd5a-5dd5-48a2-8f02-f017ff47bc23", "category": "遊戲", "primary_name": "Final Fantasy VII Rebirth", "jp_name": "ファイナルファンタジーVII リバース", "zh_name": "Final Fantasy VII Rebirth", "en_name": "Final Fantasy VII Rebirth", "series": "Final Fantasy VII", "platform": "Nintendo Switch 2", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "首批特典版", "voice_language": "日文", "subtitle_language": "繁中", "age_rating": "GSRR 輔15級", "barcode": "4.71301E+12", "developer": "Square Enix", "publisher": "Square Enix", "release_date": "2026-06-02T16:00:00.000Z", "genre": "RPG 角色扮演", "players": "1人", "features": "支援震動、連線對戰", "collect_status": "收藏中", "bundle": "遊戲本體", "buy_date": "2026-06-02T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "market_value": "1137", "market_value_updated_at": "2026-07-15T16:00:00.000Z", "market_value_source": "Rakuten JP 24 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥5,500 - ¥6,355（約 NT$1,079 - NT$1,246）；樣本 5 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "5797", "play_status": "未遊玩", "rating": "N/A", "summary": "《Final Fantasy VII Rebirth》是《Final Fantasy VII 重生》的續作，延續了克勞德與夥伴們離開米德加後的冒險旅程。玩家將在廣闊的世界中探索，體驗豐富的支線任務與角色互動，並逐步揭開故事的真相。遊戲採用即時戰鬥系統，融合了指令式操作，提供流暢且策略性十足的戰鬥體驗。本作將深入探討角色們的過去與命運，並帶來令人驚訝的劇情轉折。", "ref_link": "https://www.google.com/search?q=Final%20Fantasy%20VII%20Rebirth%20Nintendo%20Switch%202", "cover_img": "1opkt84fe-HfiDzInQyXISBRCZLHpv5XS", "related_code": "首批特典包含「Magic: The Gathering - Final Fantasy」Zack Fair（札克斯·菲爾）卡片。", "notes": "946bb273-5d52-4a6e-83b7-4fc7bde01dd8"},
+  {"uuid": "2975b778-db32-40aa-9d74-f1856a996e25", "category": "遊戲", "primary_name": "プロ野球チームをつくろう! 2003", "jp_name": "プロ野球チームをつくろう! 2003", "zh_name": "創造職棒隊伍！2003", "en_name": "Pro Yakyuu Team wo Tsukurou! 2003", "series": "プロ野球チームをつくろう!", "platform": "PlayStation 2", "media": "光碟（CD/DVD/BD）", "region": "日本", "edition": "標準版", "voice_language": "日文", "subtitle_language": "2026-06-23T16:00:00.000Z", "age_rating": "CERO 全年齢対象", "code": "SLPM-65426", "barcode": "4.97437E+12", "developer": "Smilebit", "publisher": "SEGA", "release_date": "2003-03-26T16:00:00.000Z", "genre": "SLG", "players": "單人", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "日文", "buy_date": "2003-03-26T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "232", "market_value": "227", "market_value_updated_at": "2026-07-08T16:00:00.000Z", "market_value_source": "Rakuten JP 18 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥871 - ¥4,480（約 NT$171 - NT$879）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "1159", "play_status": "未遊玩", "rating": "N/A", "summary": "《創造職棒隊伍！2003》是SEGA旗下Smilebit開發的棒球模擬經營遊戲，於PlayStation 2平台發行。玩家將扮演一支職棒隊伍的總經理，從選秀、球員養成、戰術安排到球隊經營，全面掌控球隊的發展。遊戲中收錄了日本職棒的真實球隊與球員資料，讓玩家能體驗到最真實的職棒世界。透過不斷的努力與策略，目標是打造出一支常勝軍，贏得聯盟冠軍與日本一的榮耀。遊戲提供豐富的經營要素與深度的策略性，是棒球愛好者不容錯過的經典之作。", "ref_link": "https://www.google.com/search?q=%E3%83%97%E3%83%AD%E9%87%8E%E7%90%83%E3%83%81%E3%83%BC%E3%83%A0%E3%82%92%E3%81%A4%E3%81%8F%E3%82%8D%E3%81%86!%202003%20PlayStation%202", "cover_img": "1Xunw_8IhP86seIftRYv4yOHzCDsxq2XY", "notes": "d5398051-e6fa-490e-8672-0a22debef115"},
+  {"uuid": "51e2ac31-e80b-465d-9bc9-e920ef08f99f", "category": "遊戲", "primary_name": "PlayStation VR Worlds", "jp_name": "PlayStation VR Worlds", "zh_name": "PlayStation VR Worlds", "en_name": "PlayStation VR Worlds", "platform": "PlayStation 4", "media": "光碟（CD/DVD/BD）", "region": "日本", "edition": "標準版", "voice_language": "日文", "subtitle_language": "2026-06-23T16:00:00.000Z", "age_rating": "CERO C", "developer": "SIE London Studio", "publisher": "Sony Interactive Entertainment", "release_date": "2016-10-09T16:00:00.000Z", "genre": "VR 虛擬實境", "players": "1人", "features": "支援震動、VR", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "日文", "buy_date": "2016-10-09T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "134", "market_value": "125", "market_value_updated_at": "2026-07-12T16:00:00.000Z", "market_value_source": "Rakuten JP 18 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥210 - ¥3,290（約 NT$41 - NT$645）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "638", "play_status": "未遊玩", "rating": "N/A", "summary": "《PlayStation VR Worlds》是一款專為 PlayStation VR 設計的虛擬實境遊戲合輯，收錄了五款不同的 VR 體驗。玩家將能潛入深海與鯊魚近距離接觸，或是在倫敦街頭展開刺激的搶劫行動，體驗未來世界的科幻運動，甚至在危險的太空殘骸中求生。每款遊戲都充分利用了 PS VR 的沉浸式特性，提供多樣化的視覺與互動感受，讓玩家盡情探索虛擬實境的無限可能。", "ref_link": "https://www.google.com/search?q=PlayStation%20VR%20Worlds%20PlayStation%204", "cover_img": "1yrCZH_cd_kPMZoI2pFFFUVylstjbkvuz", "notes": "5ff6f040-7fde-4b0c-aaa5-8ab2b0966df4"}
+];
+var SAMPLE_HUNT_ITEMS=[
+  {"category": "狩獵", "target_cat": "遊戲", "primary_name": "軒轅劍 柒", "platform": "Nintendo Switch", "cover_img": "1RsXTA2PngvWsw9p8RdMowBb0YqpRtjKX", "extra_images": "[{\"label\":\"\",\"img\":\"1t5iG94dtVnPgbAAlmt8zm8Zzq3da7YfI\"},{\"label\":\"\",\"img\":\"1jjFV6We9BGPy9i3TuJdX0i36vwPD1wbv\"},{\"label\":\"\",\"img\":\"1Pw6UV9zVwkHeCepCMKhcyk_Vr9-LR5ga\"},{\"label\":\"\",\"img\":\"1A8UcvItybwkUzHCumeO5K618Ao3LNbzi\"},{\"label\":\"\",\"img\":\"1MPffCJMZ77HPA0DcdXGPsaicLwAZlEaN\"},{\"label\":\"\",\"img\":\"1kSUyP1XHpoa29tXhnueikhXILHOYEeSp\"},{\"label\":\"\",\"img\":\"1Ln4TI4QIk4yzz9Gopd6RCBt1JLCjPXqb\"}]", "sightings": "[{\"loc\":\"駿河屋 新宿マルイアネックス店\",\"url\":\"\",\"chan\":\"store\",\"mapUrl\":\"https://maps.app.goo.gl/1ChADGTd2s5DzaTA6\",\"price\":\"7800\",\"cur\":\"JPY\",\"cond\":\"\",\"note\":\"\",\"date\":\"2026/06/25\",\"maddr\":\"SURUGA-YA Shinjuku Marui Annex Store, マルイアネックス 5F 3 Chome-1-26 Shinjuku, Shinjuku City, Tokyo 160-0022日本\"},{\"loc\":\"駿河屋\",\"url\":\"\",\"chan\":\"store_nomap\",\"mapUrl\":\"https://maps.app.goo.gl/Ad1HN4pAnejCbbki9\",\"price\":\"1800\",\"cur\":\"TWD\",\"cond\":\"\",\"note\":\"\",\"date\":\"2026/07/14\",\"maddr\":\"BOOKOFF Akihabara Ekimae Store, 1 Chome-6-4 Kanda Sakumacho, Chiyoda City, Tokyo 101-0025日本\"}]", "hunt_status": "追蹤中", "uuid": "c384ee93-38f7-40f8-bf55-41c2449cad98", "created_at": "2026-6-14 17:16"},
+  {"category": "狩獵", "target_cat": "遊戲", "primary_name": "スーパーリアル麻雀 LOVE 2～7!", "platform": "Nintendo Switch", "notes": "發行：MightyCraft · 發行日：2020/08/27", "cover_img": "1bsSnd8_s81WOzNK7WU2iKf8FXWZ4F9TU", "sightings": "[]", "hunt_status": "追蹤中", "uuid": "0f60d736-778a-4bf0-804c-5cd72776092d", "created_at": "2026-6-22 07:39", "jp_name": "スーパーリアル麻雀 LOVE 2～7!", "region": "日本", "summary": "《超級真實麻將 LOVE 2～7!》是一款將經典麻將遊戲系列《超級真實麻將》的第2代至第7代作品集結於Nintendo Switch平台的合輯。遊戲以其獨特的麻將玩法和豐富的女性角色互動而聞名，玩家在麻將對局中獲勝後，可以解鎖與角色相關的特殊事件和CG圖片。本作收錄了系列多款經典作品，讓玩家能一次體驗不同世代的麻將樂趣與角色魅力。"},
+  {"category": "狩獵", "target_cat": "遊戲", "primary_name": "アイドル雀士スーチーパイ Saturn Tribute", "platform": "Nintendo Switch", "notes": "發行：City Connection · 發行日：2022/12/08", "cover_img": "1hNxLoL9R4DzwWIV0pbYUSIW3n-fTCqoo", "extra_images": "[]", "sightings": "[{\"loc\":\"蝦皮\",\"url\":\"https://tw.shp.ee/zV9G7xx3\",\"chan\":\"online\",\"mapUrl\":\"\",\"price\":\"1190\",\"cur\":\"TWD\",\"cond\":\"\",\"note\":\"\",\"date\":\"2026/07/15\"}]", "hunt_status": "追蹤中", "uuid": "25e6b197-a26c-41e4-b9bd-09b535e3aa37", "created_at": "2026-6-25 08:04", "jp_name": "アイドル雀士スーチーパイ Saturn Tribute", "region": "日本", "summary": "《偶像雀士 Suchie-Pai Saturn Tribute》是將 1990 年代在 SEGA Saturn 上發售的《偶像雀士 Suchie-Pai》系列作品移植到 Nintendo Switch 的合集。遊戲收錄了《偶像雀士 Suchie-Pai Special+》、《偶像雀士 Suchie-Pai II》、《偶像雀士 Suchie-Pai Mecha-Genius》等多款經典麻將遊戲，讓玩家重溫懷舊的麻將對戰樂趣。遊戲特色為可愛的女性角色與輕鬆的麻將玩法。", "target_price": "4800", "desire_level": "高", "release_date": "2022-12-05T16:00:00.000Z"},
+  {"category": "狩獵", "target_cat": "遊戲", "primary_name": "FRONT MISSION 3rd: Remake", "platform": "Nintendo Switch", "notes": "發行：Rainy Frog", "cover_img": "1Sl5futf2WyNunrcAch_ID2jALsa0HElX", "sightings": "[]", "hunt_status": "追蹤中", "uuid": "8eaeef8a-b532-4491-8320-5711d379d895", "created_at": "2026-6-25 08:07", "jp_name": "フロントミッション ザード：リメイク", "region": "日本", "summary": "《FRONT MISSION 3rd: Remake》是經典戰略角色扮演遊戲《FRONT MISSION 3》的重製版。遊戲背景設定在近未來的亞洲，玩家將扮演主角，捲入一場涉及巨大機器人「Wanzers」的國際衝突。遊戲提供兩條截然不同的故事線，玩家的選擇將影響劇情走向。重製版保留了原版的核心戰鬥系統和策略深度，並對畫面進行了全面升級，讓玩家在現代平台上重溫這款經典之作。"},
+  {"category": "狩獵", "target_cat": "遊戲", "primary_name": "足球小將翼 II 世界鬥士", "platform": "Nintendo Switch", "notes": "發行：BANDAI NAMCO Entertainment · 發行日：2026/08/26", "cover_img": "1j-FJ9uKORvI5kj8JxGiXSxjluzGdd9gB", "sightings": "[]", "hunt_status": "追蹤中", "uuid": "e0faac14-7c13-4ca8-9a48-f3d4dfb5e872", "created_at": "2026-6-25 16:01", "jp_name": "キャプテン翼 II 世界鬥士", "region": "日本", "summary": "《足球小將翼 新秀崛起 II》是一款以高人氣動漫《足球小將翼》為題材的足球動作遊戲。遊戲中收錄了多種在原作中登場的必殺技，玩家可以操作大空翼等角色，體驗充滿魄力的足球比賽。遊戲模式包含故事模式、對戰模式等，讓玩家能重溫原作的熱血劇情，也能與朋友一同享受對戰的樂趣。"},
+  {"category": "狩獵", "target_cat": "遊戲", "primary_name": "勇者鬥惡龍X 覺醒的五種族OFFLINE 豪華版", "platform": "Nintendo Switch", "notes": "發行：Square Enix", "cover_img": "1CEcViVpguKu3VB721ugatmcoHfIv2wpw", "sightings": "[]", "hunt_status": "追蹤中", "uuid": "7c5f1a34-0e2d-4ce7-b3bc-c7c62be6ea89", "created_at": "2026-7-11 16:47", "jp_name": "ドラゴンクエストX 目覚めし五つの種族 オフライン デラックス版", "region": "日本", "summary": "《勇者鬥惡龍X 覺醒的五種族 OFFLINE》是《勇者鬥惡龍X》的單機版本，玩家將在廣闊的亞斯特爾提亞世界中冒險，與五個種族相遇，並揭開世界的秘密。豪華版包含遊戲本體及額外內容。"}
 ];
 
 // ══ 樣本資料載入 ══
 function loadSamples(){
-  if(!SAMPLE_ITEMS||!SAMPLE_ITEMS.length){toast('樣本資料為空','er');return;}
+  var hasCol=SAMPLE_ITEMS&&SAMPLE_ITEMS.length;
+  var hasHunt=(typeof SAMPLE_HUNT_ITEMS!=='undefined')&&SAMPLE_HUNT_ITEMS&&SAMPLE_HUNT_ITEMS.length;
+  if(!hasCol&&!hasHunt){toast('樣本資料為空','er');return;}
   if(!_btnGuard('loadSamples',null,'匯入中...'))return;
+  // 現有 uuid 集合，避免重複點擊時重複匯入同一批樣本
+  var exist={};
+  col.forEach(function(r){if(r.uid)exist[r.uid]=1;});
+  hunt.forEach(function(r){if(r.uid)exist[r.uid]=1;});
   var imported=0;
   (SAMPLE_ITEMS||[]).forEach(function(item){
-    if(!item.primary_name||(''+(item.primary_name||'')).trim().length===0){return;}
+    if(!item.primary_name||(''+(item.primary_name||'')).trim().length===0)return;
     var entry=Object.assign({},item);
-    entry.uuid=_genUuid();
-    var newRec={rowNum:null,uid:entry.uuid,data:entry};
-    col.push(newRec);
+    // 保留原始 uuid（讓關聯商品連結有效）；無 uuid 或已存在則補/略過
+    var uid=entry.uuid;
+    if(!uid){uid=_genUuid();entry.uuid=uid;}
+    if(exist[uid])return; // 已匯入過，略過避免重複
+    exist[uid]=1;
+    col.push({rowNum:null,uid:uid,data:entry});
+    imported++;
+  });
+  (hasHunt?SAMPLE_HUNT_ITEMS:[]).forEach(function(item){
+    if(!item.primary_name||(''+(item.primary_name||'')).trim().length===0)return;
+    var entry=Object.assign({},item);
+    var uid=entry.uuid;
+    if(!uid){uid=_genUuid();entry.uuid=uid;}
+    if(exist[uid])return;
+    exist[uid]=1;
+    hunt.push({rowNum:null,uid:uid,data:entry});
     imported++;
   });
   if(imported>0){
     localforage.setItem('gv_col',col).catch(function(){});
+    localforage.setItem('gv_hunt',hunt).catch(function(){});
     updateStats();
     renderColList();
+    if(typeof renderHuntList==='function')renderHuntList();
     toast('✓ 已匯入 '+imported+' 筆樣本資料','ok',4000);
   }else{
-    toast('樣本資料中沒有有效的記錄','er');
+    toast('樣本已匯入過（略過重複）','er');
   }
   _btnRelease('loadSamples');
 }
@@ -4864,7 +4848,7 @@ function checkFirstLaunchSamples(){
   if(col&&col.length>0)return;  // 已有資料，不提示
   if(localStorage.getItem('gv_samples_dismissed'))return;  // 使用者已忽略，不再提示
   // 提示載入樣本
-  if(confirm('首次使用 GameVault？\\n\\n載入 5 筆樣本藏品嗎？（可隨時在設定頁匯入更多）')){
+  if(confirm('首次使用 GameVault？\\n\\n載入樣本藏品嗎？（收藏與尋寶清單，可隨時在設定頁匯入）')){
     loadSamples();
   }
   localStorage.setItem('gv_samples_dismissed','true');  // 記錄使用者的選擇
