@@ -2,9 +2,9 @@
 GitHub Git Data API 批次操作工具
 用單一 commit 完成多檔案的新增/修改/刪除,取代逐檔案呼叫 Contents API。
 """
-import urllib.request, json, base64, time
+import urllib.request, json, base64, time, os
 
-TOKEN = ""  # 由使用者每次對話提供，不寫死在檔案內
+TOKEN = os.environ.get("GH_TOKEN", "")  # 由使用者每次對話提供，不寫死在檔案內；也可用 export GH_TOKEN=ghp_... 設定
 REPO = "Kevinte67228/Retro-library"
 API = f"https://api.github.com/repos/{REPO}"
 BRANCH = "main"
@@ -41,20 +41,29 @@ def list_tree_recursive(tree_sha):
     t = _retry(_req, "GET", f"/git/trees/{tree_sha}?recursive=1")
     return [item["path"] for item in t["tree"] if item["type"] == "blob"]
 
+def build_path_index(tree_sha):
+    """回傳 {path: blob_sha} 完整對照表，供「複製既有檔案到新路徑」使用，
+    不需要重新下載+上傳內容，只要在新 tree 裡引用同一個 blob sha 即可。"""
+    t = _retry(_req, "GET", f"/git/trees/{tree_sha}?recursive=1")
+    return {item["path"]: item["sha"] for item in t["tree"] if item["type"] == "blob"}
+
 def create_blob(content_bytes):
     b64 = base64.b64encode(content_bytes).decode()
     result = _retry(_req, "POST", "/git/blobs", {"content": b64, "encoding": "base64"})
     return result["sha"]
 
-def batch_commit(message, adds=None, deletes=None, base_tree_sha=None, parent_sha=None):
+def batch_commit(message, adds=None, deletes=None, copies=None, base_tree_sha=None, parent_sha=None):
     """
-    一次 commit 完成多檔案新增/修改/刪除。
-    adds: {path: content_bytes, ...}  (新增或覆蓋)
-    deletes: [path, path, ...]        (刪除)
+    一次 commit 完成多檔案新增/修改/刪除/複製。
+    adds: {path: content_bytes, ...}       (新增或覆蓋，需要上傳新內容)
+    deletes: [path, path, ...]             (刪除)
+    copies: {new_path: existing_blob_sha}  (複製既有檔案到新路徑，不用重新上傳內容，速度更快；
+                                             existing_blob_sha 從 build_path_index() 取得)
     回傳新的 commit sha。
     """
     adds = adds or {}
     deletes = deletes or []
+    copies = copies or {}
     if base_tree_sha is None or parent_sha is None:
         parent_sha, base_tree_sha = get_branch_head()
 
@@ -62,6 +71,8 @@ def batch_commit(message, adds=None, deletes=None, base_tree_sha=None, parent_sh
     for path, content in adds.items():
         blob_sha = create_blob(content)
         tree_entries.append({"path": path, "mode": "100644", "type": "blob", "sha": blob_sha})
+    for path, existing_sha in copies.items():
+        tree_entries.append({"path": path, "mode": "100644", "type": "blob", "sha": existing_sha})
     for path in deletes:
         tree_entries.append({"path": path, "mode": "100644", "sha": None})
 
