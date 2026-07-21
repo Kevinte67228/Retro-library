@@ -1286,7 +1286,6 @@ body{
             <button class="btn bp bw" onclick="huntConvertAIFill()" type="button">✨ AI 補齊資料</button>
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
           </div>
-          <div id="cd-hint-host"></div>
           <div id="form-body"></div>
           <div id="save-bar">
             <button class="btn bo" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
@@ -2366,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.01';
+const APP_VERSION='v01.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7043,7 +7042,6 @@ function applyMultiDbResult(dbResult,code,aiResult){
     entry.ref_link=googleRefLink(entry.primary_name,entry.platform);
   _gametdbTryCover(); // GameTDB 封面補全（v18.01）：非同步，僅任天堂編碼且無封面時動作
   setTimeout(function(){_autoFetchCover();},500);
-  cdMaybeAutoSearch(); // v01.02：日系資料庫背景比對（僅地區=日本且分類=遊戲時實際查詢）
 }
 
 // ════ 各資料庫查詢函數（透過 Apps Script proxy）════
@@ -7204,7 +7202,6 @@ function applyProductBarcodeResult(prod,bc,type){
   if(!entry.ref_link&&entry.primary_name)entry.ref_link=googleRefLink(entry.primary_name,entry.platform||entry.platform_family||entry.compat_platform||'');
   entry._src=entry._src||{};
   Object.keys(prod).forEach(function(k){if(k.charAt(0)!=='_'&&prod[k])entry._src[k]='db';});
-  cdMaybeAutoSearch(); // v01.02：日系資料庫背景比對
   return true;
 }
 
@@ -7398,84 +7395,6 @@ function testGCSE(){
       else{toast('無回應，請確認 Apps Script 已重新部署','er',5000);}
     }).catch(function(e){noLoad();toast('Google CSE 錯誤：'+_friendlyError(e.message),'er',5000);});
 }
-// ── コンシューマーゲーム大辞典 (consoledictionary.com) 日系遊戲資料庫背景比對（v01.02）──
-//   規則：地區=日本 且已有 primary_name 且分類=遊戲 時，背景靜默查詢；有結果才顯示小提示按鈕，
-//   點了才展開候選清單；使用者從候選清單選一筆＝視為確認，該筆資料全部套用（開發商/發行商/類型/
-//   發售日/估值資訊皆覆蓋），僅「封面圖」與其他資料庫比對邏輯一致不強制覆蓋、「參考連結」用附加不覆蓋。
-var _cdState={candidates:null,searchedFor:null};
-
-function cdMaybeAutoSearch(){
-  if(_region!=='jp')return;
-  if(!entry||!entry.primary_name)return;
-  if(catInternal(entry.category||_selectedType)!=='遊戲')return;
-  var key=entry.primary_name+'|'+(entry.platform||'');
-  if(_cdState.searchedFor===key)return; // 同樣條件已查過，避免重複查詢
-  _cdState.searchedFor=key;_cdState.candidates=null;
-  var params=new URLSearchParams({action:'cd_search',gameName:entry.primary_name,platform:entry.platform||''});
-  shGetSecP(params)
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(res){
-      if(res&&res.ok&&res.items&&res.items.length){_cdState.candidates=res.items;_cdShowHint();}
-    }).catch(function(){});
-}
-
-function _cdShowHint(){
-  var host=$('cd-hint-host');
-  if(!host)return;
-  host.innerHTML='<button type="button" onclick="cdOpenPanel()" style="display:flex;align-items:center;gap:6px;background:rgba(0,229,255,.1);border:1px solid #00e5ff;color:#00e5ff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;margin:8px 16px;cursor:pointer">🇯🇵 找到 '+_cdState.candidates.length+' 筆日系資料庫比對，點此查看</button>';
-}
-
-function cdOpenPanel(){
-  if(!_cdState.candidates||!_cdState.candidates.length)return;
-  var rows=_cdState.candidates.map(function(it){
-    return '<div onclick="cdApplyCandidate(\''+it.id+'\')" style="display:flex;gap:10px;padding:10px;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer">'
-      +'<img src="'+esc(it.thumbUrl)+'" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0">'
-      +'<div style="flex:1;min-width:0">'
-      +'<div style="color:#e8eaf6;font-weight:700;font-size:14px">'+esc(it.name)+'</div>'
-      +'<div style="color:#9fa8c8;font-size:12px">'+esc(it.platform)+' ・ '+esc(it.developer)+'</div>'
-      +'<div style="color:#69f0ae;font-size:12px">駿河屋参考 ¥'+esc(it.surugayaPrice)+'（'+esc(it.updateDate)+'）</div>'
-      +'</div></div>';
-  }).join('');
-  var wrap=document.createElement('div');
-  wrap.id='cd-ov';
-  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:flex-end';
-  wrap.onclick=function(e){if(e.target===wrap)cdClosePanel();};
-  wrap.innerHTML='<div style="background:#141b30;border-radius:16px 16px 0 0;width:100%;max-height:80vh;overflow-y:auto;padding:16px">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
-    +'<div style="font-weight:700;color:#e8eaf6">コンシューマーゲーム大辞典 比對結果</div>'
-    +'<button type="button" onclick="cdClosePanel()" style="background:none;border:none;color:#9fa8c8;font-size:20px;cursor:pointer">✕</button>'
-    +'</div>'+rows+'</div>';
-  document.body.appendChild(wrap);
-}
-
-function cdClosePanel(){var ov=$('cd-ov');if(ov)ov.remove();}
-
-function cdApplyCandidate(gameId){
-  cdClosePanel();
-  toast('查詢中...','ok',1500);
-  var params=new URLSearchParams({action:'cd_detail',gameId:gameId});
-  shGetSecP(params)
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(res){
-      if(!res||!res.ok){toast('查詢失敗：'+((res&&res.error)||'未知錯誤'),'er');return;}
-      if(res.name)entry.jp_name=res.name;
-      if(res.developer)entry.developer=res.developer;
-      if(res.publisher)entry.publisher=res.publisher;
-      if(res.genre)entry.genre=matchGenreMulti(res.genre)||res.genre;
-      if(res.releaseDate)entry.release_date=res.releaseDate;
-      if(res.surugayaPrice){
-        entry.estimate_value=res.surugayaPrice;
-        entry.estimate_currency=res.priceCurrency||'JPY';
-        entry.estimate_source='コンシューマーゲーム大辞典（駿河屋参考）';
-        entry.estimate_updated=(new Date()).toISOString().slice(0,10);
-      }
-      if(!entry.cover_img&&res.image)entry.cover_img_candidate=res.image; // 沿用既有慣例：不強制覆蓋已有封面
-      if(res.sourceUrl)entry.ref_link=entry.ref_link?(entry.ref_link+'\n'+res.sourceUrl):res.sourceUrl;
-      showForm('日系資料庫比對');
-      toast('已套用日系資料庫比對結果 ✓','ok',3000);
-    }).catch(function(){toast('查詢失敗','er');});
-}
-
 function _autoFetchCover(cb){
   if(entry.cover_img){if(cb)cb(false);return;}
   if(!cfg.gcsekey||!cfg.gcxid||!cfg.url){if(cb)cb(false);return;}
@@ -8566,7 +8485,6 @@ function scanStep3AI(){
       entry.ref_link=googleRefLink(entry.primary_name,entry.platform);
     // AI 辨識後：用條碼/名稱觸發七庫交叉比對，補全 AI 沒填的欄位
     showForm('掃碼 AI 建檔'); // 先顯示 AI 結果，資料庫補全在背景進行
-    cdMaybeAutoSearch(); // v01.02：日系資料庫背景比對，與下方交叉比對並行，不互相等待
     if(entry.primary_name&&_selectedType!=='攻略'){
       // 優先用條碼查（更精準），其次用名稱
       var queryKey=bc||entry.primary_name;
@@ -10529,7 +10447,6 @@ function onFld(k,v){
   entry[k]=v;edited.add(k);
   entry._src=entry._src||{};entry._src[k]='user'; // 使用者手動編輯標記
   var el=$('fg-'+k);if(el)el.classList.add('fe');
-  if(k==='primary_name'&&v)cdMaybeAutoSearch(); // v01.02：手動輸入名稱時也觸發日系資料庫背景比對
   if(k==='zh_name'||k==='en_name'||k==='jp_name'){
     if(!edited.has('primary_name')){
       entry.primary_name=entry.zh_name||entry.jp_name||entry.en_name||'';
