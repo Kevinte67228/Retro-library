@@ -1,2 +1,5 @@
+# Netlify build 觸發規則：只有 GameVault/ 資料夾有異動時才觸發部署，避免 _internal/ 底下的
+# 備份輪替、協作規則更新、CHANGELOG 等維護性 commit 白白耗用建置額度。
+# 未指定 [build] publish，沿用 Netlify 後台已設定的 Publish directory = GameVault，不覆蓋它。
 [build]
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ./GameVault/"
