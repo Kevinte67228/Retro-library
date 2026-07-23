@@ -1,0 +1,51 @@
+name: Deploy GameVault Apps Script
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/GameVault_AppsScript.gs'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Restore clasp credentials
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          mkdir -p ~/.clasprc
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          node -e "JSON.parse(require('fs').readFileSync(process.env.HOME + '/.clasprc.json','utf8')); console.log('clasprc.json JSON 格式正確')"
+
+      - name: Prepare clasp project
+        env:
+          GAS_SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
+        run: |
+          mkdir -p clasp_deploy
+          cp docs/GameVault_AppsScript.gs clasp_deploy/Code.gs
+          cp docs/appsscript.json clasp_deploy/appsscript.json
+          printf '{"scriptId":"%s","rootDir":"."}' "$GAS_SCRIPT_ID" > clasp_deploy/.clasp.json
+          node -e "JSON.parse(require('fs').readFileSync('clasp_deploy/.clasp.json','utf8')); console.log('.clasp.json JSON 格式正確')"
+
+      - name: Push to Apps Script
+        working-directory: clasp_deploy
+        run: clasp push --force
+
+      - name: Update existing deployment (keeps Web App URL stable)
+        working-directory: clasp_deploy
+        env:
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: clasp deploy --deploymentId "$GAS_DEPLOYMENT_ID" --description "Auto-deploy $(date '+%Y-%m-%d %H:%M:%S')"
