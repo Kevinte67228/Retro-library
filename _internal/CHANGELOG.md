@@ -1,3 +1,25 @@
+## v02.02 (2026-07-22)
+
+### 變更內容
+修正 `GameVault/` → `docs/` 搬遷時遺漏的 4 處寫死路徑，導致二手估值市場圖示（Amazon/Mercari/日本樂天/ヤフオク等）全部載入失敗：
+- `GH_ASSET_BASE` 常數（市場圖示 icon 的組合網址基準）：`.../main/GameVault/` → `.../main/docs/`
+- `<head>` 裡 3 個 favicon／apple-touch-icon 連結同步修正
+- 順手修正 `github_deploy.py` 完成訊息殘留的「Netlify」字樣，改為「GitHub Pages」
+
+### 影響檔案
+- index.html / GameVault_v02_02_index.html
+- sw.js
+- _internal/github_deploy.py（訊息文字修正，不影響部署邏輯）
+
+### GS 版本
+- 無（純前端資源路徑修正）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-01 → gamevault-v02-02
+
+### 對應備份
+- _internal/old/v02_01/
+
 ## v02.01 (2026-07-21)
 
 ### 變更內容

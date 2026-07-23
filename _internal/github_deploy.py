@@ -131,7 +131,7 @@ def deploy(new_ver, local_dir):
         msg += f'（備份 {current_ver} 並清理輪替）'
     sha = batch_commit(msg, adds=adds, deletes=deletes, copies=copies,
                         base_tree_sha=tree_sha, parent_sha=parent_sha)
-    print(f'\n=== 完成，commit={sha[:10]}，Netlify 將自動偵測部署 ===')
+    print(f'\n=== 完成，commit={sha[:10]}，GitHub Pages 將自動偵測部署 ===')
     return sha
 
 
