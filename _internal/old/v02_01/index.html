@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="GameVault">
 <meta name="application-name" content="GameVault">
 <meta name="theme-color" content="#080c18">
-<link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-144.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/icons/icon-144.png">
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>GameVault</title>
@@ -2366,7 +2366,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.02';
+const APP_VERSION='v02.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12691,7 +12691,7 @@ function marketJpQuery(d){
   return q?(name+' '+q).trim():name;
 }
 // 靜態圖檔改由 GitHub 提供（Retro-library/main 根目錄）；未來換 host 只需改此處
-var GH_ASSET_BASE='https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/';
+var GH_ASSET_BASE='https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/GameVault/';
 // v40.31：注入市場參考後呼叫，偵測 grid 是否水平溢出，溢出才顯示右側漸變提示
 function markScrollableRefs(root){
   var scope=root||document;
