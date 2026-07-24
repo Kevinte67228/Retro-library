@@ -1,25 +1,22 @@
-## v02.07 (2026-07-22)
+## v02.08 (2026-07-22)
 
 ### 變更內容
-「AI 網頁查詢」建檔模式的四個 AI 助手按鈕（DeepSeek/GPT/Gemini/Claude）改為晶片樣式，並加上選中點亮效果：
-- 原本用寫死的紫色（`#7c4dff`）inline style，跟 App 主色 cyan（`#00e5ff`）不一致；改為直接沿用既有的 `.genre-chip` 標準晶片 class（App 其他地方如遊戲類型多選已在用），風格統一
-- 新增 `_aiWebSelectedDest` 狀態變數：點擊某個 AI 助手時記錄選中狀態並重新渲染，該晶片變成 cyan 填色點亮（`.on`），其餘晶片維持未選中樣式，互斥選擇（不是多選）
-- 重新進入「AI 網頁查詢」建檔模式時重置選中狀態，避免殘留上次選過的 AI
+「AI 網頁查詢」建檔模式的「掃描條碼」「拍照辨識名稱」兩個按鈕，同步改成套用 `.genre-chip` 晶片樣式（比照上一版 DeepSeek/GPT/Gemini/Claude 的處理方式），取代原本寫死、且彼此顏色不一致的虛線框樣式（一個紫色系 `rgba(121,134,203,...)`、一個 cyan 系 `rgba(0,229,255,...)`）。這兩個是動作觸發按鈕（點擊即觸發相機/OCR），不是選擇狀態，因此只套用晶片的視覺樣式，不加選中點亮邏輯。
 
-自我檢查：晶片點亮邏輯（未選中時全暗／選中特定一個時只有該晶片亮／換選其他晶片會自動熄滅前一個）皆用檔案內實際程式碼驗證通過。
+驗證：修改前後 HTML 的 `<div>`／`</div>` 計數差值一致（-18，確認為原檔案既有、非本次修改引入），`<button>` 標籤完全配對；語法檢查通過。
 
 ### 影響檔案
-- index.html / GameVault_v02_07_index.html
+- index.html / GameVault_v02_08_index.html
 - sw.js
 
 ### GS 版本
-- 無（純前端 UI 樣式與狀態調整）
+- 無（純前端 UI 樣式調整）
 
 ### PWA 快取
-- CACHE_NAME: gamevault-v02-06 → gamevault-v02-07
+- CACHE_NAME: gamevault-v02-07 → gamevault-v02-08
 
 ### 對應備份
-- _internal/old/v02_06/
+- _internal/old/v02_07/
 
 ## v02.06 (2026-07-22)
 
