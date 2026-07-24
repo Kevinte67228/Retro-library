@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.06';
+const APP_VERSION='v02.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8160,6 +8160,7 @@ var AIWEB_DESTS=[
   {id:'gemini',label:'Gemini',url:'https://gemini.google.com/'},
   {id:'claude',label:'Claude',url:'https://claude.ai/new'}
 ];
+var _aiWebSelectedDest=null; // v02.07：記錄目前選中哪個AI助手，供晶片點亮視覺呈現
 // 核心識別欄位：排除個人記錄（購入日期/價格/保管地點）、收藏狀態、品相完整度、關聯商品、圖片類欄位
 function _aiWebCoreFields(cat,subtype){
   var excludeGroup=/收藏狀態|品相|完整度|個人記錄|關聯商品|圖片/;
@@ -8195,9 +8196,9 @@ function _aiWebBuildPrompt(subject){
 function _aiWebRenderDests(){
   var wrap=$('aiweb-dest-tabs');if(!wrap)return;
   wrap.innerHTML=AIWEB_DESTS.map(function(d){
-    return '<button type="button" onclick="aiWebCopyAndOpen(\''+d.id+'\')" '+
-      'style="height:42px;padding:4px;border-radius:10px;font-size:11px;font-weight:700;background:#141b30;'+
-      'color:#7c4dff;border:1.5px solid #7c4dff;font-family:inherit;cursor:pointer">'+esc(d.label)+'</button>';
+    var on=(_aiWebSelectedDest===d.id);
+    return '<button type="button" onclick="aiWebCopyAndOpen(\''+d.id+'\')" class="genre-chip'+(on?' on':'')+'" '+
+      'style="height:42px;justify-content:center;font-size:12px;font-family:inherit">'+esc(d.label)+'</button>';
   }).join('');
 }
 // 條碼掃描：沿用既有 openFieldScanner 即時掃描機制（比照 barScanFromBtn）
@@ -8220,6 +8221,7 @@ function initAiWebMode(){
     var pa=$('aiweb-paste');if(pa)pa.value='';
     var cam=$('aiweb-name-cam');if(cam)cam.value='';
     var st=$('aiweb-status');if(st){st.style.display='none';st.textContent='';}
+    _aiWebSelectedDest=null; // v02.07：重新進入模式時重置選中狀態，避免殘留上次選的AI晶片
     _aiWebRenderDests();
     var fl=$('aiweb-fields-list');
     if(fl)fl.textContent=_aiWebCoreFields(type,_selectedSubtype||'').map(function(f){return f[1];}).join('、');
@@ -8231,6 +8233,7 @@ function aiWebCopyAndOpen(destId){
   if(!subject){toast('請先輸入商品名稱、條碼或關鍵字','er');return;}
   var d=AIWEB_DESTS.filter(function(x){return x.id===destId;})[0];
   if(!d)return;
+  _aiWebSelectedDest=destId;_aiWebRenderDests(); // v02.07：點擊後立即點亮對應晶片
   var promptTxt=_aiWebBuildPrompt(subject);
   var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁：\n1. 在輸入框「貼上」提示詞並送出\n2. 複製 AI 回覆的 JSON 內容\n3. 回到 GameVault 貼到下方框裡，按「解析並匯入」\n\n按「確定」開啟 '+d.label+'。';
   function openIt(){
