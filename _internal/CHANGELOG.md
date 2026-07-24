@@ -1,3 +1,23 @@
+## v02.12 (2026-07-22)
+
+### 變更內容
+尋寶頁右下角 FAB 展開選單，互換「條碼查詢」與「日系資料庫查詢」兩個按鈕的位置（純視覺順序調整，功能與樣式皆未改動）：
+- HTML 順序由 `main→barcode→cd→lens` 改為 `main→cd→barcode→lens`
+- 因容器用 `flex-direction:column-reverse`，視覺呈現（由上到下）從「拍照辨識(粉紅)／日系資料庫(cyan)／條碼查詢(綠)／•••」改為「拍照辨識(粉紅)／條碼查詢(綠)／日系資料庫(cyan)／•••」
+
+### 影響檔案
+- index.html / GameVault_v02_12_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端 UI 順序調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-11 → gamevault-v02-12
+
+### 對應備份
+- _internal/old/v02_11/
+
 ## v02.11 (2026-07-22)
 
 ### 變更內容
@@ -67,24 +87,4 @@
 
 ### 對應備份
 - _internal/old/v02_08/
-
-## v02.08 (2026-07-22)
-
-### 變更內容
-「AI 網頁查詢」建檔模式的「掃描條碼」「拍照辨識名稱」兩個按鈕，同步改成套用 `.genre-chip` 晶片樣式（比照上一版 DeepSeek/GPT/Gemini/Claude 的處理方式），取代原本寫死、且彼此顏色不一致的虛線框樣式（一個紫色系 `rgba(121,134,203,...)`、一個 cyan 系 `rgba(0,229,255,...)`）。這兩個是動作觸發按鈕（點擊即觸發相機/OCR），不是選擇狀態，因此只套用晶片的視覺樣式，不加選中點亮邏輯。
-
-驗證：修改前後 HTML 的 `<div>`／`</div>` 計數差值一致（-18，確認為原檔案既有、非本次修改引入），`<button>` 標籤完全配對；語法檢查通過。
-
-### 影響檔案
-- index.html / GameVault_v02_08_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端 UI 樣式調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-07 → gamevault-v02-08
-
-### 對應備份
-- _internal/old/v02_07/
 
