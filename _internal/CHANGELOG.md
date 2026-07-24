@@ -1,3 +1,25 @@
+## v02.06 (2026-07-22)
+
+### 變更內容
+修正日系資料庫（consoledictionary.com）比對功能的觸發缺口，並改善視覺明顯度：
+- **bug修正**：原本 4 個觸發點（條碼查詢/AI辨識/手動編輯名稱欄位）都只涵蓋「新建立/新識別」流程，**漏了「開啟既有收藏記錄編輯」這個情境**——這種情況下日文名稱欄位早就有值，但因為沒走過任何觸發點，背景查詢從未被呼叫過，導致明明網站上搜得到、App 卻一直停在預設連結狀態。修正後 `renderForm()` 顯示表單時一併呼叫 `cdMaybeAutoSearch()`，涵蓋新建與編輯既有記錄兩種情境；既有的去重邏輯確保表單因編輯其他欄位重繪時不會重複打 API
+- **視覺改善**：預設狀態（尚未查到候選）的網站圖示連結，原本顏色偏淡、字偏小不明顯，改為加上底色與邊框（膠囊形狀，跟候選按鈕視覺呼應但顏色區分），字級與圖示都放大一點
+
+自我檢查：模擬「開啟既有記錄編輯」情境（entry 已有 jp_name 但未經過任何識別流程）驗證會正確觸發查詢，且多次 renderForm 重繪不會重複查詢，皆用檔案內實際程式碼驗證通過。
+
+### 影響檔案
+- index.html / GameVault_v02_06_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端觸發邏輯與樣式修正）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-05 → gamevault-v02-06
+
+### 對應備份
+- _internal/old/v02_05/
+
 ## v02.05 (2026-07-22)
 
 ### 變更內容
@@ -64,26 +86,4 @@
 
 ### 對應備份
 - _internal/old/v02_02/
-
-## v02.02 (2026-07-22)
-
-### 變更內容
-修正 `GameVault/` → `docs/` 搬遷時遺漏的 4 處寫死路徑，導致二手估值市場圖示（Amazon/Mercari/日本樂天/ヤフオク等）全部載入失敗：
-- `GH_ASSET_BASE` 常數（市場圖示 icon 的組合網址基準）：`.../main/GameVault/` → `.../main/docs/`
-- `<head>` 裡 3 個 favicon／apple-touch-icon 連結同步修正
-- 順手修正 `github_deploy.py` 完成訊息殘留的「Netlify」字樣，改為「GitHub Pages」
-
-### 影響檔案
-- index.html / GameVault_v02_02_index.html
-- sw.js
-- _internal/github_deploy.py（訊息文字修正，不影響部署邏輯）
-
-### GS 版本
-- 無（純前端資源路徑修正）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-01 → gamevault-v02-02
-
-### 對應備份
-- _internal/old/v02_01/
 
