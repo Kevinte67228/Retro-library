@@ -571,14 +571,16 @@ body{
 #hunt-fab-wrap{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:300;display:flex;flex-direction:column-reverse;align-items:center;gap:12px}
 #hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #hunt-fab-main:active{transform:scale(.93)}
-#hunt-lens-fab,#hunt-barcode-fab{
+#hunt-lens-fab,#hunt-barcode-fab,#hunt-cd-fab{
   width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
 #hunt-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
 #hunt-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
+#hunt-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:12px;overflow:hidden}
+#hunt-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 #hunt-lens-fab svg,#hunt-barcode-fab svg{width:26px;height:26px}
-#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
 #hunt-fab-wrap.open #hunt-fab-main{transform:rotate(90deg)}
 #hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
@@ -1997,6 +1999,7 @@ body{
       <div id="hunt-fab-wrap">
         <button id="hunt-fab-main" onclick="toggleHuntFab()" aria-label="更多功能" type="button">•••</button>
         <button id="hunt-barcode-fab" onclick="huntFabAction('openBarcodeWebSearch')" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
+        <button id="hunt-cd-fab" onclick="huntFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
         <button id="hunt-lens-fab" onclick="huntFabAction('huntLensStart')" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
       </div>
     </div>
@@ -2365,7 +2368,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.10';
+const APP_VERSION='v02.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7497,6 +7500,42 @@ function cdApplyCandidate(gameId){
       toast('已套用日系資料庫比對結果 ✓','ok',3000);
       aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // v02.04：套用日系資料庫結果後，剩餘空欄位交給AI補齊，比照其他建檔流程結尾
     }).catch(function(){toast('查詢失敗','er');});
+}
+// v02.11：尋寶頁 FAB 日系資料庫查詢彈窗——與 cdApplyCandidate 不同，這裡沒有正在編輯的
+// entry 可以套用，點選候選直接開該遊戲的 consoledictionary.com 詳情頁（外部連結）。
+function openCdWebSearch(){
+  var ov=$('cd-web-ov');if(ov)ov.style.display='flex';
+  var inp=$('cd-web-input');if(inp){inp.value='';inp.focus();}
+  var res=$('cd-web-results');if(res)res.innerHTML='';
+}
+function closeCdWebSearch(){
+  var ov=$('cd-web-ov');if(ov)ov.style.display='none';
+}
+function goCdWebSearch(){
+  var q=($('cd-web-input')&&$('cd-web-input').value||'').trim();
+  if(!q){toast('請輸入商品名稱','er');return;}
+  var res=$('cd-web-results');
+  if(res)res.innerHTML='<div style="text-align:center;color:#7986cb;padding:20px;font-size:13px">查詢中...</div>';
+  var params=new URLSearchParams({action:'cd_search',gameName:q,platform:''});
+  shGetSecP(params)
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(result){
+      if(!result||!result.ok||!result.items||!result.items.length){
+        if(res)res.innerHTML='<div style="text-align:center;color:#7986cb;padding:20px;font-size:13px">查無結果，換個關鍵字試試</div>';
+        return;
+      }
+      if(res)res.innerHTML=result.items.map(function(it){
+        return '<div onclick="_openExternalLink(\''+it.detailUrl+'\')" style="display:flex;gap:10px;padding:10px;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer">'
+          +'<img src="'+esc(it.thumbUrl)+'" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0">'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="color:#e8eaf6;font-weight:700;font-size:14px">'+esc(it.name)+'</div>'
+          +'<div style="color:#9fa8c8;font-size:12px">'+esc(it.platform)+' ・ '+esc(it.developer)+'</div>'
+          +'<div style="color:#69f0ae;font-size:12px">駿河屋参考 ¥'+esc(it.surugayaPrice)+'（'+esc(it.updateDate)+'）</div>'
+          +'</div></div>';
+      }).join('');
+    }).catch(function(){
+      if(res)res.innerHTML='<div style="text-align:center;color:#ff5252;padding:20px;font-size:13px">查詢失敗，請稍後再試</div>';
+    });
 }
 
 function _autoFetchCover(cb){
@@ -15492,6 +15531,28 @@ function _imgToB64(src){
       <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="或手動輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
     </div>
     <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" id="bc-web-go-btn" onclick="goBarcodeWebSearch()" type="button">前往查詢 ↗</button>
+  </div>
+</div>
+
+<!-- v02.11：日系資料庫（consoledictionary.com）查詢彈窗，尋寶頁FAB第三個按鈕。
+     跟建檔頁的cdApplyCandidate不同：這裡沒有正在編輯的entry可以套用，點選候選直接開該遊戲的consoledictionary詳情頁（外部連結）。
+     沿用既有GAS action 'cd_search'，只取結構化欄位（不解析/顯示站方介紹文字段落）。 -->
+<div id="cd-web-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column">
+  <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:16px;font-weight:700;color:#00e5ff;display:flex;align-items:center;gap:8px">
+      <img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt="">
+      コンシューマーゲーム大辞典
+    </div>
+    <button type="button" onclick="closeCdWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
+  </div>
+  <div style="padding:20px 16px;overflow-y:auto">
+    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6">輸入日系遊戲名稱，查詢コンシューマーゲーム大辞典的資料庫（駿河屋參考價、開發商、發售日等），點選候選結果會直接開啟該遊戲的詳情頁。</div>
+    <div class="sw" style="margin:0 0 14px;position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="si" id="cd-web-input" type="text" placeholder="例如：ドラゴンボールZ" onkeydown="if(event.key==='Enter')goCdWebSearch()">
+    </div>
+    <button class="btn bo bw" style="width:100%;border-color:#00e5ff;color:#00e5ff;margin-bottom:16px" id="cd-web-go-btn" onclick="goCdWebSearch()" type="button">🔍 查詢</button>
+    <div id="cd-web-results"></div>
   </div>
 </div>
 
