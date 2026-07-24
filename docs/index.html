@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.05';
+const APP_VERSION='v02.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7441,8 +7441,8 @@ function _cdRenderHintHost(){
   if(_cdState.candidates&&_cdState.candidates.length){
     host.innerHTML='<button type="button" onclick="cdOpenPanel()" style="display:flex;align-items:center;gap:6px;background:rgba(0,229,255,.1);border:1px solid #00e5ff;color:#00e5ff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;margin:6px 16px 10px;cursor:pointer">🇯🇵 找到 '+_cdState.candidates.length+' 筆日系資料庫比對，點此查看</button>';
   }else{
-    host.innerHTML='<a href="https://consoledictionary.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;color:#7986cb;text-decoration:none;font-size:11.5px;margin:6px 16px 10px;padding:4px 2px">'
-      +'<img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" style="width:14px;height:14px;border-radius:3px;flex-shrink:0" alt="">'
+    host.innerHTML='<a href="https://consoledictionary.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:7px;background:rgba(121,134,203,.12);border:1px solid rgba(121,134,203,.5);color:#b8c0f0;text-decoration:none;font-size:12.5px;font-weight:600;border-radius:20px;margin:6px 16px 10px;padding:6px 14px;width:fit-content">'
+      +'<img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" style="width:15px;height:15px;border-radius:3px;flex-shrink:0" alt="">'
       +'<span>可比對 コンシューマーゲーム大辞典（日系資料庫）</span></a>';
   }
 }
@@ -9626,6 +9626,7 @@ function renderForm(){
   });
   _aiAnnotateFields(); // F3：依 _src 標記插入 ✨badge，並對新填入欄位閃爍一次
   _cdMountHintHost(); // v02.05：日系資料庫常駐區塊掛載到日文名稱欄位下方
+  cdMaybeAutoSearch(); // v02.06：表單顯示時一併觸發(涵蓋開啟既有收藏記錄編輯的情境，原本4個觸發點都只涵蓋新建立/新識別，漏了這種情況；已有去重邏輯，不會重複打API)
 }
 // ══ F3：AI 補全視覺回饋 ══
 var _aiFlashed={}; // 已閃爍過的欄位 key，避免重複動畫

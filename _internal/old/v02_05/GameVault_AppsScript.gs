@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v01            ║
+// ║  GameVault — Google Apps Script 後端  v02            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -695,6 +695,12 @@ function dispatchRead(action, p) {
       case 'market_estimate':
         result = marketEstimateProxy(p);
         break;
+      case 'cd_search':
+        result = cdSearchProxy(p.gameName || '', p.platform || '');
+        break;
+      case 'cd_detail':
+        result = cdDetailProxy(p.gameId || '');
+        break;
       case 'ndl_search':
         result = ndlProxy(p.isbn || '');
         break;
@@ -1376,6 +1382,90 @@ function mapGenre(name) {
 }
  
 // ── MobyGames API Proxy ──────────────────────────────────────
+// ── コンシューマーゲーム大辞典 (consoledictionary.com) 日系遊戲資料庫 proxy（v01.02）──
+//   使用者要求：只在建檔區域選日本、且已有遊戲名稱時才查詢；只取結構化欄位（不重製站方介紹文字）。
+//   服務條款（../info/terms）：站方彙整資料歡迎標明出處引用，故 sourceUrl 一律回傳，前端會存入「參考連結」欄位。
+//   GameVault 平台值(v) -> consoledictionary.com 的 console 數字 ID。查無對應的平台不帶 console 篩選，退回純文字搜尋。
+var CD_PLATFORM_MAP = {
+  'PlayStation':11,'PlayStation 2':12,'PlayStation 3':13,'PlayStation 4':14,'PlayStation 5':15,
+  'PlayStation Portable':16,'PlayStation Vita':17,
+  'Famicom':18,'Super Famicom':19,'Nintendo 64':20,'GameCube':21,'Wii':22,'Wii U':23,'Nintendo Switch':24,
+  'Game Boy':25,'Virtual Boy':26,'Game Boy Advance':27,'Nintendo DS':28,'Nintendo 3DS':29,'Famicom Disk System':30,
+  'PC Engine':31,'PC-FX':32,'WonderSwan':33,
+  'Xbox':34,'Xbox 360':35,'Xbox One':36,'Xbox Series X/S':37,
+  'Neo Geo':1,'Neo Geo Pocket':2,'Sega Mega Drive':7,'Sega Saturn':8,'Dreamcast':9,'Sega Game Gear':10,
+  'Sega Master System':89,'Sega CD':92,'Sega 32X':99,'3DO':104,'WonderSwan Color':143
+};
+
+// 搜尋：依遊戲名稱(+可選平台)查詢候選清單，回傳最多8筆結構化摘要（供前端顯示候選讓使用者確認）
+function cdSearchProxy(gameName, platformValue) {
+  if (!gameName) return { error: 'missing gameName' };
+  var consoleId = CD_PLATFORM_MAP[platformValue] || 0;
+  var url = 'https://consoledictionary.com/search/';
+  try {
+    var res = UrlFetchApp.fetch(url, {
+      method: 'post',
+      payload: { page: '1', brand: '', console: String(consoleId), genre: '0', series: '', year: '0', area: 'none', games: gameName },
+      muteHttpExceptions: true
+    });
+    var code = res.getResponseCode();
+    if (code !== 200) return { error: 'HTTP ' + code };
+    var html = res.getContentText('UTF-8');
+    var items = [];
+    var re = /<li class="software-item">\s*<a href="([^"]+)">\s*<div class="package software-package"><img src="([^"]+)"[^>]*alt="([^"]*)"[^>]*>\s*<\/div>\s*<div class="info software-info">\s*<div class="platform-icon[^"]*">([^<]*)<\/div>\s*<div class="name">([^<]*)<\/div>\s*<div class="seller[^"]*">([^<]*)<\/div>\s*<div class="price surugaya">[^<]*<span class="number">([^<]*)<\/span>[^<]*<\/div>\s*<div class="update">[^<]*<span>([^<]*)<\/span>[^<]*<\/div>/g;
+    var m;
+    while ((m = re.exec(html)) !== null && items.length < 8) {
+      var idMatch = m[1].match(/\/games\/(\d+)/);
+      if (!idMatch) continue;
+      items.push({
+        id: idMatch[1],
+        thumbUrl: m[2].replace(/^\.\.\//, 'https://consoledictionary.com/'),
+        platform: m[4].trim(),
+        name: m[5].trim(),
+        developer: m[6].trim(),
+        surugayaPrice: m[7].trim(),
+        updateDate: m[8].trim(),
+        detailUrl: 'https://consoledictionary.com/games/' + idMatch[1]
+      });
+    }
+    return { ok: true, items: items };
+  } catch (e) { return { error: e.message }; }
+}
+
+// 詳情：依遊戲ID抓取結構化資料（解析 schema.org JSON-LD，不解析/回傳站方的介紹文字段落）
+function cdDetailProxy(gameId) {
+  if (!gameId) return { error: 'missing gameId' };
+  var url = 'https://consoledictionary.com/games/' + encodeURIComponent(gameId);
+  try {
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var code = res.getResponseCode();
+    if (code !== 200) return { error: 'HTTP ' + code };
+    var html = res.getContentText('UTF-8');
+    var scripts = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) || [];
+    for (var i = 0; i < scripts.length; i++) {
+      var jsonText = scripts[i].replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
+      var data;
+      try { data = JSON.parse(jsonText); } catch (e2) { continue; }
+      var types = Array.isArray(data['@type']) ? data['@type'] : [data['@type']];
+      if (types.indexOf('VideoGame') === -1) continue;
+      return {
+        ok: true,
+        name: data.name || '',
+        image: data.image || '',
+        publisher: (data.publisher && data.publisher.name) || (data.brand && data.brand.name) || '',
+        developer: (data.gameDeveloper && data.gameDeveloper[0] && data.gameDeveloper[0].name) || '',
+        genre: Array.isArray(data.genre) ? data.genre.join('、') : (data.genre || ''),
+        platform: data.gamePlatform || '',
+        releaseDate: data.releaseDate || '',
+        surugayaPrice: (data.offers && data.offers.price) || '',
+        priceCurrency: (data.offers && data.offers.priceCurrency) || '',
+        sourceUrl: url
+      };
+    }
+    return { error: '找不到遊戲資料(頁面結構可能已變更)' };
+  } catch (e) { return { error: e.message }; }
+}
+
 function mobygamesProxy(q, key) {
   if (!q || !key) return { error: 'missing params' };
   const url = 'https://api.mobygames.com/v1/games?api_key=' + key +
