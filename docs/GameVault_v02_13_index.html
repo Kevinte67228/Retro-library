@@ -571,14 +571,16 @@ body{
 #hunt-fab-wrap{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:300;display:flex;flex-direction:column-reverse;align-items:center;gap:12px}
 #hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #hunt-fab-main:active{transform:scale(.93)}
-#hunt-lens-fab,#hunt-barcode-fab{
+#hunt-lens-fab,#hunt-barcode-fab,#hunt-cd-fab{
   width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
 #hunt-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
 #hunt-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
+#hunt-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:12px;overflow:hidden}
+#hunt-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 #hunt-lens-fab svg,#hunt-barcode-fab svg{width:26px;height:26px}
-#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
 #hunt-fab-wrap.open #hunt-fab-main{transform:rotate(90deg)}
 #hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
@@ -1077,12 +1079,12 @@ body{
             <input class="fi" id="aiweb-subject" type="text" placeholder="例如：薩爾達傳說 曠野之息"
               style="font-size:14px;margin-bottom:8px">
             <div style="display:flex;gap:8px;margin-bottom:12px">
-              <button type="button" onclick="aiWebScanBarcode()"
-                style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(121,134,203,.08);border:1.5px dashed rgba(121,134,203,.35);border-radius:10px;padding:10px 8px;cursor:pointer;color:#7986cb;font-size:12px;font-family:inherit">📷 掃描條碼</button>
-              <button type="button" onclick="document.getElementById('aiweb-name-cam').click()"
-                style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,229,255,.08);border:1.5px dashed rgba(0,229,255,.35);border-radius:10px;padding:10px 8px;cursor:pointer;color:#00e5ff;font-size:12px;font-family:inherit">📷 拍照辨識名稱</button>
+              <button type="button" id="aiweb-btn-barcode" onclick="aiWebScanBarcode()" class="genre-chip"
+                style="flex:1;justify-content:center;height:42px;font-size:12px;font-family:inherit">📷 掃描條碼</button>
+              <button type="button" id="aiweb-btn-photo" onclick="document.getElementById('aiweb-name-cam').click()" class="genre-chip"
+                style="flex:1;justify-content:center;height:42px;font-size:12px;font-family:inherit">📷 拍照辨識名稱</button>
               <input type="file" accept="image/*" capture="environment" id="aiweb-name-cam" style="display:none"
-                onchange="nameFieldOCR(this,'aiweb-subject','zh')">
+                onchange="aiWebNameOCR(this)">
             </div>
             <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手：自動複製提示詞並開啟其網頁，貼上送出後把回覆的 JSON 複製回來</div>
             <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
@@ -1723,6 +1725,12 @@ body{
           <div class="shlp" style="margin-top:8px">取消勾選可以在「二手估值市場參考」區塊隱藏該市場（含內建 8 個與你自訂的市場），不會刪除資料，隨時可以再勾選回來。用 ↑↓ 按鈕可以調整顯示順序。</div>
           <div class="shlp" style="margin-top:6px">搜尋時會依分類自動加入限定詞提高準確度：遊戲/主機帶入平台；週邊/書籍/原聲帶/動漫美術/公仔帶入分類關鍵字（依市場語言自動切換中/日文）。</div>
         </div>
+        <div class="srow" style="margin-top:8px">
+          <div class="srl">📋 欄位區塊顯示設定</div>
+          <div id="grp-vis-list" style="margin-top:4px"></div>
+          <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="grpVisResetAll()" type="button">全部顯示</button>
+          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。所有分類共用這組設定（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。</div>
+        </div>
         <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
           </div>
         </div>
@@ -1996,6 +2004,7 @@ body{
       <div id="hunt-body"></div>
       <div id="hunt-fab-wrap">
         <button id="hunt-fab-main" onclick="toggleHuntFab()" aria-label="更多功能" type="button">•••</button>
+        <button id="hunt-cd-fab" onclick="huntFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
         <button id="hunt-barcode-fab" onclick="huntFabAction('openBarcodeWebSearch')" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
         <button id="hunt-lens-fab" onclick="huntFabAction('huntLensStart')" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
       </div>
@@ -2365,7 +2374,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.07';
+const APP_VERSION='v02.13';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4236,6 +4245,52 @@ function _marketOrderedList(){
   var rest=all.filter(function(n){return ordered.indexOf(n)<0;});
   return ordered.concat(rest);
 }
+// ── v02.13：欄位區塊（群組）顯示設定 ──
+// 一組設定同時作用於「建檔/編輯表單」與「收藏詳情頁」；隱藏只影響顯示，資料一律保留。
+// 所有分類共用同一份清單（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。
+var ALL_FIELD_GROUPS=['圖片紀錄','識別資訊','書籍資訊','主機資訊','週邊資訊','版本規格','規格','硬體規格','遊戲規格','內容資訊','音樂資訊','影音資訊','模型資訊','商店資訊','檔案資訊','追加內容','發行資訊','發行廠商','出版資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','運作狀態','個人記錄','關聯商品','補充資訊'];
+function _groupHiddenSet(){
+  var o={};
+  ((cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden:[]).forEach(function(n){o[n]=1;});
+  return o;
+}
+function isGroupHidden(g){return !!_groupHiddenSet()[g];}
+function grpVisRenderList(){
+  var box=$('grp-vis-list');if(!box)return;
+  var hidden=_groupHiddenSet();
+  box.innerHTML=ALL_FIELD_GROUPS.map(function(n){
+    var on=!hidden[n];
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
+      '<input type="checkbox" data-grp="'+esc(n)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
+      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n)+'</span>'+
+    '</label>';
+  }).join('');
+}
+function grpVisToggle(cb){
+  var name=cb.dataset.grp;if(!name)return;
+  var arr=(cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden.slice():[];
+  if(cb.checked){arr=arr.filter(function(n){return n!==name;});}
+  else if(arr.indexOf(name)<0)arr.push(name);
+  cfg.groupHidden=arr;
+  _persistCfg();
+  _grpVisApplyLive();
+}
+function grpVisResetAll(){
+  cfg.groupHidden=[];
+  _persistCfg();
+  grpVisRenderList();
+  _grpVisApplyLive();
+  toast('已恢復顯示所有欄位區塊','ok',2500);
+}
+// 設定變更後即時反映到目前開著的畫面（表單或詳情頁），不必重開
+function _grpVisApplyLive(){
+  try{
+    var fs=$('form-sec');
+    if(fs&&fs.style.display!=='none'&&typeof renderForm==='function')renderForm();
+    var ds=$('dsheet');
+    if(ds&&ds.classList.contains('on')&&detailRow!=null&&typeof showDetail==='function')showDetail(detailRow,true);
+  }catch(e){}
+}
 function mktVisRenderList(){
   var box=$('mkt-vis-list');if(!box)return;
   var hidden=_marketHiddenSet();
@@ -4278,6 +4333,7 @@ function mktVisToggle(cb){
 function cmRenderList(){
   var box=$('cm-list');
   mktVisRenderList(); // v54.81：自訂市場清單有異動時，同步更新「市場顯示設定」清單（放最前面，不受下方早期 return 影響）
+  grpVisRenderList(); // v02.13：同步渲染「欄位區塊顯示設定」清單（同樣放最前面，不受下方早期 return 影響）
   if(!box)return;
   var list=_cmList();
   if(!list.length){box.innerHTML='<div class="shlp" style="margin:4px 0">尚未新增任何自訂市場。</div>';return;}
@@ -7498,6 +7554,42 @@ function cdApplyCandidate(gameId){
       aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // v02.04：套用日系資料庫結果後，剩餘空欄位交給AI補齊，比照其他建檔流程結尾
     }).catch(function(){toast('查詢失敗','er');});
 }
+// v02.11：尋寶頁 FAB 日系資料庫查詢彈窗——與 cdApplyCandidate 不同，這裡沒有正在編輯的
+// entry 可以套用，點選候選直接開該遊戲的 consoledictionary.com 詳情頁（外部連結）。
+function openCdWebSearch(){
+  var ov=$('cd-web-ov');if(ov)ov.style.display='flex';
+  var inp=$('cd-web-input');if(inp){inp.value='';inp.focus();}
+  var res=$('cd-web-results');if(res)res.innerHTML='';
+}
+function closeCdWebSearch(){
+  var ov=$('cd-web-ov');if(ov)ov.style.display='none';
+}
+function goCdWebSearch(){
+  var q=($('cd-web-input')&&$('cd-web-input').value||'').trim();
+  if(!q){toast('請輸入商品名稱','er');return;}
+  var res=$('cd-web-results');
+  if(res)res.innerHTML='<div style="text-align:center;color:#7986cb;padding:20px;font-size:13px">查詢中...</div>';
+  var params=new URLSearchParams({action:'cd_search',gameName:q,platform:''});
+  shGetSecP(params)
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(result){
+      if(!result||!result.ok||!result.items||!result.items.length){
+        if(res)res.innerHTML='<div style="text-align:center;color:#7986cb;padding:20px;font-size:13px">查無結果，換個關鍵字試試</div>';
+        return;
+      }
+      if(res)res.innerHTML=result.items.map(function(it){
+        return '<div onclick="_openExternalLink(\''+it.detailUrl+'\')" style="display:flex;gap:10px;padding:10px;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer">'
+          +'<img src="'+esc(it.thumbUrl)+'" style="width:56px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0">'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="color:#e8eaf6;font-weight:700;font-size:14px">'+esc(it.name)+'</div>'
+          +'<div style="color:#9fa8c8;font-size:12px">'+esc(it.platform)+' ・ '+esc(it.developer)+'</div>'
+          +'<div style="color:#69f0ae;font-size:12px">駿河屋参考 ¥'+esc(it.surugayaPrice)+'（'+esc(it.updateDate)+'）</div>'
+          +'</div></div>';
+      }).join('');
+    }).catch(function(){
+      if(res)res.innerHTML='<div style="text-align:center;color:#ff5252;padding:20px;font-size:13px">查詢失敗，請稍後再試</div>';
+    });
+}
 
 function _autoFetchCover(cb){
   if(entry.cover_img){if(cb)cb(false);return;}
@@ -8161,6 +8253,7 @@ var AIWEB_DESTS=[
   {id:'claude',label:'Claude',url:'https://claude.ai/new'}
 ];
 var _aiWebSelectedDest=null; // v02.07：記錄目前選中哪個AI助手，供晶片點亮視覺呈現
+var _aiWebInputMethod=null; // v02.09：記錄剛剛「成功」用哪種方式產生輸入內容('barcode'/'photo')，供晶片點亮
 // 核心識別欄位：排除個人記錄（購入日期/價格/保管地點）、收藏狀態、品相完整度、關聯商品、圖片類欄位
 function _aiWebCoreFields(cat,subtype){
   var excludeGroup=/收藏狀態|品相|完整度|個人記錄|關聯商品|圖片/;
@@ -8201,6 +8294,12 @@ function _aiWebRenderDests(){
       'style="height:42px;justify-content:center;font-size:12px;font-family:inherit">'+esc(d.label)+'</button>';
   }).join('');
 }
+// v02.09：依 _aiWebInputMethod 點亮對應的輸入方式晶片('barcode'/'photo')
+function _aiWebRenderInputMethod(){
+  var bBtn=$('aiweb-btn-barcode'),pBtn=$('aiweb-btn-photo');
+  if(bBtn)bBtn.classList.toggle('on',_aiWebInputMethod==='barcode');
+  if(pBtn)pBtn.classList.toggle('on',_aiWebInputMethod==='photo');
+}
 // 條碼掃描：沿用既有 openFieldScanner 即時掃描機制（比照 barScanFromBtn）
 function aiWebScanBarcode(){
   openFieldScanner({mode:'barcode',inputId:'aiweb-subject',
@@ -8208,7 +8307,11 @@ function aiWebScanBarcode(){
     subtitle:'對準包裝上的 EAN / JAN / ISBN',
     openingText:'正在開啟相機...',
     detectText:'正在偵測商品條碼',
-    resultToast:function(v){return '已帶入條碼：'+v;}});
+    resultToast:function(v){_aiWebInputMethod='barcode';_aiWebRenderInputMethod();return '已帶入條碼：'+v;}});
+}
+// v02.09：拍照辨識名稱的 aiweb 專屬包裹函式，OCR成功後才點亮晶片（失敗/取消不點亮，避免誤導）
+function aiWebNameOCR(input){
+  nameFieldOCR(input,'aiweb-subject','zh',function(){_aiWebInputMethod='photo';_aiWebRenderInputMethod();});
 }
 function initAiWebMode(){
   pickTypeAndPlatform('aiweb',function(type,platform){
@@ -8222,6 +8325,7 @@ function initAiWebMode(){
     var cam=$('aiweb-name-cam');if(cam)cam.value='';
     var st=$('aiweb-status');if(st){st.style.display='none';st.textContent='';}
     _aiWebSelectedDest=null; // v02.07：重新進入模式時重置選中狀態，避免殘留上次選的AI晶片
+    _aiWebInputMethod=null;_aiWebRenderInputMethod(); // v02.09：同步重置輸入方式晶片
     _aiWebRenderDests();
     var fl=$('aiweb-fields-list');
     if(fl)fl.textContent=_aiWebCoreFields(type,_selectedSubtype||'').map(function(f){return f[1];}).join('、');
@@ -9615,7 +9719,7 @@ function renderForm(){
   // [0]=圖片紀錄、[1]=識別資訊（書籍/主機/週邊分別叫書籍資訊/主機資訊/週邊資訊，但同樣是排第二個）
   // 其餘區塊一律預設收折，避免建檔一開始就看到落落長的表單
   var expandByDefault=[_G[0],_G[1]].filter(Boolean);
-  _G.forEach(function(g){
+  _G.filter(function(g){return !isGroupHidden(g);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定（隱藏只影響顯示，資料保留）
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
@@ -13549,11 +13653,11 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
   });
   var sectionHtml='';
-  if(relBlock){
+  if(relBlock&&!isGroupHidden('關聯商品')){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定
     sectionHtml+='<div class="detail-section"><div class="detail-section-title">關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
   }
   sectionHtml+=marketReferenceHtml(d);
-  sectionHtml+=sectionOrder.map(function(g){
+  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g);}).map(function(g){ // v02.13：套用欄位區塊顯示設定
     return '<div class="detail-section"><div class="detail-section-title">'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
   }).join('');
   $('dgrid').innerHTML=html+sectionHtml;
@@ -14259,9 +14363,8 @@ function _bcWebRenderDestTabs(){
   if(!wrap1||!wrap2)return;
   function btnHtml(d){
     var on=d.id===_bcWebDest;
-    var onColor=d.group===1?'#69f0ae':'#7c4dff';
-    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="height:44px;padding:4px;border-radius:10px;font-size:10px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+
-      (on?('background:'+onColor+';color:#001018;border:none'):'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(d.label)+'</button>';
+    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" class="genre-chip'+(on?' on':'')+'" '+
+      'style="height:44px;justify-content:center;text-align:center;font-size:12px;font-family:inherit">'+esc(d.label)+'</button>';
   }
   wrap1.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===1;}).map(btnHtml).join('');
   wrap2.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===2;}).map(btnHtml).join('');
@@ -14632,7 +14735,7 @@ function huntLensToHunt(){
 }
 // ── 尋寶品名 OCR（中/日文）：沿用既有 Gemini 視覺（callGemini 走 GEMINI_SCHEMA 結構化輸出），
 //    辨識後取對應語系名稱欄位帶入。中文欄取 zh_name→primary_name；日文欄取 jp_name→primary_name。
-function _nameFieldOCR(input,targetId,lang){
+function _nameFieldOCR(input,targetId,lang,onSuccess){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
   if(!cfg.gkey){toast('需要 Gemini 金鑰才能 OCR 辨識品名（設定中填入）','er',4000);return;}
   var prompt;
@@ -14656,7 +14759,7 @@ function _nameFieldOCR(input,targetId,lang){
             else txt=res.zh_name||res.primary_name||res.en_name||'';
             txt=(''+txt).replace(/^[\s"'「『]+|[\s"'」』]+$/g,'').trim();
             var langLbl=(lang==='jp'?'日文':lang==='en'?'英文':'中文');
-            if(txt){var inp=$(targetId);if(inp){inp.value=txt;inp.dispatchEvent(new Event('input'));}toast('✓ 已帶入'+langLbl+'品名','ok',3000);}
+            if(txt){var inp=$(targetId);if(inp){inp.value=txt;inp.dispatchEvent(new Event('input'));}toast('✓ 已帶入'+langLbl+'品名','ok',3000);if(onSuccess)onSuccess();}
             else toast('未辨識到品名，請重拍或手動輸入','',3000);
           }).catch(function(e){
             noLoad();
@@ -14668,7 +14771,7 @@ function _nameFieldOCR(input,targetId,lang){
     r.readAsDataURL(blob);
   }).catch(function(){});
 }
-function nameFieldOCR(input,targetId,lang){_nameFieldOCR(input,targetId,lang);}
+function nameFieldOCR(input,targetId,lang,onSuccess){_nameFieldOCR(input,targetId,lang,onSuccess);}
 // v40.27：出版社／作者／型號等文字欄位 OCR 改為「拍照→裁切→Gemini 辨識」流程（沿用品名 OCR 機制，廢棄掃描框）
 function _textFieldOCR(input,targetId,fieldKey){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
@@ -15481,6 +15584,28 @@ function _imgToB64(src){
       <input class="si" id="barcode-web-input" type="text" inputmode="numeric" placeholder="或手動輸入條碼，如 4902370540734" onkeydown="if(event.key==='Enter')goBarcodeWebSearch()">
     </div>
     <button class="btn bo bw" style="width:100%;border-color:#69f0ae;color:#69f0ae" id="bc-web-go-btn" onclick="goBarcodeWebSearch()" type="button">前往查詢 ↗</button>
+  </div>
+</div>
+
+<!-- v02.11：日系資料庫（consoledictionary.com）查詢彈窗，尋寶頁FAB第三個按鈕。
+     跟建檔頁的cdApplyCandidate不同：這裡沒有正在編輯的entry可以套用，點選候選直接開該遊戲的consoledictionary詳情頁（外部連結）。
+     沿用既有GAS action 'cd_search'，只取結構化欄位（不解析/顯示站方介紹文字段落）。 -->
+<div id="cd-web-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column">
+  <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div style="font-size:16px;font-weight:700;color:#00e5ff;display:flex;align-items:center;gap:8px">
+      <img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" style="width:20px;height:20px;border-radius:4px" alt="">
+      コンシューマーゲーム大辞典
+    </div>
+    <button type="button" onclick="closeCdWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
+  </div>
+  <div style="padding:20px 16px;overflow-y:auto">
+    <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6">輸入日系遊戲名稱，查詢コンシューマーゲーム大辞典的資料庫（駿河屋參考價、開發商、發售日等），點選候選結果會直接開啟該遊戲的詳情頁。</div>
+    <div class="sw" style="margin:0 0 14px;position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="si" id="cd-web-input" type="text" placeholder="例如：ドラゴンボールZ" onkeydown="if(event.key==='Enter')goCdWebSearch()">
+    </div>
+    <button class="btn bo bw" style="width:100%;border-color:#00e5ff;color:#00e5ff;margin-bottom:16px" id="cd-web-go-btn" onclick="goCdWebSearch()" type="button">🔍 查詢</button>
+    <div id="cd-web-results"></div>
   </div>
 </div>
 

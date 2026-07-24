@@ -1725,6 +1725,12 @@ body{
           <div class="shlp" style="margin-top:8px">取消勾選可以在「二手估值市場參考」區塊隱藏該市場（含內建 8 個與你自訂的市場），不會刪除資料，隨時可以再勾選回來。用 ↑↓ 按鈕可以調整顯示順序。</div>
           <div class="shlp" style="margin-top:6px">搜尋時會依分類自動加入限定詞提高準確度：遊戲/主機帶入平台；週邊/書籍/原聲帶/動漫美術/公仔帶入分類關鍵字（依市場語言自動切換中/日文）。</div>
         </div>
+        <div class="srow" style="margin-top:8px">
+          <div class="srl">📋 欄位區塊顯示設定</div>
+          <div id="grp-vis-list" style="margin-top:4px"></div>
+          <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="grpVisResetAll()" type="button">全部顯示</button>
+          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。所有分類共用這組設定（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。</div>
+        </div>
         <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
           </div>
         </div>
@@ -2368,7 +2374,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.12';
+const APP_VERSION='v02.13';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4239,6 +4245,52 @@ function _marketOrderedList(){
   var rest=all.filter(function(n){return ordered.indexOf(n)<0;});
   return ordered.concat(rest);
 }
+// ── v02.13：欄位區塊（群組）顯示設定 ──
+// 一組設定同時作用於「建檔/編輯表單」與「收藏詳情頁」；隱藏只影響顯示，資料一律保留。
+// 所有分類共用同一份清單（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。
+var ALL_FIELD_GROUPS=['圖片紀錄','識別資訊','書籍資訊','主機資訊','週邊資訊','版本規格','規格','硬體規格','遊戲規格','內容資訊','音樂資訊','影音資訊','模型資訊','商店資訊','檔案資訊','追加內容','發行資訊','發行廠商','出版資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','運作狀態','個人記錄','關聯商品','補充資訊'];
+function _groupHiddenSet(){
+  var o={};
+  ((cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden:[]).forEach(function(n){o[n]=1;});
+  return o;
+}
+function isGroupHidden(g){return !!_groupHiddenSet()[g];}
+function grpVisRenderList(){
+  var box=$('grp-vis-list');if(!box)return;
+  var hidden=_groupHiddenSet();
+  box.innerHTML=ALL_FIELD_GROUPS.map(function(n){
+    var on=!hidden[n];
+    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
+      '<input type="checkbox" data-grp="'+esc(n)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
+      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n)+'</span>'+
+    '</label>';
+  }).join('');
+}
+function grpVisToggle(cb){
+  var name=cb.dataset.grp;if(!name)return;
+  var arr=(cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden.slice():[];
+  if(cb.checked){arr=arr.filter(function(n){return n!==name;});}
+  else if(arr.indexOf(name)<0)arr.push(name);
+  cfg.groupHidden=arr;
+  _persistCfg();
+  _grpVisApplyLive();
+}
+function grpVisResetAll(){
+  cfg.groupHidden=[];
+  _persistCfg();
+  grpVisRenderList();
+  _grpVisApplyLive();
+  toast('已恢復顯示所有欄位區塊','ok',2500);
+}
+// 設定變更後即時反映到目前開著的畫面（表單或詳情頁），不必重開
+function _grpVisApplyLive(){
+  try{
+    var fs=$('form-sec');
+    if(fs&&fs.style.display!=='none'&&typeof renderForm==='function')renderForm();
+    var ds=$('dsheet');
+    if(ds&&ds.classList.contains('on')&&detailRow!=null&&typeof showDetail==='function')showDetail(detailRow,true);
+  }catch(e){}
+}
 function mktVisRenderList(){
   var box=$('mkt-vis-list');if(!box)return;
   var hidden=_marketHiddenSet();
@@ -4281,6 +4333,7 @@ function mktVisToggle(cb){
 function cmRenderList(){
   var box=$('cm-list');
   mktVisRenderList(); // v54.81：自訂市場清單有異動時，同步更新「市場顯示設定」清單（放最前面，不受下方早期 return 影響）
+  grpVisRenderList(); // v02.13：同步渲染「欄位區塊顯示設定」清單（同樣放最前面，不受下方早期 return 影響）
   if(!box)return;
   var list=_cmList();
   if(!list.length){box.innerHTML='<div class="shlp" style="margin:4px 0">尚未新增任何自訂市場。</div>';return;}
@@ -9666,7 +9719,7 @@ function renderForm(){
   // [0]=圖片紀錄、[1]=識別資訊（書籍/主機/週邊分別叫書籍資訊/主機資訊/週邊資訊，但同樣是排第二個）
   // 其餘區塊一律預設收折，避免建檔一開始就看到落落長的表單
   var expandByDefault=[_G[0],_G[1]].filter(Boolean);
-  _G.forEach(function(g){
+  _G.filter(function(g){return !isGroupHidden(g);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定（隱藏只影響顯示，資料保留）
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
@@ -13600,11 +13653,11 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
   });
   var sectionHtml='';
-  if(relBlock){
+  if(relBlock&&!isGroupHidden('關聯商品')){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定
     sectionHtml+='<div class="detail-section"><div class="detail-section-title">關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
   }
   sectionHtml+=marketReferenceHtml(d);
-  sectionHtml+=sectionOrder.map(function(g){
+  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g);}).map(function(g){ // v02.13：套用欄位區塊顯示設定
     return '<div class="detail-section"><div class="detail-section-title">'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
   }).join('');
   $('dgrid').innerHTML=html+sectionHtml;
