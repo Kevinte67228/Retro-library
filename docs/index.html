@@ -1077,12 +1077,12 @@ body{
             <input class="fi" id="aiweb-subject" type="text" placeholder="例如：薩爾達傳說 曠野之息"
               style="font-size:14px;margin-bottom:8px">
             <div style="display:flex;gap:8px;margin-bottom:12px">
-              <button type="button" onclick="aiWebScanBarcode()" class="genre-chip"
+              <button type="button" id="aiweb-btn-barcode" onclick="aiWebScanBarcode()" class="genre-chip"
                 style="flex:1;justify-content:center;height:42px;font-size:12px;font-family:inherit">📷 掃描條碼</button>
-              <button type="button" onclick="document.getElementById('aiweb-name-cam').click()" class="genre-chip"
+              <button type="button" id="aiweb-btn-photo" onclick="document.getElementById('aiweb-name-cam').click()" class="genre-chip"
                 style="flex:1;justify-content:center;height:42px;font-size:12px;font-family:inherit">📷 拍照辨識名稱</button>
               <input type="file" accept="image/*" capture="environment" id="aiweb-name-cam" style="display:none"
-                onchange="nameFieldOCR(this,'aiweb-subject','zh')">
+                onchange="aiWebNameOCR(this)">
             </div>
             <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手：自動複製提示詞並開啟其網頁，貼上送出後把回覆的 JSON 複製回來</div>
             <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
@@ -2365,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.08';
+const APP_VERSION='v02.09';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8161,6 +8161,7 @@ var AIWEB_DESTS=[
   {id:'claude',label:'Claude',url:'https://claude.ai/new'}
 ];
 var _aiWebSelectedDest=null; // v02.07：記錄目前選中哪個AI助手，供晶片點亮視覺呈現
+var _aiWebInputMethod=null; // v02.09：記錄剛剛「成功」用哪種方式產生輸入內容('barcode'/'photo')，供晶片點亮
 // 核心識別欄位：排除個人記錄（購入日期/價格/保管地點）、收藏狀態、品相完整度、關聯商品、圖片類欄位
 function _aiWebCoreFields(cat,subtype){
   var excludeGroup=/收藏狀態|品相|完整度|個人記錄|關聯商品|圖片/;
@@ -8201,6 +8202,12 @@ function _aiWebRenderDests(){
       'style="height:42px;justify-content:center;font-size:12px;font-family:inherit">'+esc(d.label)+'</button>';
   }).join('');
 }
+// v02.09：依 _aiWebInputMethod 點亮對應的輸入方式晶片('barcode'/'photo')
+function _aiWebRenderInputMethod(){
+  var bBtn=$('aiweb-btn-barcode'),pBtn=$('aiweb-btn-photo');
+  if(bBtn)bBtn.classList.toggle('on',_aiWebInputMethod==='barcode');
+  if(pBtn)pBtn.classList.toggle('on',_aiWebInputMethod==='photo');
+}
 // 條碼掃描：沿用既有 openFieldScanner 即時掃描機制（比照 barScanFromBtn）
 function aiWebScanBarcode(){
   openFieldScanner({mode:'barcode',inputId:'aiweb-subject',
@@ -8208,7 +8215,11 @@ function aiWebScanBarcode(){
     subtitle:'對準包裝上的 EAN / JAN / ISBN',
     openingText:'正在開啟相機...',
     detectText:'正在偵測商品條碼',
-    resultToast:function(v){return '已帶入條碼：'+v;}});
+    resultToast:function(v){_aiWebInputMethod='barcode';_aiWebRenderInputMethod();return '已帶入條碼：'+v;}});
+}
+// v02.09：拍照辨識名稱的 aiweb 專屬包裹函式，OCR成功後才點亮晶片（失敗/取消不點亮，避免誤導）
+function aiWebNameOCR(input){
+  nameFieldOCR(input,'aiweb-subject','zh',function(){_aiWebInputMethod='photo';_aiWebRenderInputMethod();});
 }
 function initAiWebMode(){
   pickTypeAndPlatform('aiweb',function(type,platform){
@@ -8222,6 +8233,7 @@ function initAiWebMode(){
     var cam=$('aiweb-name-cam');if(cam)cam.value='';
     var st=$('aiweb-status');if(st){st.style.display='none';st.textContent='';}
     _aiWebSelectedDest=null; // v02.07：重新進入模式時重置選中狀態，避免殘留上次選的AI晶片
+    _aiWebInputMethod=null;_aiWebRenderInputMethod(); // v02.09：同步重置輸入方式晶片
     _aiWebRenderDests();
     var fl=$('aiweb-fields-list');
     if(fl)fl.textContent=_aiWebCoreFields(type,_selectedSubtype||'').map(function(f){return f[1];}).join('、');
@@ -14632,7 +14644,7 @@ function huntLensToHunt(){
 }
 // ── 尋寶品名 OCR（中/日文）：沿用既有 Gemini 視覺（callGemini 走 GEMINI_SCHEMA 結構化輸出），
 //    辨識後取對應語系名稱欄位帶入。中文欄取 zh_name→primary_name；日文欄取 jp_name→primary_name。
-function _nameFieldOCR(input,targetId,lang){
+function _nameFieldOCR(input,targetId,lang,onSuccess){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
   if(!cfg.gkey){toast('需要 Gemini 金鑰才能 OCR 辨識品名（設定中填入）','er',4000);return;}
   var prompt;
@@ -14656,7 +14668,7 @@ function _nameFieldOCR(input,targetId,lang){
             else txt=res.zh_name||res.primary_name||res.en_name||'';
             txt=(''+txt).replace(/^[\s"'「『]+|[\s"'」』]+$/g,'').trim();
             var langLbl=(lang==='jp'?'日文':lang==='en'?'英文':'中文');
-            if(txt){var inp=$(targetId);if(inp){inp.value=txt;inp.dispatchEvent(new Event('input'));}toast('✓ 已帶入'+langLbl+'品名','ok',3000);}
+            if(txt){var inp=$(targetId);if(inp){inp.value=txt;inp.dispatchEvent(new Event('input'));}toast('✓ 已帶入'+langLbl+'品名','ok',3000);if(onSuccess)onSuccess();}
             else toast('未辨識到品名，請重拍或手動輸入','',3000);
           }).catch(function(e){
             noLoad();
@@ -14668,7 +14680,7 @@ function _nameFieldOCR(input,targetId,lang){
     r.readAsDataURL(blob);
   }).catch(function(){});
 }
-function nameFieldOCR(input,targetId,lang){_nameFieldOCR(input,targetId,lang);}
+function nameFieldOCR(input,targetId,lang,onSuccess){_nameFieldOCR(input,targetId,lang,onSuccess);}
 // v40.27：出版社／作者／型號等文字欄位 OCR 改為「拍照→裁切→Gemini 辨識」流程（沿用品名 OCR 機制，廢棄掃描框）
 function _textFieldOCR(input,targetId,fieldKey){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
