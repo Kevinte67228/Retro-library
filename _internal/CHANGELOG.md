@@ -1,3 +1,25 @@
+## v02.10 (2026-07-22)
+
+### 變更內容
+「條碼查詢」彈窗（掃碼查無資料時的輔助查詢視窗）的 8 個目的地按鈕，統一改用跟「AI 網頁查詢」頁面一致的 `.genre-chip` 晶片樣式：
+- 這裡原本是**獨立的一套實作**（`_bcWebRenderDestTabs`），跟「AI 網頁查詢」頁面的 `_aiWebRenderDests` 各自維護重複邏輯，風格因此不一致——第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）選中時填綠色、第二排 AI 助手（DeepSeek/GPT/Gemini/Claude）選中時填紫色，皆為寫死的 inline 樣式
+- 改為統一套用 `.genre-chip` class，兩排都跟整體 App 風格一致（cyan 選中效果），拿掉舊的群組色碼邏輯
+
+自我檢查：兩排晶片渲染數量、預設選中狀態、切換選中時正確互斥熄滅、確認無殘留舊 inline 背景色，皆用檔案內實際程式碼驗證通過。
+
+### 影響檔案
+- index.html / GameVault_v02_10_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端 UI 樣式統一）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-09 → gamevault-v02-10
+
+### 對應備份
+- _internal/old/v02_09/
+
 ## v02.09 (2026-07-22)
 
 ### 變更內容
@@ -63,28 +85,4 @@
 
 ### 對應備份
 - _internal/old/v02_05/
-
-## v02.05 (2026-07-22)
-
-### 變更內容
-日系資料庫（consoledictionary.com）比對提示區塊改為**常駐顯示**，並移到「日文名稱」欄位正下方：
-- 原本只在查到候選結果時才在表單頂部跳出的提示按鈕，改成動態掛載在 `fg-jp_name` 欄位容器後面，`renderForm()` 每次重繪都會呼叫 `_cdMountHintHost()` 重新掛載（先移除舊的避免重複／殘留在錯誤分類下）
-- 只有「遊戲分類＋地區日本」時才顯示這個區塊，其餘情況完全不掛載
-- **常駐兩種狀態**：尚未查到候選時顯示 consoledictionary.com 的網站圖示＋連結（可直接點去官網）；查到候選後變成「🇯🇵 找到 N 筆日系資料庫比對，點此查看」的可點擊按鈕
-- `cdMaybeAutoSearch()` 查詢完成後統一呼叫 `_cdRenderHintHost()` 更新畫面，不論有無結果都會重繪（取代原本只在有結果時才顯示的 `_cdShowHint()`）
-
-自我檢查：14 種情境（含掛載條件、常駐兩種狀態渲染、重複呼叫不疊加、切換地區/分類後正確清除舊host）皆用檔案內實際程式碼以模擬 DOM 驗證通過。
-
-### 影響檔案
-- index.html / GameVault_v02_05_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端 UI 邏輯調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-04 → gamevault-v02-05
-
-### 對應備份
-- _internal/old/v02_04/
 
