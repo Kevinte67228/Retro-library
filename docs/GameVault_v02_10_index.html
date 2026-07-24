@@ -1077,12 +1077,12 @@ body{
             <input class="fi" id="aiweb-subject" type="text" placeholder="例如：薩爾達傳說 曠野之息"
               style="font-size:14px;margin-bottom:8px">
             <div style="display:flex;gap:8px;margin-bottom:12px">
-              <button type="button" onclick="aiWebScanBarcode()"
-                style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(121,134,203,.08);border:1.5px dashed rgba(121,134,203,.35);border-radius:10px;padding:10px 8px;cursor:pointer;color:#7986cb;font-size:12px;font-family:inherit">📷 掃描條碼</button>
-              <button type="button" onclick="document.getElementById('aiweb-name-cam').click()"
-                style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(0,229,255,.08);border:1.5px dashed rgba(0,229,255,.35);border-radius:10px;padding:10px 8px;cursor:pointer;color:#00e5ff;font-size:12px;font-family:inherit">📷 拍照辨識名稱</button>
+              <button type="button" id="aiweb-btn-barcode" onclick="aiWebScanBarcode()" class="genre-chip"
+                style="flex:1;justify-content:center;height:42px;font-size:12px;font-family:inherit">📷 掃描條碼</button>
+              <button type="button" id="aiweb-btn-photo" onclick="document.getElementById('aiweb-name-cam').click()" class="genre-chip"
+                style="flex:1;justify-content:center;height:42px;font-size:12px;font-family:inherit">📷 拍照辨識名稱</button>
               <input type="file" accept="image/*" capture="environment" id="aiweb-name-cam" style="display:none"
-                onchange="nameFieldOCR(this,'aiweb-subject','zh')">
+                onchange="aiWebNameOCR(this)">
             </div>
             <div style="font-size:11px;color:#7986cb;margin-bottom:6px">🤖 選一個 AI 助手：自動複製提示詞並開啟其網頁，貼上送出後把回覆的 JSON 複製回來</div>
             <div id="aiweb-dest-tabs" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px"></div>
@@ -1286,7 +1286,6 @@ body{
             <button class="btn bp bw" onclick="huntConvertAIFill()" type="button">✨ AI 補齊資料</button>
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
           </div>
-          <div id="cd-hint-host"></div>
           <div id="form-body"></div>
           <div id="save-bar">
             <button class="btn bo" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
@@ -2366,7 +2365,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.04';
+const APP_VERSION='v02.10';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7416,14 +7415,36 @@ function cdMaybeAutoSearch(){
   shGetSecP(params)
     .then(function(r){return r.ok?r.json():null;})
     .then(function(res){
-      if(res&&res.ok&&res.items&&res.items.length){_cdState.candidates=res.items;_cdShowHint();}
+      if(res&&res.ok&&res.items&&res.items.length)_cdState.candidates=res.items;
+      _cdRenderHintHost(); // v02.05：不論有無結果都要重繪(常駐)，沒結果時顯示網站圖示、有結果時顯示候選按鈕
     }).catch(function(){});
 }
 
-function _cdShowHint(){
+// v02.05：常駐區塊掛載到「日文名稱」欄位正下方（僅遊戲分類＋地區日本才顯示）。
+// renderForm() 每次重繪都會呼叫，先移除舊的再視情況重新掛載，避免重複或殘留在錯誤欄位分類下。
+function _cdMountHintHost(){
+  var old=$('cd-hint-host');if(old)old.remove();
+  var show=(_region==='jp')&&(catInternal((entry&&entry.category)||_selectedType)==='遊戲');
+  if(!show)return;
+  var jpField=$('fg-jp_name');
+  if(!jpField)return; // 此分類無日文名稱欄位（理論上遊戲分類必有，防呆用）
+  var host=document.createElement('div');
+  host.id='cd-hint-host';
+  jpField.insertAdjacentElement('afterend',host);
+  _cdRenderHintHost();
+}
+
+// 依 _cdState.candidates 是否有值，渲染「網站圖示連結」或「候選結果按鈕」兩種狀態，常駐不消失
+function _cdRenderHintHost(){
   var host=$('cd-hint-host');
   if(!host)return;
-  host.innerHTML='<button type="button" onclick="cdOpenPanel()" style="display:flex;align-items:center;gap:6px;background:rgba(0,229,255,.1);border:1px solid #00e5ff;color:#00e5ff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;margin:8px 16px;cursor:pointer">🇯🇵 找到 '+_cdState.candidates.length+' 筆日系資料庫比對，點此查看</button>';
+  if(_cdState.candidates&&_cdState.candidates.length){
+    host.innerHTML='<button type="button" onclick="cdOpenPanel()" style="display:flex;align-items:center;gap:6px;background:rgba(0,229,255,.1);border:1px solid #00e5ff;color:#00e5ff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;margin:6px 16px 10px;cursor:pointer">🇯🇵 找到 '+_cdState.candidates.length+' 筆日系資料庫比對，點此查看</button>';
+  }else{
+    host.innerHTML='<a href="https://consoledictionary.com/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:7px;background:rgba(121,134,203,.12);border:1px solid rgba(121,134,203,.5);color:#b8c0f0;text-decoration:none;font-size:12.5px;font-weight:600;border-radius:20px;margin:6px 16px 10px;padding:6px 14px;width:fit-content">'
+      +'<img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" style="width:15px;height:15px;border-radius:3px;flex-shrink:0" alt="">'
+      +'<span>可比對 コンシューマーゲーム大辞典（日系資料庫）</span></a>';
+  }
 }
 
 function cdOpenPanel(){
@@ -8139,6 +8160,8 @@ var AIWEB_DESTS=[
   {id:'gemini',label:'Gemini',url:'https://gemini.google.com/'},
   {id:'claude',label:'Claude',url:'https://claude.ai/new'}
 ];
+var _aiWebSelectedDest=null; // v02.07：記錄目前選中哪個AI助手，供晶片點亮視覺呈現
+var _aiWebInputMethod=null; // v02.09：記錄剛剛「成功」用哪種方式產生輸入內容('barcode'/'photo')，供晶片點亮
 // 核心識別欄位：排除個人記錄（購入日期/價格/保管地點）、收藏狀態、品相完整度、關聯商品、圖片類欄位
 function _aiWebCoreFields(cat,subtype){
   var excludeGroup=/收藏狀態|品相|完整度|個人記錄|關聯商品|圖片/;
@@ -8174,10 +8197,16 @@ function _aiWebBuildPrompt(subject){
 function _aiWebRenderDests(){
   var wrap=$('aiweb-dest-tabs');if(!wrap)return;
   wrap.innerHTML=AIWEB_DESTS.map(function(d){
-    return '<button type="button" onclick="aiWebCopyAndOpen(\''+d.id+'\')" '+
-      'style="height:42px;padding:4px;border-radius:10px;font-size:11px;font-weight:700;background:#141b30;'+
-      'color:#7c4dff;border:1.5px solid #7c4dff;font-family:inherit;cursor:pointer">'+esc(d.label)+'</button>';
+    var on=(_aiWebSelectedDest===d.id);
+    return '<button type="button" onclick="aiWebCopyAndOpen(\''+d.id+'\')" class="genre-chip'+(on?' on':'')+'" '+
+      'style="height:42px;justify-content:center;font-size:12px;font-family:inherit">'+esc(d.label)+'</button>';
   }).join('');
+}
+// v02.09：依 _aiWebInputMethod 點亮對應的輸入方式晶片('barcode'/'photo')
+function _aiWebRenderInputMethod(){
+  var bBtn=$('aiweb-btn-barcode'),pBtn=$('aiweb-btn-photo');
+  if(bBtn)bBtn.classList.toggle('on',_aiWebInputMethod==='barcode');
+  if(pBtn)pBtn.classList.toggle('on',_aiWebInputMethod==='photo');
 }
 // 條碼掃描：沿用既有 openFieldScanner 即時掃描機制（比照 barScanFromBtn）
 function aiWebScanBarcode(){
@@ -8186,7 +8215,11 @@ function aiWebScanBarcode(){
     subtitle:'對準包裝上的 EAN / JAN / ISBN',
     openingText:'正在開啟相機...',
     detectText:'正在偵測商品條碼',
-    resultToast:function(v){return '已帶入條碼：'+v;}});
+    resultToast:function(v){_aiWebInputMethod='barcode';_aiWebRenderInputMethod();return '已帶入條碼：'+v;}});
+}
+// v02.09：拍照辨識名稱的 aiweb 專屬包裹函式，OCR成功後才點亮晶片（失敗/取消不點亮，避免誤導）
+function aiWebNameOCR(input){
+  nameFieldOCR(input,'aiweb-subject','zh',function(){_aiWebInputMethod='photo';_aiWebRenderInputMethod();});
 }
 function initAiWebMode(){
   pickTypeAndPlatform('aiweb',function(type,platform){
@@ -8199,6 +8232,8 @@ function initAiWebMode(){
     var pa=$('aiweb-paste');if(pa)pa.value='';
     var cam=$('aiweb-name-cam');if(cam)cam.value='';
     var st=$('aiweb-status');if(st){st.style.display='none';st.textContent='';}
+    _aiWebSelectedDest=null; // v02.07：重新進入模式時重置選中狀態，避免殘留上次選的AI晶片
+    _aiWebInputMethod=null;_aiWebRenderInputMethod(); // v02.09：同步重置輸入方式晶片
     _aiWebRenderDests();
     var fl=$('aiweb-fields-list');
     if(fl)fl.textContent=_aiWebCoreFields(type,_selectedSubtype||'').map(function(f){return f[1];}).join('、');
@@ -8210,6 +8245,7 @@ function aiWebCopyAndOpen(destId){
   if(!subject){toast('請先輸入商品名稱、條碼或關鍵字','er');return;}
   var d=AIWEB_DESTS.filter(function(x){return x.id===destId;})[0];
   if(!d)return;
+  _aiWebSelectedDest=destId;_aiWebRenderDests(); // v02.07：點擊後立即點亮對應晶片
   var promptTxt=_aiWebBuildPrompt(subject);
   var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁：\n1. 在輸入框「貼上」提示詞並送出\n2. 複製 AI 回覆的 JSON 內容\n3. 回到 GameVault 貼到下方框裡，按「解析並匯入」\n\n按「確定」開啟 '+d.label+'。';
   function openIt(){
@@ -9604,6 +9640,8 @@ function renderForm(){
     c.appendChild(div);
   });
   _aiAnnotateFields(); // F3：依 _src 標記插入 ✨badge，並對新填入欄位閃爍一次
+  _cdMountHintHost(); // v02.05：日系資料庫常駐區塊掛載到日文名稱欄位下方
+  cdMaybeAutoSearch(); // v02.06：表單顯示時一併觸發(涵蓋開啟既有收藏記錄編輯的情境，原本4個觸發點都只涵蓋新建立/新識別，漏了這種情況；已有去重邏輯，不會重複打API)
 }
 // ══ F3：AI 補全視覺回饋 ══
 var _aiFlashed={}; // 已閃爍過的欄位 key，避免重複動畫
@@ -14233,9 +14271,8 @@ function _bcWebRenderDestTabs(){
   if(!wrap1||!wrap2)return;
   function btnHtml(d){
     var on=d.id===_bcWebDest;
-    var onColor=d.group===1?'#69f0ae':'#7c4dff';
-    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" style="height:44px;padding:4px;border-radius:10px;font-size:10px;font-weight:700;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;'+
-      (on?('background:'+onColor+';color:#001018;border:none'):'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(d.label)+'</button>';
+    return '<button type="button" onclick="setBarcodeWebDest(\''+d.id+'\')" class="genre-chip'+(on?' on':'')+'" '+
+      'style="height:44px;justify-content:center;text-align:center;font-size:12px;font-family:inherit">'+esc(d.label)+'</button>';
   }
   wrap1.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===1;}).map(btnHtml).join('');
   wrap2.innerHTML=BC_WEB_DESTS.filter(function(d){return d.group===2;}).map(btnHtml).join('');
@@ -14606,7 +14643,7 @@ function huntLensToHunt(){
 }
 // ── 尋寶品名 OCR（中/日文）：沿用既有 Gemini 視覺（callGemini 走 GEMINI_SCHEMA 結構化輸出），
 //    辨識後取對應語系名稱欄位帶入。中文欄取 zh_name→primary_name；日文欄取 jp_name→primary_name。
-function _nameFieldOCR(input,targetId,lang){
+function _nameFieldOCR(input,targetId,lang,onSuccess){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
   if(!cfg.gkey){toast('需要 Gemini 金鑰才能 OCR 辨識品名（設定中填入）','er',4000);return;}
   var prompt;
@@ -14630,7 +14667,7 @@ function _nameFieldOCR(input,targetId,lang){
             else txt=res.zh_name||res.primary_name||res.en_name||'';
             txt=(''+txt).replace(/^[\s"'「『]+|[\s"'」』]+$/g,'').trim();
             var langLbl=(lang==='jp'?'日文':lang==='en'?'英文':'中文');
-            if(txt){var inp=$(targetId);if(inp){inp.value=txt;inp.dispatchEvent(new Event('input'));}toast('✓ 已帶入'+langLbl+'品名','ok',3000);}
+            if(txt){var inp=$(targetId);if(inp){inp.value=txt;inp.dispatchEvent(new Event('input'));}toast('✓ 已帶入'+langLbl+'品名','ok',3000);if(onSuccess)onSuccess();}
             else toast('未辨識到品名，請重拍或手動輸入','',3000);
           }).catch(function(e){
             noLoad();
@@ -14642,7 +14679,7 @@ function _nameFieldOCR(input,targetId,lang){
     r.readAsDataURL(blob);
   }).catch(function(){});
 }
-function nameFieldOCR(input,targetId,lang){_nameFieldOCR(input,targetId,lang);}
+function nameFieldOCR(input,targetId,lang,onSuccess){_nameFieldOCR(input,targetId,lang,onSuccess);}
 // v40.27：出版社／作者／型號等文字欄位 OCR 改為「拍照→裁切→Gemini 辨識」流程（沿用品名 OCR 機制，廢棄掃描框）
 function _textFieldOCR(input,targetId,fieldKey){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
