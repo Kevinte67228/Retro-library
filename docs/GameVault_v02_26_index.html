@@ -162,11 +162,6 @@ body{
 #thumb-wrap{display:flex;gap:8px;padding:0 16px;margin-bottom:12px;flex-wrap:wrap}
 .gc img{flex-shrink:0}
 
-/* === Image type 標籤（上排，僅顯示用，選取改由下方預覽格控制）=== */
-.img-slot{text-align:center;padding:8px 4px 10px;border-radius:10px;border:1.5px solid transparent;transition:border-color .15s,background .15s}
-.img-slot.on{border-color:#00e5ff;background:rgba(0,229,255,.08)}
-.img-slot.on .slot-lbl{color:#00e5ff}
-
 /* === 下方預覽格：可點選 + 單選核取框 === */
 .tslot{position:relative;border-radius:8px;aspect-ratio:3/4;cursor:pointer;overflow:hidden;border:1.5px solid #1e2a45;background:#0f1525;transition:border-color .15s}
 .tslot.empty{border-style:dashed}
@@ -293,7 +288,7 @@ body{
 .dv2-kpi-bar::-webkit-scrollbar{display:none}
 .dv2-kpi-pill{flex:0 0 auto;min-width:104px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:12px;padding:11px 12px;cursor:pointer;position:relative;overflow:hidden;text-align:left;font-family:inherit;transition:border-color .15s,background .15s}
 .dv2-kpi-pill::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,#00e5ff);border-radius:12px 12px 0 0}
-.dv2-kpi-pill.active{border-color:var(--kpi-color,#00e5ff);background:#141b30}
+.dv2-kpi-pill.active{border-color:var(--kpi-color,#00e5ff);background:#141b30;box-shadow:inset 0 0 12px var(--kpi-color,#00e5ff)}
 .dv2-kpi-ic{font-size:16px;margin-bottom:5px}
 .dv2-kpi-val{font-family:Rajdhani,sans-serif;font-size:21px;font-weight:700;color:var(--kpi-color,#e8eaf6);line-height:1;white-space:nowrap}
 .dv2-kpi-lbl{font-size:10px;color:#7986cb;margin-top:3px;white-space:nowrap}
@@ -303,7 +298,7 @@ body{
 /* 財務分段控制器 */
 .dv2-seg{display:flex;background:#0a0f1e;border:1px solid #1e2a45;border-radius:10px;overflow:hidden;margin-bottom:16px}
 .dv2-seg-btn{flex:1;padding:8px 4px;font-size:11px;font-weight:700;border:none;background:transparent;color:#7986cb;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
-.dv2-seg-btn.on{background:#1a2540;color:#00e5ff}
+.dv2-seg-btn.on{background:#1a2540;color:#00e5ff;box-shadow:inset 0 0 10px rgba(0,229,255,.4)}
 /* 財務英雄數字 */
 .dv2-fin-hero{text-align:center;padding:8px 0 16px}
 .dv2-fin-lbl{font-size:11px;color:#7986cb;margin-bottom:6px}
@@ -468,9 +463,9 @@ body{
 .fp-hdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:10px}
 /* ── 兩欄式篩選（Amazon 風格：左側類別／右側選項）── */
 .filter-2pane{flex:1;min-height:0;display:flex;overflow:hidden}
-.facet-side{width:38%;max-width:170px;flex-shrink:0;overflow-y:auto;border-right:1px solid #1e2a45;background:#0b1120;-webkit-overflow-scrolling:touch}
+.facet-side{width:38%;max-width:170px;flex-shrink:0;overflow-y:auto;border-right:1px solid #1e2a45;background:#0f1525;-webkit-overflow-scrolling:touch}
 .facet-side-item{padding:13px 12px;font-size:13px;color:#9fa8c8;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid #141b30;user-select:none}
-.facet-side-item.on{background:#0f1525;color:#00e5ff;font-weight:700;box-shadow:inset 3px 0 0 #00e5ff}
+.facet-side-item.on{background:#141b30;color:#00e5ff;font-weight:700;box-shadow:inset 3px 0 0 #00e5ff}
 .facet-side-item b{font-size:11px;font-weight:700;color:#000;background:#00e5ff;border-radius:9px;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 #filter-body{flex:1;overflow-y:auto;padding:8px 14px 16px;-webkit-overflow-scrolling:touch}
 .facet-opts-col{display:flex;flex-direction:column;gap:6px;padding-top:4px}
@@ -480,8 +475,8 @@ body{
 .facet-lbl{font-size:12px;color:#7986cb;margin-bottom:8px;font-weight:600}
 .facet-opt{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:16px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer;user-select:none}
 .facet-opt b{font-weight:600;color:#7986cb;font-size:11px}
-.facet-opt.on{background:#00e5ff;border-color:#00e5ff;color:#000}
-.facet-opt.on b{color:#000}
+.facet-opt.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
+.facet-opt.on b{color:#00e5ff}
 .facet-price{display:flex;align-items:center;gap:8px}
 .facet-price input{flex:1;min-width:0;background:#141b30;border:1.5px solid #2a3a5a;border-radius:8px;padding:8px 10px;color:#e8eaf6;font-size:13px}
 .dhdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;flex-direction:column;gap:10px}
@@ -882,7 +877,7 @@ body{
           <div class="ht">GameVault</div>
           <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.02</span></div>
         </div>
-        <div class="hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
+        <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
       </div>
       <div style="padding-bottom:80px">
@@ -1252,26 +1247,10 @@ body{
         </div>
 
         <div id="img-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
+          <!-- 三格縮圖預覽（點縮圖本身即可切換目標欄位，取代原本重複的上方分頁選擇器） -->
+
+          <div id="thumb-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:16px 16px 10px"></div>
           <div style="padding:0 16px 10px">
-            <!-- 三欄目標欄位 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-              <div id="img-slot-cover" class="img-slot on" data-slot="cover" onclick="setImgSlot('cover')">
-                <div class="slot-icon">🖼</div><div class="slot-lbl">封面</div>
-                <div class="slot-status" id="slot-st-cover"></div>
-              </div>
-              <div id="img-slot-back" class="img-slot" data-slot="back" onclick="setImgSlot('back')">
-                <div class="slot-icon">🔲</div><div class="slot-lbl">封底</div>
-                <div class="slot-status" id="slot-st-back"></div>
-              </div>
-              <div id="img-slot-spine" class="img-slot" data-slot="spine" onclick="setImgSlot('spine')">
-                <div class="slot-icon">📚</div><div class="slot-lbl">側邊</div>
-                <div class="slot-status" id="slot-st-spine"></div>
-              </div>
-            </div>
-            <!-- 選中的 slot 說明 -->
-            <div style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:8px">
-              目前選取：<span id="slot-current-lbl" style="color:#00e5ff">封面</span>
-            </div>
             <!-- 拍照 / 相簿 兩個按鈕 -->
             <div style="display:flex;gap:8px">
               <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#141b30;border:1.5px solid #00e5ff;border-radius:10px;padding:12px;cursor:pointer;color:#00e5ff;font-size:13px;font-weight:600">
@@ -1284,9 +1263,7 @@ body{
               </label>
             </div>
           </div>
-          <!-- 三格縮圖預覽 -->
 
-          <div id="thumb-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 16px 10px"></div>
 
           <div id="ai-btn-wrap" style="padding:0 16px 12px">
             <div style="display:flex;gap:10px">
@@ -1468,17 +1445,20 @@ body{
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
           <div class="hs" style="margin:0">收藏數據總覽</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <select id="dash-filter" class="fsel" style="height:34px;font-size:12px;padding:0 10px;min-width:72px;border-radius:10px" onchange="_dashDrillSubtype=null;renderDash()">
-              <option value="all">全部</option>
-              <option value="game">遊戲</option>
-              <option value="book">書籍</option>
-              <option value="console">主機</option>
-              <option value="periph">週邊</option>
-              <option value="digital">數位下載版</option>
-              <option value="ost">原聲帶</option>
-              <option value="artbook">動漫/美術設定集</option>
-              <option value="figure">公仔</option>
-            </select>
+            <div style="position:relative;display:inline-block">
+              <select id="dash-filter" class="fsel" style="height:34px;font-size:12px;padding:0 10px;min-width:72px;border-radius:10px;pointer-events:none" tabindex="-1" onchange="_dashDrillSubtype=null;renderDash()">
+                <option value="all">全部</option>
+                <option value="game">遊戲</option>
+                <option value="book">書籍</option>
+                <option value="console">主機</option>
+                <option value="periph">週邊</option>
+                <option value="digital">數位下載版</option>
+                <option value="ost">原聲帶</option>
+                <option value="artbook">動漫/美術設定集</option>
+                <option value="figure">公仔</option>
+              </select>
+              <div onclick="openSelectSheet('dash-filter','篩選分類')" style="position:absolute;inset:0;cursor:pointer"></div>
+            </div>
             <button class="tbtn" onclick="dashRefresh()" title="同步資料" type="button">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
             </button>
@@ -1504,16 +1484,22 @@ body{
           <div class="dv2-card-hd">
             <div class="dv2-card-title"><span class="dv2-dot" style="background:var(--accent)"></span>購入趨勢</div>
             <div style="display:flex;gap:5px">
-              <select id="dash-trend-metric" class="dv2-sel" onchange="renderTrend()">
-                <option value="count">購入筆數</option>
-                <option value="cost">購入成本</option>
-                <option value="resale">賣出金額</option>
-                <option value="profit">淨利潤</option>
-              </select>
-              <select id="dash-trend-time" class="dv2-sel" onchange="renderTrend()">
-                <option value="yearly">年度</option>
-                <option value="monthly">近24月</option>
-              </select>
+              <div style="position:relative;display:inline-block">
+                <select id="dash-trend-metric" class="dv2-sel" style="pointer-events:none" tabindex="-1" onchange="renderTrend()">
+                  <option value="count">購入筆數</option>
+                  <option value="cost">購入成本</option>
+                  <option value="resale">賣出金額</option>
+                  <option value="profit">淨利潤</option>
+                </select>
+                <div onclick="openSelectSheet('dash-trend-metric','選擇指標')" style="position:absolute;inset:0;cursor:pointer"></div>
+              </div>
+              <div style="position:relative;display:inline-block">
+                <select id="dash-trend-time" class="dv2-sel" style="pointer-events:none" tabindex="-1" onchange="renderTrend()">
+                  <option value="yearly">年度</option>
+                  <option value="monthly">近24月</option>
+                </select>
+                <div onclick="openSelectSheet('dash-trend-time','選擇區間')" style="position:absolute;inset:0;cursor:pointer"></div>
+              </div>
             </div>
           </div>
           <canvas id="dash-yearly-chart" width="300" height="180" style="max-width:100%"></canvas>
@@ -1522,10 +1508,13 @@ body{
           <div class="dv2-card-accent"></div>
           <div class="dv2-card-hd">
             <div class="dv2-card-title"><span class="dv2-dot" style="background:var(--accent)"></span><span id="dash-donut-label">收藏組成</span></div>
-            <select id="dash-donut-mode" class="dv2-sel" style="display:none" onchange="renderDash()">
-              <option value="type">商品分類</option>
-              <option value="region">地區屬性</option>
-            </select>
+            <div style="position:relative;display:none" id="dash-donut-mode-wrap">
+              <select id="dash-donut-mode" class="dv2-sel" style="pointer-events:none" tabindex="-1" onchange="renderDash()">
+                <option value="type">商品分類</option>
+                <option value="region">地區屬性</option>
+              </select>
+              <div onclick="openSelectSheet('dash-donut-mode','選擇分析方式')" style="position:absolute;inset:0;cursor:pointer"></div>
+            </div>
           </div>
           <div class="dv2-donut-row">
             <canvas id="dash-donut" width="96" height="96" style="flex-shrink:0"></canvas>
@@ -1636,12 +1625,15 @@ body{
         <div class="stitle">AI 辨識（圖片辨識必要）</div>
         <div class="srow">
           <div class="srl">🎯 偏好 AI 引擎</div>
-          <select class="fsel" id="c-aipref">
-            <option value="gemini" selected>只用 Gemini（免費，推薦）</option>
-            <option value="auto">自動（GPT 優先，失敗轉 Gemini；亞洲版封面優先用 DeepSeek 混合校正）</option>
-            <option value="gpt">只用 GPT（需付費，較精準）</option>
-            <option value="hybrid">混合模式：Gemini OCR + DeepSeek 校正（推薦：亞洲版/CJK封面）</option>
-          </select>
+          <div style="position:relative;display:block">
+            <select class="fsel" id="c-aipref" style="pointer-events:none" tabindex="-1">
+              <option value="gemini" selected>只用 Gemini（免費，推薦）</option>
+              <option value="auto">自動（GPT 優先，失敗轉 Gemini；亞洲版封面優先用 DeepSeek 混合校正）</option>
+              <option value="gpt">只用 GPT（需付費，較精準）</option>
+              <option value="hybrid">混合模式：Gemini OCR + DeepSeek 校正（推薦：亞洲版/CJK封面）</option>
+            </select>
+            <div onclick="openSelectSheet('c-aipref','偏好 AI 引擎')" style="position:absolute;inset:0;cursor:pointer"></div>
+          </div>
           <div style="font-size:11px;color:#555;margin-top:4px">選「只用」時若該引擎失敗不會自動切換；混合模式需同時設定 Gemini 與 DeepSeek 金鑰</div>
         </div>
         <div class="srow">
@@ -1650,14 +1642,17 @@ body{
             <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('gemini')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-gkey" type="password" placeholder="AIza...">
-          <select class="fsel" id="c-gmdl" style="margin-top:8px;width:100%" onchange="toggleProNote(this.value)">
-            <optgroup label="── 免費（AI Studio 金鑰）──">
-              <option value="gemini-2.5-flash">2.5 Flash ✦ 推薦</option>
-            </optgroup>
-            <optgroup label="── 付費（需啟用 Cloud 帳單）──">
-              <option value="gemini-2.5-pro-preview-06-05">2.5 Pro Preview ★ 最強</option>
-            </optgroup>
-          </select>
+          <div style="position:relative;display:block">
+            <select class="fsel" id="c-gmdl" style="margin-top:8px;width:100%;pointer-events:none" tabindex="-1" onchange="toggleProNote(this.value)">
+              <optgroup label="── 免費（AI Studio 金鑰）──">
+                <option value="gemini-2.5-flash">2.5 Flash ✦ 推薦</option>
+              </optgroup>
+              <optgroup label="── 付費（需啟用 Cloud 帳單）──">
+                <option value="gemini-2.5-pro-preview-06-05">2.5 Pro Preview ★ 最強</option>
+              </optgroup>
+            </select>
+            <div onclick="openSelectSheet('c-gmdl','選擇 Gemini 模型')" style="position:absolute;inset:0;cursor:pointer"></div>
+          </div>
           <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testGemini()" type="button">測試</button>
           <div id="pro-note" style="display:none;margin-top:6px;padding:8px 10px;background:rgba(255,183,77,.08);border:1px solid rgba(255,183,77,.3);border-radius:8px;font-size:11px;color:#ffb74d">
             ⚠️ 付費模型需在 <a href="https://aistudio.google.com/billing" target="_blank" style="color:#ffb74d">Google AI Studio</a> 啟用計費帳戶
@@ -1770,11 +1765,14 @@ body{
             <button class="btn bo" style="font-size:12px;padding:8px 12px;font-weight:700;border:1.5px solid #00e5ff;color:#00e5ff" onclick="showApiGuide('openai')" type="button">❓ 說明</button>
           </div>
           <input class="fi" id="c-okey" type="password" placeholder="sk-...">
-          <select class="fsel" id="c-omdl" style="margin-top:8px;width:100%">
-            <option value="gpt-4o-mini">GPT-4o mini（省 token）</option>
-            <option value="gpt-4o">GPT-4o（最強）</option>
-            <option value="gpt-4.1-mini">GPT-4.1 mini</option>
-          </select>
+          <div style="position:relative;display:block">
+            <select class="fsel" id="c-omdl" style="margin-top:8px;width:100%;pointer-events:none" tabindex="-1">
+              <option value="gpt-4o-mini">GPT-4o mini（省 token）</option>
+              <option value="gpt-4o">GPT-4o（最強）</option>
+              <option value="gpt-4.1-mini">GPT-4.1 mini</option>
+            </select>
+            <div onclick="openSelectSheet('c-omdl','選擇 OpenAI 模型')" style="position:absolute;inset:0;cursor:pointer"></div>
+          </div>
           <button class="btn bo bw bs" style="margin-top:8px;font-size:11px;padding:8px 12px;align-self:flex-start" onclick="testOpenAI()" type="button">測試</button>
           <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:#00e5ff;text-decoration:none;margin-top:8px;display:inline-block">🔗 前往 OpenAI API ↗</a>
           <div style="margin-top:8px;padding:8px 10px;background:rgba(255,179,0,.07);border:1px solid rgba(255,179,0,.2);border-radius:8px;font-size:11px;color:#7986cb;line-height:1.6">
@@ -1957,7 +1955,10 @@ body{
           <div class="srl">建立常用數位帳號</div>
           <input class="fi" id="new-digital-acct" type="text" placeholder="例如：我的 PSN、家人共用 Switch" style="margin-top:8px" onkeydown="if(event.key==='Enter'){event.preventDefault();addDigitalAccount();}">
           <div style="display:flex;gap:8px;margin-top:8px">
-            <select class="fsel" id="new-digital-acct-plat" style="flex:1"></select>
+            <div style="position:relative;flex:1">
+              <select class="fsel" id="new-digital-acct-plat" style="width:100%;pointer-events:none" tabindex="-1"></select>
+              <div onclick="openSelectSheet('new-digital-acct-plat','選擇平台')" style="position:absolute;inset:0;cursor:pointer"></div>
+            </div>
             <button class="btn bp bs" style="flex-shrink:0" onclick="addDigitalAccount()" type="button">➕ 新增</button>
           </div>
           <div class="shlp">選擇平台後，這個帳號只會出現在該平台的「購入帳號」選項裡；選「不限平台」則所有數位下載版都看得到。既有資料若不在清單中，會保留為自訂選項不會被清空。</div>
@@ -2399,7 +2400,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.20';
+const APP_VERSION='v02.26';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6710,6 +6711,7 @@ function setRegion(r){
   // 持久化
   _persistCfgKeys({region:r});
   _updateRegionBtns();
+  _updateEntrySubtitle();
   toast('📍 區域已設為：'+_REGION_LABELS[r],'ok',2000);
 }
 function _updateRegionBtns(){
@@ -7972,6 +7974,16 @@ function _refreshPlatSection(hasPlat){
   }else{p3.style.display='none';}
   var mn=$('step-method-num');if(mn)mn.textContent=hasPlat?'Step 4':'Step 3';
 }
+// v02.26：建檔頁副標題（原本是固定文字「AI 高品質辨識 · UUID · 分類 / 地區 / 條碼」）
+// 改成即時顯示 Step1-3 已選擇的分類/子類型/地區/平台，跟著使用者的選擇同步更新。
+function _updateEntrySubtitle(){
+  var hsEl=$('scan-hs');if(!hsEl)return;
+  var parts=[catLabel(_selectedType)];
+  if(_selectedSubtype)parts.push(_selectedSubtype);
+  if(_region&&_REGION_LABELS[_region])parts.push(_REGION_LABELS[_region].replace(/（.*/,''));
+  if(_selectedPlatform)parts.push(_selectedPlatform);
+  hsEl.textContent=parts.join(' · ');
+}
 function selectEntryCat(cat,_noSave){
   _selectedType=cat;_entryCatChosen=true;
   // v26.07：選到分類時帶回該分類記憶的平台（不再一律清空）
@@ -7999,6 +8011,7 @@ function selectEntryCat(cat,_noSave){
   // Step 3 平台：僅遊戲／主機／數位下載版(遊戲類子類型)顯示，動態填入 PLATFORMS（onchange 寫入 _selectedPlatform）
   _refreshPlatSection(hasPlat);
   _refreshMethodButtons(cat,_selectedSubtype);
+  _updateEntrySubtitle();
   if(!_noSave)_saveEntryMem();
 }
 // v42.14：數位下載版沒有實體條碼可掃，隱藏條碼/編碼相關卡片；
@@ -8039,11 +8052,13 @@ function _applyPlatVisual(){
   // v26.07：以卡片式觸發器呈現選取狀態與目前值
   var card=$('step3-plat-card');if(card)card.classList.toggle('on',on);
   var val=$('step3-plat-val');if(val)val.textContent=sel.value||'— 不指定 —';
+  _updateEntrySubtitle();
 }
 // 子類型觸發卡視覺狀態（v42.22，比照 _applyPlatVisual）
 function _applySubtypeVisual(){
   var card=$('step-subtype-card');if(card)card.classList.toggle('on',!!_selectedSubtype);
   var val=$('step-subtype-val');if(val)val.textContent=_selectedSubtype||'— 不指定 —';
+  _updateEntrySubtitle();
 }
 // 開啟子類型自繪選單，沿用平台選擇器（openPlatPicker）的 bottom-sheet 元件，傳入 customSrc 取代平台清單
 function openSubtypePicker(){
@@ -8217,7 +8232,7 @@ function pickTypeAndPlatform(mode,cb){
     '<div id="tp-plat-row" style="margin-bottom:18px;display:'+(_selectedType==='遊戲'?'block':'none')+'">'+
       '<div style="font-size:11px;color:#7986cb;letter-spacing:1px;margin-bottom:8px">'+
         '平台 <span style="font-size:10px;color:#555">（提供給 AI 提高辨識準確率）</span></div>'+
-      '<select id="tp-platform" class="fsel" style="width:100%">'+platSelHtml+'</select>'+
+      fselPickerize('<select id="tp-platform" class="fsel" style="width:100%">'+platSelHtml+'</select>','選擇平台')+
     '</div>'+
     // 確認按鈕
     '<button onclick="confirmTypePlatform()" class="btn bp bw" style="margin-bottom:8px" type="button">確認，開始建檔</button>'+
@@ -9519,17 +9534,9 @@ function barAIFill(bc,hint,hasGB){
 // ── 圖片 slot（封面/封底/側邊）──
 var _imgSlot='cover'; // 目前選中的 slot
 var _slotImgs={cover:null,back:null,spine:null}; // 各 slot 的 File 物件
-var _slotLabels={cover:'封面',back:'封底',spine:'側邊'};
 
 function setImgSlot(slot){
   _imgSlot=slot;
-  // 上排標籤同步高亮（僅顯示用）
-  ['cover','back','spine'].forEach(function(s){
-    var el=document.getElementById('img-slot-'+s);
-    if(el)el.className='img-slot'+(s===slot?' on':'');
-  });
-  var lbl=$('slot-current-lbl');
-  if(lbl)lbl.textContent=_slotLabels[slot]||slot;
   // 下方預覽格同步選取狀態（核取框連動）
   renderSlotThumbs();
 }
@@ -9579,10 +9586,6 @@ function clearSlot(slot,ev){
 function resetSlots(){
   _slotImgs={cover:null,back:null,spine:null};
   _imgSlot='cover';
-  ['cover','back','spine'].forEach(function(s){
-    var el=document.getElementById('img-slot-'+s);if(el)el.className='img-slot'+(s==='cover'?' on':'');
-    var st=$('slot-st-'+s);if(st)st.textContent='';
-  });
   renderSlotThumbs();
   var ab=$('ai-btn-wrap');if(ab)ab.style.display='block';
 }
@@ -10362,7 +10365,7 @@ function renderFld(f){
       var selected=k==='category'?(catInternal(o)===catInternal(v)):(o===v);
       return'<option'+(selected?' selected':'')+'>'+esc(o)+'</option>';
     }).join('');
-    return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+selOpts+'</select></div>';
+    return wrap+'<label class="fl">'+lbl+'</label>'+fselPickerize('<select class="fsel" id="fld-sel-'+esc(k)+'" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+selOpts+'</select>',lbl)+'</div>';
   }
   if(type==='mediasel'||type==='regionsel'){
     var optsArr=type==='mediasel'?MEDIA_OPTS:REGION_OPTS;
@@ -10387,11 +10390,11 @@ function renderFld(f){
     var rows='';
     (COMP_COMPONENTS[cat]||[]).forEach(function(comp){
       rows+='<div class="comp-row"><span class="comp-lbl">'+esc(COMP_LABEL[comp]||comp)+'</span>'+
-        '<select class="comp-sel fsel" data-comp="'+esc(comp)+'" onchange="onCompChange()">'+grades(parsed.map[comp],comp)+'</select></div>';
+        fselPickerize('<select class="comp-sel fsel" id="comp-sel-'+esc(comp)+'" data-comp="'+esc(comp)+'" onchange="onCompChange()">'+grades(parsed.map[comp],comp)+'</select>',COMP_LABEL[comp]||comp)+'</div>';
     });
     rows+='<div class="comp-row comp-custom">'+
       '<input class="fi comp-name" id="comp-custom-name" placeholder="自定義項目…" value="'+esc(parsed.customName)+'" oninput="onCompChange()">'+
-      '<select class="comp-sel fsel" id="comp-custom-sel" onchange="onCompChange()">'+grades(parsed.map['__custom'],'__custom')+'</select></div>';
+      fselPickerize('<select class="comp-sel fsel" id="comp-custom-sel" onchange="onCompChange()">'+grades(parsed.map['__custom'],'__custom')+'</select>','自訂項目')+'</div>';
     return wrap+'<label class="fl">'+lbl+'<span style="font-size:10px;color:#7986cb;margin-left:6px">逐項評級，預設「無」</span></label>'+
       '<div class="comp-summary">'+
         '<div class="comp-summary-head"><div class="comp-summary-title">藏品狀態</div><div class="comp-summary-state '+st.cls+'">'+esc(st.state)+'</div></div>'+
@@ -10414,7 +10417,7 @@ function renderFld(f){
     if(v&&!_inAcctList)aOpts='<option value="'+esc(v)+'" selected>'+esc(v)+'（自訂/未在清單中）</option>'+aOpts;
     aOpts='<option value=""'+(v?'':' selected')+'>（未設定）</option>'+aOpts;
     var _emptyHintA=!acctList.length?'<div style="font-size:11px;color:#ffb74d;margin-top:4px">'+(curPlat?('沒有對應「'+esc(curPlat)+'」的帳號，請先至「設定 → 數位帳號清單」新增'):'尚未在設定頁建立數位帳號清單，請先至「設定 → 數位帳號清單」新增')+'</div>':'';
-    return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+aOpts+'</select>'+_emptyHintA+'</div>';
+    return wrap+'<label class="fl">'+lbl+'</label>'+fselPickerize('<select class="fsel" id="fld-sel-'+esc(k)+'" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+aOpts+'</select>',lbl)+_emptyHintA+'</div>';
   }
   if(type==='storagesel'){
     var locList=(cfg.storageLocations||[]);
@@ -10423,7 +10426,7 @@ function renderFld(f){
     if(v&&!_inLocList)sOpts='<option value="'+esc(v)+'" selected>'+esc(v)+'（自訂/未在清單中）</option>'+sOpts;
     sOpts='<option value=""'+(v?'':' selected')+'>（未設定）</option>'+sOpts;
     var _emptyHint=!locList.length?'<div style="font-size:11px;color:#ffb74d;margin-top:4px">尚未在設定頁建立保管位置清單，請先至「設定 → 保管位置清單」新增</div>':'';
-    return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+sOpts+'</select>'+_emptyHint+'</div>';
+    return wrap+'<label class="fl">'+lbl+'</label>'+fselPickerize('<select class="fsel" id="fld-sel-'+esc(k)+'" data-k="'+k+'" onchange="onSelChange(this.dataset.k,this)">'+sOpts+'</select>',lbl)+_emptyHint+'</div>';
   }
   if(type==='platsel'){
     var pOpts=PLATFORMS.map(function(p){var s=v===p.v||v===p.s?'selected':'';return'<option value="'+p.v+'" '+s+'>'+p.v+'</option>';}).join('');
@@ -10508,11 +10511,11 @@ function renderFld(f){
     var cOpts=CURRENCIES.map(function(c){return'<option'+(c===pv.cur?' selected':'')+'>'+c+'</option>';}).join('');
     return wrap+'<label class="fl">'+lbl+'</label><div style="display:flex;gap:8px">'+
       '<input class="fi" type="number" min="0" step="1" placeholder="金額" value="'+esc(pv.amt)+'" style="flex:1" data-k="'+k+'" oninput="onPriceChange(this.dataset.k,this)">'+
-      '<select class="fsel" style="width:88px" data-k="'+k+'" onchange="onPriceChange(this.dataset.k,this)">'+cOpts+'</select></div></div>';
+      fselPickerize('<select class="fsel" id="fld-cur-'+esc(k)+'" style="width:88px" data-k="'+k+'" onchange="onPriceChange(this.dataset.k,this)">'+cOpts+'</select>','幣別')+'</div></div>';
   }
   if(type==='ratingsel'){
     var rOpts=['N/A','1','2','3','4','5','6','7','8','9','10'].map(function(o){return'<option'+(o===v?' selected':'')+'>'+o+'</option>';}).join('');
-    return wrap+'<label class="fl">'+lbl+'</label><select class="fsel" data-k="'+(k)+'" onchange="onFld(this.dataset.k,this.value)">'+rOpts+'</select></div>';
+    return wrap+'<label class="fl">'+lbl+'</label>'+fselPickerize('<select class="fsel" id="fld-sel-'+esc(k)+'" data-k="'+(k)+'" onchange="onFld(this.dataset.k,this.value)">'+rOpts+'</select>',lbl)+'</div>';
   }
   // related_code → 關聯商品：跨類別、一對多；顯示已選清單＋新增按鈕（不暴露背後識別碼）
   if(k==='related_code'){
@@ -11391,7 +11394,8 @@ function renderDash(){
 
   // Zone4：佔比分析
   var donutModeEl=$('dash-donut-mode');
-  if(donutModeEl)donutModeEl.style.display=cat?'none':'';
+  var donutModeWrap=$('dash-donut-mode-wrap');
+  if(donutModeWrap)donutModeWrap.style.display=cat?'none':'';
   var dlab=$('dash-donut-label');
   if(!cat&&donutModeEl&&donutModeEl.value==='region'){
     var regMap={};
@@ -12751,6 +12755,49 @@ function _showActionSheet(o){
     '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="'+o.closeName+'()" type="button">取消</button></div></div>';
   ov.style.display='flex';
 }
+// v02.23：原生 <select> 的下拉彈出清單在 Android 上是系統白底、CSS 完全套不到，跟深色主題衝突。
+// 這幾個統計頁的 select 改成「select 本身用 pointer-events:none 隱藏互動、疊一層透明覆蓋層攔截點擊」，
+// 沿用既有 openPlatFldPicker() 同一套手法，但選單本身重用 _showActionSheet（適合短選項清單，不需要搜尋）。
+// select 的 <option> 清單直接讀取現有 DOM，不用另外複製一份選項定義，維持單一事實來源。
+// v02.24：把一段「已組好的完整 <select id="...">...</select> HTML 字串」包裝成自訂選單形式，
+// 取代 Android 原生下拉的白底彈窗，套用範圍擴大到全站表單欄位（v02.23 只處理了統計頁 4 個）。
+// 做法：對字串做屬性注入（pointer-events:none 讓 select 本身失去互動）＋疊一層透明覆蓋層，
+// 呼叫端不用重寫既有的 option 產生邏輯，只要把組好的 <select id="..."> 字串丟進來即可。
+// 限制：selectHtml 必須含有 id="..."（openSelectSheet 靠 id 找到對應 select 讀值/設值），
+// 沒有 id 就原樣退回原生 select（不會壞掉，只是那個特例仍是原生白底彈窗）。
+// wrapperStyle：預設 display:inline-block（依內容縮寬）；若原本 select 身上有 flex/width 等
+// 「作為 flex 子項」用的排版樣式，因為 select 被包了一層外殼、不再是直接的 flex 子項，
+// 這類樣式要改傳進 wrapperStyle 讓外殼接手（見呼叫端範例：hs-cur／new-digital-acct-plat）。
+function closeSelectSheet(){var ov=$('select-sheet-ov');if(ov)ov.style.display='none';}
+function fselPickerize(selectHtml, title, wrapperStyle){
+  var m = /<select\b[^>]*\sid="([^"]+)"/.exec(selectHtml);
+  if(!m) return selectHtml;
+  var id = m[1];
+  var wrapped = selectHtml.replace(/<select\b/, '<select tabindex="-1"');
+  wrapped = /\sstyle="/.test(wrapped)
+    ? wrapped.replace(/\sstyle="/, ' style="pointer-events:none;')
+    : wrapped.replace(/<select\b/, '<select style="pointer-events:none"');
+  return '<div style="position:relative;'+(wrapperStyle||'display:inline-block')+'">'+wrapped+
+    '<div onclick="openSelectSheet(\''+_escAttr(id)+'\',\''+_escAttr(title)+'\')" style="position:absolute;inset:0;cursor:pointer"></div></div>';
+}
+function openSelectSheet(selId,title){
+  var sel=$(selId);if(!sel)return;
+  var cur=sel.value;
+  var opts=Array.prototype.map.call(sel.options,function(o){return {value:o.value,label:o.textContent};});
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:title,
+    buttons:opts.map(function(o){
+      var isCur=(o.value===cur);
+      return {color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(o.label),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(o.value)+"')"};
+    })
+  });
+}
+function pickSelectSheetOpt(selId,val){
+  var sel=$(selId);if(!sel)return;
+  sel.value=val;
+  closeSelectSheet();
+  if(typeof sel.onchange==='function')sel.onchange();
+}
 
 // ── 收藏列表長按手勢 ──
 var _colPress=createPressGesture({
@@ -13334,7 +13381,7 @@ function marketOpenWorkbench(rowNum,result,errMsg){
     marketReferenceHtml(d)+
     '<div class="mvw-manual">'+
       '<div style="font-size:13px;font-weight:700;margin-bottom:8px">人工樣本估值</div>'+
-      '<div class="fg"><label class="fl">樣本幣別</label><select class="fsel" id="mv-cur"><option value="TWD">TWD 台幣</option><option value="JPY">JPY 日圓</option><option value="USD">USD 美元</option></select></div>'+
+      '<div class="fg"><label class="fl">樣本幣別</label>'+fselPickerize('<select class="fsel" id="mv-cur"><option value="TWD">TWD 台幣</option><option value="JPY">JPY 日圓</option><option value="USD">USD 美元</option></select>','樣本幣別')+'</div>'+
       '<div class="fg"><label class="fl">價格樣本</label><textarea class="ft mono" id="mv-samples" placeholder="每行一筆，例如：&#10;1890&#10;1680&#10;2200"></textarea></div>'+
       '<button class="btn bp bw" onclick="marketManualEstimate()" type="button">用樣本中位數寫入估值</button>'+
     '</div>'+
@@ -14921,16 +14968,16 @@ function _huntFormFieldsHtml(e,p){
   return ''+
     '<div class="fg"><label class="fl">中文品名 <button type="button" class="ocr-btn" onclick="document.getElementById(\''+p+'-name-cam\').click()">📷 OCR</button></label><input class="fi" id="'+p+'-name" value="'+esc(e.primary_name||'')+'" placeholder="例：太空戰士 VII"><input type="file" accept="image/*" capture="environment" id="'+p+'-name-cam" style="display:none" onchange="nameFieldOCR(this,\''+p+'-name\',\'zh\')"></div>'+
     '<div class="fg"><label class="fl">日文品名 <button type="button" class="ocr-btn" onclick="document.getElementById(\''+p+'-jpname-cam\').click()">📷 OCR</button></label><input class="fi" id="'+p+'-jpname" value="'+esc(e.jp_name||'')+'" placeholder="日本站查價用（選填）"><input type="file" accept="image/*" capture="environment" id="'+p+'-jpname-cam" style="display:none" onchange="nameFieldOCR(this,\''+p+'-jpname\',\'jp\')"></div>'+
-    '<div class="fg"><label class="fl">分類</label><select class="fsel" id="'+p+'-cat" onchange="_huntOnCatChange(\''+p+'\')">'+catSel+'</select></div>'+
+    '<div class="fg"><label class="fl">分類</label>'+fselPickerize('<select class="fsel" id="'+p+'-cat" onchange="_huntOnCatChange(\''+p+'\')">'+catSel+'</select>','分類')+'</div>'+
     '<div class="fg" id="'+p+'-plat-fg" style="display:'+(showSubtype?'none':'block')+'"><label class="fl">平台</label><div class="plat-card" id="'+p+'-plat-card" onclick="_huntOpenPlatPicker(this)"><div style="flex:1"><div style="font-size:12px;color:#7986cb"></div><div id="'+p+'-plat-val" style="font-size:14px;font-weight:600;color:#e8eaf6">'+(e.platform||'— 不指定 —')+'</div></div><div class="plat-card-chev">▾</div></div><select class="fsel" id="'+p+'-plat" style="display:none">'+platformOptionsHtml(e.platform||'')+'</select></div>'+
-    '<div class="fg" id="'+p+'-subtype-fg" style="display:'+(showSubtype?'block':'none')+'"><label class="fl">類型</label><select class="fsel" id="'+p+'-subtype">'+subOptHtml+'</select></div>'+
-    '<div class="fg"><label class="fl">區域</label><select class="fsel" id="'+p+'-region">'+regSel+'</select></div>'+
+    '<div class="fg" id="'+p+'-subtype-fg" style="display:'+(showSubtype?'block':'none')+'"><label class="fl">類型</label>'+fselPickerize('<select class="fsel" id="'+p+'-subtype">'+subOptHtml+'</select>','類型')+'</div>'+
+    '<div class="fg"><label class="fl">區域</label>'+fselPickerize('<select class="fsel" id="'+p+'-region">'+regSel+'</select>','區域')+'</div>'+
     '<div class="fg"><label class="fl">條碼 <button type="button" class="ocr-btn" onclick="huntBarcodeScan(\''+p+'-bc\')">📷 OCR</button></label><input class="fi mono" id="'+p+'-bc" value="'+esc(e.barcode||'')+'" placeholder="（選填）"></div>'+
     '<div class="fg"><label class="fl">遊戲簡介</label><textarea class="ft" id="'+p+'-summary" placeholder="商品／遊戲簡介（拍照辨識會自動帶入）" style="min-height:84px">'+esc(e.summary||'')+'</textarea></div>'+
     '<div class="fg"><label class="fl">目標價</label><input class="fi" type="number" inputmode="decimal" id="'+p+'-target" value="'+esc(e.target_price||'')+'" placeholder="心理價位，達標時會標示"></div>'+
-    '<div class="fg"><label class="fl">收藏慾望</label><select class="fsel" id="'+p+'-desire">'+
+    '<div class="fg"><label class="fl">收藏慾望</label>'+fselPickerize('<select class="fsel" id="'+p+'-desire">'+
       ['','高','中','低'].map(function(v){return '<option value="'+v+'"'+(v===(e.desire_level||'')?' selected':'')+'>'+(v||'— 不指定 —')+'</option>';}).join('')+
-    '</select></div>'+
+    '</select>','收藏慾望')+'</div>'+
     '<div class="fg"><label class="fl">發售日</label><input class="fi" type="date" id="'+p+'-release" value="'+esc((e.release_date||'').split('T')[0])+'" placeholder="供發售倒數計算"></div>'+
     '<div class="fg"><label class="fl">備註</label><textarea class="ft" id="'+p+'-notes" placeholder="想找的版本／追蹤原因…">'+esc(e.notes||'')+'</textarea></div>';
 }
@@ -15207,21 +15254,21 @@ function huntSightForm(uid,idx){
     '<div style="font-size:15px;font-weight:700;color:#ff6e9c">'+(idx>=0?'編輯報價':'新增報價')+'</div></div>'+
     '<div class="fg"><label class="fl">地點 / 店名 / 平台</label><input class="fi" id="hs-loc" value="'+esc(s.loc||'')+'" placeholder="例：秋葉原 Super Potato"></div>'+
     '<div class="fg"><label class="fl">網址（選填，點了可直接開）</label><input class="fi" id="hs-url" value="'+esc(s.url||'')+'" placeholder="https://…" inputmode="url"></div>'+
-    '<div class="fg"><label class="fl">通路類型</label><select class="fsel" id="hs-chan">'+
+    '<div class="fg"><label class="fl">通路類型</label>'+fselPickerize('<select class="fsel" id="hs-chan">'+
       '<option value="store"'+(_chanVal==='store'?' selected':'')+'>實體店面（顯示地圖）</option>'+
       '<option value="store_nomap"'+(_chanVal==='store_nomap'?' selected':'')+'>實體店面（不顯示地圖）</option>'+
       '<option value="online"'+(_chanVal==='online'?' selected':'')+'>線上通路（電商／網址，不顯示地圖）</option>'+
-    '</select></div>'+
+    '</select>','通路類型')+'</div>'+
     '<div class="fg"><label class="fl">Google 地圖（選填，貼分享連結最精準；留空則用上方地點搜尋）</label>'+
       '<input class="fi" id="hs-mapurl" value="'+esc(s.mapUrl||'')+'" placeholder="貼 Google 地圖連結，或留空" inputmode="url">'+
       '<a href="#" onclick="huntOpenMapFromForm();return false" style="display:inline-block;margin-top:6px;color:#00e5ff;font-size:12px;text-decoration:none">📍 在地圖確認</a>'+
     '</div>'+
     '<div class="fg"><label class="fl">價格</label>'+
       '<div style="display:flex;gap:8px">'+
-        '<select class="fsel" id="hs-cur" style="flex:0 0 40%" onchange="huntCurToggle()">'+
+        fselPickerize('<select class="fsel" id="hs-cur" onchange="huntCurToggle()">'+
           ['TWD','JPY','USD'].map(function(c){var lbl={TWD:'台幣 NT$',JPY:'日圓 ¥',USD:'美元 US$'}[c];return '<option value="'+c+'"'+((s.cur||'TWD')===c?' selected':'')+'>'+lbl+'</option>';}).join('')+
           '<option value="__other"'+((s.cur&&['TWD','JPY','USD'].indexOf(s.cur)<0)?' selected':'')+'>自定義</option>'+
-        '</select>'+
+        '</select>','幣別','flex:0 0 40%')+
         '<input class="fi mono" id="hs-price" value="'+esc(s.price||'')+'" placeholder="1200" inputmode="decimal" style="flex:1">'+
       '</div>'+
       '<input class="fi" id="hs-curother" value="'+esc((s.cur&&['TWD','JPY','USD'].indexOf(s.cur)<0)?s.cur:'')+'" placeholder="幣別標籤，例：EUR、人民幣" style="margin-top:8px;display:'+((s.cur&&['TWD','JPY','USD'].indexOf(s.cur)<0)?'block':'none')+'">'+
@@ -15777,11 +15824,14 @@ function _imgToB64(src){
     <div class="fg"><label class="fl">市場名稱<span style="color:#ff7043"> *</span></label>
       <input class="fi" id="cm-name" maxlength="12" placeholder="例如：駿河屋" oninput="cmPreview()"></div>
     <div class="fg"><label class="fl">查詢語言</label>
-      <select class="fsel" id="cm-lang">
-        <option value="auto">主要名稱（依商品）</option>
-        <option value="tw">中文名（台灣站適用）</option>
-        <option value="jp">日文名（日本站適用）</option>
-      </select>
+      <div style="position:relative;display:block">
+        <select class="fsel" id="cm-lang" style="pointer-events:none" tabindex="-1">
+          <option value="auto">主要名稱（依商品）</option>
+          <option value="tw">中文名（台灣站適用）</option>
+          <option value="jp">日文名（日本站適用）</option>
+        </select>
+        <div onclick="openSelectSheet('cm-lang','查詢語言')" style="position:absolute;inset:0;cursor:pointer"></div>
+      </div>
       <div class="shlp" style="margin-top:4px">決定把哪個名稱帶入查詢；該名稱缺失時自動退回其他可用名稱。</div>
     </div>
     <div class="fg"><label class="fl">查詢連結模板<span style="color:#ff7043"> *</span></label>
