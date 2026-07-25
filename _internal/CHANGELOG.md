@@ -1,3 +1,26 @@
+## v02.14 (2026-07-22)
+
+### 變更內容
+「📋 欄位區塊顯示設定」從「🔎 市場估值（選用）」設定分組裡抽出來，改成獨立的頂層設定分組，不再跟市場顯示設定混在一起：
+- 新增獨立分組 `data-grp="fieldgroups"`，比照既有分組（essential/market/gamedb）的標準結構（標題按鈕＋可收合內容）
+- `toggleSGroup()` 展開/收合邏輯本身是通用的（依 `data-grp` 動態查詢），新分組不需要額外註冊即可運作
+- 純 HTML 位置搬移，核心 JS 邏輯（`grpVisRenderList`／`grpVisToggle`／`isGroupHidden` 等）完全未變動，功能行為與 v02.13 一致
+
+驗證：修改前後 `<div>` 標籤計數差值一致（-18，確認未破壞既有結構），`.sgroup` 分組數由 8 個增為 9 個（新增的獨立分組），語法檢查通過。核心邏輯已於 v02.13 完整驗證過 17 項情境，本次僅搬移容器不影響邏輯正確性。
+
+### 影響檔案
+- index.html / GameVault_v02_14_index.html
+- sw.js
+
+### GS 版本
+- 無（純前端 HTML 結構調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-13 → gamevault-v02-14
+
+### 對應備份
+- _internal/old/v02_13/
+
 ## v02.13 (2026-07-22)
 
 ### 變更內容
@@ -69,26 +92,4 @@
 
 ### 對應備份
 - _internal/old/v02_10/
-
-## v02.10 (2026-07-22)
-
-### 變更內容
-「條碼查詢」彈窗（掃碼查無資料時的輔助查詢視窗）的 8 個目的地按鈕，統一改用跟「AI 網頁查詢」頁面一致的 `.genre-chip` 晶片樣式：
-- 這裡原本是**獨立的一套實作**（`_bcWebRenderDestTabs`），跟「AI 網頁查詢」頁面的 `_aiWebRenderDests` 各自維護重複邏輯，風格因此不一致——第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）選中時填綠色、第二排 AI 助手（DeepSeek/GPT/Gemini/Claude）選中時填紫色，皆為寫死的 inline 樣式
-- 改為統一套用 `.genre-chip` class，兩排都跟整體 App 風格一致（cyan 選中效果），拿掉舊的群組色碼邏輯
-
-自我檢查：兩排晶片渲染數量、預設選中狀態、切換選中時正確互斥熄滅、確認無殘留舊 inline 背景色，皆用檔案內實際程式碼驗證通過。
-
-### 影響檔案
-- index.html / GameVault_v02_10_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端 UI 樣式統一）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-09 → gamevault-v02-10
-
-### 對應備份
-- _internal/old/v02_09/
 
