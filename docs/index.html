@@ -468,9 +468,9 @@ body{
 .fp-hdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:10px}
 /* ── 兩欄式篩選（Amazon 風格：左側類別／右側選項）── */
 .filter-2pane{flex:1;min-height:0;display:flex;overflow:hidden}
-.facet-side{width:38%;max-width:170px;flex-shrink:0;overflow-y:auto;border-right:1px solid #1e2a45;background:#0b1120;-webkit-overflow-scrolling:touch}
+.facet-side{width:38%;max-width:170px;flex-shrink:0;overflow-y:auto;border-right:1px solid #1e2a45;background:#0f1525;-webkit-overflow-scrolling:touch}
 .facet-side-item{padding:13px 12px;font-size:13px;color:#9fa8c8;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid #141b30;user-select:none}
-.facet-side-item.on{background:#0f1525;color:#00e5ff;font-weight:700;box-shadow:inset 3px 0 0 #00e5ff}
+.facet-side-item.on{background:#141b30;color:#00e5ff;font-weight:700;box-shadow:inset 3px 0 0 #00e5ff}
 .facet-side-item b{font-size:11px;font-weight:700;color:#000;background:#00e5ff;border-radius:9px;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 #filter-body{flex:1;overflow-y:auto;padding:8px 14px 16px;-webkit-overflow-scrolling:touch}
 .facet-opts-col{display:flex;flex-direction:column;gap:6px;padding-top:4px}
@@ -480,8 +480,8 @@ body{
 .facet-lbl{font-size:12px;color:#7986cb;margin-bottom:8px;font-weight:600}
 .facet-opt{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:16px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer;user-select:none}
 .facet-opt b{font-weight:600;color:#7986cb;font-size:11px}
-.facet-opt.on{background:#00e5ff;border-color:#00e5ff;color:#000}
-.facet-opt.on b{color:#000}
+.facet-opt.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
+.facet-opt.on b{color:#00e5ff}
 .facet-price{display:flex;align-items:center;gap:8px}
 .facet-price input{flex:1;min-width:0;background:#141b30;border:1.5px solid #2a3a5a;border-radius:8px;padding:8px 10px;color:#e8eaf6;font-size:13px}
 .dhdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;flex-direction:column;gap:10px}
@@ -2399,7 +2399,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.21';
+const APP_VERSION='v02.22';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
