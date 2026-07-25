@@ -1725,13 +1725,19 @@ body{
           <div class="shlp" style="margin-top:8px">取消勾選可以在「二手估值市場參考」區塊隱藏該市場（含內建 8 個與你自訂的市場），不會刪除資料，隨時可以再勾選回來。用 ↑↓ 按鈕可以調整顯示順序。</div>
           <div class="shlp" style="margin-top:6px">搜尋時會依分類自動加入限定詞提高準確度：遊戲/主機帶入平台；週邊/書籍/原聲帶/動漫美術/公仔帶入分類關鍵字（依市場語言自動切換中/日文）。</div>
         </div>
-        <div class="srow" style="margin-top:8px">
-          <div class="srl">📋 欄位區塊顯示設定</div>
+        <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
+          </div>
+        </div>
+        <div class="sgroup" data-grp="fieldgroups">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('fieldgroups')">
+            <span>📋 欄位區塊顯示設定</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
+        <div class="srow">
           <div id="grp-vis-list" style="margin-top:4px"></div>
           <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="grpVisResetAll()" type="button">全部顯示</button>
           <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。所有分類共用這組設定（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。</div>
         </div>
-        <div class="shlp" style="margin-top:8px">📚 書籍 ISBN 查詢：openBD／NDL 國會圖書館／Open Library 免金鑰，已內建自動啟用；填妥楽天金鑰後另自動啟用 楽天ブックス</div>
           </div>
         </div>
         <div class="sgroup" data-grp="gamedb">
@@ -2374,7 +2380,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.13';
+const APP_VERSION='v02.14';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
