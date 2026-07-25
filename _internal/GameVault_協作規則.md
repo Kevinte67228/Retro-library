@@ -1,6 +1,6 @@
 # GameVault 協作規則
 
-最後更新：2026-07-25（解除 v02_17 永久備份例外，大改版四階段完成）
+最後更新：2026-07-25（CHANGELOG 更新併入部署同一次 commit，避免觸發兩次 Pages 建置互相干擾）
 
 這份文件記錄 GameVault 的協作方式與部署規則，每次修改、產版、部署或整理檔案時依照這裡的規則處理。
 
@@ -254,8 +254,10 @@ Retro-library/
 
 並刪除舊的版本 HTML（`GameVault_vXX_YY-1_index.html`）。子版號/debug 版因不產生新版本 HTML，故也不執行此刪除步驟。
 
-**4. 更新 CHANGELOG**
+**4. 更新 CHANGELOG（併入同一次 commit，不要另外 push）**
 在 `_internal/CHANGELOG.md` 頂端插入新版記錄，超過 4 筆則刪最舊。子版號（`vXX.YYaN`）與 debug 版（`vXX.YYd`）用一行條列簡記即可，不需完整四段格式。
+
+⚠️ **重要（2026-07-25 起）**：`github_deploy.py` 支援第三個參數直接帶入 CHANGELOG 內容檔路徑，讓 CHANGELOG 更新跟步驟 1-3 包在**同一次 commit**裡，不要再像過去那樣部署完 docs/ 後另外開一次 commit 只推 CHANGELOG.md。**已知發生過的真實案例**：`_internal/CHANGELOG.md` 雖然不在 `docs/` 發布範圍內，但 GitHub Pages 的「Deploy from a branch」是整個 main 分支只要有任何 push 就觸發重建，不會篩選路徑；先前 docs/ 部署完後緊接著另外 push CHANGELOG，等於短時間內連續觸發兩次 Pages 自動建置，兩次互相干擾，其中一次的 `deploy` job 被中斷回報失敗（即使最終內容仍正確部署成功，使用者也會收到 GitHub 寄來的建置失敗通知信，造成不必要的困惑）。用法：`python3 github_deploy.py <新版本號> <版本資料夾路徑> <CHANGELOG.md新內容檔路徑>`。
 
 **5. GitHub Pages 自動部署**
 GitHub push 觸發 GitHub Pages 自動重新部署（設定為「Deploy from a branch → main → /docs」），約 1 分鐘內完成，無需手動操作。2026-07-21 起取代 Netlify（原因：Netlify 額度耗盡導致部署被跳過）。

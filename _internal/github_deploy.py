@@ -1,8 +1,8 @@
 """
 GameVault GitHub 部署腳本 v2 ── 改用 gh_batch.py 的 Git Data API 單一 commit 批次方式
 
-用法：python3 github_deploy.py <新版本號> <版本資料夾路徑>
-例如：python3 github_deploy.py v01_02 /home/claude/v01_02
+用法：python3 github_deploy.py <新版本號> <版本資料夾路徑> [CHANGELOG.md路徑]
+例如：python3 github_deploy.py v01_02 /home/claude/v01_02 /home/claude/v01_02/CHANGELOG_new.md
 
 跟 v1 的差異（v1 已過時，內容跟現行規則不符，這版修正）：
 - 備份路徑 docs/old/ → _internal/old/（符合現行 Repo 結構）
@@ -11,13 +11,20 @@ GameVault GitHub 部署腳本 v2 ── 改用 gh_batch.py 的 Git Data API 單�
 - 備份/清理/部署／刪舊版HTML 全部包在同一次 atomic commit 內完成（用 gh_batch.batch_commit）
   而不是像 v1 那樣逐檔案呼叫 Contents API（一個檔案一個 commit，又慢又容易留下不一致的中間狀態）
 - 備份時直接複製既有 blob sha（build_path_index），不需要重新下載+上傳內容
+- v3（2026-07-25）：CHANGELOG.md 更新併入同一次 commit（選填第三參數），不再另外開一次 commit。
+  原因：CHANGELOG.md 雖然放在 _internal/（不在 docs/ 發布範圍），但 GitHub Pages 的
+  「Deploy from a branch」是整個 main 分支只要有任何 push 就會觸發重建，不會只挑 docs/ 路徑。
+  之前部署完 docs/ 後緊接著另外 push CHANGELOG，等於短時間內連續觸發兩次 Pages 自動建置，
+  兩次建置管線互相干擾，其中一次容易被中斷回報失敗（即使最終內容仍正確部署成功，
+  也會收到失敗通知信）。併入同一次 commit 後只觸發一次建置，可避免此問題。
 
 流程：
 1. 讀取 docs/ 目前版本號（從 GameVault_vXX_YY_index.html 檔名推斷）
 2. 備份目前版本核心檔案 → _internal/old/<目前版號>/（複製既有 blob，不重新上傳）
 3. 若一般備份（排除 PERMANENT_EXCEPTIONS）超過 MAX_OLD(5) 個，清理最舊的
 4. 推送新版本檔案到 docs/，並刪除舊版本 HTML
-5. 以上全部包在同一次 commit 內完成
+5. 併入 CHANGELOG.md（若有提供第三參數）
+6. 以上全部包在同一次 commit 內完成
 """
 
 import sys, os
@@ -61,7 +68,7 @@ def get_current_version(path_index):
     return None
 
 
-def deploy(new_ver, local_dir):
+def deploy(new_ver, local_dir, changelog_path=None):
     parent_sha, tree_sha = get_branch_head()
     path_index = build_path_index(tree_sha)  # {path: blob_sha} 完整對照表
 
@@ -122,6 +129,13 @@ def deploy(new_ver, local_dir):
                 deletes.append(path)
                 print(f'  將移除舊版本HTML: {path}')
 
+    # 併入 CHANGELOG.md（若有提供）：跟 docs/ 部署包在同一次 commit，
+    # 避免額外一次 push 觸發 GitHub Pages 的自動建置管線、跟前一次部署 push 時間太近而互相干擾。
+    if changelog_path and os.path.exists(changelog_path):
+        with open(changelog_path, 'rb') as f:
+            adds['_internal/CHANGELOG.md'] = f.read()
+        print('  併入 CHANGELOG.md（同一次 commit）')
+
     if not adds and not copies and not deletes:
         print('沒有任何異動，中止。')
         return None
@@ -138,7 +152,7 @@ def deploy(new_ver, local_dir):
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print('用法: python3 github_deploy.py <新版本號> <版本資料夾路徑>')
+        print('用法: python3 github_deploy.py <新版本號> <版本資料夾路徑> [CHANGELOG.md路徑]')
         print('例如: python3 github_deploy.py v01_02 /home/claude/v01_02')
         sys.exit(1)
-    deploy(sys.argv[1], sys.argv[2])
+    deploy(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None)
