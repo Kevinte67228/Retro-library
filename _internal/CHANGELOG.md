@@ -1,3 +1,31 @@
+## v02.23 (2026-07-25)
+
+### 變更內容
+統計/儀表板頁的原生 `<select>` 下拉選單改成自訂選單，解決「點開後彈出 Android 系統白底選單，跟深色主題完全不搭」的問題：
+- 根因：`<select>` 的下拉彈出清單是作業系統原生元件（Android 上就是系統白底 Material 清單），關閉狀態的觸發按鈕可以用 CSS 上色，但打開後的清單本身**無法用 CSS 控制**，這是瀏覽器平台限制，不是漏改樣式
+- 修法沿用既有的 `openPlatFldPicker()` 手法（建檔表單選平台時就是這樣做）：select 本身加 `pointer-events:none` 完全失去互動能力（純粹保留當「目前值」的容器，`.value` 讀取邏輯不用改），外面疊一層透明覆蓋層攔截點擊，改開自訂的深色底部選單
+- 新增 `openSelectSheet()`／`pickSelectSheetOpt()`／`closeSelectSheet()`：重用既有的 `_showActionSheet()` 底部選單元件（原本用於卡片長按動作選單），直接讀取 select 既有的 `<option>` 清單當選項來源，不用另外重複定義一份；選中項目會標記 ✓ 並用強調色
+- 套用範圍：`dash-filter`（篩選分類）／`dash-trend-metric`（趨勢指標）／`dash-trend-time`（趨勢區間）／`dash-donut-mode`（佔比分析方式）共 4 個
+- `dash-donut-mode` 原本用 select 自己的 `display:none/''`控制顯示，現在改成外層 wrapper 一起控制（select 現在是 pointer-events:none，只切換它自己的 display 沒意義了）
+
+**範圍說明（重要）**：這次先處理統計頁這 4 個最顯眼的。全站還有更大量的 `<select class="fsel">` 用在建檔表單／尋寶表單等地方（同樣的白底彈窗問題），數量遠比這 4 個多，牽涉到的欄位種類也更雜，要不要套用同一套手法是後續要另外評估的範圍，這次沒有動。
+
+自我檢查：語法/亂碼/CSS 花括號配對通過；用真實抽取的 `openSelectSheet`／`pickSelectSheetOpt` 函式＋輕量 DOM mock 驗證選項讀取完整、目前值正確標記、`onchange` 正確觸發、不存在的 id 不噴錯、特殊字元正確跳脫，12 項全過。另外用結構性比對確認 4 個 `openSelectSheet()` 呼叫的 id 都對應到真實存在的 select 元素。
+
+### 影響檔案
+- docs/index.html / docs/GameVault_v02_23_index.html
+- docs/sw.js
+
+### GS 版本
+- 無（純前端互動/視覺調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-22 → gamevault-v02-23
+
+### 對應備份
+- _internal/old/v02_22/
+
+
 ## v02.22 (2026-07-25)
 
 ### 變更內容
@@ -22,6 +50,7 @@
 
 ### 對應備份
 - _internal/old/v02_21/
+
 
 
 ## v02.21 (2026-07-25)
@@ -50,6 +79,7 @@
 
 
 
+
 ## v02.20 (2026-07-25)
 
 ### 變更內容
@@ -73,32 +103,3 @@
 
 ### 對應備份
 - _internal/old/v02_19/
-
-
-
-
-## v02.19 (2026-07-25)
-
-### 變更內容
-「統一整個程式碼渲染函式」Phase 2（建檔/編輯表單＋詳情頁）。稽核發現表單區塊(`.sg`/`.sh2`/`.sb`)跟詳情頁區塊(`.detail-section`)是同一個視覺概念（邊框卡片＋深色標題列＋內容區）分別刻出來的，統一如下：
-- 詳情頁區塊背景色 `#0b1120` → `#0f1525`，跟表單 `.sb` 以及全站其他「內容底色」（`.gi`／`.abbr-legend`／`.sortc` 等）真正一致，原本是沒對齊到的顏色漂移
-- 詳情頁區塊標題 padding `9px 12px` → `10px 14px`，對齊表單 `.sh2`
-- `.dot`（分類色點）原本被鎖在 `.sl` 底下只給表單用，改成獨立 class；詳情頁區塊標題現在也加上同一顆色點，沿用既有 `gcolFor()` 色表，沒對應色的區塊（如少數自訂區塊）比照表單同一套 fallback 灰色，不會噴錯
-- `_refLinks()`（查價連結區塊，如「關聯商品」以外的市場連結區）維持沒有色點——它不是欄位群組、`gcolFor()` 查不到對應色，刻意不強加
-
-**這次沒動的（留待後續評估）**：表單區塊是可收合的（點擊展開/收合＋箭頭動畫），詳情頁區塊目前是靜態全展開；這是行為差異不是視覺差異，要不要讓詳情頁也可收合是進一步的功能決策，這次只處理視覺一致性，沒有一併加上去。
-
-自我檢查：語法/亂碼/CSS 花括號配對通過；用真實抽取的 `gcolFor()`／`GCOL`／`BOOK_GCOL` 驗證色碼對照與 fallback 邏輯，5 項全過。
-
-### 影響檔案
-- docs/index.html / docs/GameVault_v02_19_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（純前端視覺調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-18 → gamevault-v02-19
-
-### 對應備份
-- _internal/old/v02_18/
