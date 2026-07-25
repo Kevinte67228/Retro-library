@@ -293,7 +293,7 @@ body{
 .dv2-kpi-bar::-webkit-scrollbar{display:none}
 .dv2-kpi-pill{flex:0 0 auto;min-width:104px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:12px;padding:11px 12px;cursor:pointer;position:relative;overflow:hidden;text-align:left;font-family:inherit;transition:border-color .15s,background .15s}
 .dv2-kpi-pill::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,#00e5ff);border-radius:12px 12px 0 0}
-.dv2-kpi-pill.active{border-color:var(--kpi-color,#00e5ff);background:#141b30}
+.dv2-kpi-pill.active{border-color:var(--kpi-color,#00e5ff);background:#141b30;box-shadow:inset 0 0 12px var(--kpi-color,#00e5ff)}
 .dv2-kpi-ic{font-size:16px;margin-bottom:5px}
 .dv2-kpi-val{font-family:Rajdhani,sans-serif;font-size:21px;font-weight:700;color:var(--kpi-color,#e8eaf6);line-height:1;white-space:nowrap}
 .dv2-kpi-lbl{font-size:10px;color:#7986cb;margin-top:3px;white-space:nowrap}
@@ -303,7 +303,7 @@ body{
 /* 財務分段控制器 */
 .dv2-seg{display:flex;background:#0a0f1e;border:1px solid #1e2a45;border-radius:10px;overflow:hidden;margin-bottom:16px}
 .dv2-seg-btn{flex:1;padding:8px 4px;font-size:11px;font-weight:700;border:none;background:transparent;color:#7986cb;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
-.dv2-seg-btn.on{background:#1a2540;color:#00e5ff}
+.dv2-seg-btn.on{background:#1a2540;color:#00e5ff;box-shadow:inset 0 0 10px rgba(0,229,255,.4)}
 /* 財務英雄數字 */
 .dv2-fin-hero{text-align:center;padding:8px 0 16px}
 .dv2-fin-lbl{font-size:11px;color:#7986cb;margin-bottom:6px}
@@ -2399,7 +2399,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.20';
+const APP_VERSION='v02.21';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);

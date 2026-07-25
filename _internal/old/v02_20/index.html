@@ -182,7 +182,7 @@ body{
 .sg{margin:0 16px 8px;border:1px solid #1e2a45;border-radius:10px;overflow:hidden}
 .sh2{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#141b30;cursor:pointer;user-select:none}
 .sl{font-family:'Rajdhani','PingFang TC',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px}
-.sl .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
 .sc{color:#7986cb;transition:transform .2s;font-size:16px;line-height:1}
 .sc.op{transform:rotate(180deg)}
 .sb{background:#0f1525;padding:14px}
@@ -218,8 +218,9 @@ body{
 #sort-bar{display:flex;gap:8px;padding:8px 16px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
 #sort-bar::-webkit-scrollbar{display:none}
 #sort-bar .sortbar-lbl{flex-shrink:0;font-size:12px;color:#7986cb;margin-right:2px;letter-spacing:.5px}
-.sortc{flex-shrink:0;min-height:32px;padding:6px 11px;border-radius:8px;border:1px solid #1e2a45;background:rgba(15,21,37,.82);color:#9fa8c8;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
-.sortc.on{background:rgba(0,229,255,.13);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 0 1px rgba(0,229,255,.08) inset}
+.sortc{flex-shrink:0;min-height:32px;padding:6px 11px;border-radius:8px;border:1px solid #1e2a45;background:rgba(15,21,37,.82);color:#9fa8c8;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;transition:all .15s}
+/* v02.17：晶片選中「點亮」效果統一（sortc/genre-chip/genre-tab 共用同一套：淡色底＋色框＋外發光），取代原本各自不同的純色實心／幾乎看不見的內陰影 */
+.sortc.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
 #filter-summary{display:none;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
 #filter-summary::-webkit-scrollbar{display:none}
 #filter-summary.on{display:flex}
@@ -407,8 +408,14 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
-.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative}
+.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s}
 .gc:active{border-color:#00e5ff}
+/* v02.18 Phase1：尋寶卡片外框比照收藏卡片同一套視覺語言（色值本來就相同，這裡改成共用 class 取代原本的 inline style，順便補上 :active 按壓回饋） */
+.hc{background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.hc:active{border-color:#00e5ff}
+.hc.done{opacity:.55}
+/* v02.18 Phase1：卡片選中「點亮」效果統一（取代原本 .gc／尋寶卡片各自不同、幾乎看不見的內陰影），跟晶片同一套外發光語言，色沿用既有「選取＝玫瑰色」語意 */
+.gc.sel,.hc.sel{border-color:#ff6e9c;box-shadow:0 0 4px rgba(255,110,156,.85),0 0 14px rgba(255,110,156,.45)}
 .gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
 .gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
 .gfav:active{transform:scale(.85)}
@@ -427,6 +434,7 @@ body{
 .bk-cat-ost{color:#ff8a65;border-color:#ff8a65;background:rgba(255,138,101,.08)}
 .bk-cat-artbook{color:#aed581;border-color:#aed581;background:rgba(174,213,129,.08)}
 .bk-cat-figure{color:#f06292;border-color:#f06292;background:rgba(240,98,146,.08)}
+.bk-ok{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .bk-genre{color:#e1a8ff;border-color:#ce93d8;background:rgba(206,147,216,.08)}
 .bk-cond{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:11px;font-weight:700}
 .bk-state{color:#9fa8c8;border-color:#3a4b72;background:rgba(42,58,90,.18)}
@@ -526,9 +534,10 @@ body{
 .vault-kpi .kl{font-size:9px;color:#7986cb;margin-bottom:3px}
 .vault-kpi .kv{font-size:12px;color:#e8eaf6;line-height:1.25;overflow-wrap:anywhere}
 .vault-kpi .kv-sub{font-size:9px;color:#9fa8c8;line-height:1.25;margin-top:4px;overflow-wrap:anywhere}
-.detail-section{grid-column:1/-1;border:1px solid #1e2a45;border-radius:10px;background:#0b1120;overflow:hidden}
-.detail-section-title{padding:9px 12px;background:#141b30;color:#9fa8c8;font-size:11px;font-weight:700;letter-spacing:.5px}
+.detail-section{grid-column:1/-1;border:1px solid #1e2a45;border-radius:10px;background:#0f1525;overflow:hidden}
+.detail-section-title{display:flex;align-items:center;padding:10px 14px;background:#141b30;color:#9fa8c8;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;user-select:none}
 .detail-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+.detail-section-grid.cl{display:none}
 .detail-section-grid .df.full{grid-column:1/-1}
 
 /* === Settings === */
@@ -626,14 +635,14 @@ body{
 .genre-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .genre-chip{display:inline-flex;align-items:center;padding:7px 12px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
 .genre-chip:active{transform:scale(.95)}
-.genre-chip.on{background:#00e5ff;border-color:#00e5ff;color:#000;font-weight:600}
+.genre-chip.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
 /* v54.79：遊戲類型分組頁籤——橫向可滑動，點選後下方顯示該組晶片 */
 .genre-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 6px;margin-top:6px;scrollbar-width:none}
 .genre-tabs::-webkit-scrollbar{display:none}
 .genre-tab{flex-shrink:0;white-space:nowrap;padding:8px 13px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;user-select:none}
 .genre-tab b{font-weight:700}
-.genre-tab.on{background:#7c4dff;border-color:#7c4dff;color:#fff}
-.genre-tab.on b{color:#fff}
+.genre-tab.on{background:rgba(124,77,255,.15);border-color:#7c4dff;color:#7c4dff;font-weight:700;box-shadow:0 0 4px rgba(124,77,255,.85),0 0 14px rgba(124,77,255,.45)}
+.genre-tab.on b{color:#7c4dff}
 .genre-tab:not(.on) b{color:#00e5ff}
 .genre-tab-panels{border:1px solid #1e2a45;border-radius:10px;background:#0f1525;padding:10px}
 /* 配件完整度：逐項目評級 */
@@ -665,6 +674,16 @@ body{
 .abbr-list{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 12px 12px;font-size:12px;color:#9fa8c8}
 .abbr-list span{white-space:nowrap}
 .abbr-list b{color:#e8eaf6;font-weight:700;margin-right:2px}
+/* v02.16：欄位區塊顯示設定改為矩陣勾選表（列＝欄位區塊、欄＝8大分類），取代 v02.15 的手風琴版面 */
+.grpvis-matrix{width:100%;font-size:12px}
+.grpvis-mhead,.grpvis-mrow{display:grid;grid-template-columns:74px repeat(8,1fr);align-items:center}
+.grpvis-mhead{border-bottom:1px solid #1e2a45;padding-bottom:6px;margin-bottom:2px}
+.grpvis-mrow{border-bottom:1px solid rgba(30,42,69,.5);padding:5px 0}
+.grpvis-mrow:last-child{border-bottom:none}
+.grpvis-mcell{display:flex;align-items:center;justify-content:center;min-height:26px}
+.grpvis-mlabel{justify-content:flex-start;font-size:11px;color:#e8eaf6;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grpvis-micon{font-size:15px}
+.grpvis-mcell input[type=checkbox]{width:17px;height:17px;accent-color:#00e5ff;flex-shrink:0}
 /* ── 圖片裁切器 ── */
 #crop-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;flex-direction:column;touch-action:none;opacity:0;transition:opacity .28s ease}
 #crop-ov.on{display:flex}
@@ -1736,7 +1755,7 @@ body{
         <div class="srow">
           <div id="grp-vis-list" style="margin-top:4px"></div>
           <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="grpVisResetAll()" type="button">全部顯示</button>
-          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。所有分類共用這組設定（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。</div>
+          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。<strong>橫排是 8 大分類（長按圖示可看分類名稱），直排是欄位區塊；分類沒有的區塊該格留空</strong>，各分類的同名區塊（例如「識別資訊」）開關互相獨立，例如把遊戲的識別資訊隱藏，書籍的不受影響；拆表分類（原聲帶／動漫美術／公仔／數位下載版）內的各子類型共用同一組設定。</div>
         </div>
           </div>
         </div>
@@ -2380,7 +2399,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.14';
+const APP_VERSION='v02.20';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4251,38 +4270,91 @@ function _marketOrderedList(){
   var rest=all.filter(function(n){return ordered.indexOf(n)<0;});
   return ordered.concat(rest);
 }
-// ── v02.13：欄位區塊（群組）顯示設定 ──
+// ── v02.13：欄位區塊（群組）顯示設定；v02.15：改為依 8 大分類各自獨立；v02.16：畫面改成矩陣勾選表（欄=分類icon、列=區塊，不適用留空）──
 // 一組設定同時作用於「建檔/編輯表單」與「收藏詳情頁」；隱藏只影響顯示，資料一律保留。
-// 所有分類共用同一份清單（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。
-var ALL_FIELD_GROUPS=['圖片紀錄','識別資訊','書籍資訊','主機資訊','週邊資訊','版本規格','規格','硬體規格','遊戲規格','內容資訊','音樂資訊','影音資訊','模型資訊','商店資訊','檔案資訊','追加內容','發行資訊','發行廠商','出版資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','運作狀態','個人記錄','關聯商品','補充資訊'];
-function _groupHiddenSet(){
+// 每個分類各自的欄位區塊清單改用現有 groupsFor()/SUBTYPE_META 動態取得（4 個拆表分類取所有子類型的聯集），
+// 不再手動維護扁平清單，避免跟各分類實際欄位表脫節。
+var GROUP_VIS_CATS=['遊戲','攻略','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'];
+function _catAllGroups(cat){
+  cat=catInternal(cat);
+  if(hasSubtype(cat)){
+    var opts=(SUBTYPE_META[cat]&&SUBTYPE_META[cat].options)||[];
+    var seen={},out=[];
+    opts.forEach(function(st){
+      (groupsFor(cat,st)||[]).forEach(function(g){if(!seen[g]){seen[g]=1;out.push(g);}});
+    });
+    return out;
+  }
+  return groupsFor(cat)||[];
+}
+// v01.01～v02.14 的舊格式 cfg.groupHidden（扁平陣列，跨分類共用同一開關）一次性轉換成
+// cfg.groupHiddenByCat（依分類分開存）；只有「該分類真的有這個區塊」才會轉入，避免升級當下
+// 使用者已隱藏的區塊突然變回顯示。轉換後即刪除舊欄位，之後都走新格式。
+function _migrateGroupHiddenLegacy(){
+  if(!cfg||!Array.isArray(cfg.groupHidden)||!cfg.groupHidden.length)return;
+  var byCat=(cfg.groupHiddenByCat&&typeof cfg.groupHiddenByCat==='object')?cfg.groupHiddenByCat:{};
+  GROUP_VIS_CATS.forEach(function(c){
+    var all=_catAllGroups(c);
+    var hit=cfg.groupHidden.filter(function(n){return all.indexOf(n)>=0;});
+    if(!hit.length)return;
+    var existing=Array.isArray(byCat[c])?byCat[c].slice():[];
+    hit.forEach(function(n){if(existing.indexOf(n)<0)existing.push(n);});
+    byCat[c]=existing;
+  });
+  cfg.groupHiddenByCat=byCat;
+  delete cfg.groupHidden;
+  _persistCfg();
+}
+function _groupHiddenSet(cat){
+  _migrateGroupHiddenLegacy(); // 冪等、開頭即 return，確保不管從表單/詳情頁/設定頁哪裡先進來都已完成遷移
+  var c=catInternal(cat||'遊戲');
   var o={};
-  ((cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden:[]).forEach(function(n){o[n]=1;});
+  var arr=(cfg&&cfg.groupHiddenByCat&&Array.isArray(cfg.groupHiddenByCat[c]))?cfg.groupHiddenByCat[c]:[];
+  arr.forEach(function(n){o[n]=1;});
   return o;
 }
-function isGroupHidden(g){return !!_groupHiddenSet()[g];}
+function isGroupHidden(g,cat){return !!_groupHiddenSet(cat)[g];}
+// v02.16：欄位區塊在矩陣裡的「列」順序＝依 GROUP_VIS_CATS 分類順序掃過去、第一次出現時的順序（動態算出，不手動維護清單）
+function _allGroupsMasterOrder(){
+  var seen={},out=[];
+  GROUP_VIS_CATS.forEach(function(cat){
+    _catAllGroups(cat).forEach(function(g){if(!seen[g]){seen[g]=1;out.push(g);}});
+  });
+  return out;
+}
 function grpVisRenderList(){
   var box=$('grp-vis-list');if(!box)return;
-  var hidden=_groupHiddenSet();
-  box.innerHTML=ALL_FIELD_GROUPS.map(function(n){
-    var on=!hidden[n];
-    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
-      '<input type="checkbox" data-grp="'+esc(n)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
-      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n)+'</span>'+
-    '</label>';
+  var rowsOrder=_allGroupsMasterOrder();
+  var catGroups=GROUP_VIS_CATS.map(function(cat){return {cat:cat,set:_catAllGroups(cat),hidden:_groupHiddenSet(cat)};});
+  var head='<div class="grpvis-mhead"><div class="grpvis-mcell"></div>'+
+    catGroups.map(function(cg){
+      var meta=CAT_META[cg.cat]||{};
+      return '<div class="grpvis-mcell grpvis-micon" title="'+esc(catLabel(cg.cat))+'">'+(meta.icon||'')+'</div>';
+    }).join('')+'</div>';
+  var body=rowsOrder.map(function(g){
+    var cells=catGroups.map(function(cg){
+      if(cg.set.indexOf(g)<0)return '<div class="grpvis-mcell"></div>'; // 該分類沒有這個區塊：留空，不放核取方塊
+      var on=!cg.hidden[g];
+      return '<div class="grpvis-mcell"><input type="checkbox" data-cat="'+esc(cg.cat)+'" data-grp="'+esc(g)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)"></div>';
+    }).join('');
+    return '<div class="grpvis-mrow"><div class="grpvis-mcell grpvis-mlabel">'+esc(g)+'</div>'+cells+'</div>';
   }).join('');
+  box.innerHTML='<div class="grpvis-matrix">'+head+body+'</div>';
 }
 function grpVisToggle(cb){
+  var cat=catInternal(cb.dataset.cat||'遊戲');
   var name=cb.dataset.grp;if(!name)return;
-  var arr=(cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden.slice():[];
+  var byCat=(cfg&&cfg.groupHiddenByCat&&typeof cfg.groupHiddenByCat==='object')?Object.assign({},cfg.groupHiddenByCat):{};
+  var arr=Array.isArray(byCat[cat])?byCat[cat].slice():[];
   if(cb.checked){arr=arr.filter(function(n){return n!==name;});}
   else if(arr.indexOf(name)<0)arr.push(name);
-  cfg.groupHidden=arr;
+  byCat[cat]=arr;
+  cfg.groupHiddenByCat=byCat;
   _persistCfg();
   _grpVisApplyLive();
 }
 function grpVisResetAll(){
-  cfg.groupHidden=[];
+  cfg.groupHiddenByCat={};
   _persistCfg();
   grpVisRenderList();
   _grpVisApplyLive();
@@ -9601,6 +9673,7 @@ function doAnalyze(){
 // 依資料類別套用對應的欄位集合（FIELDS/SELECTS/GROUPS/GCOL/DEFAULTS）
 function _applyCatFields(cat,subtype){
   cat=catInternal(cat)||'遊戲';
+  window._CUR_CAT=cat; // v02.15：欄位區塊顯示設定改依分類獨立，renderForm 需要知道目前分類
   window._CUR_FIELDS=fieldsFor(cat,subtype);
   window._CUR_SELECTS=selectsFor(cat,subtype);
   window._CUR_GROUPS=groupsFor(cat,subtype);
@@ -9725,7 +9798,7 @@ function renderForm(){
   // [0]=圖片紀錄、[1]=識別資訊（書籍/主機/週邊分別叫書籍資訊/主機資訊/週邊資訊，但同樣是排第二個）
   // 其餘區塊一律預設收折，避免建檔一開始就看到落落長的表單
   var expandByDefault=[_G[0],_G[1]].filter(Boolean);
-  _G.filter(function(g){return !isGroupHidden(g);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定（隱藏只影響顯示，資料保留）
+  _G.filter(function(g){return !isGroupHidden(g,window._CUR_CAT);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定（隱藏只影響顯示，資料保留）；v02.15 改依分類判斷
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
@@ -12583,7 +12656,8 @@ function renderGlist(){
     var midLine=midParts.filter(Boolean).join(' · ');
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
     var dateLine=_glistMeta(d);
-    return'<div class="gc" style="'+((_colSel&&_colSelSet.has(String(item.uid||item.rowNum)))?'box-shadow:0 0 0 2px #ff6e9c inset;':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
+    var _isSel=_colSel&&_colSelSet.has(String(item.uid||item.rowNum)); // v02.18 Phase1：選中狀態改用 class（原本是 inline box-shadow 字串）
+    return'<div class="gc'+(_isSel?' sel':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
       '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(item.uid||item.rowNum)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>'+
       (_colSel?'<div style="flex-shrink:0;align-self:center;font-size:24px;line-height:1;color:'+((_colSelSet.has(String(item.uid||item.rowNum)))?'#ff6e9c':'#5c6b8a')+'">'+((_colSelSet.has(String(item.uid||item.rowNum)))?'☑':'☐')+'</div>':'')+
       thumb+
@@ -13659,12 +13733,13 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
   });
   var sectionHtml='';
-  if(relBlock&&!isGroupHidden('關聯商品')){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定
-    sectionHtml+='<div class="detail-section"><div class="detail-section-title">關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
+  var _dcol=gcolFor(d.category,d.subtype)||{}; // v02.19 Phase2：詳情頁區塊標題比照表單加上分類色點，沿用同一份 GCOL 色表
+  if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
+    sectionHtml+='<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>';
   }
   sectionHtml+=marketReferenceHtml(d);
-  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g);}).map(function(g){ // v02.13：套用欄位區塊顯示設定
-    return '<div class="detail-section"><div class="detail-section-title">'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
+  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).map(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
+    return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
   }).join('');
   $('dgrid').innerHTML=html+sectionHtml;
   markScrollableRefs($('dgrid'));
@@ -13993,6 +14068,11 @@ var _huntDetailUid=null;
 var _huntConvertUid=null;     // #4：尋寶轉入收藏進行中的來源目標 uid
 var _huntSel=false,_huntSelSet=new Set();   // #5：尋寶批次選取
 var HUNT_CATCOLOR={'遊戲':'#00e5ff','攻略':'#ff6e9c','主機':'#69f0ae','週邊':'#ffab40'};
+// v02.18 Phase1：卡片列表的分類色條改沿用既有 .bk-cat-*（跟收藏卡片同一套），HUNT_CATCOLOR 本身保留給 huntDetail() 用
+function _huntCatCls(cat){
+  var m={'遊戲':'bk-cat bk-cat-game','攻略':'bk-cat bk-cat-book','主機':'bk-cat bk-cat-console','週邊':'bk-cat bk-cat-periph'};
+  return m[cat]||'bk-cat bk-cat-game';
+}
 
 // v54.68：尋寶詳情頁 KPI 計算（最低價／目標價／收藏慾望／發售倒數）
 function _huntLowestPriceKpi(d){
@@ -14286,7 +14366,6 @@ function huntCardHtml(h){
     else priceLine='<span style="color:#ff6e9c;font-weight:700">'+sights.length+' 筆報價</span><span style="color:#5c6b8a"> · 多幣別</span>';
   }
   var done=_huntDone(d);
-  var cc=HUNT_CATCOLOR[catInternal(d.target_cat)]||'#00e5ff';
   var photo=imgUrl(d.cover_img,150);
   // 通路報價欄（v25.10）：每通路顯示「通路/店名 · 價格幣別」，依價格低到高（跨幣別用台幣等值排序），最多 3 行 +「+N 通路」
   var chanItems=sights.map(function(s){
@@ -14305,15 +14384,16 @@ function huntCardHtml(h){
     // v54.84：改成單欄縱向排列（拿掉多欄grid），每個通路都能用到卡片全寬，避免長店名(如「駿河屋 新宿マルイアネックス店」)被切成好幾欄反而更窄
     notesCol='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e2a45;font-size:11px;color:#9fa8c8;line-height:1.5">'+chanRows+chanMore+'</div>';
   }
-  return '<div '+_huntPressAttr(h.uid)+' style="background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
+  var _huntIsSel=_huntSel&&_huntSelSet.has(h.uid);
+  return '<div class="hc'+(_huntIsSel?' sel':'')+(done?' done':'')+'" '+_huntPressAttr(h.uid)+'>'+
     '<div style="display:flex;gap:12px">'+
     (_huntSel?'<div style="flex-shrink:0;align-self:center;font-size:20px;color:'+((_huntSelSet.has(h.uid))?'#ff6e9c':'#5c6b8a')+'">'+(_huntSelSet.has(h.uid)?'☑':'☐')+'</div>':'')+
     (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:104px;height:104px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:104px;height:104px;border-radius:10px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:32px">🎮</div>')+
     '<div style="flex:1;min-width:0">'+
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
-        '<span style="font-size:9px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 5px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
-        (done?'<span style="font-size:9px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 5px">已入手</span>':'')+
+        '<span class="bk '+_huntCatCls(catInternal(d.target_cat))+'">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
+        (done?'<span class="bk bk-ok">已入手</span>':'')+
       '</div>'+
       '<div style="font-size:14px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(d.primary_name||'未命名目標')+'</div>'+
       '<div style="font-size:11px;color:#7986cb;margin-top:2px">'+esc(d.platform||d.subtype||'')+'</div>'+
