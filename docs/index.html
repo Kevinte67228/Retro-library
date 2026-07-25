@@ -1468,17 +1468,20 @@ body{
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">
           <div class="hs" style="margin:0">收藏數據總覽</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <select id="dash-filter" class="fsel" style="height:34px;font-size:12px;padding:0 10px;min-width:72px;border-radius:10px" onchange="_dashDrillSubtype=null;renderDash()">
-              <option value="all">全部</option>
-              <option value="game">遊戲</option>
-              <option value="book">書籍</option>
-              <option value="console">主機</option>
-              <option value="periph">週邊</option>
-              <option value="digital">數位下載版</option>
-              <option value="ost">原聲帶</option>
-              <option value="artbook">動漫/美術設定集</option>
-              <option value="figure">公仔</option>
-            </select>
+            <div style="position:relative;display:inline-block">
+              <select id="dash-filter" class="fsel" style="height:34px;font-size:12px;padding:0 10px;min-width:72px;border-radius:10px;pointer-events:none" tabindex="-1" onchange="_dashDrillSubtype=null;renderDash()">
+                <option value="all">全部</option>
+                <option value="game">遊戲</option>
+                <option value="book">書籍</option>
+                <option value="console">主機</option>
+                <option value="periph">週邊</option>
+                <option value="digital">數位下載版</option>
+                <option value="ost">原聲帶</option>
+                <option value="artbook">動漫/美術設定集</option>
+                <option value="figure">公仔</option>
+              </select>
+              <div onclick="openSelectSheet('dash-filter','篩選分類')" style="position:absolute;inset:0;cursor:pointer"></div>
+            </div>
             <button class="tbtn" onclick="dashRefresh()" title="同步資料" type="button">
               <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
             </button>
@@ -1504,16 +1507,22 @@ body{
           <div class="dv2-card-hd">
             <div class="dv2-card-title"><span class="dv2-dot" style="background:var(--accent)"></span>購入趨勢</div>
             <div style="display:flex;gap:5px">
-              <select id="dash-trend-metric" class="dv2-sel" onchange="renderTrend()">
-                <option value="count">購入筆數</option>
-                <option value="cost">購入成本</option>
-                <option value="resale">賣出金額</option>
-                <option value="profit">淨利潤</option>
-              </select>
-              <select id="dash-trend-time" class="dv2-sel" onchange="renderTrend()">
-                <option value="yearly">年度</option>
-                <option value="monthly">近24月</option>
-              </select>
+              <div style="position:relative;display:inline-block">
+                <select id="dash-trend-metric" class="dv2-sel" style="pointer-events:none" tabindex="-1" onchange="renderTrend()">
+                  <option value="count">購入筆數</option>
+                  <option value="cost">購入成本</option>
+                  <option value="resale">賣出金額</option>
+                  <option value="profit">淨利潤</option>
+                </select>
+                <div onclick="openSelectSheet('dash-trend-metric','選擇指標')" style="position:absolute;inset:0;cursor:pointer"></div>
+              </div>
+              <div style="position:relative;display:inline-block">
+                <select id="dash-trend-time" class="dv2-sel" style="pointer-events:none" tabindex="-1" onchange="renderTrend()">
+                  <option value="yearly">年度</option>
+                  <option value="monthly">近24月</option>
+                </select>
+                <div onclick="openSelectSheet('dash-trend-time','選擇區間')" style="position:absolute;inset:0;cursor:pointer"></div>
+              </div>
             </div>
           </div>
           <canvas id="dash-yearly-chart" width="300" height="180" style="max-width:100%"></canvas>
@@ -1522,10 +1531,13 @@ body{
           <div class="dv2-card-accent"></div>
           <div class="dv2-card-hd">
             <div class="dv2-card-title"><span class="dv2-dot" style="background:var(--accent)"></span><span id="dash-donut-label">收藏組成</span></div>
-            <select id="dash-donut-mode" class="dv2-sel" style="display:none" onchange="renderDash()">
-              <option value="type">商品分類</option>
-              <option value="region">地區屬性</option>
-            </select>
+            <div style="position:relative;display:none" id="dash-donut-mode-wrap">
+              <select id="dash-donut-mode" class="dv2-sel" style="pointer-events:none" tabindex="-1" onchange="renderDash()">
+                <option value="type">商品分類</option>
+                <option value="region">地區屬性</option>
+              </select>
+              <div onclick="openSelectSheet('dash-donut-mode','選擇分析方式')" style="position:absolute;inset:0;cursor:pointer"></div>
+            </div>
           </div>
           <div class="dv2-donut-row">
             <canvas id="dash-donut" width="96" height="96" style="flex-shrink:0"></canvas>
@@ -2399,7 +2411,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.22';
+const APP_VERSION='v02.23';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11391,7 +11403,8 @@ function renderDash(){
 
   // Zone4：佔比分析
   var donutModeEl=$('dash-donut-mode');
-  if(donutModeEl)donutModeEl.style.display=cat?'none':'';
+  var donutModeWrap=$('dash-donut-mode-wrap');
+  if(donutModeWrap)donutModeWrap.style.display=cat?'none':'';
   var dlab=$('dash-donut-label');
   if(!cat&&donutModeEl&&donutModeEl.value==='region'){
     var regMap={};
@@ -12750,6 +12763,29 @@ function _showActionSheet(o){
     '<div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+btns+'</div>'+
     '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="'+o.closeName+'()" type="button">取消</button></div></div>';
   ov.style.display='flex';
+}
+// v02.23：原生 <select> 的下拉彈出清單在 Android 上是系統白底、CSS 完全套不到，跟深色主題衝突。
+// 這幾個統計頁的 select 改成「select 本身用 pointer-events:none 隱藏互動、疊一層透明覆蓋層攔截點擊」，
+// 沿用既有 openPlatFldPicker() 同一套手法，但選單本身重用 _showActionSheet（適合短選項清單，不需要搜尋）。
+// select 的 <option> 清單直接讀取現有 DOM，不用另外複製一份選項定義，維持單一事實來源。
+function closeSelectSheet(){var ov=$('select-sheet-ov');if(ov)ov.style.display='none';}
+function openSelectSheet(selId,title){
+  var sel=$(selId);if(!sel)return;
+  var cur=sel.value;
+  var opts=Array.prototype.map.call(sel.options,function(o){return {value:o.value,label:o.textContent};});
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:title,
+    buttons:opts.map(function(o){
+      var isCur=(o.value===cur);
+      return {color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(o.label),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(o.value)+"')"};
+    })
+  });
+}
+function pickSelectSheetOpt(selId,val){
+  var sel=$(selId);if(!sel)return;
+  sel.value=val;
+  closeSelectSheet();
+  if(typeof sel.onchange==='function')sel.onchange();
 }
 
 // ── 收藏列表長按手勢 ──

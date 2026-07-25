@@ -182,7 +182,7 @@ body{
 .sg{margin:0 16px 8px;border:1px solid #1e2a45;border-radius:10px;overflow:hidden}
 .sh2{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#141b30;cursor:pointer;user-select:none}
 .sl{font-family:'Rajdhani','PingFang TC',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px}
-.sl .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
 .sc{color:#7986cb;transition:transform .2s;font-size:16px;line-height:1}
 .sc.op{transform:rotate(180deg)}
 .sb{background:#0f1525;padding:14px}
@@ -293,7 +293,7 @@ body{
 .dv2-kpi-bar::-webkit-scrollbar{display:none}
 .dv2-kpi-pill{flex:0 0 auto;min-width:104px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:12px;padding:11px 12px;cursor:pointer;position:relative;overflow:hidden;text-align:left;font-family:inherit;transition:border-color .15s,background .15s}
 .dv2-kpi-pill::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-color,#00e5ff);border-radius:12px 12px 0 0}
-.dv2-kpi-pill.active{border-color:var(--kpi-color,#00e5ff);background:#141b30}
+.dv2-kpi-pill.active{border-color:var(--kpi-color,#00e5ff);background:#141b30;box-shadow:inset 0 0 12px var(--kpi-color,#00e5ff)}
 .dv2-kpi-ic{font-size:16px;margin-bottom:5px}
 .dv2-kpi-val{font-family:Rajdhani,sans-serif;font-size:21px;font-weight:700;color:var(--kpi-color,#e8eaf6);line-height:1;white-space:nowrap}
 .dv2-kpi-lbl{font-size:10px;color:#7986cb;margin-top:3px;white-space:nowrap}
@@ -303,7 +303,7 @@ body{
 /* 財務分段控制器 */
 .dv2-seg{display:flex;background:#0a0f1e;border:1px solid #1e2a45;border-radius:10px;overflow:hidden;margin-bottom:16px}
 .dv2-seg-btn{flex:1;padding:8px 4px;font-size:11px;font-weight:700;border:none;background:transparent;color:#7986cb;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
-.dv2-seg-btn.on{background:#1a2540;color:#00e5ff}
+.dv2-seg-btn.on{background:#1a2540;color:#00e5ff;box-shadow:inset 0 0 10px rgba(0,229,255,.4)}
 /* 財務英雄數字 */
 .dv2-fin-hero{text-align:center;padding:8px 0 16px}
 .dv2-fin-lbl{font-size:11px;color:#7986cb;margin-bottom:6px}
@@ -408,8 +408,14 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
-.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative}
+.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s}
 .gc:active{border-color:#00e5ff}
+/* v02.18 Phase1：尋寶卡片外框比照收藏卡片同一套視覺語言（色值本來就相同，這裡改成共用 class 取代原本的 inline style，順便補上 :active 按壓回饋） */
+.hc{background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.hc:active{border-color:#00e5ff}
+.hc.done{opacity:.55}
+/* v02.18 Phase1：卡片選中「點亮」效果統一（取代原本 .gc／尋寶卡片各自不同、幾乎看不見的內陰影），跟晶片同一套外發光語言，色沿用既有「選取＝玫瑰色」語意 */
+.gc.sel,.hc.sel{border-color:#ff6e9c;box-shadow:0 0 4px rgba(255,110,156,.85),0 0 14px rgba(255,110,156,.45)}
 .gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
 .gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
 .gfav:active{transform:scale(.85)}
@@ -428,6 +434,7 @@ body{
 .bk-cat-ost{color:#ff8a65;border-color:#ff8a65;background:rgba(255,138,101,.08)}
 .bk-cat-artbook{color:#aed581;border-color:#aed581;background:rgba(174,213,129,.08)}
 .bk-cat-figure{color:#f06292;border-color:#f06292;background:rgba(240,98,146,.08)}
+.bk-ok{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .bk-genre{color:#e1a8ff;border-color:#ce93d8;background:rgba(206,147,216,.08)}
 .bk-cond{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:11px;font-weight:700}
 .bk-state{color:#9fa8c8;border-color:#3a4b72;background:rgba(42,58,90,.18)}
@@ -461,9 +468,9 @@ body{
 .fp-hdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:10px}
 /* ── 兩欄式篩選（Amazon 風格：左側類別／右側選項）── */
 .filter-2pane{flex:1;min-height:0;display:flex;overflow:hidden}
-.facet-side{width:38%;max-width:170px;flex-shrink:0;overflow-y:auto;border-right:1px solid #1e2a45;background:#0b1120;-webkit-overflow-scrolling:touch}
+.facet-side{width:38%;max-width:170px;flex-shrink:0;overflow-y:auto;border-right:1px solid #1e2a45;background:#0f1525;-webkit-overflow-scrolling:touch}
 .facet-side-item{padding:13px 12px;font-size:13px;color:#9fa8c8;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;border-bottom:1px solid #141b30;user-select:none}
-.facet-side-item.on{background:#0f1525;color:#00e5ff;font-weight:700;box-shadow:inset 3px 0 0 #00e5ff}
+.facet-side-item.on{background:#141b30;color:#00e5ff;font-weight:700;box-shadow:inset 3px 0 0 #00e5ff}
 .facet-side-item b{font-size:11px;font-weight:700;color:#000;background:#00e5ff;border-radius:9px;min-width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 #filter-body{flex:1;overflow-y:auto;padding:8px 14px 16px;-webkit-overflow-scrolling:touch}
 .facet-opts-col{display:flex;flex-direction:column;gap:6px;padding-top:4px}
@@ -473,8 +480,8 @@ body{
 .facet-lbl{font-size:12px;color:#7986cb;margin-bottom:8px;font-weight:600}
 .facet-opt{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:16px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer;user-select:none}
 .facet-opt b{font-weight:600;color:#7986cb;font-size:11px}
-.facet-opt.on{background:#00e5ff;border-color:#00e5ff;color:#000}
-.facet-opt.on b{color:#000}
+.facet-opt.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
+.facet-opt.on b{color:#00e5ff}
 .facet-price{display:flex;align-items:center;gap:8px}
 .facet-price input{flex:1;min-width:0;background:#141b30;border:1.5px solid #2a3a5a;border-radius:8px;padding:8px 10px;color:#e8eaf6;font-size:13px}
 .dhdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;flex-direction:column;gap:10px}
@@ -527,9 +534,10 @@ body{
 .vault-kpi .kl{font-size:9px;color:#7986cb;margin-bottom:3px}
 .vault-kpi .kv{font-size:12px;color:#e8eaf6;line-height:1.25;overflow-wrap:anywhere}
 .vault-kpi .kv-sub{font-size:9px;color:#9fa8c8;line-height:1.25;margin-top:4px;overflow-wrap:anywhere}
-.detail-section{grid-column:1/-1;border:1px solid #1e2a45;border-radius:10px;background:#0b1120;overflow:hidden}
-.detail-section-title{padding:9px 12px;background:#141b30;color:#9fa8c8;font-size:11px;font-weight:700;letter-spacing:.5px}
+.detail-section{grid-column:1/-1;border:1px solid #1e2a45;border-radius:10px;background:#0f1525;overflow:hidden}
+.detail-section-title{display:flex;align-items:center;padding:10px 14px;background:#141b30;color:#9fa8c8;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;user-select:none}
 .detail-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+.detail-section-grid.cl{display:none}
 .detail-section-grid .df.full{grid-column:1/-1}
 
 /* === Settings === */
@@ -2391,7 +2399,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.17';
+const APP_VERSION='v02.22';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12648,7 +12656,8 @@ function renderGlist(){
     var midLine=midParts.filter(Boolean).join(' · ');
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
     var dateLine=_glistMeta(d);
-    return'<div class="gc" style="'+((_colSel&&_colSelSet.has(String(item.uid||item.rowNum)))?'box-shadow:0 0 0 2px #ff6e9c inset;':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
+    var _isSel=_colSel&&_colSelSet.has(String(item.uid||item.rowNum)); // v02.18 Phase1：選中狀態改用 class（原本是 inline box-shadow 字串）
+    return'<div class="gc'+(_isSel?' sel':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
       '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(item.uid||item.rowNum)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>'+
       (_colSel?'<div style="flex-shrink:0;align-self:center;font-size:24px;line-height:1;color:'+((_colSelSet.has(String(item.uid||item.rowNum)))?'#ff6e9c':'#5c6b8a')+'">'+((_colSelSet.has(String(item.uid||item.rowNum)))?'☑':'☐')+'</div>':'')+
       thumb+
@@ -13724,12 +13733,13 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
   });
   var sectionHtml='';
+  var _dcol=gcolFor(d.category,d.subtype)||{}; // v02.19 Phase2：詳情頁區塊標題比照表單加上分類色點，沿用同一份 GCOL 色表
   if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
-    sectionHtml+='<div class="detail-section"><div class="detail-section-title">關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
+    sectionHtml+='<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>';
   }
   sectionHtml+=marketReferenceHtml(d);
   sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).map(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
-    return '<div class="detail-section"><div class="detail-section-title">'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
+    return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
   }).join('');
   $('dgrid').innerHTML=html+sectionHtml;
   markScrollableRefs($('dgrid'));
@@ -14058,6 +14068,11 @@ var _huntDetailUid=null;
 var _huntConvertUid=null;     // #4：尋寶轉入收藏進行中的來源目標 uid
 var _huntSel=false,_huntSelSet=new Set();   // #5：尋寶批次選取
 var HUNT_CATCOLOR={'遊戲':'#00e5ff','攻略':'#ff6e9c','主機':'#69f0ae','週邊':'#ffab40'};
+// v02.18 Phase1：卡片列表的分類色條改沿用既有 .bk-cat-*（跟收藏卡片同一套），HUNT_CATCOLOR 本身保留給 huntDetail() 用
+function _huntCatCls(cat){
+  var m={'遊戲':'bk-cat bk-cat-game','攻略':'bk-cat bk-cat-book','主機':'bk-cat bk-cat-console','週邊':'bk-cat bk-cat-periph'};
+  return m[cat]||'bk-cat bk-cat-game';
+}
 
 // v54.68：尋寶詳情頁 KPI 計算（最低價／目標價／收藏慾望／發售倒數）
 function _huntLowestPriceKpi(d){
@@ -14351,7 +14366,6 @@ function huntCardHtml(h){
     else priceLine='<span style="color:#ff6e9c;font-weight:700">'+sights.length+' 筆報價</span><span style="color:#5c6b8a"> · 多幣別</span>';
   }
   var done=_huntDone(d);
-  var cc=HUNT_CATCOLOR[catInternal(d.target_cat)]||'#00e5ff';
   var photo=imgUrl(d.cover_img,150);
   // 通路報價欄（v25.10）：每通路顯示「通路/店名 · 價格幣別」，依價格低到高（跨幣別用台幣等值排序），最多 3 行 +「+N 通路」
   var chanItems=sights.map(function(s){
@@ -14370,15 +14384,16 @@ function huntCardHtml(h){
     // v54.84：改成單欄縱向排列（拿掉多欄grid），每個通路都能用到卡片全寬，避免長店名(如「駿河屋 新宿マルイアネックス店」)被切成好幾欄反而更窄
     notesCol='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e2a45;font-size:11px;color:#9fa8c8;line-height:1.5">'+chanRows+chanMore+'</div>';
   }
-  return '<div '+_huntPressAttr(h.uid)+' style="background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
+  var _huntIsSel=_huntSel&&_huntSelSet.has(h.uid);
+  return '<div class="hc'+(_huntIsSel?' sel':'')+(done?' done':'')+'" '+_huntPressAttr(h.uid)+'>'+
     '<div style="display:flex;gap:12px">'+
     (_huntSel?'<div style="flex-shrink:0;align-self:center;font-size:20px;color:'+((_huntSelSet.has(h.uid))?'#ff6e9c':'#5c6b8a')+'">'+(_huntSelSet.has(h.uid)?'☑':'☐')+'</div>':'')+
     (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:104px;height:104px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:104px;height:104px;border-radius:10px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:32px">🎮</div>')+
     '<div style="flex:1;min-width:0">'+
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
-        '<span style="font-size:9px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 5px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
-        (done?'<span style="font-size:9px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 5px">已入手</span>':'')+
+        '<span class="bk '+_huntCatCls(catInternal(d.target_cat))+'">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
+        (done?'<span class="bk bk-ok">已入手</span>':'')+
       '</div>'+
       '<div style="font-size:14px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(d.primary_name||'未命名目標')+'</div>'+
       '<div style="font-size:11px;color:#7986cb;margin-top:2px">'+esc(d.platform||d.subtype||'')+'</div>'+
