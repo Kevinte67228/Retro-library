@@ -408,8 +408,14 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
-.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative}
+.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s}
 .gc:active{border-color:#00e5ff}
+/* v02.18 Phase1：尋寶卡片外框比照收藏卡片同一套視覺語言（色值本來就相同，這裡改成共用 class 取代原本的 inline style，順便補上 :active 按壓回饋） */
+.hc{background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.hc:active{border-color:#00e5ff}
+.hc.done{opacity:.55}
+/* v02.18 Phase1：卡片選中「點亮」效果統一（取代原本 .gc／尋寶卡片各自不同、幾乎看不見的內陰影），跟晶片同一套外發光語言，色沿用既有「選取＝玫瑰色」語意 */
+.gc.sel,.hc.sel{border-color:#ff6e9c;box-shadow:0 0 4px rgba(255,110,156,.85),0 0 14px rgba(255,110,156,.45)}
 .gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
 .gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
 .gfav:active{transform:scale(.85)}
@@ -428,6 +434,7 @@ body{
 .bk-cat-ost{color:#ff8a65;border-color:#ff8a65;background:rgba(255,138,101,.08)}
 .bk-cat-artbook{color:#aed581;border-color:#aed581;background:rgba(174,213,129,.08)}
 .bk-cat-figure{color:#f06292;border-color:#f06292;background:rgba(240,98,146,.08)}
+.bk-ok{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .bk-genre{color:#e1a8ff;border-color:#ce93d8;background:rgba(206,147,216,.08)}
 .bk-cond{font-family:'Rajdhani','PingFang TC',sans-serif;font-size:11px;font-weight:700}
 .bk-state{color:#9fa8c8;border-color:#3a4b72;background:rgba(42,58,90,.18)}
@@ -2391,7 +2398,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.17';
+const APP_VERSION='v02.18';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12648,7 +12655,8 @@ function renderGlist(){
     var midLine=midParts.filter(Boolean).join(' · ');
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
     var dateLine=_glistMeta(d);
-    return'<div class="gc" style="'+((_colSel&&_colSelSet.has(String(item.uid||item.rowNum)))?'box-shadow:0 0 0 2px #ff6e9c inset;':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
+    var _isSel=_colSel&&_colSelSet.has(String(item.uid||item.rowNum)); // v02.18 Phase1：選中狀態改用 class（原本是 inline box-shadow 字串）
+    return'<div class="gc'+(_isSel?' sel':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
       '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(item.uid||item.rowNum)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>'+
       (_colSel?'<div style="flex-shrink:0;align-self:center;font-size:24px;line-height:1;color:'+((_colSelSet.has(String(item.uid||item.rowNum)))?'#ff6e9c':'#5c6b8a')+'">'+((_colSelSet.has(String(item.uid||item.rowNum)))?'☑':'☐')+'</div>':'')+
       thumb+
@@ -14058,6 +14066,11 @@ var _huntDetailUid=null;
 var _huntConvertUid=null;     // #4：尋寶轉入收藏進行中的來源目標 uid
 var _huntSel=false,_huntSelSet=new Set();   // #5：尋寶批次選取
 var HUNT_CATCOLOR={'遊戲':'#00e5ff','攻略':'#ff6e9c','主機':'#69f0ae','週邊':'#ffab40'};
+// v02.18 Phase1：卡片列表的分類色條改沿用既有 .bk-cat-*（跟收藏卡片同一套），HUNT_CATCOLOR 本身保留給 huntDetail() 用
+function _huntCatCls(cat){
+  var m={'遊戲':'bk-cat bk-cat-game','攻略':'bk-cat bk-cat-book','主機':'bk-cat bk-cat-console','週邊':'bk-cat bk-cat-periph'};
+  return m[cat]||'bk-cat bk-cat-game';
+}
 
 // v54.68：尋寶詳情頁 KPI 計算（最低價／目標價／收藏慾望／發售倒數）
 function _huntLowestPriceKpi(d){
@@ -14351,7 +14364,6 @@ function huntCardHtml(h){
     else priceLine='<span style="color:#ff6e9c;font-weight:700">'+sights.length+' 筆報價</span><span style="color:#5c6b8a"> · 多幣別</span>';
   }
   var done=_huntDone(d);
-  var cc=HUNT_CATCOLOR[catInternal(d.target_cat)]||'#00e5ff';
   var photo=imgUrl(d.cover_img,150);
   // 通路報價欄（v25.10）：每通路顯示「通路/店名 · 價格幣別」，依價格低到高（跨幣別用台幣等值排序），最多 3 行 +「+N 通路」
   var chanItems=sights.map(function(s){
@@ -14370,15 +14382,16 @@ function huntCardHtml(h){
     // v54.84：改成單欄縱向排列（拿掉多欄grid），每個通路都能用到卡片全寬，避免長店名(如「駿河屋 新宿マルイアネックス店」)被切成好幾欄反而更窄
     notesCol='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e2a45;font-size:11px;color:#9fa8c8;line-height:1.5">'+chanRows+chanMore+'</div>';
   }
-  return '<div '+_huntPressAttr(h.uid)+' style="background:#141b30;border:1px solid '+((_huntSel&&_huntSelSet.has(h.uid))?'#ff6e9c':'#1e2a45')+';border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer'+(done?';opacity:.55':'')+((_huntSel&&_huntSelSet.has(h.uid))?';box-shadow:0 0 0 1px #ff6e9c inset':'')+'">'+
+  var _huntIsSel=_huntSel&&_huntSelSet.has(h.uid);
+  return '<div class="hc'+(_huntIsSel?' sel':'')+(done?' done':'')+'" '+_huntPressAttr(h.uid)+'>'+
     '<div style="display:flex;gap:12px">'+
     (_huntSel?'<div style="flex-shrink:0;align-self:center;font-size:20px;color:'+((_huntSelSet.has(h.uid))?'#ff6e9c':'#5c6b8a')+'">'+(_huntSelSet.has(h.uid)?'☑':'☐')+'</div>':'')+
     (photo?'<img src="'+photo+'" loading="lazy" decoding="async" alt="" style="width:104px;height:104px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1px solid #1e2a45">'
           :'<div style="width:104px;height:104px;border-radius:10px;flex-shrink:0;background:#0f1525;border:1px dashed #2a3a5a;display:flex;align-items:center;justify-content:center;font-size:32px">🎮</div>')+
     '<div style="flex:1;min-width:0">'+
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'+
-        '<span style="font-size:9px;color:'+cc+';border:1px solid '+cc+';border-radius:4px;padding:1px 5px">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
-        (done?'<span style="font-size:9px;color:#69f0ae;border:1px solid #69f0ae;border-radius:4px;padding:1px 5px">已入手</span>':'')+
+        '<span class="bk '+_huntCatCls(catInternal(d.target_cat))+'">'+esc(catLabel(d.target_cat||'遊戲'))+'</span>'+
+        (done?'<span class="bk bk-ok">已入手</span>':'')+
       '</div>'+
       '<div style="font-size:14px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(d.primary_name||'未命名目標')+'</div>'+
       '<div style="font-size:11px;color:#7986cb;margin-top:2px">'+esc(d.platform||d.subtype||'')+'</div>'+
