@@ -1,3 +1,27 @@
+## v02.27 (2026-07-25)
+
+### 變更內容
+v02.26 的建檔頁副標題（分類/子類型/地區/平台）再加上建檔方式與查詢資料來源分流狀態，主要供未來除錯用：
+- 新增 `_METHOD_LABELS` 對照表（8 種建檔方式的顯示名稱），掛勾在 `pagePickMethod()` 尾端更新
+- 分流狀態（`_dbOverride`：自動分流／強制指定單一資料庫）掛勾在 `setDbOverride()` 尾端更新，**一律顯示**（含預設的「自動分流」），除錯時才不會漏看目前實際生效的路由是自動還是被強制指定
+- 完整格式：「分類 · 子類型 · 地區 · 平台 · 建檔方式 · 分流狀態」，依序對應 Step1-4 的選擇加上查詢路由
+
+自我檢查：語法/亂碼通過；5 項情境測試（含建檔方式插入位置、分流強制指定顯示資料庫名稱、未知建檔方式代號不顯示、分流id查無資料庫時安全fallback不噴錯）全數通過。
+
+### 影響檔案
+- docs/index.html / docs/GameVault_v02_27_index.html
+- docs/sw.js
+
+### GS 版本
+- 無（純前端UI調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-26 → gamevault-v02-27
+
+### 對應備份
+- _internal/old/v02_26/
+
+
 ## v02.26 (2026-07-25)
 
 ### 變更內容
@@ -20,6 +44,7 @@
 
 ### 對應備份
 - _internal/old/v02_25/
+
 
 
 ## v02.25 (2026-07-25)
@@ -45,6 +70,7 @@
 
 ### 對應備份
 - _internal/old/v02_24/
+
 
 
 
@@ -75,33 +101,3 @@
 
 ### 對應備份
 - _internal/old/v02_23/
-
-
-
-
-## v02.23 (2026-07-25)
-
-### 變更內容
-統計/儀表板頁的原生 `<select>` 下拉選單改成自訂選單，解決「點開後彈出 Android 系統白底選單，跟深色主題完全不搭」的問題：
-- 根因：`<select>` 的下拉彈出清單是作業系統原生元件（Android 上就是系統白底 Material 清單），關閉狀態的觸發按鈕可以用 CSS 上色，但打開後的清單本身**無法用 CSS 控制**，這是瀏覽器平台限制，不是漏改樣式
-- 修法沿用既有的 `openPlatFldPicker()` 手法（建檔表單選平台時就是這樣做）：select 本身加 `pointer-events:none` 完全失去互動能力（純粹保留當「目前值」的容器，`.value` 讀取邏輯不用改），外面疊一層透明覆蓋層攔截點擊，改開自訂的深色底部選單
-- 新增 `openSelectSheet()`／`pickSelectSheetOpt()`／`closeSelectSheet()`：重用既有的 `_showActionSheet()` 底部選單元件（原本用於卡片長按動作選單），直接讀取 select 既有的 `<option>` 清單當選項來源，不用另外重複定義一份；選中項目會標記 ✓ 並用強調色
-- 套用範圍：`dash-filter`（篩選分類）／`dash-trend-metric`（趨勢指標）／`dash-trend-time`（趨勢區間）／`dash-donut-mode`（佔比分析方式）共 4 個
-- `dash-donut-mode` 原本用 select 自己的 `display:none/''`控制顯示，現在改成外層 wrapper 一起控制（select 現在是 pointer-events:none，只切換它自己的 display 沒意義了）
-
-**範圍說明（重要）**：這次先處理統計頁這 4 個最顯眼的。全站還有更大量的 `<select class="fsel">` 用在建檔表單／尋寶表單等地方（同樣的白底彈窗問題），數量遠比這 4 個多，牽涉到的欄位種類也更雜，要不要套用同一套手法是後續要另外評估的範圍，這次沒有動。
-
-自我檢查：語法/亂碼/CSS 花括號配對通過；用真實抽取的 `openSelectSheet`／`pickSelectSheetOpt` 函式＋輕量 DOM mock 驗證選項讀取完整、目前值正確標記、`onchange` 正確觸發、不存在的 id 不噴錯、特殊字元正確跳脫，12 項全過。另外用結構性比對確認 4 個 `openSelectSheet()` 呼叫的 id 都對應到真實存在的 select 元素。
-
-### 影響檔案
-- docs/index.html / docs/GameVault_v02_23_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（純前端互動/視覺調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-22 → gamevault-v02-23
-
-### 對應備份
-- _internal/old/v02_22/

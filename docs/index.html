@@ -2400,7 +2400,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.26';
+const APP_VERSION='v02.27';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6700,6 +6700,7 @@ function _dbSrcClose(){var ov=$('db-src-ov');if(ov)ov.style.display='none';}
 function setDbOverride(id){
   _dbOverride=id;
   _updateDbSrcChip();
+  _updateEntrySubtitle();
   var db=_dbById(id);
   toast(id?('🔀 已強制指定：'+db.icon+' '+db.name+'（查無結果時將自動分流補查）'):'🔁 已切回自動分流','ok',3000);
 }
@@ -7974,14 +7975,17 @@ function _refreshPlatSection(hasPlat){
   }else{p3.style.display='none';}
   var mn=$('step-method-num');if(mn)mn.textContent=hasPlat?'Step 4':'Step 3';
 }
-// v02.26：建檔頁副標題（原本是固定文字「AI 高品質辨識 · UUID · 分類 / 地區 / 條碼」）
-// 改成即時顯示 Step1-3 已選擇的分類/子類型/地區/平台，跟著使用者的選擇同步更新。
+// v02.27：除錯用，一併顯示目前建檔方式與查詢資料來源分流狀態
+var _METHOD_LABELS={initBarMode:'商品條碼',initImgMode:'圖片辨識',initGameCodeMode:'商品編碼',initManualMode:'手動建檔',initComboMode:'條碼＋照片',initGameCodeComboMode:'編碼＋照片',initDigitalLinkMode:'商店連結',initAiWebMode:'AI網頁查詢'};
 function _updateEntrySubtitle(){
   var hsEl=$('scan-hs');if(!hsEl)return;
   var parts=[catLabel(_selectedType)];
   if(_selectedSubtype)parts.push(_selectedSubtype);
   if(_region&&_REGION_LABELS[_region])parts.push(_REGION_LABELS[_region].replace(/（.*/,''));
   if(_selectedPlatform)parts.push(_selectedPlatform);
+  if(_lastMode&&_METHOD_LABELS[_lastMode])parts.push(_METHOD_LABELS[_lastMode]);
+  var _dbSrc=_dbOverride?_dbById(_dbOverride):null;
+  parts.push(_dbSrc?('🔀'+_dbSrc.name):'🔁自動分流');
   hsEl.textContent=parts.join(' · ');
 }
 function selectEntryCat(cat,_noSave){
@@ -8166,6 +8170,7 @@ function _saveMethodMem(fn){
 function pagePickMethod(fn){
   _lastMode=fn; // #4：記住此次建檔方式
   _saveMethodMem(fn); // v26.01：持久化，供回到 Step 1 還原外框
+  _updateEntrySubtitle();
   if(typeof window[fn]==='function')window[fn]();
 }
 // 回到 Step 1 起始態：還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
