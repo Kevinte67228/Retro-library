@@ -162,11 +162,6 @@ body{
 #thumb-wrap{display:flex;gap:8px;padding:0 16px;margin-bottom:12px;flex-wrap:wrap}
 .gc img{flex-shrink:0}
 
-/* === Image type 標籤（上排，僅顯示用，選取改由下方預覽格控制）=== */
-.img-slot{text-align:center;padding:8px 4px 10px;border-radius:10px;border:1.5px solid transparent;transition:border-color .15s,background .15s}
-.img-slot.on{border-color:#00e5ff;background:rgba(0,229,255,.08)}
-.img-slot.on .slot-lbl{color:#00e5ff}
-
 /* === 下方預覽格：可點選 + 單選核取框 === */
 .tslot{position:relative;border-radius:8px;aspect-ratio:3/4;cursor:pointer;overflow:hidden;border:1.5px solid #1e2a45;background:#0f1525;transition:border-color .15s}
 .tslot.empty{border-style:dashed}
@@ -1252,26 +1247,10 @@ body{
         </div>
 
         <div id="img-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
+          <!-- 三格縮圖預覽（點縮圖本身即可切換目標欄位，取代原本重複的上方分頁選擇器） -->
+
+          <div id="thumb-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:16px 16px 10px"></div>
           <div style="padding:0 16px 10px">
-            <!-- 三欄目標欄位 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-              <div id="img-slot-cover" class="img-slot on" data-slot="cover" onclick="setImgSlot('cover')">
-                <div class="slot-icon">🖼</div><div class="slot-lbl">封面</div>
-                <div class="slot-status" id="slot-st-cover"></div>
-              </div>
-              <div id="img-slot-back" class="img-slot" data-slot="back" onclick="setImgSlot('back')">
-                <div class="slot-icon">🔲</div><div class="slot-lbl">封底</div>
-                <div class="slot-status" id="slot-st-back"></div>
-              </div>
-              <div id="img-slot-spine" class="img-slot" data-slot="spine" onclick="setImgSlot('spine')">
-                <div class="slot-icon">📚</div><div class="slot-lbl">側邊</div>
-                <div class="slot-status" id="slot-st-spine"></div>
-              </div>
-            </div>
-            <!-- 選中的 slot 說明 -->
-            <div style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:8px">
-              目前選取：<span id="slot-current-lbl" style="color:#00e5ff">封面</span>
-            </div>
             <!-- 拍照 / 相簿 兩個按鈕 -->
             <div style="display:flex;gap:8px">
               <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#141b30;border:1.5px solid #00e5ff;border-radius:10px;padding:12px;cursor:pointer;color:#00e5ff;font-size:13px;font-weight:600">
@@ -1284,9 +1263,7 @@ body{
               </label>
             </div>
           </div>
-          <!-- 三格縮圖預覽 -->
 
-          <div id="thumb-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 16px 10px"></div>
 
           <div id="ai-btn-wrap" style="padding:0 16px 12px">
             <div style="display:flex;gap:10px">
@@ -2423,7 +2400,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.24';
+const APP_VERSION='v02.25';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9543,17 +9520,9 @@ function barAIFill(bc,hint,hasGB){
 // ── 圖片 slot（封面/封底/側邊）──
 var _imgSlot='cover'; // 目前選中的 slot
 var _slotImgs={cover:null,back:null,spine:null}; // 各 slot 的 File 物件
-var _slotLabels={cover:'封面',back:'封底',spine:'側邊'};
 
 function setImgSlot(slot){
   _imgSlot=slot;
-  // 上排標籤同步高亮（僅顯示用）
-  ['cover','back','spine'].forEach(function(s){
-    var el=document.getElementById('img-slot-'+s);
-    if(el)el.className='img-slot'+(s===slot?' on':'');
-  });
-  var lbl=$('slot-current-lbl');
-  if(lbl)lbl.textContent=_slotLabels[slot]||slot;
   // 下方預覽格同步選取狀態（核取框連動）
   renderSlotThumbs();
 }
@@ -9603,10 +9572,6 @@ function clearSlot(slot,ev){
 function resetSlots(){
   _slotImgs={cover:null,back:null,spine:null};
   _imgSlot='cover';
-  ['cover','back','spine'].forEach(function(s){
-    var el=document.getElementById('img-slot-'+s);if(el)el.className='img-slot'+(s==='cover'?' on':'');
-    var st=$('slot-st-'+s);if(st)st.textContent='';
-  });
   renderSlotThumbs();
   var ab=$('ai-btn-wrap');if(ab)ab.style.display='block';
 }
