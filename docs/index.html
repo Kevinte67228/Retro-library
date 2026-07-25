@@ -665,13 +665,16 @@ body{
 .abbr-list{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 12px 12px;font-size:12px;color:#9fa8c8}
 .abbr-list span{white-space:nowrap}
 .abbr-list b{color:#e8eaf6;font-weight:700;margin-right:2px}
-/* v02.15：欄位區塊顯示設定改為依分類分組，沿用 .abbr-legend 的 details/summary 樣式模式 */
-.grpvis-cat{margin-bottom:8px;border:1px solid #1e2a45;border-radius:10px;background:rgba(20,27,48,.4);overflow:hidden}
-.grpvis-cat>summary{padding:10px 12px;font-size:13px;font-weight:700;color:#e8eaf6;cursor:pointer;list-style:none;user-select:none}
-.grpvis-cat>summary::-webkit-details-marker{display:none}
-.grpvis-cat>summary::before{content:'▸ ';color:#00e5ff}
-.grpvis-cat[open]>summary::before{content:'▾ '}
-.grpvis-cat-body{padding:2px 12px 10px}
+/* v02.16：欄位區塊顯示設定改為矩陣勾選表（列＝欄位區塊、欄＝8大分類），取代 v02.15 的手風琴版面 */
+.grpvis-matrix{width:100%;font-size:12px}
+.grpvis-mhead,.grpvis-mrow{display:grid;grid-template-columns:74px repeat(8,1fr);align-items:center}
+.grpvis-mhead{border-bottom:1px solid #1e2a45;padding-bottom:6px;margin-bottom:2px}
+.grpvis-mrow{border-bottom:1px solid rgba(30,42,69,.5);padding:5px 0}
+.grpvis-mrow:last-child{border-bottom:none}
+.grpvis-mcell{display:flex;align-items:center;justify-content:center;min-height:26px}
+.grpvis-mlabel{justify-content:flex-start;font-size:11px;color:#e8eaf6;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grpvis-micon{font-size:15px}
+.grpvis-mcell input[type=checkbox]{width:17px;height:17px;accent-color:#00e5ff;flex-shrink:0}
 /* ── 圖片裁切器 ── */
 #crop-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;flex-direction:column;touch-action:none;opacity:0;transition:opacity .28s ease}
 #crop-ov.on{display:flex}
@@ -1743,7 +1746,7 @@ body{
         <div class="srow">
           <div id="grp-vis-list" style="margin-top:4px"></div>
           <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="grpVisResetAll()" type="button">全部顯示</button>
-          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。<strong>依 8 大分類各自獨立設定</strong>（點分類名稱展開），例如把遊戲的「識別資訊」隱藏，書籍的「識別資訊」不受影響；拆表分類（原聲帶／動漫美術／公仔／數位下載版）內的各子類型共用同一組設定。</div>
+          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。<strong>橫排是 8 大分類（長按圖示可看分類名稱），直排是欄位區塊；分類沒有的區塊該格留空</strong>，各分類的同名區塊（例如「識別資訊」）開關互相獨立，例如把遊戲的識別資訊隱藏，書籍的不受影響；拆表分類（原聲帶／動漫美術／公仔／數位下載版）內的各子類型共用同一組設定。</div>
         </div>
           </div>
         </div>
@@ -2387,7 +2390,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.15';
+const APP_VERSION='v02.16';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4258,7 +4261,7 @@ function _marketOrderedList(){
   var rest=all.filter(function(n){return ordered.indexOf(n)<0;});
   return ordered.concat(rest);
 }
-// ── v02.13：欄位區塊（群組）顯示設定；v02.15：改為依 8 大分類各自獨立 ──
+// ── v02.13：欄位區塊（群組）顯示設定；v02.15：改為依 8 大分類各自獨立；v02.16：畫面改成矩陣勾選表（欄=分類icon、列=區塊，不適用留空）──
 // 一組設定同時作用於「建檔/編輯表單」與「收藏詳情頁」；隱藏只影響顯示，資料一律保留。
 // 每個分類各自的欄位區塊清單改用現有 groupsFor()/SUBTYPE_META 動態取得（4 個拆表分類取所有子類型的聯集），
 // 不再手動維護扁平清單，避免跟各分類實際欄位表脫節。
@@ -4302,21 +4305,32 @@ function _groupHiddenSet(cat){
   return o;
 }
 function isGroupHidden(g,cat){return !!_groupHiddenSet(cat)[g];}
+// v02.16：欄位區塊在矩陣裡的「列」順序＝依 GROUP_VIS_CATS 分類順序掃過去、第一次出現時的順序（動態算出，不手動維護清單）
+function _allGroupsMasterOrder(){
+  var seen={},out=[];
+  GROUP_VIS_CATS.forEach(function(cat){
+    _catAllGroups(cat).forEach(function(g){if(!seen[g]){seen[g]=1;out.push(g);}});
+  });
+  return out;
+}
 function grpVisRenderList(){
   var box=$('grp-vis-list');if(!box)return;
-  box.innerHTML=GROUP_VIS_CATS.map(function(cat){
-    var groups=_catAllGroups(cat);
-    if(!groups.length)return '';
-    var hidden=_groupHiddenSet(cat);
-    var rows=groups.map(function(g){
-      var on=!hidden[g];
-      return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
-        '<input type="checkbox" data-cat="'+esc(cat)+'" data-grp="'+esc(g)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
-        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g)+'</span>'+
-      '</label>';
+  var rowsOrder=_allGroupsMasterOrder();
+  var catGroups=GROUP_VIS_CATS.map(function(cat){return {cat:cat,set:_catAllGroups(cat),hidden:_groupHiddenSet(cat)};});
+  var head='<div class="grpvis-mhead"><div class="grpvis-mcell"></div>'+
+    catGroups.map(function(cg){
+      var meta=CAT_META[cg.cat]||{};
+      return '<div class="grpvis-mcell grpvis-micon" title="'+esc(catLabel(cg.cat))+'">'+(meta.icon||'')+'</div>';
+    }).join('')+'</div>';
+  var body=rowsOrder.map(function(g){
+    var cells=catGroups.map(function(cg){
+      if(cg.set.indexOf(g)<0)return '<div class="grpvis-mcell"></div>'; // 該分類沒有這個區塊：留空，不放核取方塊
+      var on=!cg.hidden[g];
+      return '<div class="grpvis-mcell"><input type="checkbox" data-cat="'+esc(cg.cat)+'" data-grp="'+esc(g)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)"></div>';
     }).join('');
-    return '<details class="grpvis-cat"><summary>'+esc(catLabel(cat))+'</summary><div class="grpvis-cat-body">'+rows+'</div></details>';
+    return '<div class="grpvis-mrow"><div class="grpvis-mcell grpvis-mlabel">'+esc(g)+'</div>'+cells+'</div>';
   }).join('');
+  box.innerHTML='<div class="grpvis-matrix">'+head+body+'</div>';
 }
 function grpVisToggle(cb){
   var cat=catInternal(cb.dataset.cat||'遊戲');
