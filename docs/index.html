@@ -665,6 +665,13 @@ body{
 .abbr-list{display:flex;flex-wrap:wrap;gap:6px 14px;padding:4px 12px 12px;font-size:12px;color:#9fa8c8}
 .abbr-list span{white-space:nowrap}
 .abbr-list b{color:#e8eaf6;font-weight:700;margin-right:2px}
+/* v02.15：欄位區塊顯示設定改為依分類分組，沿用 .abbr-legend 的 details/summary 樣式模式 */
+.grpvis-cat{margin-bottom:8px;border:1px solid #1e2a45;border-radius:10px;background:rgba(20,27,48,.4);overflow:hidden}
+.grpvis-cat>summary{padding:10px 12px;font-size:13px;font-weight:700;color:#e8eaf6;cursor:pointer;list-style:none;user-select:none}
+.grpvis-cat>summary::-webkit-details-marker{display:none}
+.grpvis-cat>summary::before{content:'▸ ';color:#00e5ff}
+.grpvis-cat[open]>summary::before{content:'▾ '}
+.grpvis-cat-body{padding:2px 12px 10px}
 /* ── 圖片裁切器 ── */
 #crop-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;flex-direction:column;touch-action:none;opacity:0;transition:opacity .28s ease}
 #crop-ov.on{display:flex}
@@ -1736,7 +1743,7 @@ body{
         <div class="srow">
           <div id="grp-vis-list" style="margin-top:4px"></div>
           <button class="btn bo bw bs" style="margin-top:8px;color:#00e5ff;border-color:#00e5ff" onclick="grpVisResetAll()" type="button">全部顯示</button>
-          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。所有分類共用這組設定（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。</div>
+          <div class="shlp" style="margin-top:8px">取消勾選可以同時在「建檔／編輯表單」與「收藏詳情頁」隱藏該欄位區塊，用不到的區塊可以收起來讓畫面更精簡。<strong>隱藏只影響顯示，已填的資料一律保留</strong>，隨時勾選回來就會再出現。<strong>依 8 大分類各自獨立設定</strong>（點分類名稱展開），例如把遊戲的「識別資訊」隱藏，書籍的「識別資訊」不受影響；拆表分類（原聲帶／動漫美術／公仔／數位下載版）內的各子類型共用同一組設定。</div>
         </div>
           </div>
         </div>
@@ -2380,7 +2387,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.14';
+const APP_VERSION='v02.15';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4251,38 +4258,80 @@ function _marketOrderedList(){
   var rest=all.filter(function(n){return ordered.indexOf(n)<0;});
   return ordered.concat(rest);
 }
-// ── v02.13：欄位區塊（群組）顯示設定 ──
+// ── v02.13：欄位區塊（群組）顯示設定；v02.15：改為依 8 大分類各自獨立 ──
 // 一組設定同時作用於「建檔/編輯表單」與「收藏詳情頁」；隱藏只影響顯示，資料一律保留。
-// 所有分類共用同一份清單（各分類實際有哪些區塊不同，只有該分類存在的區塊才會受影響）。
-var ALL_FIELD_GROUPS=['圖片紀錄','識別資訊','書籍資訊','主機資訊','週邊資訊','版本規格','規格','硬體規格','遊戲規格','內容資訊','音樂資訊','影音資訊','模型資訊','商店資訊','檔案資訊','追加內容','發行資訊','發行廠商','出版資訊','編碼條碼','收藏狀態','估值資訊','品相完整度','運作狀態','個人記錄','關聯商品','補充資訊'];
-function _groupHiddenSet(){
+// 每個分類各自的欄位區塊清單改用現有 groupsFor()/SUBTYPE_META 動態取得（4 個拆表分類取所有子類型的聯集），
+// 不再手動維護扁平清單，避免跟各分類實際欄位表脫節。
+var GROUP_VIS_CATS=['遊戲','攻略','主機','週邊','數位下載版','原聲帶','動漫/美術設定集','公仔'];
+function _catAllGroups(cat){
+  cat=catInternal(cat);
+  if(hasSubtype(cat)){
+    var opts=(SUBTYPE_META[cat]&&SUBTYPE_META[cat].options)||[];
+    var seen={},out=[];
+    opts.forEach(function(st){
+      (groupsFor(cat,st)||[]).forEach(function(g){if(!seen[g]){seen[g]=1;out.push(g);}});
+    });
+    return out;
+  }
+  return groupsFor(cat)||[];
+}
+// v01.01～v02.14 的舊格式 cfg.groupHidden（扁平陣列，跨分類共用同一開關）一次性轉換成
+// cfg.groupHiddenByCat（依分類分開存）；只有「該分類真的有這個區塊」才會轉入，避免升級當下
+// 使用者已隱藏的區塊突然變回顯示。轉換後即刪除舊欄位，之後都走新格式。
+function _migrateGroupHiddenLegacy(){
+  if(!cfg||!Array.isArray(cfg.groupHidden)||!cfg.groupHidden.length)return;
+  var byCat=(cfg.groupHiddenByCat&&typeof cfg.groupHiddenByCat==='object')?cfg.groupHiddenByCat:{};
+  GROUP_VIS_CATS.forEach(function(c){
+    var all=_catAllGroups(c);
+    var hit=cfg.groupHidden.filter(function(n){return all.indexOf(n)>=0;});
+    if(!hit.length)return;
+    var existing=Array.isArray(byCat[c])?byCat[c].slice():[];
+    hit.forEach(function(n){if(existing.indexOf(n)<0)existing.push(n);});
+    byCat[c]=existing;
+  });
+  cfg.groupHiddenByCat=byCat;
+  delete cfg.groupHidden;
+  _persistCfg();
+}
+function _groupHiddenSet(cat){
+  _migrateGroupHiddenLegacy(); // 冪等、開頭即 return，確保不管從表單/詳情頁/設定頁哪裡先進來都已完成遷移
+  var c=catInternal(cat||'遊戲');
   var o={};
-  ((cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden:[]).forEach(function(n){o[n]=1;});
+  var arr=(cfg&&cfg.groupHiddenByCat&&Array.isArray(cfg.groupHiddenByCat[c]))?cfg.groupHiddenByCat[c]:[];
+  arr.forEach(function(n){o[n]=1;});
   return o;
 }
-function isGroupHidden(g){return !!_groupHiddenSet()[g];}
+function isGroupHidden(g,cat){return !!_groupHiddenSet(cat)[g];}
 function grpVisRenderList(){
   var box=$('grp-vis-list');if(!box)return;
-  var hidden=_groupHiddenSet();
-  box.innerHTML=ALL_FIELD_GROUPS.map(function(n){
-    var on=!hidden[n];
-    return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
-      '<input type="checkbox" data-grp="'+esc(n)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
-      '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(n)+'</span>'+
-    '</label>';
+  box.innerHTML=GROUP_VIS_CATS.map(function(cat){
+    var groups=_catAllGroups(cat);
+    if(!groups.length)return '';
+    var hidden=_groupHiddenSet(cat);
+    var rows=groups.map(function(g){
+      var on=!hidden[g];
+      return '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;color:#e8eaf6">'+
+        '<input type="checkbox" data-cat="'+esc(cat)+'" data-grp="'+esc(g)+'" '+(on?'checked':'')+' onchange="grpVisToggle(this)" style="width:18px;height:18px;accent-color:#00e5ff;flex-shrink:0">'+
+        '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(g)+'</span>'+
+      '</label>';
+    }).join('');
+    return '<details class="grpvis-cat"><summary>'+esc(catLabel(cat))+'</summary><div class="grpvis-cat-body">'+rows+'</div></details>';
   }).join('');
 }
 function grpVisToggle(cb){
+  var cat=catInternal(cb.dataset.cat||'遊戲');
   var name=cb.dataset.grp;if(!name)return;
-  var arr=(cfg&&Array.isArray(cfg.groupHidden))?cfg.groupHidden.slice():[];
+  var byCat=(cfg&&cfg.groupHiddenByCat&&typeof cfg.groupHiddenByCat==='object')?Object.assign({},cfg.groupHiddenByCat):{};
+  var arr=Array.isArray(byCat[cat])?byCat[cat].slice():[];
   if(cb.checked){arr=arr.filter(function(n){return n!==name;});}
   else if(arr.indexOf(name)<0)arr.push(name);
-  cfg.groupHidden=arr;
+  byCat[cat]=arr;
+  cfg.groupHiddenByCat=byCat;
   _persistCfg();
   _grpVisApplyLive();
 }
 function grpVisResetAll(){
-  cfg.groupHidden=[];
+  cfg.groupHiddenByCat={};
   _persistCfg();
   grpVisRenderList();
   _grpVisApplyLive();
@@ -9601,6 +9650,7 @@ function doAnalyze(){
 // 依資料類別套用對應的欄位集合（FIELDS/SELECTS/GROUPS/GCOL/DEFAULTS）
 function _applyCatFields(cat,subtype){
   cat=catInternal(cat)||'遊戲';
+  window._CUR_CAT=cat; // v02.15：欄位區塊顯示設定改依分類獨立，renderForm 需要知道目前分類
   window._CUR_FIELDS=fieldsFor(cat,subtype);
   window._CUR_SELECTS=selectsFor(cat,subtype);
   window._CUR_GROUPS=groupsFor(cat,subtype);
@@ -9725,7 +9775,7 @@ function renderForm(){
   // [0]=圖片紀錄、[1]=識別資訊（書籍/主機/週邊分別叫書籍資訊/主機資訊/週邊資訊，但同樣是排第二個）
   // 其餘區塊一律預設收折，避免建檔一開始就看到落落長的表單
   var expandByDefault=[_G[0],_G[1]].filter(Boolean);
-  _G.filter(function(g){return !isGroupHidden(g);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定（隱藏只影響顯示，資料保留）
+  _G.filter(function(g){return !isGroupHidden(g,window._CUR_CAT);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定（隱藏只影響顯示，資料保留）；v02.15 改依分類判斷
     var gf=_F.filter(function(f){return f[3]===g;});
     var div=document.createElement('div');div.className='sg';
     var gcolor=_GC[g]||'#7986cb';
@@ -13659,11 +13709,11 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
   });
   var sectionHtml='';
-  if(relBlock&&!isGroupHidden('關聯商品')){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定
+  if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
     sectionHtml+='<div class="detail-section"><div class="detail-section-title">關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
   }
   sectionHtml+=marketReferenceHtml(d);
-  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g);}).map(function(g){ // v02.13：套用欄位區塊顯示設定
+  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).map(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
     return '<div class="detail-section"><div class="detail-section-title">'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
   }).join('');
   $('dgrid').innerHTML=html+sectionHtml;
