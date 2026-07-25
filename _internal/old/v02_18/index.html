@@ -182,7 +182,7 @@ body{
 .sg{margin:0 16px 8px;border:1px solid #1e2a45;border-radius:10px;overflow:hidden}
 .sh2{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#141b30;cursor:pointer;user-select:none}
 .sl{font-family:'Rajdhani','PingFang TC',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px}
-.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
+.sl .dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px}
 .sc{color:#7986cb;transition:transform .2s;font-size:16px;line-height:1}
 .sc.op{transform:rotate(180deg)}
 .sb{background:#0f1525;padding:14px}
@@ -534,8 +534,8 @@ body{
 .vault-kpi .kl{font-size:9px;color:#7986cb;margin-bottom:3px}
 .vault-kpi .kv{font-size:12px;color:#e8eaf6;line-height:1.25;overflow-wrap:anywhere}
 .vault-kpi .kv-sub{font-size:9px;color:#9fa8c8;line-height:1.25;margin-top:4px;overflow-wrap:anywhere}
-.detail-section{grid-column:1/-1;border:1px solid #1e2a45;border-radius:10px;background:#0f1525;overflow:hidden}
-.detail-section-title{padding:10px 14px;background:#141b30;color:#9fa8c8;font-size:11px;font-weight:700;letter-spacing:.5px}
+.detail-section{grid-column:1/-1;border:1px solid #1e2a45;border-radius:10px;background:#0b1120;overflow:hidden}
+.detail-section-title{padding:9px 12px;background:#141b30;color:#9fa8c8;font-size:11px;font-weight:700;letter-spacing:.5px}
 .detail-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
 .detail-section-grid .df.full{grid-column:1/-1}
 
@@ -2398,7 +2398,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.19';
+const APP_VERSION='v02.18';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13732,13 +13732,12 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     }
   });
   var sectionHtml='';
-  var _dcol=gcolFor(d.category,d.subtype)||{}; // v02.19 Phase2：詳情頁區塊標題比照表單加上分類色點，沿用同一份 GCOL 色表
   if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
-    sectionHtml+='<div class="detail-section"><div class="detail-section-title"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
+    sectionHtml+='<div class="detail-section"><div class="detail-section-title">關聯商品</div><div class="detail-section-grid">'+relBlock+'</div></div>';
   }
   sectionHtml+=marketReferenceHtml(d);
   sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).map(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
-    return '<div class="detail-section"><div class="detail-section-title"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
+    return '<div class="detail-section"><div class="detail-section-title">'+esc(g)+'</div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
   }).join('');
   $('dgrid').innerHTML=html+sectionHtml;
   markScrollableRefs($('dgrid'));
