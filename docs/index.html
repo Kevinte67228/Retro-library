@@ -218,8 +218,9 @@ body{
 #sort-bar{display:flex;gap:8px;padding:8px 16px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
 #sort-bar::-webkit-scrollbar{display:none}
 #sort-bar .sortbar-lbl{flex-shrink:0;font-size:12px;color:#7986cb;margin-right:2px;letter-spacing:.5px}
-.sortc{flex-shrink:0;min-height:32px;padding:6px 11px;border-radius:8px;border:1px solid #1e2a45;background:rgba(15,21,37,.82);color:#9fa8c8;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
-.sortc.on{background:rgba(0,229,255,.13);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 0 1px rgba(0,229,255,.08) inset}
+.sortc{flex-shrink:0;min-height:32px;padding:6px 11px;border-radius:8px;border:1px solid #1e2a45;background:rgba(15,21,37,.82);color:#9fa8c8;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;transition:all .15s}
+/* v02.17：晶片選中「點亮」效果統一（sortc/genre-chip/genre-tab 共用同一套：淡色底＋色框＋外發光），取代原本各自不同的純色實心／幾乎看不見的內陰影 */
+.sortc.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
 #filter-summary{display:none;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
 #filter-summary::-webkit-scrollbar{display:none}
 #filter-summary.on{display:flex}
@@ -626,14 +627,14 @@ body{
 .genre-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .genre-chip{display:inline-flex;align-items:center;padding:7px 12px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
 .genre-chip:active{transform:scale(.95)}
-.genre-chip.on{background:#00e5ff;border-color:#00e5ff;color:#000;font-weight:600}
+.genre-chip.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
 /* v54.79：遊戲類型分組頁籤——橫向可滑動，點選後下方顯示該組晶片 */
 .genre-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 6px;margin-top:6px;scrollbar-width:none}
 .genre-tabs::-webkit-scrollbar{display:none}
 .genre-tab{flex-shrink:0;white-space:nowrap;padding:8px 13px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;font-family:inherit;cursor:pointer;transition:all .15s;user-select:none}
 .genre-tab b{font-weight:700}
-.genre-tab.on{background:#7c4dff;border-color:#7c4dff;color:#fff}
-.genre-tab.on b{color:#fff}
+.genre-tab.on{background:rgba(124,77,255,.15);border-color:#7c4dff;color:#7c4dff;font-weight:700;box-shadow:0 0 4px rgba(124,77,255,.85),0 0 14px rgba(124,77,255,.45)}
+.genre-tab.on b{color:#7c4dff}
 .genre-tab:not(.on) b{color:#00e5ff}
 .genre-tab-panels{border:1px solid #1e2a45;border-radius:10px;background:#0f1525;padding:10px}
 /* 配件完整度：逐項目評級 */
@@ -2390,7 +2391,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.16';
+const APP_VERSION='v02.17';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
