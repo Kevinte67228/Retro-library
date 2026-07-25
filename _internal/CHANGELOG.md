@@ -1,3 +1,32 @@
+## v02.24 (2026-07-25)
+
+### 變更內容
+把 v02.23 只處理統計頁 4 個 select 的白底彈窗問題，擴大套用到全站剩餘的 `<select class="fsel">`：
+- 新增通用包裝函式 `fselPickerize(selectHtml, title, wrapperStyle)`：對「已組好的完整 `<select id="...">` HTML 字串」做屬性注入（`pointer-events:none`）＋疊透明覆蓋層改開 `openSelectSheet` 自訂選單，呼叫端不用重寫既有的 option 產生邏輯
+- 套用範圍：
+  - 建檔表單 `renderFld()`：通用單選欄位／完整度逐項評級（含自訂項目）／數位帳號／保管位置／價格幣別／個人評分——這幾個是共用於所有分類的欄位渲染核心，槓桿最大
+  - 尋寶表單：分類／類型／區域／收藏慾望／通路類型／報價幣別
+  - 設定頁：AI 引擎偏好／Gemini 模型／OpenAI 模型／數位帳號常用平台／自訂市場查詢語言
+  - 其他：建檔平台選擇、市場估值樣本幣別
+- 動態表單欄位原本只有 `data-k`、沒有唯一 `id`（因為同一表單可能同時渲染多個同類型欄位），這次補上 `id="fld-sel-{欄位key}"`／`id="comp-sel-{項目}"`／`id="fld-cur-{欄位key}"` 等唯一 id，`openSelectSheet` 才能正確找到對應的 select
+- 已知取捨：Gemini 模型選單原本用 `<optgroup>` 分組（免費/付費），`select.options` 本來就會跨 optgroup 攤平成單一清單，改用自訂選單後失去分組標題，這次接受此簡化，不影響功能
+
+自我檢查：語法/亂碼/CSS 花括號配對通過；13 項測試涵蓋 `fselPickerize` 字串轉換邏輯（id/style 屬性正確注入、已有 style 時正確串接不覆蓋、無 id 時安全退回原生 select、wrapperStyle 自訂）與既有 `openSelectSheet`/`pickSelectSheetOpt` 回歸測試，全數通過；另外用靜態掃描確認全部 16 個 `fselPickerize()` 呼叫都對應到有效 id，沒有遺漏。
+
+### 影響檔案
+- docs/index.html / docs/GameVault_v02_24_index.html
+- docs/sw.js
+
+### GS 版本
+- 無（純前端互動/視覺調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-23 → gamevault-v02-24
+
+### 對應備份
+- _internal/old/v02_23/
+
+
 ## v02.23 (2026-07-25)
 
 ### 變更內容
@@ -24,6 +53,7 @@
 
 ### 對應備份
 - _internal/old/v02_22/
+
 
 
 ## v02.22 (2026-07-25)
@@ -53,6 +83,7 @@
 
 
 
+
 ## v02.21 (2026-07-25)
 
 ### 變更內容
@@ -76,30 +107,3 @@
 
 ### 對應備份
 - _internal/old/v02_20/
-
-
-
-
-## v02.20 (2026-07-25)
-
-### 變更內容
-詳情頁區塊補上可收合功能，直接沿用表單既有的 `togSec()` 切換函式（該函式本來就是純 DOM 操作、不綁定特定區塊種類，完全不用改就能重用）：
-- `.detail-section-title` 加上 `onclick="togSec(this)"`＋箭頭 `<span class="sc op">`，跟表單同一套視覺/互動語言
-- 預設維持「全部展開」（跟改版前行為一致，只是新增可以手動收起來的能力），不像表單預設收合大部分區塊——因為詳情頁本來就只顯示有資料的區塊，資訊量已經篩選過，不需要預設收合
-- CSS 新增 `.detail-section-grid.cl{display:none}`（複合選擇器，仿照原本 `.sb.cl` 的寫法，避免跟 `.detail-section-grid` 本身的 `display:grid` 產生優先權衝突而失效）
-- 「關聯商品」跟一般欄位區塊都套用同一套收合機制
-
-自我檢查：語法/亂碼/CSS 花括號配對通過；`togSec()` 本身未改動，靠直接檢視產生的 HTML 結構確認跟表單同一種「標題內含 .sc 箭頭、body 是標題的 nextElementSibling」DOM 形狀一致（`togSec` 依賴這個結構關係，已用表單驗證過是可運作的）。
-
-### 影響檔案
-- docs/index.html / docs/GameVault_v02_20_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（純前端功能/視覺調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-19 → gamevault-v02-20
-
-### 對應備份
-- _internal/old/v02_19/
