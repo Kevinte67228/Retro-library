@@ -1,3 +1,29 @@
+## v02.18 (2026-07-25)
+
+### 變更內容
+「統一整個程式碼渲染函式」Phase 1（收藏卡片列表＋尋寶卡片）。稽核發現收藏卡片(`.gc`)與尋寶卡片(`huntCardHtml`)色值/圓角/間距其實本來就一致（都是 #141b30 底／#1e2a45 框／10px 圓角），問題在實作方式跟選中效果：
+- 尋寶卡片原本 100% inline style、沒有共用 class，因此拿不到 `.gc` 已有的 `:active` 按壓回饋；新增 `.hc` class 統一比照 `.gc` 的視覺語言，尋寶卡片改用 class 而非拼 inline style 字串
+- `.gc` 與尋寶卡片的「選中」狀態原本都是 `box-shadow:...inset`（幾乎看不見，跟 v02.17 修過的 sortc 是同一種問題），統一改成 `.gc.sel`／`.hc.sel` 共用同一套外發光（沿用晶片那次的發光配方，色改用既有「選取＝玫瑰色」語意）
+- 尋寶卡片的分類色條原本用獨立的 `HUNT_CATCOLOR` hex 色碼手刻 inline span，稽核發現這 4 個顏色其實跟收藏卡片的 `.bk-cat-game/book/console/periph`完全相同 → 改成新增 `_huntCatCls()` 對照表，直接沿用 `.bk`／`.bk-cat-*`，不再重複定義顏色；「已入手」badge 新增 `.bk-ok` 沿用同一套配方取代原本手刻的綠色 inline 樣式
+- `HUNT_CATCOLOR` 本身保留（`huntDetail()` 詳情頁還在用，屬於 Phase 2 範圍，這次不動）
+- 尋寶卡片無圖時的虛線外框（區別於收藏卡片實線外框，語意上代表「尚未入手的目標」）刻意保留不統一，是有意義的視覺區隔
+
+自我檢查：語法/亂碼/CSS 花括號配對通過；用真實抽取程式碼驗證 `_huntCatCls()` 對照表涵蓋 `HUNT_CATCOLOR` 全部 4 個分類、未知分類 fallback 不噴錯，共 10 項全過。
+
+### 影響檔案
+- docs/index.html / docs/GameVault_v02_18_index.html
+- docs/sw.js
+
+### GS 版本
+- 無（純前端視覺/渲染邏輯調整）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-17 → gamevault-v02-18
+
+### 對應備份
+- _internal/old/v02_17/（同時為永久備份例外，不受這次 5 版輪替影響）
+
+
 ## v02.17 (2026-07-25)
 
 ### 變更內容
@@ -20,6 +46,7 @@
 
 ### 對應備份
 - _internal/old/v02_16/
+
 
 
 ## v02.16 (2026-07-25)
@@ -49,6 +76,7 @@
 
 
 
+
 ## v02.15 (2026-07-25)
 
 ### 變更內容
@@ -72,29 +100,3 @@
 
 ### 對應備份
 - _internal/old/v02_14/
-
-
-
-
-## v02.14 (2026-07-22)
-
-### 變更內容
-「📋 欄位區塊顯示設定」從「🔎 市場估值（選用）」設定分組裡抽出來，改成獨立的頂層設定分組，不再跟市場顯示設定混在一起：
-- 新增獨立分組 `data-grp="fieldgroups"`，比照既有分組（essential/market/gamedb）的標準結構（標題按鈕＋可收合內容）
-- `toggleSGroup()` 展開/收合邏輯本身是通用的（依 `data-grp` 動態查詢），新分組不需要額外註冊即可運作
-- 純 HTML 位置搬移，核心 JS 邏輯（`grpVisRenderList`／`grpVisToggle`／`isGroupHidden` 等）完全未變動，功能行為與 v02.13 一致
-
-驗證：修改前後 `<div>` 標籤計數差值一致（-18，確認未破壞既有結構），`.sgroup` 分組數由 8 個增為 9 個（新增的獨立分組），語法檢查通過。核心邏輯已於 v02.13 完整驗證過 17 項情境，本次僅搬移容器不影響邏輯正確性。
-
-### 影響檔案
-- index.html / GameVault_v02_14_index.html
-- sw.js
-
-### GS 版本
-- 無（純前端 HTML 結構調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-13 → gamevault-v02-14
-
-### 對應備份
-- _internal/old/v02_13/
