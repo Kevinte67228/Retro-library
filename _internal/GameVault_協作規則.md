@@ -1,6 +1,6 @@
 # GameVault 協作規則
 
-最後更新：2026-07-26（App 改名 RetroVault：版本 HTML 命名規則同步更新；GAS 檔名待 workflow 更新後處理）
+最後更新：2026-07-26（GAS 檔名 GameVault_AppsScript.gs → RetroVault_AppsScript.gs 改名完成；workflow 已由使用者手動更新確認生效）
 
 這份文件記錄 GameVault 的協作方式與部署規則，每次修改、產版、部署或整理檔案時依照這裡的規則處理。
 
@@ -10,7 +10,7 @@
 
 **這份文件如果是透過專案檔案快照拿到的，內容可能已經過時。** 專案檔案是對話開始當下的一次性快照，之後這份文件在 GitHub 上如果被更新過，Claude 手上的版本不會自動跟著更新——尤其是跨對話、對話被壓縮摘要過的情況，更容易發生「记忆」停留在舊狀態的問題。
 
-**在依賴這份文件裡任何版本號、CI/CD 狀態、部署流程做判斷之前，務必先用 GitHub Contents API 重新抓取這份文件、`docs/index.html` 的 `APP_VERSION`、`docs/GameVault_AppsScript.gs` 開頭版本註解的最新內容，不要只憑對話一開始拿到的快照或先前對話摘要判斷現況。**
+**在依賴這份文件裡任何版本號、CI/CD 狀態、部署流程做判斷之前，務必先用 GitHub Contents API 重新抓取這份文件、`docs/index.html` 的 `APP_VERSION`、`docs/RetroVault_AppsScript.gs` 開頭版本註解的最新內容，不要只憑對話一開始拿到的快照或先前對話摘要判斷現況。**
 
 **已知發生過的真實案例**：Claude 曾因為依賴過時的快照（快照上寫「GAS CI/CD 尚未設定成功」），誤判 CI/CD 還沒設定好，連續好幾個版本都重複提醒使用者「請手動貼到 Apps Script 編輯器」，即使 CI/CD 其實早就設定完成、每次推送都自動部署成功——浪費了使用者的確認時間，也讓使用者誤以為自己漏做了什麼事。之後每次要對「目前狀態是什麼」下判斷前，先重新查證，不要只靠記憶或摘要。
 
@@ -168,11 +168,17 @@ GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣�
 - **不執行備份**，不產生版本 HTML 檔，不需要完整 CHANGELOG 記錄。
 
 **Apps Script 版本檔命名：**
-- 部署用統一檔名：`GameVault_AppsScript.gs`
+- 部署用統一檔名：`RetroVault_AppsScript.gs`
 - 封存用：`GameVault_v01_AppsScript.gs.txt`
 - 只有後端程式有修改，或使用者明確要求時才生成。
 
-**App 改名（GameVault → RetroVault，2026-07-25／26）：** 使用者確認專案範圍已不再侷限遊戲單一品類（涵蓋書籍/主機/週邊/原聲帶/動漫美術/公仔/數位下載版），App 顯示名稱全面改為 RetroVault（`v02.29`，2026-07-25）。版本 HTML 檔名規則同步從 `GameVault_vXX_YY_index.html` 改成 `RetroVault_vXX_YY_index.html`（`v02.30` 起，2026-07-26），`github_deploy.py` 已同步更新且做了新舊前綴的過渡期相容判斷。**GAS 檔名（`GameVault_AppsScript.gs`）這次刻意沒有一起改**：`.github/workflows/deploy-gas.yml` 的觸發路徑與複製指令寫死引用這個檔名，Claude 沒有 `workflow` scope 無法直接修改該檔案，需要使用者先手動把 workflow 內容換成新檔名版本，確認生效後才能安全把實際的 `.gs` 檔案／`GameVault_AppsScript.gs` 相關文件引用一併改名，否則會造成 GAS CI/CD 觸發路徑跟實際檔名對不上、自動部署悄悄失效卻不易察覺（重蹈「已知發生過的真實案例」那類問題）。repo 名稱 `Retro-library` 本身沒有改，語意上跟 RetroVault 已經算搭。
+**App 改名（GameVault → RetroVault，2026-07-25／26）：** 使用者確認專案範圍已不再侷限遊戲單一品類（涵蓋書籍/主機/週邊/原聲帶/動漫美術/公仔/數位下載版），App 顯示名稱全面改為 RetroVault（`v02.29`，2026-07-25）。版本 HTML 檔名規則同步從 `GameVault_vXX_YY_index.html` 改成 `RetroVault_vXX_YY_index.html`（`v02.30`，2026-07-26），`github_deploy.py` 已同步更新且做了新舊前綴的過渡期相容判斷。GAS 檔名（`GameVault_AppsScript.gs` → `RetroVault_AppsScript.gs`）分兩步完成：先請使用者手動把 `.github/workflows/deploy-gas.yml` 的觸發路徑與複製指令改成新檔名（Claude 沒有 `workflow` scope 無法直接改），確認生效後才實際把 `.gs` 檔案改名＋同步更新所有文件引用，避免 CI/CD 觸發路徑跟實際檔名對不上、自動部署悄悄失效卻不易察覺。repo 名稱 `Retro-library` 本身沒有改，語意上跟 RetroVault 已經算搭。
+
+**GAS 檔案內部保留不改的字串（重要，避免資料遺失/外部服務中斷）：** `.gs` 程式碼裡有 4 處字串刻意沒有跟著改名，都是有實質功能依賴、不是單純顯示文字：
+- `IMG_FOLDER_NAME = 'GameVault_Images'`（及緊鄰的說明註解）：這是 Google Drive 裡實際存放圖片的資料夾名稱，使用者現有的圖片都存在這個資料夾裡，改名會讓程式找不到既有圖片、造成圖片孤兒化或重複建立新資料夾。
+- `softname = 'GameVault'`：這是 ScreenScraper API 的開發者身分識別字串（`softname` 參數），是在 ScreenScraper 官網註冊開發者帳號時登記的軟體名稱，改掉會讓 ScreenScraper 查詢功能失效（伺服器端會拒絕未註冊的 softname）。要改的話得先去 ScreenScraper 官網把註冊資訊也改掉，不是單純改程式碼字串就好。
+- 同一支 `screenScraperProxy()` 函式裡的 `'User-Agent': 'GameVault/2.0 (Google Apps Script)'`：跟上面 softname 屬於同一個 API 呼叫的一部分，保守起見一併保留不動。
+- 若之後要動這 4 處，務必先確認 Google Drive 資料夾遷移／ScreenScraper 開發者帳號更名都處理好，再回頭改程式碼，不要單獨改字串。
 
 **當前版本狀態（2026-07-17，發布版本重置後）：**
 - GS 後端：`v01`
@@ -204,7 +210,7 @@ Retro-library/
 ├── docs/                    ← GitHub Pages 部署根目錄（公開）
 │   ├── index.html
 │   ├── RetroVault_vXX_YY_index.html
-│   ├── GameVault_AppsScript.gs
+│   ├── RetroVault_AppsScript.gs
 │   ├── sw.js
 │   ├── manifest.json
 │   ├── manual.html
@@ -252,7 +258,7 @@ Retro-library/
 - `RetroVault_vXX_YY_index.html`（新版本號；子版號/debug 版不產生此檔）
 - `sw.js`
 - `manifest.json`
-- `GameVault_AppsScript.gs`（有更新時）
+- `RetroVault_AppsScript.gs`（有更新時）
 
 並刪除舊的版本 HTML（`RetroVault_vXX_YY-1_index.html`）。子版號/debug 版因不產生新版本 HTML，故也不執行此刪除步驟。
 
@@ -264,7 +270,7 @@ Retro-library/
 **5. GitHub Pages 自動部署**
 GitHub push 觸發 GitHub Pages 自動重新部署（設定為「Deploy from a branch → main → /docs」），約 1 分鐘內完成，無需手動操作。2026-07-21 起取代 Netlify（原因：Netlify 額度耗盡導致部署被跳過）。
 
-**5-1. GAS 後端自動部署（如有異動 `GameVault_AppsScript.gs`）**
+**5-1. GAS 後端自動部署（如有異動 `RetroVault_AppsScript.gs`）**
 GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script 部署，網址不變，無需使用者手動貼到 Apps Script 編輯器。詳見「GAS 後端 CI/CD 自動部署」章節。
 
 **所需資訊（每次新對話開始時提供）：**
@@ -386,7 +392,7 @@ const STATIC_ASSETS = [
 - Apps Script 版本採整數主版號，例如 `v40`。
 - 只有後端程式有變更，或使用者明確要求時才產生新版本。
 - 提供給 Apps Script 編輯器時，必須是完整檔案內容，不可只貼片段（**手動貼上的舊流程，CI/CD 上線後已不需要，見下方章節**）。
-- `GameVault_AppsScript.gs` 放在 `docs/` 根目錄，讓使用者可從 App 內直接下載（連結加 `download` 屬性），同時也是 CI/CD 自動部署的來源檔案。
+- `RetroVault_AppsScript.gs` 放在 `docs/` 根目錄，讓使用者可從 App 內直接下載（連結加 `download` 屬性），同時也是 CI/CD 自動部署的來源檔案。
 
 修改 Apps Script 後需檢查：
 
@@ -399,13 +405,13 @@ const STATIC_ASSETS = [
 
 ## GAS 後端 CI/CD 自動部署（GitHub Actions + clasp）
 
-**已於 2026-07-06 設定完成並驗證成功；2026-07-21 觸發路徑隨 `GameVault/`→`docs/` 搬遷同步更新（需使用者手動改 workflow 檔案，見下方提醒）。** 推送 `docs/GameVault_AppsScript.gs` 到 GitHub `main` 分支時，會自動觸發 GitHub Actions，用 [clasp](https://github.com/google/clasp) 把程式碼推上 Google Apps Script，並更新到**固定的 Web App 部署**（deployment），網址不會改變。**取代了先前「使用者手動貼到 Apps Script 編輯器」的流程**，Claude 推送 `.gs` 到 GitHub 後即完成後端部署，不需要再請使用者手動操作。
+**已於 2026-07-06 設定完成並驗證成功；2026-07-21 觸發路徑隨 `GameVault/`→`docs/` 搬遷同步更新；2026-07-26 隨 App 改名同步把觸發路徑與檔名從 `GameVault_AppsScript.gs` 改成 `RetroVault_AppsScript.gs`（使用者手動更新 workflow 檔案後，Claude 才把實際 .gs 檔案改名，避免路徑跟檔名對不上）。** 推送 `docs/RetroVault_AppsScript.gs` 到 GitHub `main` 分支時，會自動觸發 GitHub Actions，用 [clasp](https://github.com/google/clasp) 把程式碼推上 Google Apps Script，並更新到**固定的 Web App 部署**（deployment），網址不會改變。**取代了先前「使用者手動貼到 Apps Script 編輯器」的流程**，Claude 推送 `.gs` 到 GitHub 後即完成後端部署，不需要再請使用者手動操作。
 
 ### 運作方式
 
 - Workflow 檔案：`.github/workflows/deploy-gas.yml`
-- 觸發條件：push 到 `main` 且異動 `docs/GameVault_AppsScript.gs`；也支援手動觸發（`workflow_dispatch`）
-  ⚠️ **2026-07-21 搬遷提醒**：`.github/workflows/deploy-gas.yml` 裡寫死的觸發路徑仍是舊的 `GameVault/GameVault_AppsScript.gs`，Claude 沒有 `workflow` scope 無法直接修改，**需要使用者手動到 GitHub 網頁把該路徑改成 `docs/GameVault_AppsScript.gs`**，否則往後推送 `.gs` 更新不會觸發 GAS 自動部署。修改前這個提醒不要移除。
+- 觸發條件：push 到 `main` 且異動 `docs/RetroVault_AppsScript.gs`；也支援手動觸發（`workflow_dispatch`）
+  ⚠️ **2026-07-21 搬遷提醒（已於 2026-07-26 解決，保留備查）**：當時觸發路徑曾一度寫死舊的 `GameVault/GameVault_AppsScript.gs`，經使用者手動更新 workflow 檔案改成 `docs/GameVault_AppsScript.gs` 解決；2026-07-26 又隨 App 改名再次更新為 `docs/RetroVault_AppsScript.gs`（同樣是請使用者手動改 workflow，Claude 沒有 `workflow` scope 無法直接修改該檔案）。
 - 流程：checkout → 安裝 clasp → 還原 clasp 登入憑證 → 建立暫存 clasp 專案（複製 `.gs`／`appsscript.json`，寫入 `.clasp.json`）→ `clasp push --force` 推送程式碼 → `clasp deploy --deploymentId "$GAS_DEPLOYMENT_ID"` **更新既有部署的版本**（不是新增部署，這是網址保持固定的關鍵）
 
 ### 所需 GitHub Secrets（已設定，正常情況不需再碰）
@@ -498,7 +504,7 @@ Claude 產生任何時間戳記（CI 測試標記、commit 訊息、CHANGELOG �
 | `index.html` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/index.html` |
 | `sw.js` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/sw.js` |
 | `manifest.json` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/manifest.json` |
-| `GameVault_AppsScript.gs` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/GameVault_AppsScript.gs` |
+| `RetroVault_AppsScript.gs` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/RetroVault_AppsScript.gs` |
 | `CHANGELOG.md` | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/_internal/CHANGELOG.md` |
 | `GameVault_協作規則.md`（最新） | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/_internal/GameVault_%E5%8D%94%E4%BD%9C%E8%A6%8F%E5%89%87.md` |
 | `.github/workflows/deploy-gas.yml`（GAS CI/CD） | `https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/.github/workflows/deploy-gas.yml` |

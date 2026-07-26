@@ -21,9 +21,10 @@ GameVault GitHub 部署腳本 v2 ── 改用 gh_batch.py 的 Git Data API 單�
   GameVault_vXX_YY_index.html 改成 RetroVault_vXX_YY_index.html。get_current_version()／
   備份／刪舊檔三處都做了「新舊前綴都比對」的過渡期相容處理，只需要在 v02.29→v02.30
   這次轉換時派上用場（v02.29 以前是舊前綴、v02.30 起全部是新前綴），之後可以移除相容判斷，
-  但保留著也無害。GAS 檔名（GameVault_AppsScript.gs）這次沒有一起改，因為 workflow 觸發路徑
-  寫死在 .github/workflows/deploy-gas.yml，Claude 沒有 workflow scope 不能直接改，
-  需要使用者先手動更新該檔案，確認後才能安全把 GAS 檔名也換掉（見協作規則.md 相關章節）。
+  但保留著也無害。GAS 檔名（GameVault_AppsScript.gs → RetroVault_AppsScript.gs）已於
+  使用者手動更新 .github/workflows/deploy-gas.yml 觸發路徑後（2026-07-26）一併改名，
+  BACKUP_FILES／DEPLOY_FILES 已同步更新為新檔名，不再需要相容判斷（GAS 檔名沒有「新舊都
+  可能存在」的過渡期疑慮，改名跟部署是同一次 commit 原子完成）。
 
 流程：
 1. 讀取 docs/ 目前版本號（從 GameVault_vXX_YY_index.html 檔名推斷）
@@ -52,7 +53,7 @@ BACKUP_FILES = [
     'sw.js',
     'manifest.json',
     'bg.webp',
-    'GameVault_AppsScript.gs',
+    'RetroVault_AppsScript.gs',
     'appsscript.json',
 ]
 
@@ -62,7 +63,7 @@ DEPLOY_FILES = {
     'RetroVault_{ver}_index.html':      'docs/RetroVault_{ver}_index.html',
     'sw.js':                            'docs/sw.js',
     'manifest.json':                    'docs/manifest.json',
-    'GameVault_AppsScript.gs':          'docs/GameVault_AppsScript.gs',
+    'RetroVault_AppsScript.gs':         'docs/RetroVault_AppsScript.gs',
 }
 
 

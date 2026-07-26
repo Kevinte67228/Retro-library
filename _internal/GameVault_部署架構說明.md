@@ -43,10 +43,10 @@ PATCH /git/refs/heads/main      把 main 分支指標指到新 commit
 
 ## 2. GAS（Google Apps Script）後端如何自動部署
 
-這段完全由 **GitHub Actions** 自動完成，Claude 只需要把新版 `GameVault_AppsScript.gs` push 到 GitHub，不需要手動介入部署。
+這段完全由 **GitHub Actions** 自動完成，Claude 只需要把新版 `RetroVault_AppsScript.gs` push 到 GitHub，不需要手動介入部署。
 
 **觸發條件**（`.github/workflows/deploy-gas.yml`）：
-- push 到 `main` 分支，且異動路徑包含 `GameVault/GameVault_AppsScript.gs`
+- push 到 `main` 分支，且異動路徑包含 `GameVault/RetroVault_AppsScript.gs`
 - 也支援手動觸發（`workflow_dispatch`）
 
 **執行流程**：
@@ -57,7 +57,7 @@ PATCH /git/refs/heads/main      把 main 分支指標指到新 commit
 4. 還原 clasp 登入憑證
    → 從 GitHub Secrets 的 CLASPRC_JSON 寫入 ~/.clasprc.json
 5. 準備 clasp 專案
-   → 複製 GameVault_AppsScript.gs 為 Code.gs
+   → 複製 RetroVault_AppsScript.gs 為 Code.gs
    → 複製 appsscript.json
    → 用 GitHub Secrets 的 GAS_SCRIPT_ID 寫入 .clasp.json
 6. clasp push --force
@@ -107,7 +107,7 @@ Claude(容器) ──API呼叫──► GitHub main 分支
                               │
               ┌───────────────┴───────────────┐
               ▼                                ▼
-    GameVault_AppsScript.gs 變動      GameVault/ 資料夾任何變動
+    RetroVault_AppsScript.gs 變動      GameVault/ 資料夾任何變動
               │                                │
               ▼                                ▼
    GitHub Actions(deploy-gas.yml)      Netlify 自動偵測
