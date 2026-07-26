@@ -1,6 +1,6 @@
 # GameVault 協作規則
 
-最後更新：2026-07-25（CHANGELOG 更新併入部署同一次 commit，避免觸發兩次 Pages 建置互相干擾）
+最後更新：2026-07-26（App 改名 RetroVault：版本 HTML 命名規則同步更新；GAS 檔名待 workflow 更新後處理）
 
 這份文件記錄 GameVault 的協作方式與部署規則，每次修改、產版、部署或整理檔案時依照這裡的規則處理。
 
@@ -158,7 +158,7 @@ GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣�
 - 適用範圍：**bug 修復、UI 微調、錯字訂正**這類非功能性的小幅修正。
 - 觸發時機：在同一個 `vXX.YY` 基準上連續修正時使用，不單獨遞增 `YY`。
 - **不執行備份**：子版號更新不複製檔案到 `_internal/old/`，也不產生對應的 `_internal/old/vXX_YYaN/` 資料夾。
-- **不產生版本 HTML 檔**：不需要額外建立 `GameVault_vXX_YYaN_index.html`，沿用目前的版本 HTML 檔（`sw.js` 的 `CACHE_NAME` 仍需遞增以強制更新快取）。
+- **不產生版本 HTML 檔**：不需要額外建立 `RetroVault_vXX_YYaN_index.html`，沿用目前的版本 HTML 檔（`sw.js` 的 `CACHE_NAME` 仍需遞增以強制更新快取）。
 - **CHANGELOG 仍需更新**：簡短記錄修了什麼，但不需要完整四段格式，可用一行條列。
 - 下一次正式功能更新時，`YY` 正常遞增、`aN` 歸零（不帶子版號）。
 
@@ -171,6 +171,8 @@ GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣�
 - 部署用統一檔名：`GameVault_AppsScript.gs`
 - 封存用：`GameVault_v01_AppsScript.gs.txt`
 - 只有後端程式有修改，或使用者明確要求時才生成。
+
+**App 改名（GameVault → RetroVault，2026-07-25／26）：** 使用者確認專案範圍已不再侷限遊戲單一品類（涵蓋書籍/主機/週邊/原聲帶/動漫美術/公仔/數位下載版），App 顯示名稱全面改為 RetroVault（`v02.29`，2026-07-25）。版本 HTML 檔名規則同步從 `GameVault_vXX_YY_index.html` 改成 `RetroVault_vXX_YY_index.html`（`v02.30` 起，2026-07-26），`github_deploy.py` 已同步更新且做了新舊前綴的過渡期相容判斷。**GAS 檔名（`GameVault_AppsScript.gs`）這次刻意沒有一起改**：`.github/workflows/deploy-gas.yml` 的觸發路徑與複製指令寫死引用這個檔名，Claude 沒有 `workflow` scope 無法直接修改該檔案，需要使用者先手動把 workflow 內容換成新檔名版本，確認生效後才能安全把實際的 `.gs` 檔案／`GameVault_AppsScript.gs` 相關文件引用一併改名，否則會造成 GAS CI/CD 觸發路徑跟實際檔名對不上、自動部署悄悄失效卻不易察覺（重蹈「已知發生過的真實案例」那類問題）。repo 名稱 `Retro-library` 本身沒有改，語意上跟 RetroVault 已經算搭。
 
 **當前版本狀態（2026-07-17，發布版本重置後）：**
 - GS 後端：`v01`
@@ -201,7 +203,7 @@ GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣�
 Retro-library/
 ├── docs/                    ← GitHub Pages 部署根目錄（公開）
 │   ├── index.html
-│   ├── GameVault_vXX_YY_index.html
+│   ├── RetroVault_vXX_YY_index.html
 │   ├── GameVault_AppsScript.gs
 │   ├── sw.js
 │   ├── manifest.json
@@ -236,7 +238,7 @@ Retro-library/
 
 每次產新版，Claude 透過 GitHub API 自動完成以下步驟，不需要手動下載上傳。
 
-**子版號（`vXX.YYaN`）與 debug 版（`vXX.YYd`）例外：** 不執行下列「1. 備份」與「2. 清理舊備份」步驟，直接跳到「3. 推送新版檔案」，且不產生對應的 `GameVault_vXX_YYaN_index.html` 版本 HTML（沿用目前已存在的版本 HTML 檔案）。
+**子版號（`vXX.YYaN`）與 debug 版（`vXX.YYd`）例外：** 不執行下列「1. 備份」與「2. 清理舊備份」步驟，直接跳到「3. 推送新版檔案」，且不產生對應的 `RetroVault_vXX_YYaN_index.html` 版本 HTML（沿用目前已存在的版本 HTML 檔案）。
 
 **1. 備份目前版本**（一般 `vXX.YY` 正式版適用）
 把 `docs/` 現有核心檔案複製到 `_internal/old/<目前版號>/`（含 `icons/` 子資料夾）。
@@ -247,12 +249,12 @@ Retro-library/
 **3. 推送新版檔案**
 把新版本的以下檔案推到 `docs/`：
 - `index.html`
-- `GameVault_vXX_YY_index.html`（新版本號；子版號/debug 版不產生此檔）
+- `RetroVault_vXX_YY_index.html`（新版本號；子版號/debug 版不產生此檔）
 - `sw.js`
 - `manifest.json`
 - `GameVault_AppsScript.gs`（有更新時）
 
-並刪除舊的版本 HTML（`GameVault_vXX_YY-1_index.html`）。子版號/debug 版因不產生新版本 HTML，故也不執行此刪除步驟。
+並刪除舊的版本 HTML（`RetroVault_vXX_YY-1_index.html`）。子版號/debug 版因不產生新版本 HTML，故也不執行此刪除步驟。
 
 **4. 更新 CHANGELOG（併入同一次 commit，不要另外 push）**
 在 `_internal/CHANGELOG.md` 頂端插入新版記錄，超過 4 筆則刪最舊。子版號（`vXX.YYaN`）與 debug 版（`vXX.YYd`）用一行條列簡記即可，不需完整四段格式。
@@ -309,7 +311,7 @@ GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script
 每次產生新版時，依序執行：
 
 1. 在 Claude 容器建立新版本資料夾，例如 `/home/claude/v01_02/`。
-2. 修改 `index.html` 與 `GameVault_v01_02_index.html`（兩者內容完全一致）。
+2. 修改 `index.html` 與 `RetroVault_v01_02_index.html`（兩者內容完全一致）。
 3. 更新 `APP_VERSION='v01.02'`。
 4. 更新 `sw.js` 的 `CACHE_NAME`，例如 `gamevault-v01-02`。
 5. 更新 `sw.js` 預先快取清單（相對路徑，不寫資料夾前綴）。
@@ -320,7 +322,7 @@ GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script
 
 **子版號（`vXX.YYaN`）簡化流程：**
 
-1. 直接修改 `index.html`（沿用既有的 `GameVault_vXX_YY_index.html`，同步更新內容使兩者一致）。
+1. 直接修改 `index.html`（沿用既有的 `RetroVault_vXX_YY_index.html`，同步更新內容使兩者一致）。
 2. 更新 `APP_VERSION='vXX.YYaN'`（如 `v01.02a1`）。
 3. 更新 `sw.js` 的 `CACHE_NAME`（仍需遞增以強制更新快取）。
 4. 執行驗證清單。
@@ -337,7 +339,7 @@ GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './GameVault_vXX_YY_index.html',
+  './RetroVault_vXX_YY_index.html',
   './manifest.json',
   './manual.html',
   './bg.webp',

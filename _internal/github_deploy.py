@@ -17,6 +17,13 @@ GameVault GitHub 部署腳本 v2 ── 改用 gh_batch.py 的 Git Data API 單�
   之前部署完 docs/ 後緊接著另外 push CHANGELOG，等於短時間內連續觸發兩次 Pages 自動建置，
   兩次建置管線互相干擾，其中一次容易被中斷回報失敗（即使最終內容仍正確部署成功，
   也會收到失敗通知信）。併入同一次 commit 後只觸發一次建置，可避免此問題。
+- v4（2026-07-26）：App 改名 GameVault→RetroVault，版本 HTML 命名規則同步從
+  GameVault_vXX_YY_index.html 改成 RetroVault_vXX_YY_index.html。get_current_version()／
+  備份／刪舊檔三處都做了「新舊前綴都比對」的過渡期相容處理，只需要在 v02.29→v02.30
+  這次轉換時派上用場（v02.29 以前是舊前綴、v02.30 起全部是新前綴），之後可以移除相容判斷，
+  但保留著也無害。GAS 檔名（GameVault_AppsScript.gs）這次沒有一起改，因為 workflow 觸發路徑
+  寫死在 .github/workflows/deploy-gas.yml，Claude 沒有 workflow scope 不能直接改，
+  需要使用者先手動更新該檔案，確認後才能安全把 GAS 檔名也換掉（見協作規則.md 相關章節）。
 
 流程：
 1. 讀取 docs/ 目前版本號（從 GameVault_vXX_YY_index.html 檔名推斷）
@@ -52,7 +59,7 @@ BACKUP_FILES = [
 # 部署新版本時要推送的檔案（本機檔名 → GitHub 路徑，{ver} 會被替換成新版號）
 DEPLOY_FILES = {
     'index.html':                       'docs/index.html',
-    'GameVault_{ver}_index.html':       'docs/GameVault_{ver}_index.html',
+    'RetroVault_{ver}_index.html':      'docs/RetroVault_{ver}_index.html',
     'sw.js':                            'docs/sw.js',
     'manifest.json':                    'docs/manifest.json',
     'GameVault_AppsScript.gs':          'docs/GameVault_AppsScript.gs',
@@ -60,8 +67,12 @@ DEPLOY_FILES = {
 
 
 def get_current_version(path_index):
-    """從目前 tree 裡的 GameVault_vXX_YY_index.html 檔名推斷目前版號"""
+    """從目前 tree 裡的 RetroVault_vXX_YY_index.html 檔名推斷目前版號
+    （v02.30 起改名；v02.29 以前是 GameVault_vXX_YY_index.html，向下相容判斷）"""
     for path in path_index:
+        if path.startswith('docs/RetroVault_v') and path.endswith('_index.html'):
+            name = path.split('/')[-1]
+            return name.replace('RetroVault_', '').replace('_index.html', '')
         if path.startswith('docs/GameVault_v') and path.endswith('_index.html'):
             name = path.split('/')[-1]
             return name.replace('GameVault_', '').replace('_index.html', '')
@@ -87,9 +98,15 @@ def deploy(new_ver, local_dir, changelog_path=None):
             src = f'docs/{fname}'
             if src in path_index:
                 copies[f'_internal/old/{current_ver}/{fname}'] = path_index[src]
-        ver_html = f'docs/GameVault_{current_ver}_index.html'
-        if ver_html in path_index:
-            copies[f'_internal/old/{current_ver}/GameVault_{current_ver}_index.html'] = path_index[ver_html]
+        ver_html = None
+        for prefix in ('RetroVault_', 'GameVault_'):  # 過渡期：v02.30起新前綴，v02.29以前是舊前綴
+            candidate = f'docs/{prefix}{current_ver}_index.html'
+            if candidate in path_index:
+                ver_html = candidate
+                break
+        if ver_html:
+            ver_html_name = ver_html.split('/')[-1]
+            copies[f'_internal/old/{current_ver}/{ver_html_name}'] = path_index[ver_html]
         for path, sha in path_index.items():
             if path.startswith('docs/icons/'):
                 icon_name = path[len('docs/icons/'):]
@@ -121,11 +138,14 @@ def deploy(new_ver, local_dir, changelog_path=None):
         else:
             print(f'  skip（本機找不到）: {local_path}')
 
-    # 刪除舊版本 HTML（不同版號才需要）
+    # 刪除舊版本 HTML（不同版號才需要；過渡期同時比對新舊兩種前綴）
     if not same_version:
         for path in path_index:
-            if (path.startswith('docs/GameVault_v') and path.endswith('_index.html')
-                    and path != f'docs/GameVault_{new_ver}_index.html'):
+            is_ver_html = (
+                (path.startswith('docs/RetroVault_v') or path.startswith('docs/GameVault_v'))
+                and path.endswith('_index.html')
+            )
+            if is_ver_html and path != f'docs/RetroVault_{new_ver}_index.html':
                 deletes.append(path)
                 print(f'  將移除舊版本HTML: {path}')
 
