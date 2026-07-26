@@ -14030,18 +14030,45 @@ function resetAll(){
 
 function registerServiceWorker(){
   if(!('serviceWorker' in navigator)||location.protocol==='file:')return;
-  // v54.09：v54.01 改成的自動重整，實測會在部分情況下於頁面資源還沒穩定載入完成時就
-  // 觸發 reload（controllerchange 不只在真的有新版本時觸發，某些情境下也可能誤觸發），
-  // 造成畫面破碎、底部導覽列消失，需要使用者自己再關閉重開才會恢復。
-  // 改回保守做法：偵測到新版本只顯示提示橫幅，由使用者自己決定何時點擊更新，不再自動 reload。
-  var _swUpdateShown=false;
-  navigator.serviceWorker.addEventListener('controllerchange',function(){
-    if(_swUpdateShown)return;
-    _swUpdateShown=true;
+  // 2026-07：改用「等待使用者確認才切換」的模式，與 Taxi-Meter 專案對齊。
+  // sw.js 這邊 install 時不再自動 skipWaiting，新版本會先進入 waiting 狀態；
+  // 這裡偵測到 waiting worker 才顯示提示橫幅，使用者點擊才 postMessage 通知切換，
+  // 切換完成（controllerchange）後才真正自動 reload 一次——
+  // 這個 reload 只會在使用者主動點擊之後才可能觸發，理論上不會再有
+  // 舊版「controllerchange 誤觸發、畫面破碎」的問題（舊版是因為 skipWaiting
+  // 在背景自動發生，reload 時機跟頁面當下狀態不同步）。
+  var _waitingWorker=null;
+
+  function showBannerFor(worker){
+    _waitingWorker=worker;
     _showUpdateBanner();
+  }
+
+  navigator.serviceWorker.register('sw.js?v='+encodeURIComponent(APP_VERSION)).then(function(reg){
+    if(reg.waiting && navigator.serviceWorker.controller){
+      showBannerFor(reg.waiting);
+    }
+    reg.addEventListener('updatefound',function(){
+      var nw=reg.installing;
+      if(!nw)return;
+      nw.addEventListener('statechange',function(){
+        if(nw.state==='installed' && navigator.serviceWorker.controller){
+          showBannerFor(nw);
+        }
+      });
+    });
+  }).catch(function(){});
+
+  var _reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(_reloaded)return;
+    _reloaded=true;
+    location.reload();
   });
-  navigator.serviceWorker.register('sw.js?v='+encodeURIComponent(APP_VERSION))
-    .catch(function(){});
+
+  window._retrovaultApplyUpdate=function(){
+    if(_waitingWorker) _waitingWorker.postMessage('SKIP_WAITING');
+  };
 }
 function _showUpdateBanner(){
   var b=document.getElementById('sw-update-banner');
@@ -14060,7 +14087,7 @@ function _showUpdateBanner(){
     'background:linear-gradient(135deg,#00e5ff 0%,#7c4dff 100%);border:none;border-radius:14px;padding:13px 14px;'+
     'display:flex;align-items:center;gap:10px';
   b.innerHTML='<div style="flex:1;font-size:13px;font-weight:700;color:#001018">🔄 有新版本可用</div>'+
-    '<button type="button" onclick="location.reload()" style="background:#001018;color:#00e5ff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;flex-shrink:0">立即更新</button>';
+    '<button type="button" onclick="window._retrovaultApplyUpdate&&window._retrovaultApplyUpdate();this.textContent=\'更新中…\'" style="background:#001018;color:#00e5ff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;flex-shrink:0">立即更新</button>';
   document.body.appendChild(b);
 }
 
