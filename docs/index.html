@@ -2400,7 +2400,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.31';
+const APP_VERSION='v02.32';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3475,6 +3475,10 @@ const DIGITAL_PLATFORM_VALUES=['PlayStation 3','PlayStation 4','PlayStation 5','
 const DIGITAL_PLATFORMS=PLATFORMS.filter(function(p){return DIGITAL_PLATFORM_VALUES.indexOf(p.v)>=0;});
 
 // ── AI 分類規格：四類的角色／項目標籤／欄位語意／限制（v24.03）──
+// 🤖🤖🤖 ═══ AI 辨識區塊 START（1/2：提示規格與系統提示建構）═══ 🤖🤖🤖
+// 範圍：AI_CAT_SPEC ~ buildSYS()（下方至「// ── State ──」前）
+// 內容：各分類/子類型的 AI 辨識欄位規格定義（AI_CAT_SPEC／ARTBOOK_AI_SPEC）、
+//       依分類/子類型取用規格的 _aiSpecFor()、視覺辨識用的系統提示字串組裝（buildSYS 等）
 //   視覺辨識（buildSYS）與文字補全（aiKnowledgeFill）共用的單一事實來源。
 //   fields：{ 欄位名: 人類可讀說明 }；文字補全直接拿來問缺漏欄位，視覺辨識（主機/週邊）由 buildSYS 即時渲染成 schema 區塊。
 var AI_CAT_SPEC={
@@ -3737,6 +3741,8 @@ function buildSYS(){
   }
   return head+'\n\n'+_SYS_COMMON+'\n\n'+catBlocks+'\n\n'+_SYS_TAIL+_regionCtx();
 }
+
+// 🤖🤖🤖 ═══ AI 辨識區塊 END（1/2）═══ 🤖🤖🤖
 
 // ── State ──
 var cfg={}, entry={}, edited=new Set(), col=[], filtered=[], activeF='all', detailRow=null;
@@ -5427,6 +5433,10 @@ function translateOpenAIError(status, msg){
   if(msg)return 'OpenAI 錯誤：'+msg.slice(0,80)+'（請至 platform.openai.com 確認帳號狀態）';
   return 'OpenAI HTTP 錯誤 '+status;
 }
+// 🤖🤖🤖 ═══ AI 辨識區塊 START（2/2：核心呼叫引擎）═══ 🤖🤖🤖
+// 範圍：translateGeminiError() ~ testGemini()（下方至「Giant Bomb API 查詢」banner前）
+// 內容：Gemini/GPT/DeepSeek 呼叫封裝（callGemini／callGeminiOCR／callHybridVision／callAIVision）、
+//       錯誤訊息轉譯、JSON 擷取、第二階段文字補全（aiCompleteMissing／aiKnowledgeFill）、連線測試
 function translateGeminiError(status, msg){
   var m=msg.toLowerCase();
   if(status===429||m.indexOf('quota')>=0||m.indexOf('rate')>=0){
@@ -5949,6 +5959,9 @@ function testGemini(){
   }).then(function(){toast('Gemini 連線成功 ✓ 金鑰有效','ok',4000);})
   .catch(function(e){toast('失敗：'+e.message,'er',8000);}).finally(noLoad);
 }
+
+// 🤖🤖🤖 ═══ AI 辨識區塊 END（2/2）═══ 🤖🤖🤖
+
 // ════════════════════════════════════════════════════
 // Giant Bomb API 查詢
 // ════════════════════════════════════════════════════
@@ -6555,6 +6568,7 @@ function gcodeSearch(){
 }
 
 // ════ 主查詢函數（編碼+照片模式）════
+// 🤖 [AI辨識進入點] 編碼＋照片 combo 模式：先查資料庫，同時跑圖片AI辨識，兩邊結果交叉比對
 function gcodeComboSearch(){
   var code=normalizeGameCode(($('gcode-combo-inp')&&$('gcode-combo-inp').value||'').trim().toUpperCase());
   // v49.05：數位下載版的電子書子類型改走 ISBN 書籍資料庫查詢，取代遊戲交叉比對
@@ -7115,6 +7129,7 @@ function extractField(src,data,field){
 }
 
 // 套用多資料庫結果到 entry
+// 🤖 [AI辨識進入點] 合併多個資料庫查詢結果與AI辨識結果，決定最終要套用到表單的值
 function applyMultiDbResult(dbResult,code,aiResult){
   var type=_selectedType||'遊戲';
   // 基底：AI 結果（若有）
@@ -8411,6 +8426,7 @@ function aiWebScanBarcode(){
 function aiWebNameOCR(input){
   nameFieldOCR(input,'aiweb-subject','zh',function(){_aiWebInputMethod='photo';_aiWebRenderInputMethod();});
 }
+// 🤖 [AI辨識進入點] AI網頁查詢模式：不直接呼叫API，是組好prompt讓使用者複製貼到外部AI聊天視窗，機制跟其他AI辨識不同
 function initAiWebMode(){
   pickTypeAndPlatform('aiweb',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
@@ -9073,6 +9089,7 @@ function comboScanFromBtn(){
     detectText:'正在偵測條碼',
     resultToast:function(v){return '已帶入條碼：'+v;}}); // 僅回填欄位
 }
+// 🤖 [AI辨識進入點] 條碼＋照片 combo 模式：條碼查資料庫 + 封面照片AI辨識並行，交叉比對
 function comboSearchFromInput(){
   var bi=$('combo-bar-inp');var v=(bi&&bi.value||'').trim();
   if(!v&&!_scanImg){toast('請掃描／輸入條碼，或先拍攝封面','er');return;}
@@ -9231,6 +9248,7 @@ function fscanCancel(){
   }
   var cb=_fscanOpt&&_fscanOpt.onCancel;fscanClose();if(typeof cb==='function')cb();
 }
+// 🤖 [AI辨識進入點] 拍照OCR掃描條碼模式：擷取畫面送Gemini辨識條碼數字
 function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
   if(_fscanBusy)return;
   var v=$('fscan-video');if(!v||!v.videoWidth){toast('相機尚未就緒，請稍候','er');return;}
@@ -9595,6 +9613,7 @@ function resetSlots(){
   var ab=$('ai-btn-wrap');if(ab)ab.style.display='block';
 }
 
+// 🤖 [AI辨識進入點] 圖片辨識模式初始化（純拍照/選圖辨識，不經過條碼/編碼查詢）
 function initImgMode(){
   pickTypeAndPlatform('img',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
@@ -9606,6 +9625,7 @@ function initImgMode(){
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   });
 }
+// 🤖 [AI辨識進入點] 實際觸發圖片AI辨識並把結果套進表單欄位（initImgMode模式的核心動作）
 function doAnalyze(){
   // 從 slot 收集圖片
   var slotOrder=[

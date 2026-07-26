@@ -1,3 +1,28 @@
+## v02.32 (2026-07-26)
+
+### 變更內容
+純標註，無邏輯異動：在 AI 辨識相關程式碼加上區塊標記與進入點註解，方便後續交給 Fable 做優化時快速定位。標記涵蓋：
+- 兩個較集中的區塊，加了 START/END banner：
+  1. 提示規格與系統提示建構（`AI_CAT_SPEC`／`ARTBOOK_AI_SPEC`／`_aiSpecFor()`／`buildSYS()` 等）
+  2. 核心呼叫引擎（`callGemini`／`callGeminiOCR`／`callHybridVision`／`callAIVision`／`aiCompleteMissing`／`aiKnowledgeFill`／`testGemini` 等）
+- 7 個分散在各建檔模式裡的 AI 辨識進入點，各自加一行說明註解：`gcodeComboSearch`／`applyMultiDbResult`／`initAiWebMode`／`comboSearchFromInput`／`fscanCapture`／`initImgMode`／`doAnalyze`
+
+全部用 `🤖` 開頭方便 grep 搜尋定位，不影響任何程式邏輯。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_32_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-31 → retrovault-v02-32
+
+### 對應備份
+- _internal/old/v02_31/
+
+
 ## v02.31 (2026-07-26)
 
 ### 變更內容
@@ -34,6 +59,7 @@ GAS 後端檔名正式從 `GameVault_AppsScript.gs` 改成 `RetroVault_AppsScrip
 - _internal/old/v02_30/
 
 
+
 ## v02.30 (2026-07-26)
 
 ### 變更內容
@@ -60,6 +86,7 @@ GAS 後端檔名正式從 `GameVault_AppsScript.gs` 改成 `RetroVault_AppsScrip
 
 ### 對應備份
 - _internal/old/v02_29/
+
 
 
 
@@ -92,29 +119,3 @@ App 名稱從「GameVault」改成「RetroVault」，因為專案範圍已經不
 
 ### 對應備份
 - _internal/old/v02_28/
-
-
-
-
-## v02.28 (2026-07-25)
-
-### 變更內容
-修正統計頁「最近入手」點擊後關閉詳情頁會停留在收藏頁、需要使用者自己切回統計頁的問題：
-- 根因：原本的點擊行為是 `showPg('col')`（把底層頁面切到收藏）再開詳情頁；詳情頁（`#dsheet`）本身是 `position:fixed` 的全螢幕覆蓋層，關閉時只是移除 `.on` class（`closeDetail()`），不會做任何頁面導航——所以關閉後停留在「切換當下的底層頁面」，也就是被切過去的收藏頁，不是原本的統計頁
-- 修法：拿掉 `showPg('col')`，改成只呼叫 `filterCol()`（純資料運算：重新計算 `filtered` 陣列＋渲染收藏頁 DOM，但不切換頁面可見性）。之所以不能只是單純拿掉整段、直接開詳情頁，是因為詳情頁的上一筆/下一筆導覽與「X/107」位置指示器依賴全域 `filtered` 陣列，而這個陣列只在使用者「造訪過」收藏頁時才會算過一次（`refreshColAfterLoad()` 有 `if(收藏頁是目前頁面)` 的守門），若使用者這次 session 都還沒去過收藏頁就直接從統計頁點最近入手，`filtered` 會是空陣列，位置指示器與上一頁/下一頁按鈕會失效
-- 效果：詳情頁疊在統計頁上方開啟，關閉後自然留在原本的統計頁、同一個捲動位置，可以繼續點下一筆；上一筆/下一筆導覽與位置指示器維持正常運作
-
-驗證：語法/亂碼通過；用 Node 直接執行字串組裝邏輯確認產生的 onclick 屬性字串結構正確、引號沒有互相破壞。
-
-### 影響檔案
-- docs/index.html / docs/GameVault_v02_28_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（純前端UI/導覽邏輯調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-27 → gamevault-v02-28
-
-### 對應備份
-- _internal/old/v02_27/
