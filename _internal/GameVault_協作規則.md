@@ -1,6 +1,6 @@
 # GameVault 協作規則
 
-最後更新：2026-07-26（GAS 檔名 GameVault_AppsScript.gs → RetroVault_AppsScript.gs 改名完成；workflow 已由使用者手動更新確認生效）
+最後更新：2026-07-26（重寫部署架構說明.md：Netlify→GitHub Pages；補上正式 Pages 網址）
 
 這份文件記錄 GameVault 的協作方式與部署規則，每次修改、產版、部署或整理檔案時依照這裡的規則處理。
 
@@ -184,7 +184,7 @@ GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣�
 - GS 後端：`v01`
 - HTML 前端：`v01.01`
 - GitHub repo：`Kevinte67228/Retro-library`
-- GitHub Pages：（從 `docs/` 資料夾部署，網址視 Pages 設定／自訂網域而定；尚未對外發布，正式網址待確認後補上）
+- GitHub Pages：`https://kevinte67228.github.io/Retro-library/`（從 `docs/` 資料夾部署，2026-07-26 確認）
 - GAS 後端：GitHub Actions 自動部署（詳見「GAS 後端 CI/CD 自動部署」章節），不再需要手動貼到 Apps Script 編輯器
 
 **發布版本重置（Release Baseline Reset，2026-07-17）：** 使用者明確要求將當時的 v67.16／GAS v67 正式訂為公開發布起點，版本號重新編號為 **前端 v01.01／GAS v01**。這是**純版本重新編號**，前後端程式碼邏輯與行為跟重置前的 v67.16／v67 完全一致，沒有任何功能異動。同時依使用者指示：
@@ -324,7 +324,7 @@ GitHub push 觸發 GitHub Actions（clasp）自動部署到固定的 Apps Script
 6. 確認 `manifest.json` 的 `start_url` 為 `./`。
 7. 執行驗證清單。
 8. 透過 GitHub API 自動部署（備份 → 清理 → 推送 → 更新 CHANGELOG）。
-9. 確認 GitHub Pages 部署完成，正式網址正常運作（尚未對外發布，網址待補上）。
+9. 確認 GitHub Pages 部署完成，正式網址（`https://kevinte67228.github.io/Retro-library/`）正常運作。
 
 **子版號（`vXX.YYaN`）簡化流程：**
 
