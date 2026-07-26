@@ -1,10 +1,10 @@
-name: Deploy GameVault Apps Script
+name: Deploy RetroVault Apps Script
 
 on:
   push:
     branches: [main]
     paths:
-      - 'docs/GameVault_AppsScript.gs'
+      - 'docs/RetroVault_AppsScript.gs'
   workflow_dispatch:
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
           GAS_SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
         run: |
           mkdir -p clasp_deploy
-          cp docs/GameVault_AppsScript.gs clasp_deploy/Code.gs
+          cp docs/RetroVault_AppsScript.gs clasp_deploy/Code.gs
           cp docs/appsscript.json clasp_deploy/appsscript.json
           printf '{"scriptId":"%s","rootDir":"."}' "$GAS_SCRIPT_ID" > clasp_deploy/.clasp.json
           node -e "JSON.parse(require('fs').readFileSync('clasp_deploy/.clasp.json','utf8')); console.log('.clasp.json JSON 格式正確')"
