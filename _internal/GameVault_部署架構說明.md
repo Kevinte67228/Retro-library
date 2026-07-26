@@ -100,7 +100,7 @@ https://kevinte67228.github.io/Retro-library/ 顯示最新版本
 
 ⚠️ **另一個已知真實案例（2026-07-25）**：GitHub 的 `pages-build-deployment` 工作流程需要 `GITHUB_TOKEN` 有寫入權限（`pages: write`／`id-token: write`）才能完成 `deploy` 這個步驟；若 repo 的 **Settings → Actions → General → Workflow permissions** 設成「Read repository contents permission」（唯讀），`build` 步驟會成功但 `deploy` 步驟會固定失敗，每次都收到失敗通知信，即使最終內容有沒有正確發布都要另外用 `pages/builds` API 確認。已於 2026-07-25 把這個設定改成「Read and write permissions」解決。這個設定是 repo 層級的，理論上不會自己跑掉，但如果之後又開始收到 `deploy` 失敗信，先檢查這個設定有沒有被改回唯讀。
 
-⚠️ **提醒**：repo 裡 `_internal/netlify.toml` 是 Netlify 時代的殘留設定檔，GitHub Pages 不會讀取它，保留著無害，但已經沒有作用，確認不再需要可以直接刪除。
+✅ **2026-07-26 更新**：repo 根目錄（不是 `_internal/`，先前這裡寫錯路徑）的 `netlify.toml` 是 Netlify 時代的殘留設定檔，GitHub Pages 不會讀取它，經確認已無作用，使用者已要求清除，目前已刪除。
 
 ---
 

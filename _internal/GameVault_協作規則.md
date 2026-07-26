@@ -1,6 +1,6 @@
 # GameVault 協作規則
 
-最後更新：2026-07-26（重寫部署架構說明.md：Netlify→GitHub Pages；補上正式 Pages 網址）
+最後更新：2026-07-26（清除已無作用的 netlify.toml；修正部署架構說明.md 裡該檔案的路徑錯誤）
 
 這份文件記錄 GameVault 的協作方式與部署規則，每次修改、產版、部署或整理檔案時依照這裡的規則處理。
 
@@ -218,7 +218,7 @@ Retro-library/
 │   └── icons/
 │       ├── icon-*.png/webp
 │       └── mkt-*.webp/jpg
-├── netlify.toml             ← 舊 Netlify 時代殘留設定檔（GitHub Pages 不會讀取，保留無害；若確認不再需要可移除）
+├── ~~netlify.toml~~          ← 舊 Netlify 時代殘留設定檔，已於 2026-07-26 確認無作用後刪除
 └── _internal/                ← 不部署（私有，GitHub Pages 完全不碰）
     ├── CHANGELOG.md        ← 版本更新記錄（最近 4 筆）
     ├── GameVault_協作規則.md
