@@ -5,15 +5,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GameVault">
-<meta name="application-name" content="GameVault">
+<meta name="apple-mobile-web-app-title" content="RetroVault">
+<meta name="application-name" content="RetroVault">
 <meta name="theme-color" content="#080c18">
 <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-144.png">
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>GameVault</title>
+<title>RetroVault</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -161,11 +161,6 @@ body{
 /* === Thumbnails === */
 #thumb-wrap{display:flex;gap:8px;padding:0 16px;margin-bottom:12px;flex-wrap:wrap}
 .gc img{flex-shrink:0}
-
-/* === Image type 標籤（上排，僅顯示用，選取改由下方預覽格控制）=== */
-.img-slot{text-align:center;padding:8px 4px 10px;border-radius:10px;border:1.5px solid transparent;transition:border-color .15s,background .15s}
-.img-slot.on{border-color:#00e5ff;background:rgba(0,229,255,.08)}
-.img-slot.on .slot-lbl{color:#00e5ff}
 
 /* === 下方預覽格：可點選 + 單選核取框 === */
 .tslot{position:relative;border-radius:8px;aspect-ratio:3/4;cursor:pointer;overflow:hidden;border:1.5px solid #1e2a45;background:#0f1525;transition:border-color .15s}
@@ -868,7 +863,7 @@ body{
 <!-- ══ 開機啟動畫面 ══ -->
 <div id="boot-splash">
   <img id="boot-logo" alt="">
-  <div class="boot-name">GameVault</div>
+  <div class="boot-name">RetroVault</div>
   <div class="boot-sub">電玩/動漫迷的收藏基地</div>
 </div>
 
@@ -879,10 +874,10 @@ body{
     <div class="pg on" id="pg-scan">
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
-          <div class="ht">GameVault</div>
+          <div class="ht">RetroVault</div>
           <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.02</span></div>
         </div>
-        <div class="hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
+        <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
       </div>
       <div style="padding-bottom:80px">
@@ -1252,26 +1247,10 @@ body{
         </div>
 
         <div id="img-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
+          <!-- 三格縮圖預覽（點縮圖本身即可切換目標欄位，取代原本重複的上方分頁選擇器） -->
+
+          <div id="thumb-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:16px 16px 10px"></div>
           <div style="padding:0 16px 10px">
-            <!-- 三欄目標欄位 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-              <div id="img-slot-cover" class="img-slot on" data-slot="cover" onclick="setImgSlot('cover')">
-                <div class="slot-icon">🖼</div><div class="slot-lbl">封面</div>
-                <div class="slot-status" id="slot-st-cover"></div>
-              </div>
-              <div id="img-slot-back" class="img-slot" data-slot="back" onclick="setImgSlot('back')">
-                <div class="slot-icon">🔲</div><div class="slot-lbl">封底</div>
-                <div class="slot-status" id="slot-st-back"></div>
-              </div>
-              <div id="img-slot-spine" class="img-slot" data-slot="spine" onclick="setImgSlot('spine')">
-                <div class="slot-icon">📚</div><div class="slot-lbl">側邊</div>
-                <div class="slot-status" id="slot-st-spine"></div>
-              </div>
-            </div>
-            <!-- 選中的 slot 說明 -->
-            <div style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:8px">
-              目前選取：<span id="slot-current-lbl" style="color:#00e5ff">封面</span>
-            </div>
             <!-- 拍照 / 相簿 兩個按鈕 -->
             <div style="display:flex;gap:8px">
               <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#141b30;border:1.5px solid #00e5ff;border-radius:10px;padding:12px;cursor:pointer;color:#00e5ff;font-size:13px;font-weight:600">
@@ -1284,9 +1263,7 @@ body{
               </label>
             </div>
           </div>
-          <!-- 三格縮圖預覽 -->
 
-          <div id="thumb-wrap" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 16px 10px"></div>
 
           <div id="ai-btn-wrap" style="padding:0 16px 12px">
             <div style="display:flex;gap:10px">
@@ -1579,13 +1556,13 @@ body{
         <div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;line-height:1.6;color:#9fa8c8">
           <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
             <span style="flex-shrink:0">ℹ️</span>
-            <div>GameVault 需要你的個人 Google 試算表作為資料庫。首次使用需要 5 分鐘完成一次設定。</div>
+            <div>RetroVault 需要你的個人 Google 試算表作為資料庫。首次使用需要 5 分鐘完成一次設定。</div>
           </div>
           <button class="btn bo bs" style="width:100%;margin-top:8px;font-size:11px;padding:8px" onclick="toggleSetupGuide()" type="button">展開詳細步驟</button>
           <div id="setup-guide" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,229,255,0.2)">
             <div style="margin-bottom:14px">
               <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">步驟 1：建立 Google 試算表</div>
-              <div style="color:#9fa8c8">打開 <a href="https://sheets.google.com" target="_blank" style="color:#00e5ff">Google 試算表</a> → 點擊「建立新試算表」→ 命名為「GameVault」或你喜歡的名字。</div>
+              <div style="color:#9fa8c8">打開 <a href="https://sheets.google.com" target="_blank" style="color:#00e5ff">Google 試算表</a> → 點擊「建立新試算表」→ 命名為「RetroVault」或你喜歡的名字。</div>
             </div>
             <div style="margin-bottom:14px">
               <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">步驟 2：開啟 Apps Script 編輯器</div>
@@ -2005,7 +1982,7 @@ body{
         <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">GameVault <span id="app-ver2">v51.02</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v51.02</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2117,7 +2094,7 @@ body{
 
 <script>
 // ════════════════════════════════════════
-// GameVault 主程式 — 無外部 CDN
+// RetroVault 主程式 — 無外部 CDN
 // ════════════════════════════════════════
 
 const FIELDS=[
@@ -2423,7 +2400,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.24';
+const APP_VERSION='v02.29';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3751,10 +3728,10 @@ function buildSYS(){
   var cat=_aiSpecFor(st)?st:'';
   var head,catBlocks;
   if(cat){
-    head='你是「GameVault '+_aiSpecFor(cat).role+'」。本次建檔類別已由使用者指定為【'+cat+'】，請直接以該類規格辨識並輸出 JSON，category 固定填"'+cat+'"，不要改判其他類別。';
+    head='你是「RetroVault '+_aiSpecFor(cat).role+'」。本次建檔類別已由使用者指定為【'+cat+'】，請直接以該類規格辨識並輸出 JSON，category 固定填"'+cat+'"，不要改判其他類別。';
     catBlocks=_visionCatBlock(cat);
   }else{
-    head='你是「GameVault 收藏建檔鑑定專家」。請先判斷圖片內容是【遊戲軟體】還是【攻略本/書籍】，再依對應規格輸出 JSON。\n\n'+
+    head='你是「RetroVault 收藏建檔鑑定專家」。請先判斷圖片內容是【遊戲軟體】還是【攻略本/書籍】，再依對應規格輸出 JSON。\n\n'+
       '═══ 判斷規則 ═══\n- 有遊戲盒、光碟、卡匣、PS/Switch/FC 等主機封面 → category="遊戲"\n- 有書脊、ISBN、頁碼、「攻略」「設定集」「畫冊」等字樣 → category="攻略"';
     catBlocks=_SYS_GAME+'\n\n'+_SYS_BOOK;
   }
@@ -3824,7 +3801,7 @@ window.addEventListener('popstate',function(e){
   // 已在根層：雙擊離開；2 秒內未再按則重置（避免看過提示後永遠剩一步就退出）
   if(_exitArmed){_exitConfirmed=true;history.back();return;}
   _exitArmed=true;
-  toast('再按一次返回鍵離開 GameVault','',2000);
+  toast('再按一次返回鍵離開 RetroVault','',2000);
   _pushGuard();
   if(_exitTimer)clearTimeout(_exitTimer);
   _exitTimer=setTimeout(function(){_exitArmed=false;},2000);
@@ -3880,7 +3857,7 @@ function downloadManual(){
   }).then(function(b){
     var url=URL.createObjectURL(b);
     var a=document.createElement('a');
-    a.href=url; a.download='GameVault使用說明書.html';
+    a.href=url; a.download='RetroVault使用說明書.html';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){URL.revokeObjectURL(url);},1000);
   }).catch(function(e){ toast('下載失敗：'+e.message,'er',5000); });
@@ -3930,7 +3907,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：申請應用 ID</strong><div style="margin-top:4px;color:#9fa8c8">填寫應用基本資訊（應用名稱、説明、所屬カテゴリ 等）→ 同意條款 → 提交申請。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API 認證</strong><div style="margin-top:4px;color:#9fa8c8">申請通過後，在管理畫面取得：<br>• <strong>Application ID</strong>（アプリケーション ID）<br>• <strong>Access Key</strong>（アクセスキー）<br>兩組認證資訊都要複製保存。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第四步：啟用服務</strong><div style="margin-top:4px;color:#9fa8c8">在管理畫面確認「商品検索 API」、「楽天ブックス検索 API」已啟用（通常預設啟用）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Application ID 和 Access Key 分別貼入設定頁的兩個欄位，點擊「測試」驗證是否成功。</div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Application ID 和 Access Key 分別貼入設定頁的兩個欄位，點擊「測試」驗證是否成功。</div>'
     ]
   },
   yahoo: {
@@ -3941,7 +3918,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：進入開發者管理</strong><div style="margin-top:4px;color:#9fa8c8">登入後進入「アプリケーション管理」→ 點擊「新しいアプリケーションを登録」。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：建立應用</strong><div style="margin-top:4px;color:#9fa8c8">填寫應用名稱、説明 → 選擇「商品検索 API」服務 → 提交。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第四步：取得 Client ID</strong><div style="margin-top:4px;color:#9fa8c8">應用建立後，取得 <strong>Client ID</strong>（アプリケーション ID）。無需 Client Secret（商品検索 API 只需 ID）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Client ID 貼入設定頁的欄位，點擊「測試」驗證是否成功。</div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Client ID 貼入設定頁的欄位，點擊「測試」驗證是否成功。</div>'
     ]
   },
   ebay: {
@@ -3952,7 +3929,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立開發者帳號</strong><div style="margin-top:4px;color:#9fa8c8">登入後進入「Developer Program」→ 同意協議 → 建立開發者帳號。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：建立應用</strong><div style="margin-top:4px;color:#9fa8c8">進入「Applications」→ 「Create an application」→ 填寫應用名稱和説明 → 提交。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第四步：取得 API Keys</strong><div style="margin-top:4px;color:#9fa8c8">應用建立後，在「Keys & OAuth」取得：<br>• <strong>Client ID</strong>（Production Key）<br>• <strong>Client Secret</strong>（Production Secret）<br>兩組都要複製。預設有免費額度。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Client ID 和 Client Secret 分別貼入設定頁的兩個欄位，點擊「測試」驗證是否成功。</div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Client ID 和 Client Secret 分別貼入設定頁的兩個欄位，點擊「測試」驗證是否成功。</div>'
     ]
   },
   giantbomb: {
@@ -3962,7 +3939,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：Giant Bomb 帳號</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://www.giantbomb.com</strong> 建立帳號（免費）。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：登入並進入 API 頁面</strong><div style="margin-top:4px;color:#9fa8c8">登入帳號後，前往 <strong>https://www.giantbomb.com/api/</strong>。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：生成 API Key</strong><div style="margin-top:4px;color:#9fa8c8">在個人設定頁面找到「User API Key」或直接在 API 頁面點擊「Generate a new one」取得 API Key。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 注意：遊戲 API 目前暫停服務，待官方恢復後可使用</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 注意：遊戲 API 目前暫停服務，待官方恢復後可使用</span></div>'
     ]
   },
   mobygames: {
@@ -3972,7 +3949,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：MobyGames 帳號與訂閱</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://www.mobygames.com/api/</strong> → 選擇訂閱方案（Hobbyist $9.99/月起；免費方案已於 2025/03 終止）。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：帳號設定</strong><div style="margin-top:4px;color:#9fa8c8">登入帳號後進入「Account Settings」或「My API」頁面。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">在 API 管理頁面找到或生成 API Key（通常在「API Keys」或「Developer」區塊）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 付費方案：$9.99/月起，需信用卡綁定</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 付費方案：$9.99/月起，需信用卡綁定</span></div>'
     ]
   },
   igdb: {
@@ -3983,7 +3960,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：連結到 Twitch 開發者控制台</strong><div style="margin-top:4px;color:#9fa8c8">登入 Twitch 後，前往 <strong>https://dev.twitch.tv/console</strong> → 登入 Twitch 帳號。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：建立應用</strong><div style="margin-top:4px;color:#9fa8c8">進入「Applications」→ 「Create Application」→ 填寫應用名稱、OAuth 回調網址 → 同意條款 → 建立。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第四步：取得 Client ID 和 Access Token</strong><div style="margin-top:4px;color:#9fa8c8">在應用詳情頁面取得：<br>• <strong>Client ID</strong><br>• <strong>Client Secret</strong>（保密，勿分享）<br>使用 Client ID + Secret 交換 OAuth Token（後端自動處理）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Client ID 貼入設定頁的欄位，點擊「測試」驗證是否成功（後端會自動化處理 OAuth 流程）。</div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 Client ID 貼入設定頁的欄位，點擊「測試」驗證是否成功（後端會自動化處理 OAuth 流程）。</div>'
     ]
   },
   screenscraper: {
@@ -3993,7 +3970,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：ScreenScraper 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://www.screenscraper.fr</strong>。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立帳號</strong><div style="margin-top:4px;color:#9fa8c8">點擊「Inscription」→ 填寫帳號名、密碼、信箱 → 驗證郵件 → 帳號建立完成。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得使用者認證</strong><div style="margin-top:4px;color:#9fa8c8">登入後進入「Profil」→ 找到「API」區塊 → 複製<strong>帳號名稱</strong>和<strong>密碼</strong>（用於 API 認證）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將帳號名稱和密碼分別貼入設定頁的兩個欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費帳號有使用限制；詳見官網條款</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將帳號名稱和密碼分別貼入設定頁的兩個欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費帳號有使用限制；詳見官網條款</span></div>'
     ]
   },
   thegamesdb: {
@@ -4003,7 +3980,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：TheGamesDB 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://api.thegamesdb.net</strong>。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立帳號或登入</strong><div style="margin-top:4px;color:#9fa8c8">點擊「Create an Account」→ 填寫資訊 → 驗證郵件 → 帳號建立；或使用既有帳號登入。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">登入後進入「Developer Console」或「Account Settings」→ 找到「API Keys」→ 複製 <strong>API Key</strong>（免費方案預設提供）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費 API 有速率限制（建議每秒不超過 1 次請求）</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費 API 有速率限制（建議每秒不超過 1 次請求）</span></div>'
     ]
   },
   rawg: {
@@ -4013,7 +3990,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：RAWG 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://rawg.io</strong>。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立帳號或登入</strong><div style="margin-top:4px;color:#9fa8c8">點擊右上角「Sign up」→ 填寫資訊或用 Google/Steam 帳號登入。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://rawg.io/apidocs</strong> → 「Get API key」→ 複製 <strong>API Key</strong>（免費方案）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。GameVault 用它補強現代／獨立遊戲的高畫質封面（IGDB 沒圖時的候補來源）。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費方案每月 20,000 次請求；基本搜尋結果不含開發商/發行商資訊</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。RetroVault 用它補強現代／獨立遊戲的高畫質封面（IGDB 沒圖時的候補來源）。<br><span style="color:#ff9800;font-size:11px">⚠️ 免費方案每月 20,000 次請求；基本搜尋結果不含開發商/發行商資訊</span></div>'
     ]
   },
   deepseek: {
@@ -4023,7 +4000,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：DeepSeek 官網</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://platform.deepseek.com</strong>。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：建立帳號或登入</strong><div style="margin-top:4px;color:#9fa8c8">註冊或登入後，通常需要先儲值少量金額才能呼叫 API（按 token 用量計費，非常便宜）。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：取得 API Key</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>API Keys</strong> 頁面 → 「Create new API key」→ 複製金鑰（<strong>只會顯示一次，請立即保存</strong>）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br>DeepSeek <strong>本身不支援圖片輸入</strong>，GameVault 採用「混合模式」：先用 Gemini 抽取封面上所有可見文字（OCR），再交給 DeepSeek 依 ACG／復古遊戲知識推理校正成精準的遊戲資訊，對日版/亞洲版封面的藝術字體辨識準確度較高。<br>需在「偏好 AI 引擎」選擇「混合模式」或「自動」（自動模式下，地區設為日本/亞洲時會優先嘗試混合模式），並同時設定好 Gemini 金鑰才會生效。<br><span style="color:#ff9800;font-size:11px">⚠️ 需先儲值才能呼叫；每次辨識 token 用量極少，成本幾乎可忽略</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br>DeepSeek <strong>本身不支援圖片輸入</strong>，RetroVault 採用「混合模式」：先用 Gemini 抽取封面上所有可見文字（OCR），再交給 DeepSeek 依 ACG／復古遊戲知識推理校正成精準的遊戲資訊，對日版/亞洲版封面的藝術字體辨識準確度較高。<br>需在「偏好 AI 引擎」選擇「混合模式」或「自動」（自動模式下，地區設為日本/亞洲時會優先嘗試混合模式），並同時設定好 Gemini 金鑰才會生效。<br><span style="color:#ff9800;font-size:11px">⚠️ 需先儲值才能呼叫；每次辨識 token 用量極少，成本幾乎可忽略</span></div>'
     ]
   },
   app_token: {
@@ -4046,7 +4023,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：同意條款</strong><div style="margin-top:4px;color:#9fa8c8">首次登入時，同意「Google AI Studio」使用條款 → 繼續。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：生成 API Key</strong><div style="margin-top:4px;color:#9fa8c8">進入 API 金鑰頁面 → 點擊「Create API Key」或「Get API Key」→ 自動生成並複製。</div>',
       '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ 關於免費額度，請務必自行到官網確認</strong><div style="margin-top:4px;color:#9fa8c8">Google AI Studio 通常有免費額度可用，但實際規則（是否要求連結帳單、額度多寡、哪些模型適用）Google 會不定期調整，<strong style="color:#e8eaf6">已知有使用者反映：專案一旦連結 Cloud 帳單帳戶後，即使用量不大也可能開始產生費用（雖然通常很低）</strong>。建議申請前先到 <strong style="color:#00e5ff">https://ai.google.dev/pricing</strong> 確認你要用的模型目前的免費/付費規則，並留意 AI Studio 是否要求或建議連結帳單。</div>',
-      '<strong style="color:#00e5ff;margin-top:12px;display:block">GameVault 使用方式</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。</div>'
+      '<strong style="color:#00e5ff;margin-top:12px;display:block">RetroVault 使用方式</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。</div>'
     ]
   },
   openai: {
@@ -4056,7 +4033,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff">第一步：OpenAI 帳號與付費帳號</strong><div style="margin-top:4px;color:#9fa8c8">前往 <strong>https://platform.openai.com</strong> → 登入或建立帳號 → 進入「Billing」綁定信用卡（需付費帳號）。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：設置帳單</strong><div style="margin-top:4px;color:#9fa8c8">進入「Billing」→ 「Overview」→ 設定預算上限和使用配額（建議設定，避免意外費用）。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：建立 API Key</strong><div style="margin-top:4px;color:#9fa8c8">進入「API keys」→ 「Create new secret key」→ 複製 API Key（只顯示一次，務必保存）。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 付費方案：GPT-4o mini 約 $0.00015/1000 字，建議設定預算上限避免超支</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位，點擊「測試」驗證是否成功。<br><span style="color:#ff9800;font-size:11px">⚠️ 付費方案：GPT-4o mini 約 $0.00015/1000 字，建議設定預算上限避免超支</span></div>'
     ]
   },
   googlemaps: {
@@ -4067,7 +4044,7 @@ var API_GUIDES = {
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第二步：啟用 Maps API</strong><div style="margin-top:4px;color:#9fa8c8">進入「APIs & Services」→ 「Enable APIs and Services」→ 搜尋「Maps Static API」→ 啟用。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第三步：建立 API Key</strong><div style="margin-top:4px;color:#9fa8c8">進入「Credentials」→ 「Create Credentials」→ 選「API Key」→ 複製 Key（限制為僅 Maps Static API）。</div>',
       '<strong style="color:#00e5ff;margin-top:12px;display:block">第四步：綁定結算帳戶（可選）</strong><div style="margin-top:4px;color:#9fa8c8">免費額度：每月 $200 credit（約 25,000 靜態地圖請求）。若超出，需綁定結算帳戶。</div>',
-      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ GameVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位（選填），點擊「測試」驗證是否成功。<br><span style="color:#00e676;font-size:11px">✓ 大多數使用者可享免費額度，無需額外費用</span></div>'
+      '<strong style="color:#ffb300;margin-top:12px;display:block">⭐ RetroVault 使用</strong><div style="margin-top:4px;color:#9fa8c8">將 API Key 貼入設定頁的欄位（選填），點擊「測試」驗證是否成功。<br><span style="color:#00e676;font-size:11px">✓ 大多數使用者可享免費額度，無需額外費用</span></div>'
     ]
   }
 };
@@ -4684,7 +4661,7 @@ function exportCfg(){
   var blob=new Blob([data],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
-  a.href=url;a.download='gamevault-settings.json';
+  a.href=url;a.download='retrovault-settings.json';
   a.click();URL.revokeObjectURL(url);
   toast('設定已匯出 ✓（檔案含 API 金鑰，請妥善保管）','ok',5000);
 }
@@ -4941,11 +4918,11 @@ function _genUuid(){
 
 // ══ 樣本藏品資料 ══
 var SAMPLE_ITEMS=[
-  {"uuid": "8a545fbe-cbe0-4cf9-8846-9c930a434b60", "category": "遊戲", "primary_name": "超級瑪利歐銀河1+2", "jp_name": "スーパーマリオ ギャラクシー 1+2", "zh_name": "超級瑪利歐銀河 + 超級瑪利歐銀河 2", "en_name": "Super Mario Galaxy 1+2", "series": "超級瑪利歐", "platform": "Nintendo Switch", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "一般版", "voice_language": "繁中", "subtitle_language": "2026-06-20T16:00:00.000Z", "age_rating": "GSRR 保護級", "barcode": "4.71128E+12", "developer": "Nintendo", "publisher": "Nintendo", "release_date": "2025-10-01T16:00:00.000Z", "genre": "ACT 動作", "players": "2026-01-01T16:00:00.000Z", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "繁中", "buy_date": "2025-10-01T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "1409", "market_value": "319", "market_value_updated_at": "2026-07-08T16:00:00.000Z", "market_value_source": "Rakuten JP 8 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥500 - ¥6,468（約 NT$98 - NT$1,268）；樣本 8 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "1628", "play_status": "未遊玩", "rating": "N/A", "summary": "《超級瑪利歐銀河》與《超級瑪利歐銀河 2》是兩款經典的3D平台動作遊戲，最初在Wii平台發行。本作將兩款遊戲合而為一，讓玩家在Nintendo Switch上體驗瑪利歐在浩瀚宇宙中冒險的樂趣。玩家將操控瑪利歐在各種獨特的星球上跳躍、奔跑，收集星星以拯救碧姬公主。遊戲以其創新的重力機制、豐富的關卡設計和充滿想像力的宇宙世界觀而聞名，提供單人或雙人合作模式，適合所有年齡層的玩家。", "ref_link": "https://www.google.com/search?q=%E8%B6%85%E7%B4%9A%E7%91%AA%E5%88%A9%E6%AD%90%E9%8A%80%E6%B2%B3%20%2B%20%E8%B6%85%E7%B4%9A%E7%91%AA%E5%88%A9%E6%AD%90%E9%8A%80%E6%B2%B3%202%20Nintendo%20Switch", "cover_img": "12c5b5Wq_cJxVWHbcRtISwFcwRqqvwuCL", "notes": "45f23e43-cfd4-4bb1-8274-a34619c9b7c8"},
-  {"uuid": "7f25eef4-ff4e-4dcd-bd15-32d1c1baed0f", "category": "遊戲", "primary_name": "天穗之咲稻姬", "jp_name": "天穂のサクナヒメ", "zh_name": "天穗之咲稻姬", "en_name": "Sakuna: Of Rice and Ruin", "series": "天穗之咲稻姬", "platform": "Nintendo Switch", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "標準版", "voice_language": "日文", "subtitle_language": "繁中", "age_rating": "GSRR 普", "barcode": "4.53551E+12", "developer": "Edelweiss", "publisher": "Marvelous", "release_date": "2020-11-11T16:00:00.000Z", "genre": "SLG 模擬", "players": "1", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "buy_date": "2020-11-11T16:00:00.000Z", "buy_source": "全新購入", "market_value": "75", "market_value_updated_at": "2026-07-15T16:00:00.000Z", "market_value_source": "Rakuten JP 33 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥220 - ¥440（約 NT$43 - NT$86）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "380", "play_status": "未遊玩", "rating": "N/A", "summary": "《天穗之咲稻姬》是一款結合了和風動作RPG與種稻模擬的遊戲。玩家將扮演豐穰神「佐久名」，因故被貶至妖魔跋扈的「日之惠島」。為了開拓荒島並驅逐妖魔，佐久名必須透過種稻來提升自己的神力。遊戲中，玩家需要親手進行插秧、施肥、收割等一系列農務，並在種稻的過程中學習各種農業知識。同時，佐久名也將在島上與人類夥伴們一同生活，透過戰鬥來擊敗妖魔，逐步揭開日之惠島的秘密。遊戲以其獨特的種稻系統和爽快的動作戰鬥，為玩家帶來豐富的遊戲體驗。", "ref_link": "https://www.google.com/search?q=%E5%A4%A9%E7%A9%97%E4%B9%8B%E5%92%B2%E7%A8%BB%E5%A7%AC%20Nintendo%20Switch%202", "cover_img": "13WWRalsji9mDgmZWH3XKd019zexO50_R", "notes": "6bc00504-b949-4a43-9586-5439cf81344e"},
-  {"uuid": "3a84bd5a-5dd5-48a2-8f02-f017ff47bc23", "category": "遊戲", "primary_name": "Final Fantasy VII Rebirth", "jp_name": "ファイナルファンタジーVII リバース", "zh_name": "Final Fantasy VII Rebirth", "en_name": "Final Fantasy VII Rebirth", "series": "Final Fantasy VII", "platform": "Nintendo Switch 2", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "首批特典版", "voice_language": "日文", "subtitle_language": "繁中", "age_rating": "GSRR 輔15級", "barcode": "4.71301E+12", "developer": "Square Enix", "publisher": "Square Enix", "release_date": "2026-06-02T16:00:00.000Z", "genre": "RPG 角色扮演", "players": "1人", "features": "支援震動、連線對戰", "collect_status": "收藏中", "bundle": "遊戲本體", "buy_date": "2026-06-02T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "market_value": "1137", "market_value_updated_at": "2026-07-15T16:00:00.000Z", "market_value_source": "Rakuten JP 24 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥5,500 - ¥6,355（約 NT$1,079 - NT$1,246）；樣本 5 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "5797", "play_status": "未遊玩", "rating": "N/A", "summary": "《Final Fantasy VII Rebirth》是《Final Fantasy VII 重生》的續作，延續了克勞德與夥伴們離開米德加後的冒險旅程。玩家將在廣闊的世界中探索，體驗豐富的支線任務與角色互動，並逐步揭開故事的真相。遊戲採用即時戰鬥系統，融合了指令式操作，提供流暢且策略性十足的戰鬥體驗。本作將深入探討角色們的過去與命運，並帶來令人驚訝的劇情轉折。", "ref_link": "https://www.google.com/search?q=Final%20Fantasy%20VII%20Rebirth%20Nintendo%20Switch%202", "cover_img": "1opkt84fe-HfiDzInQyXISBRCZLHpv5XS", "related_code": "首批特典包含「Magic: The Gathering - Final Fantasy」Zack Fair（札克斯·菲爾）卡片。", "notes": "946bb273-5d52-4a6e-83b7-4fc7bde01dd8"},
-  {"uuid": "2975b778-db32-40aa-9d74-f1856a996e25", "category": "遊戲", "primary_name": "プロ野球チームをつくろう! 2003", "jp_name": "プロ野球チームをつくろう! 2003", "zh_name": "創造職棒隊伍！2003", "en_name": "Pro Yakyuu Team wo Tsukurou! 2003", "series": "プロ野球チームをつくろう!", "platform": "PlayStation 2", "media": "光碟（CD/DVD/BD）", "region": "日本", "edition": "標準版", "voice_language": "日文", "subtitle_language": "2026-06-23T16:00:00.000Z", "age_rating": "CERO 全年齢対象", "code": "SLPM-65426", "barcode": "4.97437E+12", "developer": "Smilebit", "publisher": "SEGA", "release_date": "2003-03-26T16:00:00.000Z", "genre": "SLG", "players": "單人", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "日文", "buy_date": "2003-03-26T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "232", "market_value": "227", "market_value_updated_at": "2026-07-08T16:00:00.000Z", "market_value_source": "Rakuten JP 18 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥871 - ¥4,480（約 NT$171 - NT$879）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "1159", "play_status": "未遊玩", "rating": "N/A", "summary": "《創造職棒隊伍！2003》是SEGA旗下Smilebit開發的棒球模擬經營遊戲，於PlayStation 2平台發行。玩家將扮演一支職棒隊伍的總經理，從選秀、球員養成、戰術安排到球隊經營，全面掌控球隊的發展。遊戲中收錄了日本職棒的真實球隊與球員資料，讓玩家能體驗到最真實的職棒世界。透過不斷的努力與策略，目標是打造出一支常勝軍，贏得聯盟冠軍與日本一的榮耀。遊戲提供豐富的經營要素與深度的策略性，是棒球愛好者不容錯過的經典之作。", "ref_link": "https://www.google.com/search?q=%E3%83%97%E3%83%AD%E9%87%8E%E7%90%83%E3%83%81%E3%83%BC%E3%83%A0%E3%82%92%E3%81%A4%E3%81%8F%E3%82%8D%E3%81%86!%202003%20PlayStation%202", "cover_img": "1Xunw_8IhP86seIftRYv4yOHzCDsxq2XY", "notes": "d5398051-e6fa-490e-8672-0a22debef115"},
-  {"uuid": "51e2ac31-e80b-465d-9bc9-e920ef08f99f", "category": "遊戲", "primary_name": "PlayStation VR Worlds", "jp_name": "PlayStation VR Worlds", "zh_name": "PlayStation VR Worlds", "en_name": "PlayStation VR Worlds", "platform": "PlayStation 4", "media": "光碟（CD/DVD/BD）", "region": "日本", "edition": "標準版", "voice_language": "日文", "subtitle_language": "2026-06-23T16:00:00.000Z", "age_rating": "CERO C", "developer": "SIE London Studio", "publisher": "Sony Interactive Entertainment", "release_date": "2016-10-09T16:00:00.000Z", "genre": "VR 虛擬實境", "players": "1人", "features": "支援震動、VR", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "日文", "buy_date": "2016-10-09T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "134", "market_value": "125", "market_value_updated_at": "2026-07-12T16:00:00.000Z", "market_value_source": "Rakuten JP 18 / FX GameVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥210 - ¥3,290（約 NT$41 - NT$645）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "638", "play_status": "未遊玩", "rating": "N/A", "summary": "《PlayStation VR Worlds》是一款專為 PlayStation VR 設計的虛擬實境遊戲合輯，收錄了五款不同的 VR 體驗。玩家將能潛入深海與鯊魚近距離接觸，或是在倫敦街頭展開刺激的搶劫行動，體驗未來世界的科幻運動，甚至在危險的太空殘骸中求生。每款遊戲都充分利用了 PS VR 的沉浸式特性，提供多樣化的視覺與互動感受，讓玩家盡情探索虛擬實境的無限可能。", "ref_link": "https://www.google.com/search?q=PlayStation%20VR%20Worlds%20PlayStation%204", "cover_img": "1yrCZH_cd_kPMZoI2pFFFUVylstjbkvuz", "notes": "5ff6f040-7fde-4b0c-aaa5-8ab2b0966df4"}
+  {"uuid": "8a545fbe-cbe0-4cf9-8846-9c930a434b60", "category": "遊戲", "primary_name": "超級瑪利歐銀河1+2", "jp_name": "スーパーマリオ ギャラクシー 1+2", "zh_name": "超級瑪利歐銀河 + 超級瑪利歐銀河 2", "en_name": "Super Mario Galaxy 1+2", "series": "超級瑪利歐", "platform": "Nintendo Switch", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "一般版", "voice_language": "繁中", "subtitle_language": "2026-06-20T16:00:00.000Z", "age_rating": "GSRR 保護級", "barcode": "4.71128E+12", "developer": "Nintendo", "publisher": "Nintendo", "release_date": "2025-10-01T16:00:00.000Z", "genre": "ACT 動作", "players": "2026-01-01T16:00:00.000Z", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "繁中", "buy_date": "2025-10-01T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "1409", "market_value": "319", "market_value_updated_at": "2026-07-08T16:00:00.000Z", "market_value_source": "Rakuten JP 8 / FX RetroVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥500 - ¥6,468（約 NT$98 - NT$1,268）；樣本 8 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "1628", "play_status": "未遊玩", "rating": "N/A", "summary": "《超級瑪利歐銀河》與《超級瑪利歐銀河 2》是兩款經典的3D平台動作遊戲，最初在Wii平台發行。本作將兩款遊戲合而為一，讓玩家在Nintendo Switch上體驗瑪利歐在浩瀚宇宙中冒險的樂趣。玩家將操控瑪利歐在各種獨特的星球上跳躍、奔跑，收集星星以拯救碧姬公主。遊戲以其創新的重力機制、豐富的關卡設計和充滿想像力的宇宙世界觀而聞名，提供單人或雙人合作模式，適合所有年齡層的玩家。", "ref_link": "https://www.google.com/search?q=%E8%B6%85%E7%B4%9A%E7%91%AA%E5%88%A9%E6%AD%90%E9%8A%80%E6%B2%B3%20%2B%20%E8%B6%85%E7%B4%9A%E7%91%AA%E5%88%A9%E6%AD%90%E9%8A%80%E6%B2%B3%202%20Nintendo%20Switch", "cover_img": "12c5b5Wq_cJxVWHbcRtISwFcwRqqvwuCL", "notes": "45f23e43-cfd4-4bb1-8274-a34619c9b7c8"},
+  {"uuid": "7f25eef4-ff4e-4dcd-bd15-32d1c1baed0f", "category": "遊戲", "primary_name": "天穗之咲稻姬", "jp_name": "天穂のサクナヒメ", "zh_name": "天穗之咲稻姬", "en_name": "Sakuna: Of Rice and Ruin", "series": "天穗之咲稻姬", "platform": "Nintendo Switch", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "標準版", "voice_language": "日文", "subtitle_language": "繁中", "age_rating": "GSRR 普", "barcode": "4.53551E+12", "developer": "Edelweiss", "publisher": "Marvelous", "release_date": "2020-11-11T16:00:00.000Z", "genre": "SLG 模擬", "players": "1", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "buy_date": "2020-11-11T16:00:00.000Z", "buy_source": "全新購入", "market_value": "75", "market_value_updated_at": "2026-07-15T16:00:00.000Z", "market_value_source": "Rakuten JP 33 / FX RetroVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥220 - ¥440（約 NT$43 - NT$86）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "380", "play_status": "未遊玩", "rating": "N/A", "summary": "《天穗之咲稻姬》是一款結合了和風動作RPG與種稻模擬的遊戲。玩家將扮演豐穰神「佐久名」，因故被貶至妖魔跋扈的「日之惠島」。為了開拓荒島並驅逐妖魔，佐久名必須透過種稻來提升自己的神力。遊戲中，玩家需要親手進行插秧、施肥、收割等一系列農務，並在種稻的過程中學習各種農業知識。同時，佐久名也將在島上與人類夥伴們一同生活，透過戰鬥來擊敗妖魔，逐步揭開日之惠島的秘密。遊戲以其獨特的種稻系統和爽快的動作戰鬥，為玩家帶來豐富的遊戲體驗。", "ref_link": "https://www.google.com/search?q=%E5%A4%A9%E7%A9%97%E4%B9%8B%E5%92%B2%E7%A8%BB%E5%A7%AC%20Nintendo%20Switch%202", "cover_img": "13WWRalsji9mDgmZWH3XKd019zexO50_R", "notes": "6bc00504-b949-4a43-9586-5439cf81344e"},
+  {"uuid": "3a84bd5a-5dd5-48a2-8f02-f017ff47bc23", "category": "遊戲", "primary_name": "Final Fantasy VII Rebirth", "jp_name": "ファイナルファンタジーVII リバース", "zh_name": "Final Fantasy VII Rebirth", "en_name": "Final Fantasy VII Rebirth", "series": "Final Fantasy VII", "platform": "Nintendo Switch 2", "media": "卡匣（ROM 卡帶）", "region": "亞洲", "edition": "首批特典版", "voice_language": "日文", "subtitle_language": "繁中", "age_rating": "GSRR 輔15級", "barcode": "4.71301E+12", "developer": "Square Enix", "publisher": "Square Enix", "release_date": "2026-06-02T16:00:00.000Z", "genre": "RPG 角色扮演", "players": "1人", "features": "支援震動、連線對戰", "collect_status": "收藏中", "bundle": "遊戲本體", "buy_date": "2026-06-02T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "market_value": "1137", "market_value_updated_at": "2026-07-15T16:00:00.000Z", "market_value_source": "Rakuten JP 24 / FX RetroVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥5,500 - ¥6,355（約 NT$1,079 - NT$1,246）；樣本 5 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "5797", "play_status": "未遊玩", "rating": "N/A", "summary": "《Final Fantasy VII Rebirth》是《Final Fantasy VII 重生》的續作，延續了克勞德與夥伴們離開米德加後的冒險旅程。玩家將在廣闊的世界中探索，體驗豐富的支線任務與角色互動，並逐步揭開故事的真相。遊戲採用即時戰鬥系統，融合了指令式操作，提供流暢且策略性十足的戰鬥體驗。本作將深入探討角色們的過去與命運，並帶來令人驚訝的劇情轉折。", "ref_link": "https://www.google.com/search?q=Final%20Fantasy%20VII%20Rebirth%20Nintendo%20Switch%202", "cover_img": "1opkt84fe-HfiDzInQyXISBRCZLHpv5XS", "related_code": "首批特典包含「Magic: The Gathering - Final Fantasy」Zack Fair（札克斯·菲爾）卡片。", "notes": "946bb273-5d52-4a6e-83b7-4fc7bde01dd8"},
+  {"uuid": "2975b778-db32-40aa-9d74-f1856a996e25", "category": "遊戲", "primary_name": "プロ野球チームをつくろう! 2003", "jp_name": "プロ野球チームをつくろう! 2003", "zh_name": "創造職棒隊伍！2003", "en_name": "Pro Yakyuu Team wo Tsukurou! 2003", "series": "プロ野球チームをつくろう!", "platform": "PlayStation 2", "media": "光碟（CD/DVD/BD）", "region": "日本", "edition": "標準版", "voice_language": "日文", "subtitle_language": "2026-06-23T16:00:00.000Z", "age_rating": "CERO 全年齢対象", "code": "SLPM-65426", "barcode": "4.97437E+12", "developer": "Smilebit", "publisher": "SEGA", "release_date": "2003-03-26T16:00:00.000Z", "genre": "SLG", "players": "單人", "features": "支援震動", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "日文", "buy_date": "2003-03-26T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "232", "market_value": "227", "market_value_updated_at": "2026-07-08T16:00:00.000Z", "market_value_source": "Rakuten JP 18 / FX RetroVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥871 - ¥4,480（約 NT$171 - NT$879）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "1159", "play_status": "未遊玩", "rating": "N/A", "summary": "《創造職棒隊伍！2003》是SEGA旗下Smilebit開發的棒球模擬經營遊戲，於PlayStation 2平台發行。玩家將扮演一支職棒隊伍的總經理，從選秀、球員養成、戰術安排到球隊經營，全面掌控球隊的發展。遊戲中收錄了日本職棒的真實球隊與球員資料，讓玩家能體驗到最真實的職棒世界。透過不斷的努力與策略，目標是打造出一支常勝軍，贏得聯盟冠軍與日本一的榮耀。遊戲提供豐富的經營要素與深度的策略性，是棒球愛好者不容錯過的經典之作。", "ref_link": "https://www.google.com/search?q=%E3%83%97%E3%83%AD%E9%87%8E%E7%90%83%E3%83%81%E3%83%BC%E3%83%A0%E3%82%92%E3%81%A4%E3%81%8F%E3%82%8D%E3%81%86!%202003%20PlayStation%202", "cover_img": "1Xunw_8IhP86seIftRYv4yOHzCDsxq2XY", "notes": "d5398051-e6fa-490e-8672-0a22debef115"},
+  {"uuid": "51e2ac31-e80b-465d-9bc9-e920ef08f99f", "category": "遊戲", "primary_name": "PlayStation VR Worlds", "jp_name": "PlayStation VR Worlds", "zh_name": "PlayStation VR Worlds", "en_name": "PlayStation VR Worlds", "platform": "PlayStation 4", "media": "光碟（CD/DVD/BD）", "region": "日本", "edition": "標準版", "voice_language": "日文", "subtitle_language": "2026-06-23T16:00:00.000Z", "age_rating": "CERO C", "developer": "SIE London Studio", "publisher": "Sony Interactive Entertainment", "release_date": "2016-10-09T16:00:00.000Z", "genre": "VR 虛擬實境", "players": "1人", "features": "支援震動、VR", "collect_status": "收藏中", "bundle": "遊戲本體", "bonus_code_status": "日文", "buy_date": "2016-10-09T16:00:00.000Z", "buy_price": "0", "buy_source": "全新購入", "storage_location": "134", "market_value": "125", "market_value_updated_at": "2026-07-12T16:00:00.000Z", "market_value_source": "Rakuten JP 18 / FX RetroVault Settings", "market_value_confidence": "中", "market_value_notes": "價格範圍 ¥210 - ¥3,290（約 NT$41 - NT$645）；樣本 10 筆", "market_value_currency": "JPY", "market_value_foreign_amount": "638", "play_status": "未遊玩", "rating": "N/A", "summary": "《PlayStation VR Worlds》是一款專為 PlayStation VR 設計的虛擬實境遊戲合輯，收錄了五款不同的 VR 體驗。玩家將能潛入深海與鯊魚近距離接觸，或是在倫敦街頭展開刺激的搶劫行動，體驗未來世界的科幻運動，甚至在危險的太空殘骸中求生。每款遊戲都充分利用了 PS VR 的沉浸式特性，提供多樣化的視覺與互動感受，讓玩家盡情探索虛擬實境的無限可能。", "ref_link": "https://www.google.com/search?q=PlayStation%20VR%20Worlds%20PlayStation%204", "cover_img": "1yrCZH_cd_kPMZoI2pFFFUVylstjbkvuz", "notes": "5ff6f040-7fde-4b0c-aaa5-8ab2b0966df4"}
 ];
 var SAMPLE_HUNT_ITEMS=[
   {"category": "狩獵", "target_cat": "遊戲", "primary_name": "軒轅劍 柒", "platform": "Nintendo Switch", "cover_img": "1RsXTA2PngvWsw9p8RdMowBb0YqpRtjKX", "extra_images": "[{\"label\":\"\",\"img\":\"1t5iG94dtVnPgbAAlmt8zm8Zzq3da7YfI\"},{\"label\":\"\",\"img\":\"1jjFV6We9BGPy9i3TuJdX0i36vwPD1wbv\"},{\"label\":\"\",\"img\":\"1Pw6UV9zVwkHeCepCMKhcyk_Vr9-LR5ga\"},{\"label\":\"\",\"img\":\"1A8UcvItybwkUzHCumeO5K618Ao3LNbzi\"},{\"label\":\"\",\"img\":\"1MPffCJMZ77HPA0DcdXGPsaicLwAZlEaN\"},{\"label\":\"\",\"img\":\"1kSUyP1XHpoa29tXhnueikhXILHOYEeSp\"},{\"label\":\"\",\"img\":\"1Ln4TI4QIk4yzz9Gopd6RCBt1JLCjPXqb\"}]", "sightings": "[{\"loc\":\"駿河屋 新宿マルイアネックス店\",\"url\":\"\",\"chan\":\"store\",\"mapUrl\":\"https://maps.app.goo.gl/1ChADGTd2s5DzaTA6\",\"price\":\"7800\",\"cur\":\"JPY\",\"cond\":\"\",\"note\":\"\",\"date\":\"2026/06/25\",\"maddr\":\"SURUGA-YA Shinjuku Marui Annex Store, マルイアネックス 5F 3 Chome-1-26 Shinjuku, Shinjuku City, Tokyo 160-0022日本\"},{\"loc\":\"駿河屋\",\"url\":\"\",\"chan\":\"store_nomap\",\"mapUrl\":\"https://maps.app.goo.gl/Ad1HN4pAnejCbbki9\",\"price\":\"1800\",\"cur\":\"TWD\",\"cond\":\"\",\"note\":\"\",\"date\":\"2026/07/14\",\"maddr\":\"BOOKOFF Akihabara Ekimae Store, 1 Chome-6-4 Kanda Sakumacho, Chiyoda City, Tokyo 101-0025日本\"}]", "hunt_status": "追蹤中", "uuid": "c384ee93-38f7-40f8-bf55-41c2449cad98", "created_at": "2026-6-14 17:16"},
@@ -5006,7 +4983,7 @@ function checkFirstLaunchSamples(){
   if(col&&col.length>0)return;  // 已有資料，不提示
   if(localStorage.getItem('gv_samples_dismissed'))return;  // 使用者已忽略，不再提示
   // 提示載入樣本
-  if(confirm('首次使用 GameVault？\\n\\n載入樣本藏品嗎？（收藏與尋寶清單，可隨時在設定頁匯入）')){
+  if(confirm('首次使用 RetroVault？\\n\\n載入樣本藏品嗎？（收藏與尋寶清單，可隨時在設定頁匯入）')){
     loadSamples();
   }
   localStorage.setItem('gv_samples_dismissed','true');  // 記錄使用者的選擇
@@ -6723,6 +6700,7 @@ function _dbSrcClose(){var ov=$('db-src-ov');if(ov)ov.style.display='none';}
 function setDbOverride(id){
   _dbOverride=id;
   _updateDbSrcChip();
+  _updateEntrySubtitle();
   var db=_dbById(id);
   toast(id?('🔀 已強制指定：'+db.icon+' '+db.name+'（查無結果時將自動分流補查）'):'🔁 已切回自動分流','ok',3000);
 }
@@ -6734,6 +6712,7 @@ function setRegion(r){
   // 持久化
   _persistCfgKeys({region:r});
   _updateRegionBtns();
+  _updateEntrySubtitle();
   toast('📍 區域已設為：'+_REGION_LABELS[r],'ok',2000);
 }
 function _updateRegionBtns(){
@@ -7996,6 +7975,19 @@ function _refreshPlatSection(hasPlat){
   }else{p3.style.display='none';}
   var mn=$('step-method-num');if(mn)mn.textContent=hasPlat?'Step 4':'Step 3';
 }
+// v02.27：除錯用，一併顯示目前建檔方式與查詢資料來源分流狀態
+var _METHOD_LABELS={initBarMode:'商品條碼',initImgMode:'圖片辨識',initGameCodeMode:'商品編碼',initManualMode:'手動建檔',initComboMode:'條碼＋照片',initGameCodeComboMode:'編碼＋照片',initDigitalLinkMode:'商店連結',initAiWebMode:'AI網頁查詢'};
+function _updateEntrySubtitle(){
+  var hsEl=$('scan-hs');if(!hsEl)return;
+  var parts=[catLabel(_selectedType)];
+  if(_selectedSubtype)parts.push(_selectedSubtype);
+  if(_region&&_REGION_LABELS[_region])parts.push(_REGION_LABELS[_region].replace(/（.*/,''));
+  if(_selectedPlatform)parts.push(_selectedPlatform);
+  if(_lastMode&&_METHOD_LABELS[_lastMode])parts.push(_METHOD_LABELS[_lastMode]);
+  var _dbSrc=_dbOverride?_dbById(_dbOverride):null;
+  parts.push(_dbSrc?('🔀'+_dbSrc.name):'🔁自動分流');
+  hsEl.textContent=parts.join(' · ');
+}
 function selectEntryCat(cat,_noSave){
   _selectedType=cat;_entryCatChosen=true;
   // v26.07：選到分類時帶回該分類記憶的平台（不再一律清空）
@@ -8023,6 +8015,7 @@ function selectEntryCat(cat,_noSave){
   // Step 3 平台：僅遊戲／主機／數位下載版(遊戲類子類型)顯示，動態填入 PLATFORMS（onchange 寫入 _selectedPlatform）
   _refreshPlatSection(hasPlat);
   _refreshMethodButtons(cat,_selectedSubtype);
+  _updateEntrySubtitle();
   if(!_noSave)_saveEntryMem();
 }
 // v42.14：數位下載版沒有實體條碼可掃，隱藏條碼/編碼相關卡片；
@@ -8063,11 +8056,13 @@ function _applyPlatVisual(){
   // v26.07：以卡片式觸發器呈現選取狀態與目前值
   var card=$('step3-plat-card');if(card)card.classList.toggle('on',on);
   var val=$('step3-plat-val');if(val)val.textContent=sel.value||'— 不指定 —';
+  _updateEntrySubtitle();
 }
 // 子類型觸發卡視覺狀態（v42.22，比照 _applyPlatVisual）
 function _applySubtypeVisual(){
   var card=$('step-subtype-card');if(card)card.classList.toggle('on',!!_selectedSubtype);
   var val=$('step-subtype-val');if(val)val.textContent=_selectedSubtype||'— 不指定 —';
+  _updateEntrySubtitle();
 }
 // 開啟子類型自繪選單，沿用平台選擇器（openPlatPicker）的 bottom-sheet 元件，傳入 customSrc 取代平台清單
 function openSubtypePicker(){
@@ -8175,6 +8170,7 @@ function _saveMethodMem(fn){
 function pagePickMethod(fn){
   _lastMode=fn; // #4：記住此次建檔方式
   _saveMethodMem(fn); // v26.01：持久化，供回到 Step 1 還原外框
+  _updateEntrySubtitle();
   if(typeof window[fn]==='function')window[fn]();
 }
 // 回到 Step 1 起始態：還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
@@ -8441,7 +8437,7 @@ function aiWebCopyAndOpen(destId){
   if(!d)return;
   _aiWebSelectedDest=destId;_aiWebRenderDests(); // v02.07：點擊後立即點亮對應晶片
   var promptTxt=_aiWebBuildPrompt(subject);
-  var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁：\n1. 在輸入框「貼上」提示詞並送出\n2. 複製 AI 回覆的 JSON 內容\n3. 回到 GameVault 貼到下方框裡，按「解析並匯入」\n\n按「確定」開啟 '+d.label+'。';
+  var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁：\n1. 在輸入框「貼上」提示詞並送出\n2. 複製 AI 回覆的 JSON 內容\n3. 回到 RetroVault 貼到下方框裡，按「解析並匯入」\n\n按「確定」開啟 '+d.label+'。';
   function openIt(){
     var a=document.createElement('a');
     a.href=d.url;a.target='_blank';a.rel='noopener noreferrer';
@@ -9543,17 +9539,9 @@ function barAIFill(bc,hint,hasGB){
 // ── 圖片 slot（封面/封底/側邊）──
 var _imgSlot='cover'; // 目前選中的 slot
 var _slotImgs={cover:null,back:null,spine:null}; // 各 slot 的 File 物件
-var _slotLabels={cover:'封面',back:'封底',spine:'側邊'};
 
 function setImgSlot(slot){
   _imgSlot=slot;
-  // 上排標籤同步高亮（僅顯示用）
-  ['cover','back','spine'].forEach(function(s){
-    var el=document.getElementById('img-slot-'+s);
-    if(el)el.className='img-slot'+(s===slot?' on':'');
-  });
-  var lbl=$('slot-current-lbl');
-  if(lbl)lbl.textContent=_slotLabels[slot]||slot;
   // 下方預覽格同步選取狀態（核取框連動）
   renderSlotThumbs();
 }
@@ -9603,10 +9591,6 @@ function clearSlot(slot,ev){
 function resetSlots(){
   _slotImgs={cover:null,back:null,spine:null};
   _imgSlot='cover';
-  ['cover','back','spine'].forEach(function(s){
-    var el=document.getElementById('img-slot-'+s);if(el)el.className='img-slot'+(s==='cover'?' on':'');
-    var st=$('slot-st-'+s);if(st)st.textContent='';
-  });
   renderSlotThumbs();
   var ab=$('ai-btn-wrap');if(ab)ab.style.display='block';
 }
@@ -11442,7 +11426,7 @@ function renderDash(){
     // v54.03\uff1a\u526f\u6a19\u984c\u6539\u7528\u8ddf\u6536\u85cf\u5361\u7247\u4e00\u81f4\u7684 _catMeta().sub()\uff0c\u6578\u4f4d\u4e0b\u8f09\u7248/\u539f\u8072\u5e36/\u52d5\u6f2b\u7f8e\u8853/\u516c\u4ed4\u624d\u6709\u6b63\u78ba\u8cc7\u8a0a\u53ef\u986f\u793a
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
-    return '<div class="dv2-ri" onclick="showPg(\'col\');setTimeout(function(){showDetail(\''+(c.uid||c.rowNum)+'\');},200)">'+
+    return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
       '<div class="dv2-ri-ic">'+ico+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div class="dv2-ri-name">'+esc(name)+'</div>'+
@@ -12247,7 +12231,7 @@ function exportCsvByType(){
     var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
     var u=URL.createObjectURL(blob);
     var a=document.createElement('a');
-    a.href=u;a.download='GameVault_'+lbl+'_'+date+'.csv';
+    a.href=u;a.download='RetroVault_'+lbl+'_'+date+'.csv';
     setTimeout(function(){a.click();URL.revokeObjectURL(u);},totalFiles*450);
     totalFiles++;
   }
@@ -14333,7 +14317,7 @@ function exportHuntCsv(){
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   var u=URL.createObjectURL(blob);
   var a=document.createElement('a');
-  a.href=u;a.download='GameVault_尋寶_'+date+'.csv';
+  a.href=u;a.download='RetroVault_尋寶_'+date+'.csv';
   a.click();
   setTimeout(function(){URL.revokeObjectURL(u);},1000);
   toast('已匯出尋寶清單 '+rows.length+' 筆 ✓','ok',3000);
@@ -14609,7 +14593,7 @@ function goBarcodeWebSearch(){
   // 還停留在原本的查詢頁面（可以換個目的地或重新掃描），不會被送回尋寶首頁
   if(d&&d.type==='copy')_bcWebCopyAndOpen(code);
   else _openExternalLink(_bcWebBuildUrl(code));
-  // v54.48：v54.47 開完連結後「立刻」重啟相機時機抓錯——此時 GameVault 分頁還在背景（使用者
+  // v54.48：v54.47 開完連結後「立刻」重啟相機時機抓錯——此時 RetroVault 分頁還在背景（使用者
   // 還沒切過去/切回來），瀏覽器基於隱私考量通常會擋掉背景分頁申請相機權限，導致重啟失敗、
   // 顯示「無法啟動相機」。改用 visibilitychange 事件，在使用者真正切回本頁籤的當下才重啟。
 }

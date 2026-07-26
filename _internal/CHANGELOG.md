@@ -1,3 +1,31 @@
+## v02.30 (2026-07-26)
+
+### 變更內容
+版本 HTML 檔名規則從 `GameVault_vXX_YY_index.html` 改成 `RetroVault_vXX_YY_index.html`，呼應 App 改名（v02.29）：
+- `github_deploy.py` 升版到 v4：`get_current_version()`／備份步驟／刪舊檔案步驟都做了「新舊前綴都比對」的過渡期相容處理，這次（v02.29→v02.30）會正確備份、刪除舊的 `GameVault_v02_29_index.html`，並改用新前綴推送 `RetroVault_v02_30_index.html`
+- `sw.js` 的 `CACHE_NAME`／`STATIC_ASSETS` 同步改用新檔名
+- 協作規則.md 新增「App 改名」記錄段落，並把文件內所有版本 HTML 命名規則範例都改成新前綴（GAS 封存檔名 `GameVault_v01_AppsScript.gs.txt` 這次沒有一起改，屬於下面的 GAS 範圍）
+
+**GAS 檔名（`GameVault_AppsScript.gs`）這次刻意沒有一起改**：`.github/workflows/deploy-gas.yml` 的觸發路徑與複製指令寫死引用這個檔名，Claude 沒有 `workflow` scope 無法直接修改該檔案，需要使用者先手動把 workflow 內容換成新檔名版本，確認生效後才能安全把實際的 `.gs` 檔案與相關文件引用一併改名，避免 GAS CI/CD 觸發路徑跟實際檔名對不上、自動部署悄悄失效卻不易察覺。
+
+自我檢查：Python 語法通過；用真實匯入的 `github_deploy.py` 模組（非重寫邏輯）測試 `get_current_version()` 在舊前綴/新前綴/都找不到三種狀態下正確運作，以及備份尋找版本HTML、刪除判斷邏輯在混合過渡狀態下正確運作，9 項全過。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_30_index.html（新命名，取代 docs/GameVault_v02_29_index.html）
+- docs/sw.js
+- _internal/github_deploy.py
+- _internal/GameVault_協作規則.md
+
+### GS 版本
+- 無（純部署腳本/檔名規則調整，App 本身邏輯無變化）
+
+### PWA 快取
+- CACHE_NAME: gamevault-v02-29 → retrovault-v02-30
+
+### 對應備份
+- _internal/old/v02_29/
+
+
 ## v02.29 (2026-07-25)
 
 ### 變更內容
@@ -29,6 +57,7 @@ App 名稱從「GameVault」改成「RetroVault」，因為專案範圍已經不
 - _internal/old/v02_28/
 
 
+
 ## v02.28 (2026-07-25)
 
 ### 變更內容
@@ -54,6 +83,7 @@ App 名稱從「GameVault」改成「RetroVault」，因為專案範圍已經不
 
 
 
+
 ## v02.27 (2026-07-25)
 
 ### 變更內容
@@ -76,29 +106,3 @@ v02.26 的建檔頁副標題（分類/子類型/地區/平台）再加上建檔�
 
 ### 對應備份
 - _internal/old/v02_26/
-
-
-
-
-## v02.26 (2026-07-25)
-
-### 變更內容
-建檔頁副標題（原本固定顯示「AI 高品質辨識 · UUID · 分類 / 地區 / 條碼」宣傳文字）改成即時顯示 Step1-3 已選擇的分類/子類型/地區/平台：
-- 新增 `_updateEntrySubtitle()`，格式為「分類 [· 子類型] [· 地區] [· 平台]」（依 Step 順序：Step1分類/子類型 → Step2地區 → Step3平台），地區只取中文簡短名（例如「日本」而非「日本（Japan）」），節省手機寬度
-- 掛勾在 4 個既有的狀態變更函式尾端：`selectEntryCat()`（分類/子類型）、`setRegion()`（地區）、`_applyPlatVisual()`（平台）、`_applySubtypeVisual()`（子類型），涵蓋所有會改變這幾個值的路徑（含 Step3 平台選單、續建記憶回填等），不需要在每個呼叫點個別加掛
-- App 啟動時 `resetEntryStep1()` 會還原上次記憶的分類，副標題也會跟著在啟動當下就正確顯示，不會有空白或殘留舊文字的狀態
-
-自我檢查：語法/亂碼通過；逐字比對確認測試片段與真實程式碼完全一致；6 項情境測試（純分類／分類+地區／分類+地區+平台／含子類型分類／書籍分類名稱轉換／找不到對應DOM元素時安全跳過不噴錯）全數通過。
-
-### 影響檔案
-- docs/index.html / docs/GameVault_v02_26_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（純前端UI調整）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-25 → gamevault-v02-26
-
-### 對應備份
-- _internal/old/v02_25/
