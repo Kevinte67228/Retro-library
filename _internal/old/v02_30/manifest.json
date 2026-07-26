@@ -1,6 +1,6 @@
 {
-  "name": "GameVault",
-  "short_name": "GameVault",
+  "name": "RetroVault",
+  "short_name": "RetroVault",
   "description": "Personal physical game collection manager powered by Google Sheets.",
   "lang": "zh-Hant",
   "start_url": "./",
