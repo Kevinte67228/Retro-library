@@ -2501,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.42';
+const APP_VERSION='v02.43';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7174,13 +7174,13 @@ function mergeMultiDbResults(results){
   // ScreenScraper 專有：封面/書背/背面圖 URL
   if(srcMap['screenscraper']){
     var _ss=srcMap['screenscraper'];
-    if(_ss.cover_url)merged.cover_url=_ss.cover_url;
+    if(_ss.cover_url){merged.cover_url=_ss.cover_url;merged._coverSrc='screenscraper';}
     if(_ss.spine_url)merged.spine_url=_ss.spine_url;
     if(_ss.back_url)merged.back_url=_ss.back_url;
   }
-  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
-  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image)merged.cover_url=srcMap['rawg'].background_image;
-  if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
+  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url){merged.cover_url=srcMap['igdb'].cover_url;merged._coverSrc='igdb';}
+  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image){merged.cover_url=srcMap['rawg'].background_image;merged._coverSrc='rawg';}
+  if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image){merged.cover_url=srcMap['rakuten'].image;merged._coverSrc='rakuten';}
   // F：完全沒有拉丁/中文主名時，用日文名回填 primary_name 避免空白
   if(!merged.primary_name&&merged.jp_name)merged.primary_name=merged.jp_name;
 
@@ -9979,7 +9979,8 @@ function initBatchSpineMode(){
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
-    $('batch-lock-note').textContent='⚠️ 本次批次全部套用：'+lockTxt+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
+    var _cseWarn=(!cfg.gcsekey||!cfg.gcxid)?'<br><span style="color:#ffb74d">⚠️ 尚未設定 Google 圖片搜尋金鑰，封面候選只會有資料庫查到的 1 張（如果查到的話），沒有其他候選可挑。到「設定」頁填入 Google API Key + Search Engine ID 可以取得更多候選圖。</span>':'';
+    $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。'+_cseWarn;
   });
 }
 
@@ -10125,7 +10126,7 @@ function _batchResolveNext(idx){
     crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
       // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
       [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
-        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img='db';}
+        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
       });
       _mergeDbIntoEntry(db);
       coverThenComplete();
@@ -10149,9 +10150,15 @@ function _batchImgSrcLabel(item){
   var e=item.entry;
   if(!e||!e.cover_img)return '';
   var src=(e._src&&e._src.cover_img)||'';
-  if(src==='google_cse')return '圖片來源：Google 搜尋';
-  if(src==='db')return '圖片來源：資料庫';
-  return '';
+  var labels={
+    google_cse:'圖片來源：Google 搜尋',
+    screenscraper:'圖片來源：ScreenScraper',
+    igdb:'圖片來源：IGDB',
+    rawg:'圖片來源：RAWG',
+    rakuten:'圖片來源：楽天市場（⚠️賣場商品照，非官方封面，畫質/內容可能不理想）',
+    db:'圖片來源：資料庫'
+  };
+  return labels[src]||'';
 }
 
 // 選這件項目要用哪一張候選封面（candIdx為-1代表不使用任何封面）

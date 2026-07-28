@@ -994,8 +994,7 @@ body{
                 <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
                 <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上網址抓資料</div></div>
               </div>
-              <div class="ec-card mb-wide" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
-                <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
+              <div class="ec-card" id="mb-combo" onclick="pagePickMethod('initComboMode')">
                 <div class="mb-ico" style="background:rgba(206,147,216,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ce93d8" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/><circle cx="20" cy="5" r="2.5" fill="#ce93d8" stroke="none"/></svg></div>
                 <div class="mb-txt"><div class="ect">條碼＋照片</div><div class="ecd">最高準確度</div></div>
               </div>
@@ -1006,6 +1005,10 @@ body{
               <div class="ec-card" id="mb-aiweb" onclick="pagePickMethod('initAiWebMode')">
                 <div class="mb-ico" style="background:rgba(124,77,255,.14)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#7c4dff" stroke-width="1.5"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M9 3v4M15 3v4"/><circle cx="9" cy="13" r="1" fill="#7c4dff" stroke="none"/><circle cx="15" cy="13" r="1" fill="#7c4dff" stroke="none"/></svg></div>
                 <div class="ect">AI 網頁查詢</div><div class="ecd">貼上生成資料</div>
+              </div>
+              <div class="ec-card" id="mb-batch" onclick="pagePickMethod('initBatchSpineMode')">
+                <div class="mb-ico" style="background:rgba(240,98,146,.14)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f06292" stroke-width="1.5"><rect x="2" y="3" width="3" height="18" rx="1"/><rect x="7" y="3" width="2" height="18" rx="1"/><rect x="11" y="3" width="3" height="18" rx="1"/><rect x="16" y="3" width="2" height="18" rx="1"/><rect x="20" y="3" width="2" height="18" rx="1"/></svg></div>
+                <div class="ect">批次書背</div><div class="ecd">一次辨識多件</div>
               </div>
             </div>
           </div>
@@ -1222,6 +1225,87 @@ body{
             <div style="display:flex;gap:10px;margin-top:4px">
               <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
               <button id="gcode-search-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="gcodeSearch()" type="button">🔍 查詢遊戲資料庫</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 批次書背辨識模式（v02.38）：一次拍照辨識多件商品書背，比照 combo-sec 單頁版面風格 -->
+        <div id="batch-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
+          <div style="padding:0 16px">
+            <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 8 件）</div>
+            <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
+              <svg viewBox="0 0 320 170" style="width:100%;height:auto;display:block">
+                <!-- 觀景窗取景框（四角括號，示意「把商品都拍進這個框裡」） -->
+                <g stroke="#7986cb" stroke-width="2" fill="none" opacity=".6">
+                  <path d="M10 8 L10 24 M10 8 L26 8"/>
+                  <path d="M310 8 L310 24 M310 8 L294 8"/>
+                  <path d="M10 162 L10 146 M10 162 L26 162"/>
+                  <path d="M310 162 L310 146 M310 162 L294 162"/>
+                </g>
+                <!-- 一排書背朝外排列的商品（不同高度/顏色示意不同商品） -->
+                <g>
+                  <rect x="34" y="40" width="30" height="90" rx="2" fill="#3949ab"/>
+                  <rect x="34" y="40" width="30" height="22" rx="2" fill="#e8eaf6"/>
+                  <text x="49" y="54" text-anchor="middle" font-size="6" font-family="monospace" font-weight="700" fill="#1a237e">SLPM</text>
+                  <text x="49" y="60" text-anchor="middle" font-size="6" font-family="monospace" font-weight="700" fill="#1a237e">65338</text>
+
+                  <rect x="68" y="30" width="24" height="100" rx="2" fill="#00897b"/>
+                  <rect x="68" y="30" width="24" height="18" rx="2" fill="#e8eaf6"/>
+
+                  <rect x="96" y="45" width="30" height="85" rx="2" fill="#8e24aa"/>
+                  <rect x="96" y="45" width="30" height="24" rx="2" fill="#e8eaf6"/>
+                  <text x="111" y="55" text-anchor="middle" font-size="5.2" font-family="sans-serif" font-weight="700" fill="#4a148c">十二國記</text>
+                  <text x="111" y="63" text-anchor="middle" font-size="5.2" font-family="sans-serif" font-weight="700" fill="#4a148c">紅蓮の標</text>
+
+                  <rect x="130" y="35" width="24" height="95" rx="2" fill="#d81b60"/>
+                  <rect x="130" y="35" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="158" y="42" width="26" height="88" rx="2" fill="#ffa000"/>
+                  <rect x="158" y="42" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="188" y="30" width="24" height="100" rx="2" fill="#1e88e5"/>
+                  <rect x="188" y="30" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="216" y="48" width="26" height="82" rx="2" fill="#43a047"/>
+                  <rect x="216" y="48" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="246" y="38" width="24" height="92" rx="2" fill="#6d4c41"/>
+                  <rect x="246" y="38" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                </g>
+                <!-- 底部平面示意 -->
+                <rect x="30" y="130" width="248" height="4" rx="2" fill="#1e2a45"/>
+                <!-- 兩根書背的放大指示線＋說明文字（示範「品名」跟「商品編碼」兩種可辨識內容） -->
+                <g stroke="#555" stroke-width="1" opacity=".5">
+                  <path d="M49 40 L49 20"/>
+                  <path d="M111 45 L111 20"/>
+                </g>
+                <text x="49" y="16" text-anchor="middle" font-size="8" fill="#7986cb">商品編碼</text>
+                <text x="111" y="16" text-anchor="middle" font-size="8" fill="#7986cb">商品品名</text>
+              </svg>
+              <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:6px">範例：商品書背朝外，排成一排，一次入鏡拍攝</div>
+              <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 商品編碼或品名至少一項要能清楚辨識，太模糊會影響辨識準確度</div>
+            </div>
+            <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
+                📷 拍照
+                <input type="file" accept="image/*" capture="environment" style="display:none" id="batch-cam" onchange="batchPhotoPick(this)">
+              </label>
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
+                🖼 相簿
+                <input type="file" accept="image/*" style="display:none" id="batch-gal" onchange="batchPhotoPick(this)">
+              </label>
+            </div>
+            <div id="batch-preview" style="display:none;text-align:center;margin-bottom:12px">
+              <img id="batch-preview-img" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #1e2a45">
+            </div>
+            <button id="batch-start-btn" class="btn bp bw" disabled onclick="batchDetectStart()" type="button" style="margin-bottom:6px">✨ 開始批次辨識</button>
+            <div id="batch-progress" style="display:none;font-size:12px;color:#7986cb;text-align:center;margin:8px 0"></div>
+
+            <div id="batch-list-wrap" style="display:none;margin-top:16px">
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">② 確認結果（取消勾選可剃除該筆）</div>
+              <div id="batch-list"></div>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button id="batch-save-btn" class="btn bp bw" style="flex:1;font-size:14px;display:none" onclick="batchSaveAll()" type="button">儲存已勾選項目</button>
             </div>
           </div>
         </div>
@@ -2417,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.37';
+const APP_VERSION='v02.43';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5571,7 +5655,7 @@ function callGemini(parts,opts){
     genCfg.maxOutputTokens=16384; // 思考+搜尋+輸出都要吃 token，拉高上限避免截斷
   }else{
     genCfg.responseMimeType='application/json';
-    genCfg.responseSchema=GEMINI_SCHEMA; // 強制結構化輸出（非 grounding 模式維持原行為）
+    genCfg.responseSchema=(opts&&opts.customSchema)||GEMINI_SCHEMA; // v02.38：批次偵測等場景可傳入自訂 schema，不傳則沿用原本行為
   }
   // 2.5 系列預設開啟 thinking 會吃掉 token 導致輸出截斷，非 grounding 模式明確關閉；
   // grounding 模式需要思考來交叉比對搜尋結果，保留預設（不設 thinkingBudget=0）
@@ -5583,7 +5667,7 @@ function callGemini(parts,opts){
   _aiAbortCtrl=ctrl;
   var timeoutId=setTimeout(function(){ctrl.abort();},useGround?45000:25000);
   var _reqBody={
-    system_instruction:{parts:[{text:buildSYS()}]}, // v23.03 動態注入區域上下文
+    system_instruction:{parts:[{text:(opts&&opts.customSystem)||buildSYS()}]}, // v02.38：批次偵測可傳入自訂系統提示，不傳則沿用原本行為
     contents:[{role:'user',parts:(function(){
       // 若 parts 已有 text part（如 combo 模式傳入的 prompt），不再重複附加
       var hasText=parts.some(function(p){return p.text;});
@@ -7090,13 +7174,13 @@ function mergeMultiDbResults(results){
   // ScreenScraper 專有：封面/書背/背面圖 URL
   if(srcMap['screenscraper']){
     var _ss=srcMap['screenscraper'];
-    if(_ss.cover_url)merged.cover_url=_ss.cover_url;
+    if(_ss.cover_url){merged.cover_url=_ss.cover_url;merged._coverSrc='screenscraper';}
     if(_ss.spine_url)merged.spine_url=_ss.spine_url;
     if(_ss.back_url)merged.back_url=_ss.back_url;
   }
-  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
-  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image)merged.cover_url=srcMap['rawg'].background_image;
-  if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
+  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url){merged.cover_url=srcMap['igdb'].cover_url;merged._coverSrc='igdb';}
+  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image){merged.cover_url=srcMap['rawg'].background_image;merged._coverSrc='rawg';}
+  if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image){merged.cover_url=srcMap['rakuten'].image;merged._coverSrc='rakuten';}
   // F：完全沒有拉丁/中文主名時，用日文名回填 primary_name 避免空白
   if(!merged.primary_name&&merged.jp_name)merged.primary_name=merged.jp_name;
 
@@ -8132,10 +8216,14 @@ function _refreshMethodButtons(cat,subtype){
   var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
+  // v02.42：批次書背只適用「遊戲」「書籍」（主機/週邊沒有排書背拍照的使用情境，拿掉）
+  // 書籍卡片內部傳的分類值實際是「攻略」（見 catInternal 正規化），改用 catInternal 比對，
+  // 直接比對原始字串'書籍'不會命中，這是 v02.41 的 bug，書籍分類批次卡一直沒出現過
+  var showBatch=(catInternal(cat)==='遊戲'||catInternal(cat)==='攻略');
   // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
   [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
    ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital],
-   ['mb-aiweb',true]].forEach(function(p){
+   ['mb-aiweb',true],['mb-batch',showBatch]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
@@ -8145,6 +8233,11 @@ function _refreshMethodButtons(cat,subtype){
   // 數位下載版的空格改由 mb-aiweb 補滿，不再需要動態切換寬窄
   var linkEl=$('mb-link');
   if(linkEl)linkEl.classList.remove('mb-wide');
+  // v02.41：mb-combo 寬窄依「有沒有顯示批次書背」動態切換，讓各情境都整除 4 格、不留空格——
+  // 顯示批次書背（遊戲/書籍）：條碼1+編碼1+圖片1+手動1+條碼照片1(窄)+編碼照片1+AI網頁1+批次1 = 8格
+  // 不顯示批次書背（主機/週邊/子類型分類）：條碼1+編碼1+圖片1+手動1+條碼照片2(寬)+編碼照片1+AI網頁1 = 8格
+  var comboEl=$('mb-combo');
+  if(comboEl)comboEl.classList.toggle('mb-wide',!showBatch);
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
@@ -8365,7 +8458,7 @@ function cancelTypePicker(){
 
 // 隱藏所有模式的執行區（避免疊加）
 function hideAllSecs(){
-  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec','aiweb-sec'].forEach(function(id){
+  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec','aiweb-sec','batch-sec'].forEach(function(id){
     var el=$(id);if(el)el.style.display='none';
   });
 }
@@ -8402,8 +8495,8 @@ function backToModeSelect(){
 }
 
 function setMbActive(which){
-  var ids=['bar','img','combo','manual','gcode','gcode-combo','link','aiweb'];
-  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',link:'#40c4ff',aiweb:'#7c4dff'};
+  var ids=['bar','img','combo','manual','gcode','gcode-combo','link','aiweb','batch'];
+  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',link:'#40c4ff',aiweb:'#7c4dff',batch:'#f06292'};
   // hexToRgb: #rrggbb → 'r,g,b'
   function hRgb(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return r+','+g+','+b;}
   ids.forEach(function(id){
@@ -9839,6 +9932,354 @@ function doAnalyze(){
     console.error('[doAnalyze]',e);
     toast('AI 辨識失敗：'+_friendlyError(e.message),'er',7000);
   }).finally(noLoad);
+}
+
+// 🤖 [AI辨識進入點] 批次書背辨識模式（v02.38）：一次拍照辨識最多 8 件商品書背，
+// 逐件循序查資料庫＋補封面＋AI補全，列成確認清單讓使用者勾選後批次存檔。
+// 設計對照：整批鎖死使用者已選定的分類/平台/區域（不逐件覆蓋），序號辨識不清楚時
+// 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剃除；只支援無子類型的 4 個分類。
+var _batchItems=[]; // {order,code,title_guess,code_clear,status,include,entry,dup}
+var _batchImgFile=null;
+
+var BATCH_DETECT_SCHEMA={
+  type:'OBJECT',
+  properties:{
+    items:{type:'ARRAY',items:{type:'OBJECT',properties:{
+      order:{type:'NUMBER'},
+      code:{type:'STRING'},
+      title_guess:{type:'STRING'},
+      code_clear:{type:'BOOLEAN'}
+    },required:['order','code','title_guess','code_clear']}}
+  },
+  required:['items']
+};
+
+function _batchDetectPrompt(){
+  var cat=catLabel(_selectedType)||'遊戲';
+  var platTxt=_selectedPlatform?('，平台為「'+_selectedPlatform+'」'):'';
+  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 8 件（超過 8 件只取最左邊 8 件；忽略書背以外的背景物件）。'+
+    '每一件請找出書背上印刷的商品編碼（常見格式如 SLPS-01234、SLPM-12345、SCPS-15041、CUSA-00001、VW107-J1、ULJM-05000 等，含條碼數字），這是最重要的欄位，務必仔細看；'+
+    'title_guess 填書背上看到的標題文字（僅供人工比對確認用，看到什麼填什麼，不需要完整或保證正確）；'+
+    'code_clear：這件商品的編碼是否印刷清晰、有把握辨識正確，模糊、被遮擋、看不清楚或不確定請填 false；order 為由左到右的順序（1 起算）。只輸出 JSON，不要其他文字。';
+}
+
+function initBatchSpineMode(){
+  pickTypeAndPlatform('batch',function(type,platform){
+    _selectedType=type;_selectedPlatform=platform;
+    setMbActive('batch');enterMode();
+    hideAllSecs();
+    $('batch-sec').style.display='block';
+    _batchItems=[];_batchImgFile=null;
+    $('batch-preview').style.display='none';
+    $('batch-start-btn').disabled=true;
+    $('batch-list').innerHTML='';
+    $('batch-list-wrap').style.display='none';
+    $('batch-save-btn').style.display='none';
+    $('batch-progress').style.display='none';
+    var bc=$('batch-cam');if(bc)bc.value='';
+    var bg=$('batch-gal');if(bg)bg.value='';
+    var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
+    var _cseWarn=(!cfg.gcsekey||!cfg.gcxid)?'<br><span style="color:#ffb74d">⚠️ 尚未設定 Google 圖片搜尋金鑰，封面候選只會有資料庫查到的 1 張（如果查到的話），沒有其他候選可挑。到「設定」頁填入 Google API Key + Search Engine ID 可以取得更多候選圖。</span>':'';
+    $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。'+_cseWarn;
+  });
+}
+
+function batchPhotoPick(input){
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  _batchImgFile=f;
+  var r=new FileReader();
+  r.onload=function(){
+    $('batch-preview-img').src=r.result;
+    $('batch-preview').style.display='block';
+    $('batch-start-btn').disabled=false;
+  };
+  r.readAsDataURL(f);
+}
+
+function batchDetectStart(){
+  if(!_batchImgFile){toast('請先拍照或選擇圖片','er');return;}
+  if(!cfg.gkey){toast('請先在設定頁填入 Gemini 金鑰','er');showPg('cfg');return;}
+  var r=new FileReader();
+  r.onload=function(){
+    compressImg(r.result,1600,0.85,function(compressed){
+      loading('AI 辨識畫面中商品... 約需 10~30 秒');
+      var parts=[
+        {inlineData:{mimeType:'image/jpeg',data:compressed.split(',')[1]}},
+        {text:_batchDetectPrompt()}
+      ];
+      callGemini(parts,{customSchema:BATCH_DETECT_SCHEMA,customSystem:'你是商品書背辨識助手，只根據圖片實際內容回答，不要編造看不到的資訊。'})
+        .then(function(res){
+          noLoad();
+          var items=(res&&Array.isArray(res.items))?res.items:[];
+          if(!items.length){toast('沒有辨識到任何商品，請確認照片有清楚拍到書背','er',4000);return;}
+          items=items.slice(0,8); // 防禦：即使 AI 超量回傳也裁切
+          _batchItems=items.map(function(it,i){
+            return {
+              order:it.order||(i+1),
+              code:(''+(it.code||'')).trim(),
+              title_guess:(''+(it.title_guess||'')).trim(),
+              code_clear:it.code_clear!==false,
+              status:'pending', // pending/resolving/ok/failed
+              include:true,
+              entry:null,
+              dup:null
+            };
+          });
+          $('batch-list-wrap').style.display='block';
+          _batchRenderList();
+          _batchResolveNext(0);
+        }).catch(function(e){
+          noLoad();
+          toast('AI 辨識失敗：'+_friendlyError(e.message),'er',6000);
+        });
+    },'batch');
+  };
+  r.onerror=function(){noLoad();toast('圖片讀取失敗','er');};
+  r.readAsDataURL(_batchImgFile);
+}
+
+// 逐件循序解析：查資料庫→補封面→AI補全，完全比照 doAnalyze 單品邏輯，
+// 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
+// v02.42（3張候選封面）：蒐集最多 3 張候選封面圖，不直接判定「用哪張」，交給確認清單讓使用者選。
+// 呼叫時序：假設 entry.cover_img 若已有值，代表資料庫（crossRef／bookLookup）已查到，當候選1；
+// 不足 3 張時用 Google CSE 補（GAS 後端 googleImageSearchProxy 本來就支援 num 最多 3，一次要足額）。
+function _batchFetchCoverCandidates(cb){
+  var cands=[];
+  if(entry.cover_img)cands.push({url:entry.cover_img,src:(entry._src&&entry._src.cover_img)||'db'});
+  var need=3-cands.length;
+  if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
+  var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.code||'';
+  if(!name){cb(cands);return;}
+  var platform=entry.platform||_selectedPlatform||'';
+  var q=name+(platform?' '+platform:'');
+  var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
+  shGetSecP(params)
+    .then(function(r){return r.ok?r.json():null;})
+    .then(function(d){
+      if(d&&d.ok&&Array.isArray(d.items)){
+        d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
+      }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
+        cands.push({url:d.imageUrl,src:'google_cse'});
+      }
+      cb(cands);
+    }).catch(function(){cb(cands);});
+}
+
+function _batchResolveNext(idx){
+  if(idx>=_batchItems.length){
+    $('batch-progress').style.display='none';
+    _batchRenderList();
+    toast('批次辨識完成，請確認後儲存','ok',3000);
+    return;
+  }
+  var item=_batchItems[idx];
+  item.status='resolving';
+  item.coverCandidates=item.coverCandidates||[];
+  $('batch-progress').style.display='block';
+  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...';
+  _batchRenderList();
+  var type=_selectedType||'遊戲';
+  var _backupEntry=entry;
+  entry=Object.assign({},_defaultsFor(type),{
+    category:type,platform:_selectedPlatform||'',
+    primary_name:item.title_guess||'',code:item.code||''
+  });
+  _carrySelPlat();_carrySelRegion();_carrySelSubtype();
+  function finishItem(failed){
+    item.entry=Object.assign({},entry);
+    item.dup=findDuplicate(item.entry);
+    item.status=failed?'failed':'ok';
+    entry=_backupEntry; // 還原全域 entry，避免汙染其他畫面狀態
+    _batchRenderList();
+    _batchResolveNext(idx+1);
+  }
+  function completeThenFinish(){aiCompleteMissing(function(){finishItem(false);});}
+  // v02.42（3張候選封面）：不再「查到就直接用、查不到才補」，改成一律蒐集最多 3 張候選
+  // （DB 查到的優先當候選1，不夠再用 Google CSE 補），交給確認清單讓使用者挑選，預設先選第1張
+  function coverThenComplete(){
+    _batchFetchCoverCandidates(function(cands){
+      item.coverCandidates=cands;
+      if(cands.length){
+        entry.cover_img=cands[0].url;
+        entry._src=entry._src||{};entry._src.cover_img=cands[0].src;
+      }
+      completeThenFinish();
+    });
+  }
+  if(!item.code&&!item.title_guess){finishItem(true);return;}
+  if(catInternal(type)==='攻略'){
+    var isISBN=item.code.indexOf('978')===0||item.code.indexOf('979')===0;
+    if(!isISBN){coverThenComplete();return;}
+    bookLookupPromise(item.code).then(function(bk){
+      if(bk){
+        entry._src=entry._src||{};
+        // 書籍資料庫只補空欄（含 cover_img，通用鍵值迴圈）；img 來源不覆蓋，與單品 doAnalyze 同精神
+        Object.keys(bk).forEach(function(k){if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';}});
+      }
+      coverThenComplete();
+    }).catch(coverThenComplete);
+  }else{
+    // v02.40：查詢鍵改用品名優先（原本用序號優先，但序號字串對 ScreenScraper 以外的資料庫
+    // 如 IGDB/RAWG/楽天等，會被當成「名稱」去查，等於送出一串不是名稱的亂碼查詢，容易查到不相關結果；
+    // ScreenScraper 本身另外從全域 entry.code 讀序號做精確比對，不受這裡查詢鍵順序影響，序號查詢能力仍保留）
+    crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
+      // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
+      [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
+        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
+      });
+      _mergeDbIntoEntry(db);
+      coverThenComplete();
+    }).catch(coverThenComplete);
+  }
+}
+
+function _batchStatusBadge(item){
+  if(item.status==='pending')return '<span style="color:#7986cb">等待中</span>';
+  if(item.status==='resolving')return '<span style="color:#00e5ff">解析中...</span>';
+  if(item.status==='failed')return '<span style="color:#ff5252">✗ 查詢失敗</span>';
+  var parts=[];
+  if(!item.code_clear)parts.push('<span style="color:#ffb74d">⚠️ 序號模糊</span>');
+  if(item.dup)parts.push('<span style="color:#ff8a65">⚠️ 已收藏過：'+esc(item.dup.data.primary_name||'')+'</span>');
+  if(!parts.length)parts.push('<span style="color:#69f0ae">✓ 辨識完成</span>');
+  return parts.join('　');
+}
+
+// v02.42（3張候選封面）：來源標籤依「目前選中的那張」顯示，讓使用者知道現在採用的封面是資料庫還是Google搜尋來的
+function _batchImgSrcLabel(item){
+  var e=item.entry;
+  if(!e||!e.cover_img)return '';
+  var src=(e._src&&e._src.cover_img)||'';
+  var labels={
+    google_cse:'圖片來源：Google 搜尋',
+    screenscraper:'圖片來源：ScreenScraper',
+    igdb:'圖片來源：IGDB',
+    rawg:'圖片來源：RAWG',
+    rakuten:'圖片來源：楽天市場（⚠️賣場商品照，非官方封面，畫質/內容可能不理想）',
+    db:'圖片來源：資料庫'
+  };
+  return labels[src]||'';
+}
+
+// 選這件項目要用哪一張候選封面（candIdx為-1代表不使用任何封面）
+function batchSelectCover(i,candIdx){
+  var item=_batchItems[i];
+  if(!item||!item.entry)return;
+  if(candIdx<0){
+    item.entry.cover_img='';
+    if(item.entry._src)delete item.entry._src.cover_img;
+  }else{
+    var c=item.coverCandidates&&item.coverCandidates[candIdx];
+    if(!c)return;
+    item.entry.cover_img=c.url;
+    item.entry._src=item.entry._src||{};
+    item.entry._src.cover_img=c.src;
+  }
+  _batchRenderList();
+}
+
+// 候選封面選擇列：最多3張小縮圖可點選切換，選中的用外框標示，另外一顆「不使用」選項
+function _batchCoverPicker(item,i){
+  var cands=item.coverCandidates||[];
+  if(!cands.length)return '';
+  var curUrl=item.entry&&item.entry.cover_img;
+  var thumbs=cands.map(function(c,ci){
+    var sel=curUrl===c.url;
+    return '<img src="'+esc(imgUrl(c.url,80))+'" onclick="batchSelectCover('+i+','+ci+')" title="選這張當封面" style="width:30px;height:30px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid '+(sel?'#ce93d8':'transparent')+'">';
+  }).join('');
+  var noneSel=!curUrl;
+  var noneBtn='<button type="button" onclick="batchSelectCover('+i+',-1)" title="不使用封面" style="width:30px;height:30px;border-radius:6px;background:#141b30;border:2px solid '+(noneSel?'#ce93d8':'#1e2a45')+';color:#7986cb;font-size:13px;cursor:pointer;padding:0">✕</button>';
+  return '<div style="display:flex;gap:5px;margin-top:5px">'+thumbs+noneBtn+'</div>';
+}
+
+function _batchRenderList(){
+  var wrap=$('batch-list');if(!wrap)return;
+  wrap.innerHTML=_batchItems.map(function(item,i){
+    var e=item.entry;
+    var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
+    var hasImg=!!(e&&e.cover_img);
+    var imgTag=hasImg
+      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" onclick="window.open(\''+esc(imgUrl(e.cover_img,800))+'\',\'_blank\')" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;background:#141b30;flex-shrink:0" title="點圖放大看清楚">'
+      : '<div style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>';
+    var checked=(item.status==='ok'&&item.include)?'checked':'';
+    var disabled=item.status==='ok'?'':'disabled';
+    var srcLabel=_batchImgSrcLabel(item);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
+      '<input type="checkbox" '+checked+' '+disabled+' onchange="batchToggleInclude('+i+',this.checked)" style="width:18px;height:18px;flex-shrink:0;accent-color:#ce93d8">'+
+      imgTag+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
+        '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
+        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(srcLabel?'　<span style="color:#7986cb">'+srcLabel+'</span>':'')+'</div>'+
+        _batchCoverPicker(item,i)+
+      '</div>'+
+    '</div>';
+  }).join('');
+  var doneCount=_batchItems.filter(function(it){return it.status==='ok'||it.status==='failed';}).length;
+  var allDone=doneCount===_batchItems.length&&_batchItems.length>0;
+  var sb=$('batch-save-btn');
+  if(sb){
+    sb.style.display=allDone?'block':'none';
+    var n=_batchItems.filter(function(it){return it.include&&it.status==='ok';}).length;
+    sb.textContent='儲存已勾選項目（'+n+' 件）';
+  }
+}
+
+function batchToggleInclude(i,checked){
+  if(!_batchItems[i])return;
+  _batchItems[i].include=checked;
+  _batchRenderList();
+}
+
+// 批次存檔：逐筆循序呼叫，核心持久化步驟比照 doSave（壓縮→組列→shPost），
+// 但跳過單筆存檔的 confirm() 對話框（重複/序號模糊已在確認清單階段由使用者決定）。
+function batchSaveAll(){
+  if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
+  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok';});
+  if(!toSave.length){toast('沒有勾選任何項目','er');return;}
+  if(_saving)return;
+  _saving=true;
+  var _backupEntry=entry;
+  var savedCount=0,failCount=0;
+  function saveOne(i){
+    if(i>=toSave.length){
+      _saving=false;entry=_backupEntry;
+      localforage.setItem('gv_col',col).catch(function(){});updateStats();
+      noLoad();
+      toast('批次儲存完成：成功 '+savedCount+' 件'+(failCount?'，失敗 '+failCount+' 件':''),'ok',4500);
+      var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
+      resetAll();
+      showPg('col');
+      if(_contCat){selectEntryCat(_contCat);_selectedPlatform=_contPlat;}
+      return;
+    }
+    loading('批次儲存中...（'+(i+1)+'／'+toSave.length+'）');
+    entry=Object.assign({},toSave[i].entry);
+    if(!entry.uuid)entry.uuid=_genUuid();
+    if(!entry.created_at)entry.created_at=tpeDateTime();
+    _normalizeEntryEnums();
+    _compressAndSave(function(){
+      ['cover_img','back_img','spine_img'].forEach(function(k){
+        if(entry[k]&&entry[k].length>8000000)entry[k]='';
+      });
+      _capExtraImagesSize();
+      var _SF=fieldsFor(entry.category,entry.subtype);
+      var row=_rowFromFields(entry,_SF);
+      shPost({action:'add',row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
+        if(res.ok){
+          savedCount++;
+          var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+          if(res.uuid&&!entry.uuid)entry.uuid=res.uuid;
+          if(res.imgs){
+            ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];});
+            if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images;
+          }
+          col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});
+        }else{failCount++;}
+      }).catch(function(){failCount++;}).finally(function(){saveOne(i+1);});
+    });
+  }
+  saveOne(0);
 }
 
 // ── Form ──
