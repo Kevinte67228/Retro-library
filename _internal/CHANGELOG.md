@@ -1,3 +1,26 @@
+## v02.35 (2026-07-26)
+
+### 變更內容
+「②b 加拍封底」區塊 UI 統一成跟「② 拍攝遊戲封面」一致：
+- 標題色從 `#7986cb`（偏暗淡）改成 `#ce93d8`（本區塊 accent 色，跟①②標題一致）
+- 備註文字「選填，封底印有條碼/編號/日期/語言...」從 `#555`（深灰，在深色背景下幾乎不可見）改成 `#7986cb`（可讀的次要文字色）
+- 「拍封底」按鈕從淡化的虛線外框樣式，改成跟「拍照」按鈕一樣的實心強調樣式（背景色塊＋實線框＋粗體）
+- 「拍封底」「相簿」按鈕的 padding（10px→12px）與字級（12px→13px）跟上排對齊
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_35_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-34 → retrovault-v02-35
+
+### 對應備份
+- _internal/old/v02_34/
+
+
 ## v02.34 (2026-07-26)
 
 ### 變更內容
@@ -21,6 +44,7 @@
 
 ### 對應備份
 - _internal/old/v02_33/
+
 
 
 ## v02.33 (2026-07-26)
@@ -51,6 +75,7 @@ AI 辨識流程優化（A–E），目標：使用者提供圖片時，優先採
 
 
 
+
 ## v02.32 (2026-07-26)
 
 ### 變更內容
@@ -74,41 +99,3 @@ AI 辨識流程優化（A–E），目標：使用者提供圖片時，優先採
 
 ### 對應備份
 - _internal/old/v02_31/
-
-
-
-
-## v02.31 (2026-07-26)
-
-### 變更內容
-GAS 後端檔名正式從 `GameVault_AppsScript.gs` 改成 `RetroVault_AppsScript.gs`，完成 App 改名的最後一塊：
-- 使用者已手動更新 `.github/workflows/deploy-gas.yml` 的觸發路徑與複製指令（Claude 沒有 workflow scope），確認生效後才由 Claude 執行實際改名，避免觸發路徑跟檔名對不上、CI/CD 悄悄失效
-- `.gs` 程式碼內文同步改名的地方（純顯示文字，無外部依賴）：檔頭版本註解、健康檢查回應訊息、程式註解、`market_value_source` 標籤文字
-- **刻意保留不改的 4 處**（有實質功能/外部依賴，改了會出問題）：
-  - `IMG_FOLDER_NAME = 'GameVault_Images'`：Google Drive 實際圖片資料夾名稱，改名會讓程式找不到使用者現有圖片
-  - `softname = 'GameVault'`：ScreenScraper API 的開發者身分識別字串，是官網註冊登記的軟體名稱，改了會讓查詢功能失效
-  - 同一支函式裡的 `User-Agent: 'GameVault/2.0...'`：跟 softname 屬於同一個 API 呼叫，保守起見一併不動
-  - 詳細原因記錄於協作規則.md 的「GAS 檔案內部保留不改的字串」段落
-- 連帶更新：`docs/index.html` 下載連結、`docs/manual.html` 教學文字、`github_deploy.py`（BACKUP_FILES／DEPLOY_FILES）、協作規則.md／部署架構說明.md 所有檔名引用
-
-**發現但這次沒動的既有問題**：`_internal/GameVault_部署架構說明.md` 整份文件描述的是舊版 Netlify 部署流程（`GameVault/` 資料夾、Netlify Publish directory），但專案已經在 2026-07-21 改用 GitHub Pages（`docs/` 資料夾），這份文件從那時候起就沒有跟著更新、內容已經過時，這次只做了最小範圍的 GAS 檔名字串取代，沒有一併重寫整份文件，需要之後另外處理。
-
-自我檢查：`.gs` 內容 `node --check`（改副檔名為 .js）語法通過；index.html/manual.html/github_deploy.py/rules.md 均無亂碼、Python 語法通過；逐一核對 4 處刻意保留字串在最終檔案裡確實還在、其餘引用確實都已更新。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_31_index.html
-- docs/RetroVault_AppsScript.gs（取代 docs/GameVault_AppsScript.gs）
-- docs/manual.html
-- docs/sw.js
-- _internal/github_deploy.py
-- _internal/GameVault_協作規則.md
-- _internal/GameVault_部署架構說明.md
-
-### GS 版本
-- 檔名異動，程式邏輯無變化（純顯示文字改名，見上方說明）
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-30 → retrovault-v02-31
-
-### 對應備份
-- _internal/old/v02_30/

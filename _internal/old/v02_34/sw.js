@@ -1,8 +1,8 @@
-const CACHE_NAME = 'gamevault-v02-29';
+const CACHE_NAME = 'retrovault-v02-34';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './GameVault_v02_29_index.html',
+  './RetroVault_v02_34_index.html',
   './manifest.json',
   './manual.html',
   './bg.webp'
@@ -17,10 +17,19 @@ self.addEventListener('install', function(event) {
       return Promise.all(STATIC_ASSETS.map(function(asset) {
         return cache.add(asset).catch(function() {});
       }));
-    }).then(function() {
-      return self.skipWaiting();
     })
   );
+  // 註：這裡故意「不」呼叫 self.skipWaiting()。
+  // 讓新版本先進入 waiting 狀態，由頁面偵測到後顯示「發現新版本」提示，
+  // 使用者主動點下去才透過 postMessage 通知這裡 skipWaiting，
+  // 避免新版本背景默默接管、跟頁面當下記憶體裡的舊版邏輯不同步。
+  // （與 Taxi-Meter 專案採用同一套做法，2026-07 對齊）
+});
+
+self.addEventListener('message', function(event) {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', function(event) {
