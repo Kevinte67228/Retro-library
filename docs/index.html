@@ -2453,7 +2453,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.39';
+const APP_VERSION='v02.40';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10030,11 +10030,13 @@ function _batchResolveNext(idx){
       completeThenFinish();
     }).catch(completeThenFinish);
   }else{
-    // 遊戲/主機/週邊：crossRefLookupPromise 內部僅遊戲分類實際查詢，其餘分類自動略過（回傳空物件），行為與既有單品流程一致
-    crossRefLookupPromise(item.code||item.title_guess,item.title_guess).then(function(db){
+    // v02.40：查詢鍵改用品名優先（原本用序號優先，但序號字串對 ScreenScraper 以外的資料庫
+    // 如 IGDB/RAWG/楽天等，會被當成「名稱」去查，等於送出一串不是名稱的亂碼查詢，容易查到不相關結果；
+    // ScreenScraper 本身另外從全域 entry.code 讀序號做精確比對，不受這裡查詢鍵順序影響，序號查詢能力仍保留）
+    crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
       // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
       [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
-        if(!entry[p[0]]&&db[p[1]])entry[p[0]]=db[p[1]];
+        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img='db';}
       });
       _mergeDbIntoEntry(db);
       coverThenComplete();
@@ -10053,13 +10055,39 @@ function _batchStatusBadge(item){
   return parts.join('　');
 }
 
+// v02.40（C）：圖片來源標籤，讓使用者知道這張封面是資料庫查到的還是 Google 搜尋來的，
+// 方便判斷可信度；封面不明來源（例如舊資料/其他管道）不顯示標籤，不強行猜測
+function _batchImgSrcLabel(item){
+  var e=item.entry;
+  if(!e||!e.cover_img)return '';
+  var src=(e._src&&e._src.cover_img)||'';
+  if(src==='google_cse')return '<div style="font-size:10px;color:#7986cb;margin-top:2px">圖片來源：Google 搜尋</div>';
+  if(src==='db')return '<div style="font-size:10px;color:#7986cb;margin-top:2px">圖片來源：資料庫</div>';
+  return '';
+}
+
+// 清除這筆項目目前抓到的封面圖（不重新查詢，使用者可自行之後在收藏頁補照片）
+function batchClearCover(i){
+  var item=_batchItems[i];
+  if(!item||!item.entry)return;
+  item.entry.cover_img='';
+  if(item.entry._src)delete item.entry._src.cover_img;
+  _batchRenderList();
+}
+
 function _batchRenderList(){
   var wrap=$('batch-list');if(!wrap)return;
   wrap.innerHTML=_batchItems.map(function(item,i){
     var e=item.entry;
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
-    var img=(e&&e.cover_img)?('<img src="'+esc(imgUrl(e.cover_img,120))+'" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#141b30">'):
-      '<div style="width:44px;height:44px;border-radius:8px;flex-shrink:0;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>';
+    var hasImg=!!(e&&e.cover_img);
+    var imgTag=hasImg
+      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" onclick="window.open(\''+esc(imgUrl(e.cover_img,800))+'\',\'_blank\')" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;background:#141b30" title="點圖放大看清楚">'
+      : '<div style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>';
+    var clearBtn=hasImg
+      ? '<button type="button" onclick="batchClearCover('+i+')" title="清除這張圖" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#ff5252;color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0">✕</button>'
+      : '';
+    var img='<div style="position:relative;flex-shrink:0">'+imgTag+clearBtn+'</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
@@ -10069,6 +10097,7 @@ function _batchRenderList(){
         '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
         '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
         '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+'</div>'+
+        _batchImgSrcLabel(item)+
       '</div>'+
     '</div>';
   }).join('');
