@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  GameVault — Google Apps Script 後端  v02            ║
+// ║  RetroVault — Google Apps Script 後端  v02            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -657,7 +657,7 @@ function dispatchRead(action, p) {
   let result;
   switch (action) {
       case 'ping':
-        result = { ok: true, msg: 'GameVault Apps Script 正常運行 ✓ (Games/Books/Consoles/Peripherals/Hunt + 數位下載版8子表 + 原聲帶5子表 + 動漫美術8子表 + 公仔6子表，共32工作表)' };
+        result = { ok: true, msg: 'RetroVault Apps Script 正常運行 ✓ (Games/Books/Consoles/Peripherals/Hunt + 數位下載版8子表 + 原聲帶5子表 + 動漫美術8子表 + 公仔6子表，共32工作表)' };
         break;
       case 'list':
         result = listAll(p.type || 'all');
@@ -1385,7 +1385,7 @@ function mapGenre(name) {
 // ── コンシューマーゲーム大辞典 (consoledictionary.com) 日系遊戲資料庫 proxy（v01.02）──
 //   使用者要求：只在建檔區域選日本、且已有遊戲名稱時才查詢；只取結構化欄位（不重製站方介紹文字）。
 //   服務條款（../info/terms）：站方彙整資料歡迎標明出處引用，故 sourceUrl 一律回傳，前端會存入「參考連結」欄位。
-//   GameVault 平台值(v) -> consoledictionary.com 的 console 數字 ID。查無對應的平台不帶 console 篩選，退回純文字搜尋。
+//   RetroVault 平台值(v) -> consoledictionary.com 的 console 數字 ID。查無對應的平台不帶 console 篩選，退回純文字搜尋。
 var CD_PLATFORM_MAP = {
   'PlayStation':11,'PlayStation 2':12,'PlayStation 3':13,'PlayStation 4':14,'PlayStation 5':15,
   'PlayStation Portable':16,'PlayStation Vita':17,
@@ -1916,7 +1916,7 @@ function marketTwdFx_(currency, p) {
     ? Number(p && p.fx_jpy)
     : (currency === 'USD' ? Number(p && p.fx_usd) : 0);
   if (settingsRate && settingsRate > 0) {
-    return { rate: settingsRate, provider: 'GameVault Settings', updated_at: '' };
+    return { rate: settingsRate, provider: 'RetroVault Settings', updated_at: '' };
   }
   try {
     const url = 'https://open.er-api.com/v6/latest/' + encodeURIComponent(currency);
