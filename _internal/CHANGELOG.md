@@ -1,3 +1,28 @@
+## v02.34 (2026-07-26)
+
+### 變更內容
+裁切框自動對齊商品外框，降低使用者手動調整機率：
+- 手動裁切器（`_cropLayout`）原本初始框寫死「影像內縮 6%」、完全沒用邊緣偵測。現在改為首次開啟時呼叫既有的 `detectCropBox()`（背景色估算＋自適應容差＋四邊向內掃描）偵測商品外框，把原圖座標換算成畫面座標當初始框，讓框一開始就貼齊商品；偵測失敗或偵測框過小（<影像 25%）時，退回原本的內縮 6%。
+- 修復同時發現的漏洞：`_cropLayout` 也被 `resize` 監聽器呼叫，若無保護會在每次螢幕旋轉/鍵盤彈出時用自動偵測結果重置使用者已調好的框。加 `_autoDetected` 旗標，只在首次布局偵測；resize 時改為把既有框依新舊 view 比例換算保留，框不會跑掉。每張新圖開啟時（`_cropOpen`）重置旗標，確保每張都重新偵測。
+
+`detectCropBox()` 本身是既有函式（`autoCropCanvas` 一直在用），這次只是讓帶手動框的裁切 UI 也共用它，沒有改動偵測演算法。
+
+自我檢查：`node --check` 通過；無 U+FFFD；CSS 594/594；座標換算邏輯自我檢查 9 項全過（原圖↔畫面座標互算、resize 前後框對應原圖座標一致、偵測失敗退回內縮 6%、過小框被拒絕）。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_34_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-33 → retrovault-v02-34
+
+### 對應備份
+- _internal/old/v02_33/
+
+
 ## v02.33 (2026-07-26)
 
 ### 變更內容
@@ -25,6 +50,7 @@ AI 辨識流程優化（A–E），目標：使用者提供圖片時，優先採
 - _internal/old/v02_32/
 
 
+
 ## v02.32 (2026-07-26)
 
 ### 變更內容
@@ -48,6 +74,7 @@ AI 辨識流程優化（A–E），目標：使用者提供圖片時，優先採
 
 ### 對應備份
 - _internal/old/v02_31/
+
 
 
 
@@ -85,33 +112,3 @@ GAS 後端檔名正式從 `GameVault_AppsScript.gs` 改成 `RetroVault_AppsScrip
 
 ### 對應備份
 - _internal/old/v02_30/
-
-
-
-
-## v02.30 (2026-07-26)
-
-### 變更內容
-版本 HTML 檔名規則從 `GameVault_vXX_YY_index.html` 改成 `RetroVault_vXX_YY_index.html`，呼應 App 改名（v02.29）：
-- `github_deploy.py` 升版到 v4：`get_current_version()`／備份步驟／刪舊檔案步驟都做了「新舊前綴都比對」的過渡期相容處理，這次（v02.29→v02.30）會正確備份、刪除舊的 `GameVault_v02_29_index.html`，並改用新前綴推送 `RetroVault_v02_30_index.html`
-- `sw.js` 的 `CACHE_NAME`／`STATIC_ASSETS` 同步改用新檔名
-- 協作規則.md 新增「App 改名」記錄段落，並把文件內所有版本 HTML 命名規則範例都改成新前綴（GAS 封存檔名 `GameVault_v01_AppsScript.gs.txt` 這次沒有一起改，屬於下面的 GAS 範圍）
-
-**GAS 檔名（`GameVault_AppsScript.gs`）這次刻意沒有一起改**：`.github/workflows/deploy-gas.yml` 的觸發路徑與複製指令寫死引用這個檔名，Claude 沒有 `workflow` scope 無法直接修改該檔案，需要使用者先手動把 workflow 內容換成新檔名版本，確認生效後才能安全把實際的 `.gs` 檔案與相關文件引用一併改名，避免 GAS CI/CD 觸發路徑跟實際檔名對不上、自動部署悄悄失效卻不易察覺。
-
-自我檢查：Python 語法通過；用真實匯入的 `github_deploy.py` 模組（非重寫邏輯）測試 `get_current_version()` 在舊前綴/新前綴/都找不到三種狀態下正確運作，以及備份尋找版本HTML、刪除判斷邏輯在混合過渡狀態下正確運作，9 項全過。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_30_index.html（新命名，取代 docs/GameVault_v02_29_index.html）
-- docs/sw.js
-- _internal/github_deploy.py
-- _internal/GameVault_協作規則.md
-
-### GS 版本
-- 無（純部署腳本/檔名規則調整，App 本身邏輯無變化）
-
-### PWA 快取
-- CACHE_NAME: gamevault-v02-29 → retrovault-v02-30
-
-### 對應備份
-- _internal/old/v02_29/

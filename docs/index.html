@@ -2414,7 +2414,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.33';
+const APP_VERSION='v02.34';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6152,7 +6152,7 @@ function initGameCodeComboMode(){
 // OCR 讀取遊戲編碼（純編碼模式）
 // ════════════════ 通用圖片裁切器 ════════════════
 // 任何「辨識」用途的圖片（拍照或相簿）皆先進入裁切步驟，再進入後續流程。
-var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null};
+var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null,_autoDetected:false};
 // 讀檔→開啟裁切器，回傳裁切後的 Blob（image/jpeg）。取消則 reject。
 function cropImageFile(file){
   return new Promise(function(resolve,reject){
@@ -6171,7 +6171,7 @@ function _dataUrlToBlob(durl){
 function _cropOpen(srcDataUrl,resolve,reject){
   var img=new Image();
   img.onload=function(){
-    _crop.img=img;_crop.resolve=resolve;_crop.reject=reject;
+    _crop.img=img;_crop.resolve=resolve;_crop.reject=reject;_crop._autoDetected=false; // v02.34：每張新圖重新偵測
     var ov=$('crop-ov');ov.classList.add('on');
     requestAnimationFrame(function(){ov.classList.add('vis');}); // F2：淡入，避免突兀跳轉
     // 等版面定位後再計算尺寸
@@ -6188,12 +6188,36 @@ function _cropLayout(){
   var scale=Math.min(sw/img.naturalWidth,sh/img.naturalHeight);
   var w=Math.round(img.naturalWidth*scale),h=Math.round(img.naturalHeight*scale);
   var x=Math.round((sw-w)/2),y=Math.round((sh-h)/2);
+  var prevView=_crop.view; // v02.34：resize 時用來把既有框換算到新版面
   _crop.view={x:x,y:y,w:w,h:h,scale:scale};
   var cv=$('crop-canvas');
   cv.width=sw;cv.height=sh;cv.style.width=sw+'px';cv.style.height=sh+'px';
-  // 預設裁切框：影像範圍內縮 6%
-  var ins=Math.round(Math.min(w,h)*0.06);
-  _crop.box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  // v02.34：resize（已偵測過）時保留使用者現有框，依版面比例換算，避免重置手動調整
+  if(_crop._autoDetected&&_crop.box&&prevView&&prevView.w){
+    var b=_crop.box;
+    // 既有框 → 原圖比例 → 新 view 座標
+    var fx=(b.x-prevView.x)/prevView.w, fy=(b.y-prevView.y)/prevView.h;
+    var fw=b.w/prevView.w, fh=b.h/prevView.h;
+    _crop.box={x:Math.round(x+fx*w),y:Math.round(y+fy*h),w:Math.round(fw*w),h:Math.round(fh*h)};
+    _cropDraw();_cropBind();return;
+  }
+  // 首次布局：初始裁切框優先用邊緣偵測對齊商品外框，降低手動調整機率；偵測失敗退回內縮 6%
+  var box=null;
+  try{
+    var det=detectCropBox(img); // 回傳原圖座標 {x,y,w,h}
+    if(det){
+      // 原圖座標 → 畫面座標（view 是等比置中後的顯示區）
+      var bx=x+det.x*scale, by=y+det.y*scale, bw=det.w*scale, bh=det.h*scale;
+      // 合理性防呆：偵測框過小（<影像 25%）或明顯異常時不採用
+      if(bw>=w*0.25&&bh>=h*0.25){box={x:Math.round(bx),y:Math.round(by),w:Math.round(bw),h:Math.round(bh)};}
+    }
+  }catch(e){box=null;}
+  if(!box){
+    var ins=Math.round(Math.min(w,h)*0.06);
+    box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  }
+  _crop.box=box;
+  _crop._autoDetected=true; // 標記已完成首次偵測，往後 resize 不再重置
   _cropDraw();
   _cropBind();
 }
