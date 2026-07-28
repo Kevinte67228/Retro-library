@@ -1233,6 +1233,39 @@ body{
         <div id="batch-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
           <div style="padding:0 16px">
             <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 8 件）</div>
+            <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
+              <svg viewBox="0 0 320 150" style="width:100%;height:auto;display:block">
+                <!-- 觀景窗取景框（四角括號，示意「把商品都拍進這個框裡」） -->
+                <g stroke="#7986cb" stroke-width="2" fill="none" opacity=".6">
+                  <path d="M10 8 L10 24 M10 8 L26 8"/>
+                  <path d="M310 8 L310 24 M310 8 L294 8"/>
+                  <path d="M10 142 L10 126 M10 142 L26 142"/>
+                  <path d="M310 142 L310 126 M310 142 L294 142"/>
+                </g>
+                <!-- 一排書背朝外排列的商品（不同高度/顏色示意不同商品） -->
+                <g>
+                  <rect x="40" y="40" width="26" height="90" rx="2" fill="#3949ab"/>
+                  <rect x="40" y="40" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="70" y="30" width="24" height="100" rx="2" fill="#00897b"/>
+                  <rect x="70" y="30" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="98" y="45" width="26" height="85" rx="2" fill="#8e24aa"/>
+                  <rect x="98" y="45" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="128" y="35" width="24" height="95" rx="2" fill="#d81b60"/>
+                  <rect x="128" y="35" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="156" y="42" width="26" height="88" rx="2" fill="#ffa000"/>
+                  <rect x="156" y="42" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="186" y="30" width="24" height="100" rx="2" fill="#1e88e5"/>
+                  <rect x="186" y="30" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="214" y="48" width="26" height="82" rx="2" fill="#43a047"/>
+                  <rect x="214" y="48" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="244" y="38" width="24" height="92" rx="2" fill="#6d4c41"/>
+                  <rect x="244" y="38" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                </g>
+                <!-- 底部平面示意 -->
+                <rect x="30" y="130" width="248" height="4" rx="2" fill="#1e2a45"/>
+              </svg>
+              <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:6px">範例：商品書背朝外，排成一排，一次入鏡拍攝</div>
+            </div>
             <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
               <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
@@ -2453,7 +2486,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.40';
+const APP_VERSION='v02.41';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8168,10 +8201,12 @@ function _refreshMethodButtons(cat,subtype){
   var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
+  // v02.41：批次書背只適用「遊戲」「書籍」（主機/週邊沒有排書背拍照的使用情境，拿掉）
+  var showBatch=(cat==='遊戲'||cat==='書籍');
   // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
   [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
    ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital],
-   ['mb-aiweb',true],['mb-batch',!hasSubtype(cat)]].forEach(function(p){
+   ['mb-aiweb',true],['mb-batch',showBatch]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
@@ -8181,11 +8216,11 @@ function _refreshMethodButtons(cat,subtype){
   // 數位下載版的空格改由 mb-aiweb 補滿，不再需要動態切換寬窄
   var linkEl=$('mb-link');
   if(linkEl)linkEl.classList.remove('mb-wide');
-  // v02.39：mb-combo 寬窄依分類動態切換，讓兩種情境都能整除 4 格、不留空格——
-  // 無子類型分類（顯示批次卡）：條碼1+編碼1+圖片1+手動1+條碼照片1(窄)+編碼照片1+AI網頁1+批次1 = 8格
-  // 有子類型分類（隱藏批次卡）：條碼1+編碼1+圖片1+手動1+條碼照片2(寬)+編碼照片1+AI網頁1 = 8格
+  // v02.41：mb-combo 寬窄依「有沒有顯示批次書背」動態切換，讓各情境都整除 4 格、不留空格——
+  // 顯示批次書背（遊戲/書籍）：條碼1+編碼1+圖片1+手動1+條碼照片1(窄)+編碼照片1+AI網頁1+批次1 = 8格
+  // 不顯示批次書背（主機/週邊/子類型分類）：條碼1+編碼1+圖片1+手動1+條碼照片2(寬)+編碼照片1+AI網頁1 = 8格
   var comboEl=$('mb-combo');
-  if(comboEl)comboEl.classList.toggle('mb-wide',hasSubtype(cat));
+  if(comboEl)comboEl.classList.toggle('mb-wide',!showBatch);
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
