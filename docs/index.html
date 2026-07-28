@@ -1175,7 +1175,10 @@ body{
             <div id="scan-step2-preview" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden">
               <img id="scan-preview-img" alt="掃描預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
             </div>
-            <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">②b 加拍封底 <span style="font-weight:400;color:#7986cb">（選填，封底印有條碼/編號/日期/語言，可提升欄位命中）</span></div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px;overflow:hidden;white-space:nowrap">
+              <span style="font-size:12px;color:#ce93d8;font-weight:700;flex:0 0 auto">加拍封底</span>
+              <span style="font-size:10px;color:#7986cb;overflow:hidden;text-overflow:ellipsis">（選填，可提升欄位命中率）</span>
+            </div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
               <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                 📷 拍封底
@@ -2414,7 +2417,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.35';
+const APP_VERSION='v02.36';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);

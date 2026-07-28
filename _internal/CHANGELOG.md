@@ -1,3 +1,24 @@
+## v02.36 (2026-07-26)
+
+### 變更內容
+「加拍封底」標題微調：
+- 拿掉沒有實質意義的「②b」前綴，只留「加拍封底」
+- 備註文字縮短（「選填，封底印有條碼/編號/日期/語言，可提升欄位命中」→「選填，可提升欄位命中率」）並改用 flex 排列＋`white-space:nowrap`＋`text-overflow:ellipsis`，確保整段標題固定顯示在一行，不會在窄螢幕上換行拉長版面
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_36_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-35 → retrovault-v02-36
+
+### 對應備份
+- _internal/old/v02_35/
+
+
 ## v02.35 (2026-07-26)
 
 ### 變更內容
@@ -19,6 +40,7 @@
 
 ### 對應備份
 - _internal/old/v02_34/
+
 
 
 ## v02.34 (2026-07-26)
@@ -47,6 +69,7 @@
 
 
 
+
 ## v02.33 (2026-07-26)
 
 ### 變更內容
@@ -72,30 +95,3 @@ AI 辨識流程優化（A–E），目標：使用者提供圖片時，優先採
 
 ### 對應備份
 - _internal/old/v02_32/
-
-
-
-
-## v02.32 (2026-07-26)
-
-### 變更內容
-純標註，無邏輯異動：在 AI 辨識相關程式碼加上區塊標記與進入點註解，方便後續交給 Fable 做優化時快速定位。標記涵蓋：
-- 兩個較集中的區塊，加了 START/END banner：
-  1. 提示規格與系統提示建構（`AI_CAT_SPEC`／`ARTBOOK_AI_SPEC`／`_aiSpecFor()`／`buildSYS()` 等）
-  2. 核心呼叫引擎（`callGemini`／`callGeminiOCR`／`callHybridVision`／`callAIVision`／`aiCompleteMissing`／`aiKnowledgeFill`／`testGemini` 等）
-- 7 個分散在各建檔模式裡的 AI 辨識進入點，各自加一行說明註解：`gcodeComboSearch`／`applyMultiDbResult`／`initAiWebMode`／`comboSearchFromInput`／`fscanCapture`／`initImgMode`／`doAnalyze`
-
-全部用 `🤖` 開頭方便 grep 搜尋定位，不影響任何程式邏輯。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_32_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-31 → retrovault-v02-32
-
-### 對應備份
-- _internal/old/v02_31/
