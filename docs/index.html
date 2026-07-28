@@ -994,10 +994,9 @@ body{
                 <div class="mb-ico" style="background:rgba(64,196,255,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#40c4ff" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg></div>
                 <div class="mb-txt"><div class="ect">商店連結</div><div class="ecd">貼上網址抓資料</div></div>
               </div>
-              <div class="ec-card" id="mb-combo" onclick="pagePickMethod('initComboMode')" style="position:relative">
-                <span style="position:absolute;top:8px;right:8px;font-size:9px;background:#ce93d8;color:#0a0e1a;padding:2px 7px;border-radius:8px;font-weight:700;letter-spacing:.5px">推薦</span>
+              <div class="ec-card" id="mb-combo" onclick="pagePickMethod('initComboMode')">
                 <div class="mb-ico" style="background:rgba(206,147,216,.15)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ce93d8" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/><circle cx="20" cy="5" r="2.5" fill="#ce93d8" stroke="none"/></svg></div>
-                <div class="ect">條碼＋照片</div><div class="ecd">最高準確度</div>
+                <div class="mb-txt"><div class="ect">條碼＋照片</div><div class="ecd">最高準確度</div></div>
               </div>
               <div class="ec-card" id="mb-gcode-combo" onclick="pagePickMethod('initGameCodeComboMode')">
                 <div class="mb-ico" style="background:rgba(128,203,196,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#80cbc4" stroke-width="1.5"><rect x="3" y="7" width="10" height="10" rx="2"/><path d="M15 8h4M15 12h4M15 16h2"/><circle cx="20" cy="8" r="1.5" fill="#80cbc4" stroke="none"/></svg></div>
@@ -2454,7 +2453,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.38';
+const APP_VERSION='v02.39';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8182,6 +8181,11 @@ function _refreshMethodButtons(cat,subtype){
   // 數位下載版的空格改由 mb-aiweb 補滿，不再需要動態切換寬窄
   var linkEl=$('mb-link');
   if(linkEl)linkEl.classList.remove('mb-wide');
+  // v02.39：mb-combo 寬窄依分類動態切換，讓兩種情境都能整除 4 格、不留空格——
+  // 無子類型分類（顯示批次卡）：條碼1+編碼1+圖片1+手動1+條碼照片1(窄)+編碼照片1+AI網頁1+批次1 = 8格
+  // 有子類型分類（隱藏批次卡）：條碼1+編碼1+圖片1+手動1+條碼照片2(寬)+編碼照片1+AI網頁1 = 8格
+  var comboEl=$('mb-combo');
+  if(comboEl)comboEl.classList.toggle('mb-wide',hasSubtype(cat));
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
