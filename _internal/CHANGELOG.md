@@ -1,3 +1,24 @@
+## v02.37 (2026-07-26)
+
+### 變更內容
+修復進入編輯表單時，上一步的掃描區塊沒被隱藏、跟表單內容疊在一起顯示的 bug：
+- `showForm()` 原本只手動隱藏 `bar-sec`／`img-sec` 兩個區塊（純條碼/純圖片模式年代寫的），後來新增的 `combo-sec`／`gcode-sec`／`gcode-combo-sec`／`digital-link-sec`／`aiweb-sec` 都沒被涵蓋到，導致這些模式（例如條碼＋照片）AI 辨識完進表單時，上一步的拍照/AI辨識按鈕跟預覽圖還留在畫面上、跟表單堆疊在一起。
+- 改用既有的 `hideAllSecs()`（涵蓋全部 8 個進場區塊）取代原本手動隱藏兩個區塊，再把 `form-sec` 顯示回來。已確認全部 26 個呼叫 `showForm()` 的地方都是「準備顯示完成表單」的最終步驟，沒有任何一處需要保留掃描區塊可見，此修復對全部建檔模式都適用。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_37_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-36 → retrovault-v02-37
+
+### 對應備份
+- _internal/old/v02_36/
+
+
 ## v02.36 (2026-07-26)
 
 ### 變更內容
@@ -17,6 +38,7 @@
 
 ### 對應備份
 - _internal/old/v02_35/
+
 
 
 ## v02.35 (2026-07-26)
@@ -43,6 +65,7 @@
 
 
 
+
 ## v02.34 (2026-07-26)
 
 ### 變更內容
@@ -66,32 +89,3 @@
 
 ### 對應備份
 - _internal/old/v02_33/
-
-
-
-
-## v02.33 (2026-07-26)
-
-### 變更內容
-AI 辨識流程優化（A–E），目標：使用者提供圖片時，優先採信盒子上的印刷事實，讓建檔命中欄位更多更準確。核心原則優先權：使用者選的 > 圖片實讀(img) > 資料庫(db) > AI知識推斷(ai)。
-
-- **[A] 純圖片模式補上資料庫查詢**：`doAnalyze()` 原本辨識完直接 AI 補全、完全沒查資料庫。現在改成 AI 辨識 → 資料庫交叉比對（攻略走 ISBN、其餘走 crossRef）→ AI 補剩餘空欄，跟 combo 模式同一套管線；任一步失敗都有 `_aiOnly()` fallback。
-- **[B] 來源可信度分級 + 合併保護**：視覺辨識 schema 新增 `_from_image` 欄位（AI 標注「哪些欄位是實際從圖片印刷內容讀到的」，知識推斷的不列）；系統提示 `_SYS_TAIL` 加「來源標注（必填）」指示段。新增共用合併函式 `_mergeDbIntoEntry(db)`：事實類欄位（開發商/發行商/發行日/類型/人數/分級/系列）若來源是 img 且有值，資料庫不覆蓋；summary 需含中文且非 img 才採用；版本類欄位只補空。三個進入點（combo 的 applyAIResult、gcode 的 applyMultiDbResult、純圖片的 doAnalyze）統一套用。順帶修復 combo 路徑原本 `_src` 因 Object.assign 重建 entry 而遺失的既有 bug（改成先存區域變數、entry 重建後再掛回）。
-- **[C] 條碼＋照片模式支援加拍封底**：combo 建檔頁新增「②b 加拍封底（選填）」拍照/相簿鈕；封底是事實密度最高的一面（條碼/編號/發行日/語言/人數都在那）。runAI 改收封面＋封底兩張圖，prompt 說明圖片順序並提示封底事實密集。封底暫存原圖，doSave 時由 `_compressAndSave` 統一壓縮三張圖到 Sheets 上限（已確認安全）。
-- **[D] 商品編號當第二把查詢鑰匙**：資料庫查詢鍵改為備用鏈「條碼 > 商品編號(code) > 名稱」，條碼查不到時用封底印的型號（如 GC-CC-NP-...）。
-- **[E] 封底條碼由 AI 讀取**：BarcodeDetector 掃不到條碼時，AI 可從封底照片直接讀出條碼數字，多一層備援。
-
-自我檢查：`node --check` 語法通過；無 U+FFFD；CSS 花括號 594/594 配對；抽取真實 `_mergeDbIntoEntry` 原始碼（非重寫）跑 17 項合併規則測試全過，核心情境（韓版盒子發行日不被日版資料庫覆蓋）驗證通過。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_33_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（純前端流程調整，未動 GAS 後端）
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-32 → retrovault-v02-33
-
-### 對應備份
-- _internal/old/v02_32/

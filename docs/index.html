@@ -2417,7 +2417,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.36';
+const APP_VERSION='v02.37';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9908,7 +9908,10 @@ function _pickBestPrimaryName(){
 function showForm(src){
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
-  $('bar-sec').style.display='none';$('img-sec').style.display='none';
+  // v02.37：原本只手動隱藏 bar-sec/img-sec，是舊模式年代寫的，後來新增的
+  // combo/gcode-combo/digital-link/aiweb 等模式都沒被涵蓋，導致 AI 辨識完進表單時
+  // 上一步的區塊（如條碼+照片的拍照/AI按鈕）還留在畫面上。改用 hideAllSecs() 涵蓋全部。
+  hideAllSecs();
   // 手動建檔直接進表單，保留返回列；其他模式表單階段隱藏（用底部 ✕）
   var _mbb=$('mode-back-bar');
   if(_mbb)_mbb.style.display=(src==='手動建檔')?'flex':'none';

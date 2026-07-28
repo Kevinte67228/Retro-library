@@ -1175,6 +1175,23 @@ body{
             <div id="scan-step2-preview" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden">
               <img id="scan-preview-img" alt="掃描預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
             </div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px;overflow:hidden;white-space:nowrap">
+              <span style="font-size:12px;color:#ce93d8;font-weight:700;flex:0 0 auto">加拍封底</span>
+              <span style="font-size:10px;color:#7986cb;overflow:hidden;text-overflow:ellipsis">（選填，可提升欄位命中率）</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
+                📷 拍封底
+                <input type="file" accept="image/*" capture="environment" style="display:none" id="combo-back-cam" onchange="scanStep2BackPhoto(this)">
+              </label>
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
+                🖼 相簿
+                <input type="file" accept="image/*" style="display:none" id="combo-back-gal" onchange="scanStep2BackPhoto(this)">
+              </label>
+            </div>
+            <div id="scan-step2b-preview" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden">
+              <img id="scan-preview-back-img" alt="封底預覽" style="width:100%;max-height:180px;object-fit:contain;background:#0f1525">
+            </div>
             <div style="display:flex;gap:10px;margin-top:4px">
               <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
               <button id="combo-ai-btn" class="btn bp bw" style="flex:1;font-size:14px" onclick="comboSearchFromInput()" type="button">✨ 資料庫查詢＋AI 辨識</button>
@@ -2400,7 +2417,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.31';
+const APP_VERSION='v02.36';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3475,6 +3492,10 @@ const DIGITAL_PLATFORM_VALUES=['PlayStation 3','PlayStation 4','PlayStation 5','
 const DIGITAL_PLATFORMS=PLATFORMS.filter(function(p){return DIGITAL_PLATFORM_VALUES.indexOf(p.v)>=0;});
 
 // ── AI 分類規格：四類的角色／項目標籤／欄位語意／限制（v24.03）──
+// 🤖🤖🤖 ═══ AI 辨識區塊 START（1/2：提示規格與系統提示建構）═══ 🤖🤖🤖
+// 範圍：AI_CAT_SPEC ~ buildSYS()（下方至「// ── State ──」前）
+// 內容：各分類/子類型的 AI 辨識欄位規格定義（AI_CAT_SPEC／ARTBOOK_AI_SPEC）、
+//       依分類/子類型取用規格的 _aiSpecFor()、視覺辨識用的系統提示字串組裝（buildSYS 等）
 //   視覺辨識（buildSYS）與文字補全（aiKnowledgeFill）共用的單一事實來源。
 //   fields：{ 欄位名: 人類可讀說明 }；文字補全直接拿來問缺漏欄位，視覺辨識（主機/週邊）由 buildSYS 即時渲染成 schema 區塊。
 var AI_CAT_SPEC={
@@ -3698,6 +3719,9 @@ const _SYS_TAIL=`═══ 收藏欄位（固定值）═══
 collect_status="收藏中"
 buy_date="2099/01/01" buy_price="0" buy_source="全新購入" rating="N/A"
 
+═══ 來源標注（必填）═══
+_from_image: 字串陣列。列出你「實際從圖片印刷內容上讀到」的欄位名（例如 ["barcode","release_date","publisher","code","voice_language"]）。封底通常印有條碼/產品編號/發行日/語言規格/遊玩人數等，讀到什麼列什麼；由你的知識推斷、圖片上看不到的欄位絕對不要列入。這個標注決定欄位可信度層級，務必誠實。
+
 鐵律：code/barcode 嚴格 OCR，看不清絕對留空，禁止腦補。只輸出 JSON，不要 markdown。`;
 
 // 主機/週邊的視覺 schema 區塊由 AI_CAT_SPEC 即時渲染（欄位語意維持單一來源）；遊戲/攻略沿用手調 prose
@@ -3737,6 +3761,8 @@ function buildSYS(){
   }
   return head+'\n\n'+_SYS_COMMON+'\n\n'+catBlocks+'\n\n'+_SYS_TAIL+_regionCtx();
 }
+
+// 🤖🤖🤖 ═══ AI 辨識區塊 END（1/2）═══ 🤖🤖🤖
 
 // ── State ──
 var cfg={}, entry={}, edited=new Set(), col=[], filtered=[], activeF='all', detailRow=null;
@@ -5427,6 +5453,10 @@ function translateOpenAIError(status, msg){
   if(msg)return 'OpenAI 錯誤：'+msg.slice(0,80)+'（請至 platform.openai.com 確認帳號狀態）';
   return 'OpenAI HTTP 錯誤 '+status;
 }
+// 🤖🤖🤖 ═══ AI 辨識區塊 START（2/2：核心呼叫引擎）═══ 🤖🤖🤖
+// 範圍：translateGeminiError() ~ testGemini()（下方至「Giant Bomb API 查詢」banner前）
+// 內容：Gemini/GPT/DeepSeek 呼叫封裝（callGemini／callGeminiOCR／callHybridVision／callAIVision）、
+//       錯誤訊息轉譯、JSON 擷取、第二階段文字補全（aiCompleteMissing／aiKnowledgeFill）、連線測試
 function translateGeminiError(status, msg){
   var m=msg.toLowerCase();
   if(status===429||m.indexOf('quota')>=0||m.indexOf('rate')>=0){
@@ -5497,7 +5527,9 @@ var GEMINI_SCHEMA={
     rating:{type:'STRING'},summary:{type:'STRING'},
     ref_link:{type:'STRING'},cover_img:{type:'STRING'},
     back_img:{type:'STRING'},spine_img:{type:'STRING'},
-    related_code:{type:'STRING'},notes:{type:'STRING'}
+    related_code:{type:'STRING'},notes:{type:'STRING'},
+    // v02.33（B）：AI標注「實際從圖片印刷內容讀到」的欄位名清單，供合併時保護不被資料庫覆蓋
+    _from_image:{type:'ARRAY',items:{type:'STRING'}}
   },
   required:['category','primary_name','collect_status']
 };
@@ -5734,6 +5766,36 @@ function _aiStr(v){
   if(typeof v==='object')return Object.keys(v).map(function(k){return _aiStr(v[k]);}).filter(Boolean).join('：');
   return (''+v).trim();
 }
+// v02.33（B）：資料庫查詢結果合併進 entry 的共用規則（combo 與純圖片模式共用）。
+// 優先權：使用者選的 > 圖片實讀（_src='img'）> 資料庫（'db'）> AI知識（'ai'）。
+// 事實類欄位資料庫原則上較可靠，但若該欄位是 AI「從圖片印刷內容實際讀到」的（img），
+// 實體盒子才是這個版本的第一手事實（例如韓版發行日 vs 資料庫回傳的日版日期），不得覆蓋。
+function _mergeDbIntoEntry(db){
+  var filled=0;
+  entry._src=entry._src||{};
+  if(!db||!Object.keys(db).length)return 0;
+  var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
+  factFields.forEach(function(k){
+    if(!db[k])return;
+    if(entry._src[k]==='img'&&(''+(entry[k]||'')).trim())return; // 圖片實讀優先，不覆蓋
+    var dv=(k==='genre')?matchGenreMulti(db[k]):db[k];
+    if(entry[k]!==dv)filled++;
+    entry[k]=dv;entry._src[k]='db';
+  });
+  // 簡介：只有當 DB 簡介含中文時才採用（否則留給 AI 補中文）；img 來源不覆蓋
+  if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)&&!(entry._src.summary==='img'&&(''+(entry.summary||'')).trim())){
+    entry.summary=db.summary;entry._src.summary='db';filled++;
+  }
+  // 版本類欄位：AI/使用者選的優先，只補空白
+  normalizeLanguageFields(db);
+  var verFields=['platform','region','voice_language','subtitle_language','media'];
+  verFields.forEach(function(k){
+    if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';filled++;}
+  });
+  if(!entry.primary_name&&db.primary_name){entry.primary_name=db.primary_name;entry._src.primary_name='db';filled++;}
+  return filled;
+}
+
 function aiCompleteMissing(cb){
   var done=function(n){if(typeof cb==='function')cb(n||0);};
   var type=entry.category||_selectedType||'遊戲';
@@ -5949,6 +6011,9 @@ function testGemini(){
   }).then(function(){toast('Gemini 連線成功 ✓ 金鑰有效','ok',4000);})
   .catch(function(e){toast('失敗：'+e.message,'er',8000);}).finally(noLoad);
 }
+
+// 🤖🤖🤖 ═══ AI 辨識區塊 END（2/2）═══ 🤖🤖🤖
+
 // ════════════════════════════════════════════════════
 // Giant Bomb API 查詢
 // ════════════════════════════════════════════════════
@@ -6090,7 +6155,7 @@ function initGameCodeComboMode(){
 // OCR 讀取遊戲編碼（純編碼模式）
 // ════════════════ 通用圖片裁切器 ════════════════
 // 任何「辨識」用途的圖片（拍照或相簿）皆先進入裁切步驟，再進入後續流程。
-var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null};
+var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null,_autoDetected:false};
 // 讀檔→開啟裁切器，回傳裁切後的 Blob（image/jpeg）。取消則 reject。
 function cropImageFile(file){
   return new Promise(function(resolve,reject){
@@ -6109,7 +6174,7 @@ function _dataUrlToBlob(durl){
 function _cropOpen(srcDataUrl,resolve,reject){
   var img=new Image();
   img.onload=function(){
-    _crop.img=img;_crop.resolve=resolve;_crop.reject=reject;
+    _crop.img=img;_crop.resolve=resolve;_crop.reject=reject;_crop._autoDetected=false; // v02.34：每張新圖重新偵測
     var ov=$('crop-ov');ov.classList.add('on');
     requestAnimationFrame(function(){ov.classList.add('vis');}); // F2：淡入，避免突兀跳轉
     // 等版面定位後再計算尺寸
@@ -6126,12 +6191,36 @@ function _cropLayout(){
   var scale=Math.min(sw/img.naturalWidth,sh/img.naturalHeight);
   var w=Math.round(img.naturalWidth*scale),h=Math.round(img.naturalHeight*scale);
   var x=Math.round((sw-w)/2),y=Math.round((sh-h)/2);
+  var prevView=_crop.view; // v02.34：resize 時用來把既有框換算到新版面
   _crop.view={x:x,y:y,w:w,h:h,scale:scale};
   var cv=$('crop-canvas');
   cv.width=sw;cv.height=sh;cv.style.width=sw+'px';cv.style.height=sh+'px';
-  // 預設裁切框：影像範圍內縮 6%
-  var ins=Math.round(Math.min(w,h)*0.06);
-  _crop.box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  // v02.34：resize（已偵測過）時保留使用者現有框，依版面比例換算，避免重置手動調整
+  if(_crop._autoDetected&&_crop.box&&prevView&&prevView.w){
+    var b=_crop.box;
+    // 既有框 → 原圖比例 → 新 view 座標
+    var fx=(b.x-prevView.x)/prevView.w, fy=(b.y-prevView.y)/prevView.h;
+    var fw=b.w/prevView.w, fh=b.h/prevView.h;
+    _crop.box={x:Math.round(x+fx*w),y:Math.round(y+fy*h),w:Math.round(fw*w),h:Math.round(fh*h)};
+    _cropDraw();_cropBind();return;
+  }
+  // 首次布局：初始裁切框優先用邊緣偵測對齊商品外框，降低手動調整機率；偵測失敗退回內縮 6%
+  var box=null;
+  try{
+    var det=detectCropBox(img); // 回傳原圖座標 {x,y,w,h}
+    if(det){
+      // 原圖座標 → 畫面座標（view 是等比置中後的顯示區）
+      var bx=x+det.x*scale, by=y+det.y*scale, bw=det.w*scale, bh=det.h*scale;
+      // 合理性防呆：偵測框過小（<影像 25%）或明顯異常時不採用
+      if(bw>=w*0.25&&bh>=h*0.25){box={x:Math.round(bx),y:Math.round(by),w:Math.round(bw),h:Math.round(bh)};}
+    }
+  }catch(e){box=null;}
+  if(!box){
+    var ins=Math.round(Math.min(w,h)*0.06);
+    box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  }
+  _crop.box=box;
+  _crop._autoDetected=true; // 標記已完成首次偵測，往後 resize 不再重置
   _cropDraw();
   _cropBind();
 }
@@ -6555,6 +6644,7 @@ function gcodeSearch(){
 }
 
 // ════ 主查詢函數（編碼+照片模式）════
+// 🤖 [AI辨識進入點] 編碼＋照片 combo 模式：先查資料庫，同時跑圖片AI辨識，兩邊結果交叉比對
 function gcodeComboSearch(){
   var code=normalizeGameCode(($('gcode-combo-inp')&&$('gcode-combo-inp').value||'').trim().toUpperCase());
   // v49.05：數位下載版的電子書子類型改走 ISBN 書籍資料庫查詢，取代遊戲交叉比對
@@ -7115,8 +7205,12 @@ function extractField(src,data,field){
 }
 
 // 套用多資料庫結果到 entry
+// 🤖 [AI辨識進入點] 合併多個資料庫查詢結果與AI辨識結果，決定最終要套用到表單的值
 function applyMultiDbResult(dbResult,code,aiResult){
   var type=_selectedType||'遊戲';
+  // v02.33（B）：解析 AI 標注的「圖片實讀」欄位；先移除避免污染 entry
+  var _fromImg=Array.isArray(aiResult&&aiResult._from_image)?aiResult._from_image:[];
+  if(aiResult)delete aiResult._from_image;
   // 基底：AI 結果（若有）
   if(aiResult&&aiResult.primary_name){
     normalizeLanguageFields(aiResult);
@@ -7124,6 +7218,9 @@ function applyMultiDbResult(dbResult,code,aiResult){
       code:code,category:type,
       platform:_selectedPlatform||aiResult.platform||''
     });
+    // v02.33（B）：掛上來源標記（img=圖片實讀，受下方 DB 覆蓋保護）
+    entry._src=entry._src||{};
+    Object.keys(aiResult).forEach(function(k){if(aiResult[k])entry._src[k]=_fromImg.indexOf(k)>=0?'img':'ai';});
   }
   // ── req1：DB 來源只有在「條碼」+「遊戲名稱」皆吻合時才採用，否則交由 AI 判斷 ──
   // 條碼為查詢鍵（條碼庫有回傳代表條碼吻合）；再比對名稱以排除錯誤對應的商品。
@@ -7149,7 +7246,9 @@ function applyMultiDbResult(dbResult,code,aiResult){
     dbFields.forEach(function(k){
       if(dbResult[k]){
         if(k==='primary_name'&&entry.zh_name)return; // 保留 AI 的中文名
+        if(entry._src&&entry._src[k]==='img'&&(''+(entry[k]||'')).trim())return; // v02.33（B）：圖片實讀優先，不覆蓋
         entry[k]=dbResult[k];
+        entry._src=entry._src||{};entry._src[k]='db';
       }
     });
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
@@ -8411,6 +8510,7 @@ function aiWebScanBarcode(){
 function aiWebNameOCR(input){
   nameFieldOCR(input,'aiweb-subject','zh',function(){_aiWebInputMethod='photo';_aiWebRenderInputMethod();});
 }
+// 🤖 [AI辨識進入點] AI網頁查詢模式：不直接呼叫API，是組好prompt讓使用者複製貼到外部AI聊天視窗，機制跟其他AI辨識不同
 function initAiWebMode(){
   pickTypeAndPlatform('aiweb',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
@@ -8653,6 +8753,7 @@ function _steamMonToDate(m){
 // ══ 掃碼三步驟流程 ══
 var _scanBC='';      // 步驟一鎖定的條碼
 var _scanImg=null;   // 步驟二拍的封面圖
+var _scanImgBack=null; // v02.33（C）：選拍的封底圖（事實密集面：條碼/編號/日期/語言）
 
 // 更新步驟指示器樣式
 function scanSetStep(n){
@@ -8682,8 +8783,10 @@ function scanGoStep2(bc){
     if(badge)badge.style.display='none';
   }
   var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
+  var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
   var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
   _scanImg=null;
+  _scanImgBack=null; // v02.33（C）
   scanSetStep(2);
 }
 
@@ -8705,6 +8808,22 @@ function scanStep2Photo(input){
   }).catch(function(){});
 }
 
+// v02.33（C）：選拍封底（比照 scanStep2Photo；封底是事實密集面，可大幅提升欄位命中）
+function scanStep2BackPhoto(input){
+  var f=input.files&&input.files[0];if(!f)return;
+  input.value='';
+  cropImageFile(f).then(function(blob){
+  _scanImgBack=blob;
+  var r=new FileReader();
+  r.onload=function(){
+    var prev=$('scan-step2b-preview');
+    var img=$('scan-preview-back-img');
+    if(prev&&img){prev.style.display='block';img.src=r.result;}
+  };
+  r.readAsDataURL(blob);
+  }).catch(function(){});
+}
+
 // 步驟三：AI 辨識
 function scanStep3AI(){
   if(!cfg.gkey&&!cfg.okey){toast('請先在設定頁填入 AI 金鑰','er');showPg('cfg');return;}
@@ -8720,7 +8839,7 @@ function scanStep3AI(){
 
   // ISBN：先查書籍資料庫（v18.01 兩段式：openBD＋NDL → Open Library），有結果直接帶入（省 AI token）
   var isISBN=bc.startsWith('978')||bc.startsWith('979');
-  if(isISBN&&!_scanImg){
+  if(isISBN&&!_scanImg&&!_scanImgBack){
     bookLookupPromise(bc).then(function(bk){
       noLoad();if(aiBtn){aiBtn.disabled=false;}
       if(bk){
@@ -8736,17 +8855,21 @@ function scanStep3AI(){
     return;
   }
 
-  // 壓縮封面圖並送 AI
-  function runAI(coverB64){
+  // 壓縮封面（＋選拍的封底）圖並送 AI
+  function runAI(coverB64,backB64){
     var platHint=_selectedPlatform?('平台：'+_selectedPlatform+'。'):'';
     var typeHint=type==='攻略'?'建檔類型：書籍。':'';
     var bcHint=bc?('條碼：'+bc+'。'):'';
     var regionHint='商品區域：'+(_REGION_LABELS[_region]||'不明')+'。'; // v23.03
+    // v02.33（C）：有封底時說明圖片順序，並提示封底是事實密集面（條碼/編號/日期/語言等）
+    var imgHint=(coverB64&&backB64)?'圖片依序為【封面】與【封底】，封底通常印有條碼、產品編號、發行日、語言規格、遊玩人數，請仔細讀取。'
+      :(backB64?'圖片為【封底】，通常印有條碼、產品編號、發行日、語言規格、遊玩人數，請仔細讀取。':'');
     var promptTxt=typeHint+platHint+bcHint+
-      regionHint+'請根據圖片辨識這款遊戲（或書籍），僅輸出 JSON 物件，不加說明文字。summary 請用繁體中文，限 200 字。'; // v23.03 region
+      regionHint+imgHint+'請根據圖片辨識這款遊戲（或書籍），僅輸出 JSON 物件，不加說明文字。summary 請用繁體中文，限 200 字。'; // v23.03 region
 
     var aiParts=[];
     if(coverB64)aiParts.push({inlineData:{mimeType:'image/jpeg',data:coverB64}});
+    if(backB64)aiParts.push({inlineData:{mimeType:'image/jpeg',data:backB64}}); // v02.33（C）
     aiParts.push({text:promptTxt});
 
     // 統一走 callAIVision（依 cfg.aipref 選擇引擎；auto 模式 GPT 失敗自動轉 Gemini）
@@ -8761,11 +8884,15 @@ function scanStep3AI(){
       toast('AI 結果為空。'+(window._lastAIDiag||'無診斷資訊'),'er',12000);
       showForm('掃碼建檔');return;
     }
+    // v02.33（B）：解析 AI 標注的「圖片實讀」欄位清單；先從 res 移除避免污染 entry
+    var _fromImg=Array.isArray(res._from_image)?res._from_image:[];
+    delete res._from_image;
     // 若 primary_name 為空，嘗試從各語言名稱補上
     if(!res.primary_name)res.primary_name=res.zh_name||res.jp_name||res.en_name||res.title||res.name||'';
-    // 記錄欄位來源：AI 填的標記為 'ai'
-    entry._src=entry._src||{};
-    Object.keys(res).forEach(function(k){if(res[k])entry._src[k]='ai';});
+    // 記錄欄位來源：圖片實讀標 'img'（合併時受保護），知識推斷標 'ai'
+    // v02.33：先存進區域變數，entry 重建後再掛回（修復原本 _src 因 Object.assign 重建而遺失的問題）
+    var srcMap={};
+    Object.keys(res).forEach(function(k){if(res[k])srcMap[k]=_fromImg.indexOf(k)>=0?'img':'ai';});
     // 若補全後仍為空，顯示診斷
     if(!res.primary_name){
       toast('AI 未辨識出名稱。'+(window._lastAIDiag||''),'er',12000);
@@ -8778,6 +8905,7 @@ function scanStep3AI(){
       category:type, // 類別以用戶在開頭選擇者為準（AI 僅能判遊戲/攻略，不得覆蓋）
       platform:_selectedPlatform||res.platform||''
     });
+    entry._src=srcMap; // v02.33：掛回來源標記
     if(!entry.primary_name)entry.primary_name=entry.zh_name||entry.jp_name||entry.en_name||'';
     if(_savedBackApply)entry.back_img=_savedBackApply;
     if(_savedSpineApply)entry.spine_img=_savedSpineApply;
@@ -8792,37 +8920,15 @@ function scanStep3AI(){
     }
     if(!entry.ref_link&&entry.primary_name)
       entry.ref_link=googleRefLink(entry.primary_name,entry.platform);
-    // AI 辨識後：用條碼/名稱觸發七庫交叉比對，補全 AI 沒填的欄位
+    // AI 辨識後：用條碼/編碼/名稱觸發七庫交叉比對，補全 AI 沒填的欄位
     showForm('掃碼 AI 建檔'); // 先顯示 AI 結果，資料庫補全在背景進行
     cdMaybeAutoSearch(); // v01.02：日系資料庫背景比對，與下方交叉比對並行，不互相等待
     if(entry.primary_name&&_selectedType!=='攻略'){
-      // 優先用條碼查（更精準），其次用名稱
-      var queryKey=bc||entry.primary_name;
+      // v02.33（D+E）：查詢鍵備用鏈——掃到/AI讀到的條碼 > 圖片上的商品編號 > 名稱
+      var queryKey=(entry.barcode||'').trim()||(entry.code||'').trim()||entry.primary_name;
       loading('資料庫比對補全中...');
       crossRefLookupPromise(queryKey,entry.primary_name).then(function(db){
-        var filled=0;
-        entry._src=entry._src||{};
-        if(db&&Object.keys(db).length){
-          // 事實類欄位：資料庫優先（summary/ref_link 另外處理）
-          var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
-          factFields.forEach(function(k){
-            if(db[k]){
-              var dv=(k==='genre')?matchGenreMulti(db[k]):db[k]; // 多類型標準化
-              if(entry[k]!==dv)filled++;entry[k]=dv;entry._src[k]='db';
-            }
-          });
-          // 簡介：只有當 DB 簡介含中文時才採用，否則留給 AI 階段補中文
-          if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)){
-            entry.summary=db.summary;entry._src.summary='db';filled++;
-          }
-          // 版本類欄位：AI/使用者選的優先
-          normalizeLanguageFields(db);
-          var verFields=['platform','region','voice_language','subtitle_language','media'];
-          verFields.forEach(function(k){
-            if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';filled++;}
-          });
-          if(!entry.primary_name&&db.primary_name){entry.primary_name=db.primary_name;entry._src.primary_name='db';filled++;}
-        }
+        var filled=_mergeDbIntoEntry(db); // v02.33（B）：共用合併規則，img 來源欄位不被覆蓋
         _carrySelPlat();_carrySelRegion();_carrySelSubtype();
         _applyBuyDateFromRelease();
         renderForm();
@@ -8893,19 +8999,31 @@ function scanStep3AI(){
     toast('AI 辨識失敗：'+_friendlyError(e.message),'er',6000);
   }
 
-  if(_scanImg){
-    var r=new FileReader();
-    r.onload=function(){
-      // 直接用原始圖送 AI（最高辨識率），存 Sheets 在 doSave 時才壓縮
-      var raw=r.result;
-      entry._raw_cover=raw; // 暫存原圖，doSave 時壓縮
-      var b64=raw.indexOf(',')>=0?raw.split(',')[1]:raw; // 防護：確保去掉前綴
-      runAI(b64);
-    };
-    r.readAsDataURL(_scanImg);
+  // v02.33（C）：同時讀取封面與選拍的封底
+  function _blobToDataURL(blob){
+    return new Promise(function(ok,ng){
+      var r=new FileReader();
+      r.onload=function(){ok(r.result);};
+      r.onerror=function(){ng(new Error('圖片讀取失敗'));};
+      r.readAsDataURL(blob);
+    });
+  }
+  if(_scanImg||_scanImgBack){
+    Promise.all([
+      _scanImg?_blobToDataURL(_scanImg):Promise.resolve(''),
+      _scanImgBack?_blobToDataURL(_scanImgBack):Promise.resolve('')
+    ]).then(function(arr){
+      var rawC=arr[0],rawB=arr[1];
+      // 直接用原始圖送 AI（最高辨識率），存 Sheets 在 doSave 時才壓縮（_compressAndSave 統一處理三張圖）
+      if(rawC)entry._raw_cover=rawC;
+      if(rawB)entry.back_img=rawB;
+      var b64c=rawC?(rawC.indexOf(',')>=0?rawC.split(',')[1]:rawC):'';
+      var b64b=rawB?(rawB.indexOf(',')>=0?rawB.split(',')[1]:rawB):'';
+      runAI(b64c,b64b);
+    }).catch(onAIFail);
   }else{
     // 無圖片，只用條碼
-    runAI('');
+    runAI('','');
   }
 }
 
@@ -8936,9 +9054,10 @@ function initComboMode(){
     hideAllSecs();
     $('combo-sec').style.display='block';
     // v26.06：單頁版面（比照編碼＋照片），重置狀態
-    _scanBC='';_scanImg=null;
+    _scanBC='';_scanImg=null;_scanImgBack=null; // v02.33（C）：封底一併重置
     var bi=$('combo-bar-inp');if(bi)bi.value='';
     var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
+    var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
     var aiBtn=$('combo-ai-btn');if(aiBtn){aiBtn.disabled=false;aiBtn.textContent='✨ 資料庫查詢＋AI 辨識';}
     var s2lbl=$('combo-step2-lbl');var _lb=_gcodeLabels(type);if(s2lbl&&_lb&&_lb.step2)s2lbl.textContent=_lb.step2;
     entry=Object.assign({},_defaultsFor(type),{category:type,platform:platform||''});
@@ -9073,9 +9192,10 @@ function comboScanFromBtn(){
     detectText:'正在偵測條碼',
     resultToast:function(v){return '已帶入條碼：'+v;}}); // 僅回填欄位
 }
+// 🤖 [AI辨識進入點] 條碼＋照片 combo 模式：條碼查資料庫 + 封面照片AI辨識並行，交叉比對
 function comboSearchFromInput(){
   var bi=$('combo-bar-inp');var v=(bi&&bi.value||'').trim();
-  if(!v&&!_scanImg){toast('請掃描／輸入條碼，或先拍攝封面','er');return;}
+  if(!v&&!_scanImg&&!_scanImgBack){toast('請掃描／輸入條碼，或先拍攝封面/封底','er');return;}
   if(v&&!confirmBarcodeDup(v)){return;} // 與原流程一致的重複條碼防護
   _scanBC=v;
   scanStep3AI();
@@ -9231,6 +9351,7 @@ function fscanCancel(){
   }
   var cb=_fscanOpt&&_fscanOpt.onCancel;fscanClose();if(typeof cb==='function')cb();
 }
+// 🤖 [AI辨識進入點] 拍照OCR掃描條碼模式：擷取畫面送Gemini辨識條碼數字
 function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
   if(_fscanBusy)return;
   var v=$('fscan-video');if(!v||!v.videoWidth){toast('相機尚未就緒，請稍候','er');return;}
@@ -9595,6 +9716,7 @@ function resetSlots(){
   var ab=$('ai-btn-wrap');if(ab)ab.style.display='block';
 }
 
+// 🤖 [AI辨識進入點] 圖片辨識模式初始化（純拍照/選圖辨識，不經過條碼/編碼查詢）
 function initImgMode(){
   pickTypeAndPlatform('img',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
@@ -9606,6 +9728,7 @@ function initImgMode(){
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   });
 }
+// 🤖 [AI辨識進入點] 實際觸發圖片AI辨識並把結果套進表單欄位（initImgMode模式的核心動作）
 function doAnalyze(){
   // 從 slot 收集圖片
   var slotOrder=[
@@ -9653,6 +9776,11 @@ function doAnalyze(){
       toast('AI 辨識不完整，請補充遊戲名稱','',3000);
     }
     var type=_selectedType||'遊戲';
+    // v02.33（B）：解析「圖片實讀」欄位清單；先移除避免污染 entry
+    var _fromImg=Array.isArray(res&&res._from_image)?res._from_image:[];
+    if(res)delete res._from_image;
+    var srcMap={};
+    if(res)Object.keys(res).forEach(function(k){if(res[k])srcMap[k]=_fromImg.indexOf(k)>=0?'img':'ai';});
     // 先備份圖片（Object.assign 會用 DEFAULTS 的空值覆蓋）
     var _savedCover=entry.cover_img||'';
     var _savedBack=entry.back_img||'';
@@ -9662,6 +9790,7 @@ function doAnalyze(){
       category:type,
       platform:_selectedPlatform||(res&&res.platform)||''
     });
+    entry._src=srcMap; // v02.33（B）：掛上來源標記（img受合併保護）
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
     if(!entry.primary_name)entry.primary_name=entry.zh_name||entry.jp_name||entry.en_name||'';
     // 還原圖片（優先 tasks 存入的，其次 AI 回傳的）
@@ -9669,7 +9798,42 @@ function doAnalyze(){
     if(_savedBack)entry.back_img=_savedBack;
     if(_savedSpine)entry.spine_img=_savedSpine;
     showForm('AI 圖片辨識');
-    aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
+    // ── v02.33（A）：純圖片模式補上資料庫查詢（原本這條路徑完全沒查資料庫）──
+    // 查詢鍵備用鏈（D+E）：AI 從圖片讀到的條碼 > 商品編號 > 名稱
+    cdMaybeAutoSearch(); // 日系資料庫背景比對（僅日本區+遊戲時實際查詢），與下方並行
+    var _q=(entry.barcode||'').trim()||(entry.code||'').trim();
+    var _isISBN=_q.indexOf('978')===0||_q.indexOf('979')===0;
+    function _aiOnly(){aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);});}
+    if(catInternal(type)==='攻略'){
+      if(_isISBN){
+        loading('ISBN 資料庫比對中...');
+        bookLookupPromise(_q).then(function(bk){
+          var f=0;
+          if(bk){
+            entry._src=entry._src||{};
+            Object.keys(bk).forEach(function(k){
+              // 書籍資料庫只補空欄；img 來源不覆蓋（與 _mergeDbIntoEntry 同精神）
+              if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';f++;}
+            });
+            renderForm();
+          }
+          aiCompleteMissing(function(n){toast('✓ 資料庫補 '+f+' 欄，AI 補 '+n+' 欄','ok',4000);});
+        }).catch(function(){noLoad();_aiOnly();});
+      }else{
+        _aiOnly();
+      }
+    }else if(entry.primary_name){
+      loading('資料庫比對補全中...');
+      crossRefLookupPromise(_q||entry.primary_name,entry.primary_name).then(function(db){
+        var filled=_mergeDbIntoEntry(db); // 共用合併規則：img 來源不被覆蓋
+        _carrySelPlat();_carrySelRegion();_carrySelSubtype();
+        if(typeof _applyBuyDateFromRelease==='function')_applyBuyDateFromRelease();
+        renderForm();
+        aiCompleteMissing(function(n){toast('✓ 資料庫補 '+filled+' 欄，AI 補 '+n+' 欄','ok',4500);});
+      }).catch(function(){noLoad();_aiOnly();});
+    }else{
+      _aiOnly();
+    }
   }).catch(function(e){
     if(e&&e.cancelled)return; // 使用者取消：cancelAI 已處理 UI
     console.error('[doAnalyze]',e);
