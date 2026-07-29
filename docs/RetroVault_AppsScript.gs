@@ -637,6 +637,69 @@ function cleanupOrphanImages() {
   if (!orphans.length) Logger.log('✓ 沒有孤兒檔需要清除');
   return { ok: true, trashed: orphans.length, list: orphans };
 }
+
+// ── v02.52：圖片健康檢查（診斷用，不會刪除或修改任何資料）─────────────────
+// 掃描所有列的 cover_img/back_img/spine_img/extra_images，對每個 Drive ID 實際去問
+// Google Drive「這個檔案現在還開得了嗎」，抓出「Sheet 裡寫著 ID、但 Drive 上有問題」的項目，
+// 分成兩種狀態：trashed（還在垃圾桶，可還原）／notfound（垃圾桶已清空或ID有誤，救不回來）。
+// 用法：Apps Script 編輯器函式選單選 auditMissingImages 執行，結果在「執行紀錄」查看。
+function checkFileStatus_(id) {
+  try {
+    const f = DriveApp.getFileById(id);
+    return f.isTrashed() ? 'trashed（垃圾桶內，可還原）' : 'ok';
+  } catch (e) {
+    return 'notfound（已找不到，垃圾桶可能已清空或ID有誤）';
+  }
+}
+function auditMissingImages() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetDefs = [
+    [GAMES_SHEET, GAME_HEADERS], [BOOKS_SHEET, BOOK_HEADERS],
+    [CONSOLE_SHEET, CONSOLE_HEADERS], [PERIPH_SHEET, PERIPH_HEADERS],
+    [HUNT_SHEET, HUNT_HEADERS],
+    [DIGIGAME_SHEET, DIGIGAME_HEADERS], [DIGIDLC_SHEET, DIGIDLC_HEADERS],
+    [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
+    [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
+    [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS],
+    [OSTMAIN_SHEET, OSTMAIN_HEADERS], [OSTSINGLE_SHEET, OSTSINGLE_HEADERS],
+    [OSTCHAR_SHEET, OSTCHAR_HEADERS], [OSTDRAMA_SHEET, OSTDRAMA_HEADERS], [OSTLIVE_SHEET, OSTLIVE_HEADERS],
+    [ANMANGA_SHEET, ANMANGA_HEADERS], [ANARTBOOK_SHEET, ANARTBOOK_HEADERS],
+    [ANSETTING_SHEET, ANSETTING_HEADERS], [ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS],
+    [ANMAG_SHEET, ANMAG_HEADERS], [ANTV_SHEET, ANTV_HEADERS], [ANMOVIE_SHEET, ANMOVIE_HEADERS], [ANOTHER_SHEET, ANOTHER_HEADERS],
+    [FIGSCALE_SHEET, FIGSCALE_HEADERS], [FIGACTION_SHEET, FIGACTION_HEADERS], [FIGNENDO_SHEET, FIGNENDO_HEADERS],
+    [FIGPRIZE_SHEET, FIGPRIZE_HEADERS], [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
+  ];
+  const results = [];
+  const checked = {}; // 同一個ID只查一次Drive（省時間），但每個引用它的列都要記錄進結果
+  sheetDefs.forEach(function(def) {
+    const sheet = ss.getSheetByName(def[0]);
+    if (!sheet || sheet.getLastRow() < 2) return;
+    const headers = def[1];
+    const nameIdx = headers.indexOf('primary_name');
+    const colDefs = IMG_COLS.map(function(c) { return { col: c, idx: headers.indexOf(c) }; }).filter(function(o) { return o.idx >= 0; });
+    const eiIdx = headers.indexOf(EXTRA_IMG_COL);
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+    data.forEach(function(row, i) {
+      const rowNum = i + 2;
+      const name = nameIdx >= 0 ? row[nameIdx] : '(無名稱欄位)';
+      function checkAndRecord(id, fieldLabel) {
+        if (!isDriveId(id)) return;
+        if (!(id in checked)) checked[id] = checkFileStatus_(id);
+        if (checked[id] !== 'ok') results.push({ sheet: def[0], row: rowNum, name: name, field: fieldLabel, id: id, status: checked[id] });
+      }
+      colDefs.forEach(function(o) { checkAndRecord(row[o.idx], o.col); });
+      if (eiIdx >= 0) extractExtraImageIds(row[eiIdx]).forEach(function(id) { checkAndRecord(id, EXTRA_IMG_COL); });
+    });
+  });
+  Logger.log('=== 圖片健康檢查報告：共 %s 個異常（已檢查 %s 個不重複的圖片ID）===', results.length, Object.keys(checked).length);
+  results.forEach(function(r) {
+    Logger.log('[%s] 第%s列「%s」欄位=%s → ID=%s → 狀態：%s', r.sheet, r.row, r.name, r.field, r.id, r.status);
+  });
+  if (!results.length) Logger.log('✓ 全部圖片檔案都正常，沒有異常');
+  else Logger.log('提示：status=trashed 的項目可到 Google Drive 垃圾桶搜尋該 ID 或檔名還原；notfound 的項目垃圾桶內可能已經找不到了');
+  return { ok: true, total: results.length, list: results };
+}
+
  
 // ── GET handler ───────────────────────────────────
 function doGet(e) {
