@@ -1,3 +1,22 @@
+## GAS 新增診斷工具：圖片健康檢查 (2026-07-26，純後端，無前端版號異動)
+
+### 變更內容
+新增 `auditMissingImages()` 診斷函式，配合前一版的圖片誤刪漏洞修復使用，幫使用者精準定位哪些記錄的圖片檔案在 Drive 上失效了：
+
+- 掃描所有 32 張工作表每一列的 `cover_img`／`back_img`／`spine_img`／`extra_images`，對每個不重複的 Drive ID 實際查詢 Google Drive
+- 分兩種異常狀態：`trashed`（還在垃圾桶內，可還原）／`notfound`（垃圾桶已清空或 ID 有誤，救不回來）
+- 結果列出「哪張工作表／第幾列／商品名稱／哪個欄位／ID／狀態」，使用者可以照清單直接去 Drive 垃圾桶搜尋對應 ID 或檔名還原，不用整批用眼睛找哪張圖是破圖
+- 純診斷、不會刪除或修改任何資料；沿用既有 `auditOrphanImages()` 同一套「Apps Script 編輯器函式選單手動執行、結果看執行紀錄」的操作慣例，沒有另外設計新的觸發方式
+
+自我檢查：`node --check`（.gs 副檔名改 .js 檢查）語法通過；無 U+FFFD；確認函式內引用的所有既有常數/函式（`IMG_COLS`／`EXTRA_IMG_COL`／`isDriveId`／`extractExtraImageIds`／32 張工作表對應常數）都存在。
+
+### 影響檔案
+- docs/RetroVault_AppsScript.gs（GitHub Actions 自動部署到 Apps Script，執行成功）
+
+### GS 版本
+- 新增診斷用函式，不影響既有功能行為，純後端修正
+
+
 ## GAS 緊急修復：圖片遭誤刪的資料遺失漏洞 (2026-07-26，純後端，無前端版號異動)
 
 ### 變更內容
@@ -71,30 +90,3 @@
 
 ### 對應備份
 - _internal/old/v02_48/
-
-
-## v02.48 (2026-07-26)
-
-### 變更內容
-批次書背資料庫比對依使用者要求細分：**ScreenScraper 用平台＋序號，其他資料庫用平台＋品名**。
-
-上一版（v02.47）為了避免 OCR 序號誤差把 ScreenScraper 也一併改成只用品名比對，但 ScreenScraper 本身就是為日版序號精確比對設計的資料庫、且 `ssSearch()` 早就會用 `_selectedPlatform` 帶入 `systemeid` 參數（本來就是平台感知的查詢），這次改回讓它吃得到序號：
-
-- `entry.code` 改回提早帶入（DB 查詢前就設好），讓 ScreenScraper 內部的 `_codeSerial` 機制能抓到序號
-- 傳給 `crossRefLookupPromise` 的查詢字串仍維持「品名＋平台」（`_nameQ`），這個字串只影響 Giant Bomb／IGDB／RAWG／楽天這幾家「用名稱查」的資料庫，不影響 ScreenScraper（它是獨立路徑，直接讀 `entry.code`）
-- 兩邊分工不衝突：ScreenScraper 序號查最準，其餘資料庫用品名+平台查，拿掉了 v02.47 那個「沒有品名就跳過查詢」的防護——現在即使 AI 只讀到序號、完全沒讀到品名文字，仍會呼叫查詢，讓 ScreenScraper 有機會純靠序號命中
-
-自我檢查：`node --check` 通過；無 U+FFFD；CSS 594/594；用 stub 模擬並記錄呼叫當下 `entry.code`／查詢字串快照，跑 6 項自我檢查全過，含 ScreenScraper 能拿到序號、其他資料庫查詢字串維持品名+平台不含序號、無品名純序號情境下仍會查詢、最終存檔序號正確等情境。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_48_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-47 → retrovault-v02-48
-
-### 對應備份
-- _internal/old/v02_47/
