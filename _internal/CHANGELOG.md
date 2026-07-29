@@ -1,3 +1,28 @@
+## v02.50 (2026-07-26)
+
+### 變更內容
+修正上一版誤解需求範圍：使用者要的是整個「•••」收合式 FAB 群組（含日系資料庫查詢／條碼品名查詢／拍照辨識三個功能）搬到收藏詳情頁，不是只有條碼查詢單一按鈕。同時修正位置跟翻頁浮動按鈕（`.dnav-float`，`bottom:86px`）重疊的問題：
+
+- 收藏詳情頁新增 `#det-fab-wrap` 三按鈕收合式 FAB 群組，結構、動畫、視覺樣式完全比照尋寶頁的 `#hunt-fab-wrap`；三個子功能（`openCdWebSearch`／`openBarcodeWebSearch`／`huntLensStart`）都是既有全域函式，直接沿用不重複實作
+- 位置改成 `bottom:20px`，明顯低於翻頁按鈕的 `bottom:86px`，兩者範圍（20-74px vs 86-134px）不重疊
+- `closeDetail()`／`closeDetailSilent()` 關閉詳情頁時一併收合 FAB 群組，避免下次開啟時維持展開狀態
+
+自我檢查：`node --check` 通過；無 U+FFFD；CSS 606/606；位置範圍計算確認不重疊；抽取真實函式跑 4 項自我檢查全過，含展開/收合狀態切換、子功能正確分派到對應全域函式、選擇子功能後自動收合。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_50_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-49 → retrovault-v02-50
+
+### 對應備份
+- _internal/old/v02_49/
+
+
 ## v02.49 (2026-07-26)
 
 ### 變更內容
@@ -75,28 +100,3 @@
 
 ### 對應備份
 - _internal/old/v02_46/
-
-
-## v02.46 (2026-07-26)
-
-### 變更內容
-使用者實測回報批次書背「ラチェット＆クランク」（PS2）抓到楽天市場的 PS5 版商品照。追查確認：`crossRefLookupPromise` 送給楽天市場的查詢字串（`rakuten_search` 的 `q` 參數）完全沒有帶平台資訊，只有純商品名稱／條碼。楽天是一般商城搜尋，同系列跨平台作品（PS2/PS3/PS4/PS5 都有推出的續作系列很常見）沒有平台字串很容易搜到別平台的商品照。
-
-新增 `nameQRakuten`：有平台資訊時在查詢字串後面加上平台名稱（如「ラチェット＆クランク PlayStation 2」），只套用在楽天這一條查詢，不影響其他共用 `nameQ` 的遊戲資料庫查詢（ScreenScraper／IGDB／RAWG 等多半有自己的平台篩選機制，不需要這樣處理）。
-
-自我檢查：`node --check` 通過；無 U+FFFD；CSS 594/594；4 項查詢字串組合邏輯自我檢查全過（entry.platform 優先／退回 _selectedPlatform／都沒有時維持純品名／邊界情況安全處理）。同樣無法在沙箱實際驗證真實命中率改善程度，需使用者實測。
-
-**附帶觀察（這次沒有處理）**：同一批截圖裡也看到維基百科查詢在「ドラムマニア」這筆變得更差（從機台照片變成單純 PlayStation 標誌圖示），懷疑是上一版加入平台字串後，「PlayStation 2」這個較廣泛的詞可能讓維基搜尋比對到別的、跟 PlayStation 平台本身相關但非該遊戲條目的文章。這個問題比較難在沒有實際連線驗證的情況下再繼續猜測調整，先如實記錄，之後有更多實測資料再回頭處理。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_46_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-45 → retrovault-v02-46
-
-### 對應備份
-- _internal/old/v02_45/
