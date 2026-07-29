@@ -2501,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.46';
+const APP_VERSION='v02.47';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10129,7 +10129,11 @@ function _batchResolveNext(idx){
   var _backupEntry=entry;
   entry=Object.assign({},_defaultsFor(type),{
     category:type,platform:_selectedPlatform||'',
-    primary_name:item.title_guess||'',code:item.code||''
+    primary_name:item.title_guess||''
+    // v02.47：code 這裡先不帶入。ScreenScraper 會從全域 entry.code 讀序號做比對（不受下面
+    // crossRefLookupPromise 傳入的查詢字串影響），序號因為是書背小字 OCR，容易有個位數誤差
+    // （如 65686 誤讀成 65685），用它比對容易配到錯誤商品。改成完全不用序號比對，一律用
+    // 「品名＋平台」查，序號等 DB 查詢完成後才補回 entry，只當存檔資料、不參與比對。
   });
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   function finishItem(failed){
@@ -10166,17 +10170,32 @@ function _batchResolveNext(idx){
       coverThenComplete();
     }).catch(coverThenComplete);
   }else{
-    // v02.40：查詢鍵改用品名優先（原本用序號優先，但序號字串對 ScreenScraper 以外的資料庫
-    // 如 IGDB/RAWG/楽天等，會被當成「名稱」去查，等於送出一串不是名稱的亂碼查詢，容易查到不相關結果；
-    // ScreenScraper 本身另外從全域 entry.code 讀序號做精確比對，不受這裡查詢鍵順序影響，序號查詢能力仍保留）
-    crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
+    // v02.47：查詢字串改用「品名＋平台」，完全不用序號比對——序號是書背小字OCR，容易有
+    // 個位數誤差（如65686誤讀成65685），拿去比對容易配到錯誤商品；改用品名+平台後，
+    // ScreenScraper（從全域entry.code讀序號，此時entry.code還是空的）跟其他資料庫
+    // （Giant Bomb/IGDB/RAWG/楽天）統一都改用這個帶平台的名稱字串比對。
+    var _platQ=_selectedPlatform||'';
+    var _nameQ=(item.title_guess||'')+(_platQ?' '+_platQ:'');
+    if(!item.title_guess){
+      // 完全沒有品名文字時（只有序號），不送出只剩平台字串的空洞查詢，直接跳到補封面步驟
+      // （封面步驟仍會用 entry.code 當最後備援，屬於較低風險的用法——找不到圖頂多空著，
+      // 不會像產品資料比對錯誤那樣把錯的開發商/發行日等欄位寫進收藏）
+      entry.code=item.code||'';
+      coverThenComplete();
+      return;
+    }
+    crossRefLookupPromise(_nameQ,item.title_guess).then(function(db){
+      entry.code=item.code||''; // DB查詢已完成，這時才補回序號，只當存檔資料用
       // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
       [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
         if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
       });
       _mergeDbIntoEntry(db);
       coverThenComplete();
-    }).catch(coverThenComplete);
+    }).catch(function(){
+      entry.code=item.code||''; // 查詢失敗也要補回序號，不能漏存這筆資料
+      coverThenComplete();
+    });
   }
 }
 

@@ -1,3 +1,29 @@
+## v02.47 (2026-07-26)
+
+### 變更內容
+批次書背資料庫比對完全改用「品名＋平台」，不再用序號當比對依據（使用者明確要求）：
+
+- `entry` 初始化時先不帶入 `code`，DB 查詢完成（成功或失敗）後才補回 `entry.code=item.code`——序號只當最終存檔資料，不參與比對過程
+- `crossRefLookupPromise` 的查詢字串改成 `item.title_guess+' '+平台`（如「FRONT MISSION 4 PlayStation 2」），完全不含序號
+- 這個改動連帶讓 ScreenScraper 也受益：ScreenScraper 原本會從全域 `entry.code` 讀序號做精確比對（不受查詢字串本身影響），序號是書背小字 OCR，容易有個位數誤差（先前已觀察到 65686 誤讀成 65685 等案例），用它比對容易配到錯誤商品；改成呼叫當下 `entry.code` 是空的，ScreenScraper 也會自動改用品名比對
+- 邊界防護：AI 完全沒讀到品名文字（只有序號）時，不送出只剩平台字串的空洞查詢，直接跳過資料庫查詢進入補封面步驟（封面步驟仍以 `entry.code` 當最後備援，找不到圖頂多留白，風險比錯誤的產品資料比對低很多）
+
+自我檢查：`node --check` 通過；無 U+FFFD；CSS 594/594；用 stub 模擬 `crossRefLookupPromise` 並記錄呼叫當下 `entry.code` 快照，跑 9 項自我檢查全過，含查詢字串正確組合、呼叫當下序號確實為空、查詢完成後序號正確補回存檔、無平台時不留多餘空白、完全無品名時的邊界防護等情境。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_47_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-46 → retrovault-v02-47
+
+### 對應備份
+- _internal/old/v02_46/
+
+
 ## v02.46 (2026-07-26)
 
 ### 變更內容
@@ -70,19 +96,3 @@ Google CSE 圖片搜尋始終回報 403（金鑰/憑證/計費都確認正確，
 
 ### 對應備份
 - _internal/old/v02_43/
-
-
-## GAS 後端修正 (2026-07-26，純後端，無前端版號異動)
-
-### 變更內容
-使用者回報 Google 圖片搜尋一直是 HTTP 403，懷疑是 Google 政策限制個人帳號搜尋整個網路。追查後發現實際問題：`googleImageSearchProxy()` 收到非 200 回應時，原本**直接丟棄 Google API 回應本文**、只回傳籠統的「Google CSE HTTP 403」訊息，導致真正的錯誤原因（金鑰未啟用計費／額度用完／cx 設定問題等 Google 實際回報的細節）完全看不到。修正後會解析回應本文的 `error.message`／`error.errors[0].reason`，把 Google 真正說的原因帶出來顯示在前端的測試結果與提示訊息裡（`testGCSE()`／批次書背的封面候選流程都會受益，因為兩者都是直接顯示 `error` 欄位，不需要額外改前端）。
-
-同時發現「搜尋整個網路」（Search the entire web）開關在使用者的 Programmable Search Engine 設定裡是關閉的，且限定了 19 個西方數位商店/報價網站，這解釋了封面搜尋命中率低的另一半原因——這是使用者帳號的既有設定問題，不是政策限制，已請使用者自行開啟該開關。
-
-自我檢查：`node --check`（.gs 副檔名改 .js 檢查）語法通過；無 U+FFFD。
-
-### 影響檔案
-- docs/RetroVault_AppsScript.gs（GitHub Actions 自動部署到 Apps Script，執行成功）
-
-### GS 版本
-- 有實質邏輯變更（錯誤訊息解析），但這次是獨立於前端版號之外的後端修正，未搭配前端部署，沿用目前 Apps Script 版本號慣例
