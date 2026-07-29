@@ -1073,7 +1073,16 @@ function googleImageSearchProxy(q, gcsekey, gcxid, num) {
   try {
     const res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
     const code = res.getResponseCode();
-    if (code !== 200) return { ok: false, error: 'Google CSE HTTP ' + code, imageUrl: '' };
+    if (code !== 200) {
+      // v02.44：非200時嘗試解析 Google 回應本文，把真正的錯誤原因（如金鑰未啟用計費、
+      // 額度用完、cx設定問題等）帶出來，取代原本只回傳籠統「Google CSE HTTP 403」的做法
+      let detail = '';
+      try {
+        const body = JSON.parse(res.getContentText());
+        detail = (body && body.error && (body.error.message || (body.error.errors && body.error.errors[0] && body.error.errors[0].reason))) || '';
+      } catch (parseErr) { /* 回應本文非JSON，忽略，仍回傳狀態碼 */ }
+      return { ok: false, error: 'Google CSE HTTP ' + code + (detail ? '：' + detail : ''), imageUrl: '' };
+    }
     const data = JSON.parse(res.getContentText());
     if (!data.items || !data.items.length) return { ok: false, error: '查無圖片結果', imageUrl: '' };
     return { ok: true, imageUrl: data.items[0].link, items: data.items.map(i => i.link) };

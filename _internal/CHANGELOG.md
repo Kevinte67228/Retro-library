@@ -1,3 +1,30 @@
+## v02.48 (2026-07-26)
+
+### 變更內容
+批次書背資料庫比對依使用者要求細分：**ScreenScraper 用平台＋序號，其他資料庫用平台＋品名**。
+
+上一版（v02.47）為了避免 OCR 序號誤差把 ScreenScraper 也一併改成只用品名比對，但 ScreenScraper 本身就是為日版序號精確比對設計的資料庫、且 `ssSearch()` 早就會用 `_selectedPlatform` 帶入 `systemeid` 參數（本來就是平台感知的查詢），這次改回讓它吃得到序號：
+
+- `entry.code` 改回提早帶入（DB 查詢前就設好），讓 ScreenScraper 內部的 `_codeSerial` 機制能抓到序號
+- 傳給 `crossRefLookupPromise` 的查詢字串仍維持「品名＋平台」（`_nameQ`），這個字串只影響 Giant Bomb／IGDB／RAWG／楽天這幾家「用名稱查」的資料庫，不影響 ScreenScraper（它是獨立路徑，直接讀 `entry.code`）
+- 兩邊分工不衝突：ScreenScraper 序號查最準，其餘資料庫用品名+平台查，拿掉了 v02.47 那個「沒有品名就跳過查詢」的防護——現在即使 AI 只讀到序號、完全沒讀到品名文字，仍會呼叫查詢，讓 ScreenScraper 有機會純靠序號命中
+
+自我檢查：`node --check` 通過；無 U+FFFD；CSS 594/594；用 stub 模擬並記錄呼叫當下 `entry.code`／查詢字串快照，跑 6 項自我檢查全過，含 ScreenScraper 能拿到序號、其他資料庫查詢字串維持品名+平台不含序號、無品名純序號情境下仍會查詢、最終存檔序號正確等情境。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_48_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-47 → retrovault-v02-48
+
+### 對應備份
+- _internal/old/v02_47/
+
+
 ## v02.47 (2026-07-26)
 
 ### 變更內容
@@ -71,28 +98,3 @@
 
 ### 對應備份
 - _internal/old/v02_44/
-
-
-## v02.44 (2026-07-26)
-
-### 變更內容
-Google CSE 圖片搜尋始終回報 403（金鑰/憑證/計費都確認正確，懷疑是 Google 新政策限制個人搜尋引擎全網搜尋），改走維基百科作為封面候選的新來源：
-
-- 新增 `_wikipediaCoverSearch(name, cb)`：查詢維基百科文章頁面圖片（通常是資訊框裡的正式封面/box art）。不需要 API 金鑰，MediaWiki API 本身支援跨網域請求（`origin=*`），直接前端呼叫，不用經過 GAS 後端代理。先查日文維基（對日版老遊戲命中率較高），沒結果才退回英文維基。
-- `_batchFetchCoverCandidates` 候選優先順序調整為：**資料庫（若有）→ 維基百科 → Google CSE**。CSE 呼叫仍保留沒拿掉（沒設定金鑰或持續失敗都只是安靜跳過，不影響前面已蒐集到的候選），如果 CSE 之後真的恢復正常也還能用。
-- 確認清單來源標籤新增「圖片來源：維基百科」。
-
-自我檢查：`node --check` 通過；無 U+FFFD；CSS 594/594；用 stub 模擬 fetch 回應跑 8 項自我檢查全過，含日文維基優先/無圖退回英文維基/兩邊都查無結果安全回傳/API失敗安全處理/與資料庫候選正確共存等情境。**無法在沙箱環境實際連線 Wikipedia API 驗證（網路白名單不含 wikipedia.org），解析邏輯依 MediaWiki API 文件設計，需要實機測試確認真實回應格式與命中率。**
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_44_index.html
-- docs/sw.js
-
-### GS 版本
-- 無（維基百科查詢不需要 GAS 代理，前端直接呼叫）
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-43 → retrovault-v02-44
-
-### 對應備份
-- _internal/old/v02_43/
