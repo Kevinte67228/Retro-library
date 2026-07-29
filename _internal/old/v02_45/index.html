@@ -1233,6 +1233,54 @@ body{
         <div id="batch-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
           <div style="padding:0 16px">
             <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 8 件）</div>
+            <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
+              <svg viewBox="0 0 320 170" style="width:100%;height:auto;display:block">
+                <!-- 觀景窗取景框（四角括號，示意「把商品都拍進這個框裡」） -->
+                <g stroke="#7986cb" stroke-width="2" fill="none" opacity=".6">
+                  <path d="M10 8 L10 24 M10 8 L26 8"/>
+                  <path d="M310 8 L310 24 M310 8 L294 8"/>
+                  <path d="M10 162 L10 146 M10 162 L26 162"/>
+                  <path d="M310 162 L310 146 M310 162 L294 162"/>
+                </g>
+                <!-- 一排書背朝外排列的商品（不同高度/顏色示意不同商品） -->
+                <g>
+                  <rect x="34" y="40" width="30" height="90" rx="2" fill="#3949ab"/>
+                  <rect x="34" y="40" width="30" height="22" rx="2" fill="#e8eaf6"/>
+                  <text x="49" y="54" text-anchor="middle" font-size="6" font-family="monospace" font-weight="700" fill="#1a237e">SLPM</text>
+                  <text x="49" y="60" text-anchor="middle" font-size="6" font-family="monospace" font-weight="700" fill="#1a237e">65338</text>
+
+                  <rect x="68" y="30" width="24" height="100" rx="2" fill="#00897b"/>
+                  <rect x="68" y="30" width="24" height="18" rx="2" fill="#e8eaf6"/>
+
+                  <rect x="96" y="45" width="30" height="85" rx="2" fill="#8e24aa"/>
+                  <rect x="96" y="45" width="30" height="24" rx="2" fill="#e8eaf6"/>
+                  <text x="111" y="55" text-anchor="middle" font-size="5.2" font-family="sans-serif" font-weight="700" fill="#4a148c">十二國記</text>
+                  <text x="111" y="63" text-anchor="middle" font-size="5.2" font-family="sans-serif" font-weight="700" fill="#4a148c">紅蓮の標</text>
+
+                  <rect x="130" y="35" width="24" height="95" rx="2" fill="#d81b60"/>
+                  <rect x="130" y="35" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="158" y="42" width="26" height="88" rx="2" fill="#ffa000"/>
+                  <rect x="158" y="42" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="188" y="30" width="24" height="100" rx="2" fill="#1e88e5"/>
+                  <rect x="188" y="30" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                  <rect x="216" y="48" width="26" height="82" rx="2" fill="#43a047"/>
+                  <rect x="216" y="48" width="26" height="20" rx="2" fill="#e8eaf6"/>
+                  <rect x="246" y="38" width="24" height="92" rx="2" fill="#6d4c41"/>
+                  <rect x="246" y="38" width="24" height="18" rx="2" fill="#e8eaf6"/>
+                </g>
+                <!-- 底部平面示意 -->
+                <rect x="30" y="130" width="248" height="4" rx="2" fill="#1e2a45"/>
+                <!-- 兩根書背的放大指示線＋說明文字（示範「品名」跟「商品編碼」兩種可辨識內容） -->
+                <g stroke="#555" stroke-width="1" opacity=".5">
+                  <path d="M49 40 L49 20"/>
+                  <path d="M111 45 L111 20"/>
+                </g>
+                <text x="49" y="16" text-anchor="middle" font-size="8" fill="#7986cb">商品編碼</text>
+                <text x="111" y="16" text-anchor="middle" font-size="8" fill="#7986cb">商品品名</text>
+              </svg>
+              <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:6px">範例：商品書背朝外，排成一排，一次入鏡拍攝</div>
+              <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 商品編碼或品名至少一項要能清楚辨識，太模糊會影響辨識準確度</div>
+            </div>
             <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
             <div style="display:flex;gap:8px;margin-bottom:10px">
               <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
@@ -2453,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.40';
+const APP_VERSION='v02.45';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7126,13 +7174,13 @@ function mergeMultiDbResults(results){
   // ScreenScraper 專有：封面/書背/背面圖 URL
   if(srcMap['screenscraper']){
     var _ss=srcMap['screenscraper'];
-    if(_ss.cover_url)merged.cover_url=_ss.cover_url;
+    if(_ss.cover_url){merged.cover_url=_ss.cover_url;merged._coverSrc='screenscraper';}
     if(_ss.spine_url)merged.spine_url=_ss.spine_url;
     if(_ss.back_url)merged.back_url=_ss.back_url;
   }
-  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url)merged.cover_url=srcMap['igdb'].cover_url;
-  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image)merged.cover_url=srcMap['rawg'].background_image;
-  if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image)merged.cover_url=srcMap['rakuten'].image;
+  if(!merged.cover_url&&srcMap['igdb']&&srcMap['igdb'].cover_url){merged.cover_url=srcMap['igdb'].cover_url;merged._coverSrc='igdb';}
+  if(!merged.cover_url&&srcMap['rawg']&&srcMap['rawg'].background_image){merged.cover_url=srcMap['rawg'].background_image;merged._coverSrc='rawg';}
+  if(!merged.cover_url&&srcMap['rakuten']&&srcMap['rakuten'].image){merged.cover_url=srcMap['rakuten'].image;merged._coverSrc='rakuten';}
   // F：完全沒有拉丁/中文主名時，用日文名回填 primary_name 避免空白
   if(!merged.primary_name&&merged.jp_name)merged.primary_name=merged.jp_name;
 
@@ -8168,10 +8216,14 @@ function _refreshMethodButtons(cat,subtype){
   var sub=(subtype!==undefined&&subtype!==null)?subtype:_selectedSubtype;
   var isDigital=(cat==='數位下載版');
   var showIsbn=isDigital&&_DIGI_BOOK_SUBS[sub];
+  // v02.42：批次書背只適用「遊戲」「書籍」（主機/週邊沒有排書背拍照的使用情境，拿掉）
+  // 書籍卡片內部傳的分類值實際是「攻略」（見 catInternal 正規化），改用 catInternal 比對，
+  // 直接比對原始字串'書籍'不會命中，這是 v02.41 的 bug，書籍分類批次卡一直沒出現過
+  var showBatch=(catInternal(cat)==='遊戲'||catInternal(cat)==='攻略');
   // v49.05：電子書子類型改用「ISBN＋照片」單一組合卡，取代原本分開的商品編碼(ISBN)＋圖片辨識兩張卡
   [['mb-bar',!isDigital],['mb-gcode',!isDigital],['mb-img',!showIsbn],
    ['mb-combo',!isDigital],['mb-gcode-combo',!isDigital||showIsbn],['mb-link',isDigital],
-   ['mb-aiweb',true],['mb-batch',!hasSubtype(cat)]].forEach(function(p){
+   ['mb-aiweb',true],['mb-batch',showBatch]].forEach(function(p){
     var el=$(p[0]);if(el)el.style.display=p[1]?'':'none';
   });
   var t=$('mb-gcode-combo-title'),s=$('mb-gcode-combo-sub');
@@ -8181,11 +8233,11 @@ function _refreshMethodButtons(cat,subtype){
   // 數位下載版的空格改由 mb-aiweb 補滿，不再需要動態切換寬窄
   var linkEl=$('mb-link');
   if(linkEl)linkEl.classList.remove('mb-wide');
-  // v02.39：mb-combo 寬窄依分類動態切換，讓兩種情境都能整除 4 格、不留空格——
-  // 無子類型分類（顯示批次卡）：條碼1+編碼1+圖片1+手動1+條碼照片1(窄)+編碼照片1+AI網頁1+批次1 = 8格
-  // 有子類型分類（隱藏批次卡）：條碼1+編碼1+圖片1+手動1+條碼照片2(寬)+編碼照片1+AI網頁1 = 8格
+  // v02.41：mb-combo 寬窄依「有沒有顯示批次書背」動態切換，讓各情境都整除 4 格、不留空格——
+  // 顯示批次書背（遊戲/書籍）：條碼1+編碼1+圖片1+手動1+條碼照片1(窄)+編碼照片1+AI網頁1+批次1 = 8格
+  // 不顯示批次書背（主機/週邊/子類型分類）：條碼1+編碼1+圖片1+手動1+條碼照片2(寬)+編碼照片1+AI網頁1 = 8格
   var comboEl=$('mb-combo');
-  if(comboEl)comboEl.classList.toggle('mb-wide',hasSubtype(cat));
+  if(comboEl)comboEl.classList.toggle('mb-wide',!showBatch);
 }
 // Step 3 平台選單變更：寫入 _selectedPlatform、亮色高亮、持久化記憶
 // 套用 Step3 平台選單的視覺狀態（inline style，避免行動瀏覽器對 select 改 class 不重繪）
@@ -9903,7 +9955,7 @@ var BATCH_DETECT_SCHEMA={
 };
 
 function _batchDetectPrompt(){
-  var cat=_selectedType||'遊戲';
+  var cat=catLabel(_selectedType)||'遊戲';
   var platTxt=_selectedPlatform?('，平台為「'+_selectedPlatform+'」'):'';
   return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 8 件（超過 8 件只取最左邊 8 件；忽略書背以外的背景物件）。'+
     '每一件請找出書背上印刷的商品編碼（常見格式如 SLPS-01234、SLPM-12345、SCPS-15041、CUSA-00001、VW107-J1、ULJM-05000 等，含條碼數字），這是最重要的欄位，務必仔細看；'+
@@ -9926,8 +9978,9 @@ function initBatchSpineMode(){
     $('batch-progress').style.display='none';
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
-    var lockTxt=type+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
-    $('batch-lock-note').textContent='⚠️ 本次批次全部套用：'+lockTxt+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
+    var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
+    var _cseWarn=(!cfg.gcsekey||!cfg.gcxid)?'<br><span style="color:#ffb74d">⚠️ 尚未設定 Google 圖片搜尋金鑰，封面候選只會有資料庫查到的 1 張（如果查到的話），沒有其他候選可挑。到「設定」頁填入 Google API Key + Search Engine ID 可以取得更多候選圖。</span>':'';
+    $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。'+_cseWarn;
   });
 }
 
@@ -9986,8 +10039,74 @@ function batchDetectStart(){
   r.readAsDataURL(_batchImgFile);
 }
 
+// v02.44：維基百科封面搜尋。不需要API金鑰，MediaWiki API本身支援跨網域請求（origin=*參數），
+// 可直接前端呼叫不用經過GAS後端代理。
+// v02.45：加入平台參數，查詢改成依序嘗試「品名+平台」優先、查無結果才退回「純品名」——
+// 純品名容易撞到系列總覽頁/消歧義頁（例如「ドラムマニア」查到整個街機系列的機台照片，不是特定平台版本封面），
+// 帶平台字串有機會命中該平台專屬條目/段落。日文維基先查（對JP老遊戲命中率較高），沒結果才退回英文維基。
+// 不加商品編碼查詢：維基百科文章不會用商品序號索引，加了幾乎不會有結果。
+function _wikipediaCoverSearch(name, platform, cb){
+  if(!name){cb(null);return;}
+  var queries=platform?[name+' '+platform,name]:[name];
+  var langs=['ja','en'];
+  var attempts=[];
+  langs.forEach(function(lang){queries.forEach(function(q){attempts.push({lang:lang,q:q});});});
+  function tryNext(i){
+    if(i>=attempts.length){cb(null);return;}
+    var a=attempts[i];
+    var url='https://'+a.lang+'.wikipedia.org/w/api.php?action=query&format=json&origin=*'+
+      '&generator=search&gsrsearch='+encodeURIComponent(a.q)+'&gsrlimit=1'+
+      '&prop=pageimages&piprop=original';
+    fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(d){
+      var pages=d&&d.query&&d.query.pages;
+      var keys=pages?Object.keys(pages):[];
+      var page=keys.length?pages[keys[0]]:null;
+      var img=page&&page.original&&page.original.source;
+      if(img)cb(img);else tryNext(i+1);
+    }).catch(function(){tryNext(i+1);});
+  }
+  tryNext(0);
+}
+
 // 逐件循序解析：查資料庫→補封面→AI補全，完全比照 doAnalyze 單品邏輯，
 // 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
+// v02.42（3張候選封面）：蒐集最多 3 張候選封面圖，不直接判定「用哪張」，交給確認清單讓使用者選。
+// 優先順序：資料庫（若有）→ 維基百科 → Google CSE（v02.44 加入維基百科，插在CSE之前；
+// CSE 呼叫仍保留不拿掉，未設定金鑰或呼叫失敗都只是安靜跳過，不影響前面已蒐集到的候選）。
+function _batchFetchCoverCandidates(cb){
+  var cands=[];
+  if(entry.cover_img)cands.push({url:entry.cover_img,src:(entry._src&&entry._src.cover_img)||'db'});
+  var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.code||'';
+  var platform=entry.platform||_selectedPlatform||'';
+
+  function fetchCSE(){
+    var need=3-cands.length;
+    if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
+    if(!name){cb(cands);return;}
+    var q=name+(platform?' '+platform:'');
+    var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
+    shGetSecP(params)
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(d){
+        if(d&&d.ok&&Array.isArray(d.items)){
+          d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
+        }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
+          cands.push({url:d.imageUrl,src:'google_cse'});
+        }
+        cb(cands);
+      }).catch(function(){cb(cands);});
+  }
+
+  if(cands.length<3&&name){
+    _wikipediaCoverSearch(name,platform,function(img){
+      if(img&&cands.length<3)cands.push({url:img,src:'wikipedia'});
+      fetchCSE();
+    });
+  }else{
+    fetchCSE();
+  }
+}
+
 function _batchResolveNext(idx){
   if(idx>=_batchItems.length){
     $('batch-progress').style.display='none';
@@ -9997,6 +10116,7 @@ function _batchResolveNext(idx){
   }
   var item=_batchItems[idx];
   item.status='resolving';
+  item.coverCandidates=item.coverCandidates||[];
   $('batch-progress').style.display='block';
   $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...';
   _batchRenderList();
@@ -10016,19 +10136,30 @@ function _batchResolveNext(idx){
     _batchResolveNext(idx+1);
   }
   function completeThenFinish(){aiCompleteMissing(function(){finishItem(false);});}
-  function coverThenComplete(){if(!entry.cover_img)_autoFetchCover(completeThenFinish);else completeThenFinish();}
+  // v02.42（3張候選封面）：不再「查到就直接用、查不到才補」，改成一律蒐集最多 3 張候選
+  // （DB 查到的優先當候選1，不夠再用 Google CSE 補），交給確認清單讓使用者挑選，預設先選第1張
+  function coverThenComplete(){
+    _batchFetchCoverCandidates(function(cands){
+      item.coverCandidates=cands;
+      if(cands.length){
+        entry.cover_img=cands[0].url;
+        entry._src=entry._src||{};entry._src.cover_img=cands[0].src;
+      }
+      completeThenFinish();
+    });
+  }
   if(!item.code&&!item.title_guess){finishItem(true);return;}
   if(catInternal(type)==='攻略'){
     var isISBN=item.code.indexOf('978')===0||item.code.indexOf('979')===0;
-    if(!isISBN){completeThenFinish();return;}
+    if(!isISBN){coverThenComplete();return;}
     bookLookupPromise(item.code).then(function(bk){
       if(bk){
         entry._src=entry._src||{};
         // 書籍資料庫只補空欄（含 cover_img，通用鍵值迴圈）；img 來源不覆蓋，與單品 doAnalyze 同精神
         Object.keys(bk).forEach(function(k){if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';}});
       }
-      completeThenFinish();
-    }).catch(completeThenFinish);
+      coverThenComplete();
+    }).catch(coverThenComplete);
   }else{
     // v02.40：查詢鍵改用品名優先（原本用序號優先，但序號字串對 ScreenScraper 以外的資料庫
     // 如 IGDB/RAWG/楽天等，會被當成「名稱」去查，等於送出一串不是名稱的亂碼查詢，容易查到不相關結果；
@@ -10036,7 +10167,7 @@ function _batchResolveNext(idx){
     crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
       // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
       [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
-        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img='db';}
+        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
       });
       _mergeDbIntoEntry(db);
       coverThenComplete();
@@ -10055,24 +10186,52 @@ function _batchStatusBadge(item){
   return parts.join('　');
 }
 
-// v02.40（C）：圖片來源標籤，讓使用者知道這張封面是資料庫查到的還是 Google 搜尋來的，
-// 方便判斷可信度；封面不明來源（例如舊資料/其他管道）不顯示標籤，不強行猜測
+// v02.42（3張候選封面）：來源標籤依「目前選中的那張」顯示，讓使用者知道現在採用的封面是資料庫還是Google搜尋來的
 function _batchImgSrcLabel(item){
   var e=item.entry;
   if(!e||!e.cover_img)return '';
   var src=(e._src&&e._src.cover_img)||'';
-  if(src==='google_cse')return '<div style="font-size:10px;color:#7986cb;margin-top:2px">圖片來源：Google 搜尋</div>';
-  if(src==='db')return '<div style="font-size:10px;color:#7986cb;margin-top:2px">圖片來源：資料庫</div>';
-  return '';
+  var labels={
+    google_cse:'圖片來源：Google 搜尋',
+    wikipedia:'圖片來源：維基百科',
+    screenscraper:'圖片來源：ScreenScraper',
+    igdb:'圖片來源：IGDB',
+    rawg:'圖片來源：RAWG',
+    rakuten:'圖片來源：楽天市場（⚠️賣場商品照，非官方封面，畫質/內容可能不理想）',
+    db:'圖片來源：資料庫'
+  };
+  return labels[src]||'';
 }
 
-// 清除這筆項目目前抓到的封面圖（不重新查詢，使用者可自行之後在收藏頁補照片）
-function batchClearCover(i){
+// 選這件項目要用哪一張候選封面（candIdx為-1代表不使用任何封面）
+function batchSelectCover(i,candIdx){
   var item=_batchItems[i];
   if(!item||!item.entry)return;
-  item.entry.cover_img='';
-  if(item.entry._src)delete item.entry._src.cover_img;
+  if(candIdx<0){
+    item.entry.cover_img='';
+    if(item.entry._src)delete item.entry._src.cover_img;
+  }else{
+    var c=item.coverCandidates&&item.coverCandidates[candIdx];
+    if(!c)return;
+    item.entry.cover_img=c.url;
+    item.entry._src=item.entry._src||{};
+    item.entry._src.cover_img=c.src;
+  }
   _batchRenderList();
+}
+
+// 候選封面選擇列：最多3張小縮圖可點選切換，選中的用外框標示，另外一顆「不使用」選項
+function _batchCoverPicker(item,i){
+  var cands=item.coverCandidates||[];
+  if(!cands.length)return '';
+  var curUrl=item.entry&&item.entry.cover_img;
+  var thumbs=cands.map(function(c,ci){
+    var sel=curUrl===c.url;
+    return '<img src="'+esc(imgUrl(c.url,80))+'" onclick="batchSelectCover('+i+','+ci+')" title="選這張當封面" style="width:30px;height:30px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid '+(sel?'#ce93d8':'transparent')+'">';
+  }).join('');
+  var noneSel=!curUrl;
+  var noneBtn='<button type="button" onclick="batchSelectCover('+i+',-1)" title="不使用封面" style="width:30px;height:30px;border-radius:6px;background:#141b30;border:2px solid '+(noneSel?'#ce93d8':'#1e2a45')+';color:#7986cb;font-size:13px;cursor:pointer;padding:0">✕</button>';
+  return '<div style="display:flex;gap:5px;margin-top:5px">'+thumbs+noneBtn+'</div>';
 }
 
 function _batchRenderList(){
@@ -10082,22 +10241,19 @@ function _batchRenderList(){
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
     var hasImg=!!(e&&e.cover_img);
     var imgTag=hasImg
-      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" onclick="window.open(\''+esc(imgUrl(e.cover_img,800))+'\',\'_blank\')" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;background:#141b30" title="點圖放大看清楚">'
-      : '<div style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>';
-    var clearBtn=hasImg
-      ? '<button type="button" onclick="batchClearCover('+i+')" title="清除這張圖" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#ff5252;color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0">✕</button>'
-      : '';
-    var img='<div style="position:relative;flex-shrink:0">'+imgTag+clearBtn+'</div>';
+      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" onclick="window.open(\''+esc(imgUrl(e.cover_img,800))+'\',\'_blank\')" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;background:#141b30;flex-shrink:0" title="點圖放大看清楚">'
+      : '<div style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
+    var srcLabel=_batchImgSrcLabel(item);
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
       '<input type="checkbox" '+checked+' '+disabled+' onchange="batchToggleInclude('+i+',this.checked)" style="width:18px;height:18px;flex-shrink:0;accent-color:#ce93d8">'+
-      img+
+      imgTag+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
         '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
-        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+'</div>'+
-        _batchImgSrcLabel(item)+
+        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(srcLabel?'　<span style="color:#7986cb">'+srcLabel+'</span>':'')+'</div>'+
+        _batchCoverPicker(item,i)+
       '</div>'+
     '</div>';
   }).join('');

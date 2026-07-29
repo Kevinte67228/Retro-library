@@ -2501,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.45';
+const APP_VERSION='v02.46';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7000,6 +7000,11 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
   // 遊戲資料庫要用「名稱」查；若 q 是條碼，改用 hint（AI 辨識的名稱）
   var nameQ=isBarcode?(hint||''):q;  // 給遊戲資料庫的名稱
   var codeQ=isBarcode?q:'';          // 給條碼資料庫的條碼
+  // v02.46：楽天市場專用查詢字串，帶入平台字樣——楽天是一般商城搜尋，同系列跨平台作品
+  // （如PS2/PS3/PS4/PS5都有推出的續作系列）沒有平台字串容易搜到別平台的商品照。
+  // 只加在rakuten這條查詢，不影響其他共用nameQ的遊戲資料庫（那些多半有自己的平台篩選機制）。
+  var _platQ=(typeof entry!=='undefined'&&entry&&entry.platform)||_selectedPlatform||'';
+  var nameQRakuten=_platQ?(nameQ+' '+_platQ):nameQ;
 
   // 1. Giant Bomb（API 暫停中）— 用名稱查
   if(cfg.gbkey&&cfg.url&&nameQ&&_ok('giantbomb')) tasks.push(
@@ -7024,8 +7029,8 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
     rawgSearch(nameQ).then(function(r){return r?{src:'rawg',data:r}:null;}).catch(function(){return null;})
   );
   // 4b. 楽天市場（日系）— JAN 條碼或名稱查
-  if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQ)&&_ok('rakuten')) tasks.push(
-    shPost({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+  if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQRakuten)&&_ok('rakuten')) tasks.push(
+    shPost({action:'rakuten_search',q:codeQ||nameQRakuten,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?{src:'rakuten',data:r}:null;})
       .catch(function(){return null;})
   );
