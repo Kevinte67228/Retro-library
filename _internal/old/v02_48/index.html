@@ -2501,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.43';
+const APP_VERSION='v02.48';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7000,6 +7000,11 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
   // 遊戲資料庫要用「名稱」查；若 q 是條碼，改用 hint（AI 辨識的名稱）
   var nameQ=isBarcode?(hint||''):q;  // 給遊戲資料庫的名稱
   var codeQ=isBarcode?q:'';          // 給條碼資料庫的條碼
+  // v02.46：楽天市場專用查詢字串，帶入平台字樣——楽天是一般商城搜尋，同系列跨平台作品
+  // （如PS2/PS3/PS4/PS5都有推出的續作系列）沒有平台字串容易搜到別平台的商品照。
+  // 只加在rakuten這條查詢，不影響其他共用nameQ的遊戲資料庫（那些多半有自己的平台篩選機制）。
+  var _platQ=(typeof entry!=='undefined'&&entry&&entry.platform)||_selectedPlatform||'';
+  var nameQRakuten=_platQ?(nameQ+' '+_platQ):nameQ;
 
   // 1. Giant Bomb（API 暫停中）— 用名稱查
   if(cfg.gbkey&&cfg.url&&nameQ&&_ok('giantbomb')) tasks.push(
@@ -7024,8 +7029,8 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
     rawgSearch(nameQ).then(function(r){return r?{src:'rawg',data:r}:null;}).catch(function(){return null;})
   );
   // 4b. 楽天市場（日系）— JAN 條碼或名稱查
-  if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQ)&&_ok('rakuten')) tasks.push(
-    shPost({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+  if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQRakuten)&&_ok('rakuten')) tasks.push(
+    shPost({action:'rakuten_search',q:codeQ||nameQRakuten,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?{src:'rakuten',data:r}:null;})
       .catch(function(){return null;})
   );
@@ -10039,31 +10044,72 @@ function batchDetectStart(){
   r.readAsDataURL(_batchImgFile);
 }
 
+// v02.44：維基百科封面搜尋。不需要API金鑰，MediaWiki API本身支援跨網域請求（origin=*參數），
+// 可直接前端呼叫不用經過GAS後端代理。
+// v02.45：加入平台參數，查詢改成依序嘗試「品名+平台」優先、查無結果才退回「純品名」——
+// 純品名容易撞到系列總覽頁/消歧義頁（例如「ドラムマニア」查到整個街機系列的機台照片，不是特定平台版本封面），
+// 帶平台字串有機會命中該平台專屬條目/段落。日文維基先查（對JP老遊戲命中率較高），沒結果才退回英文維基。
+// 不加商品編碼查詢：維基百科文章不會用商品序號索引，加了幾乎不會有結果。
+function _wikipediaCoverSearch(name, platform, cb){
+  if(!name){cb(null);return;}
+  var queries=platform?[name+' '+platform,name]:[name];
+  var langs=['ja','en'];
+  var attempts=[];
+  langs.forEach(function(lang){queries.forEach(function(q){attempts.push({lang:lang,q:q});});});
+  function tryNext(i){
+    if(i>=attempts.length){cb(null);return;}
+    var a=attempts[i];
+    var url='https://'+a.lang+'.wikipedia.org/w/api.php?action=query&format=json&origin=*'+
+      '&generator=search&gsrsearch='+encodeURIComponent(a.q)+'&gsrlimit=1'+
+      '&prop=pageimages&piprop=original';
+    fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(d){
+      var pages=d&&d.query&&d.query.pages;
+      var keys=pages?Object.keys(pages):[];
+      var page=keys.length?pages[keys[0]]:null;
+      var img=page&&page.original&&page.original.source;
+      if(img)cb(img);else tryNext(i+1);
+    }).catch(function(){tryNext(i+1);});
+  }
+  tryNext(0);
+}
+
 // 逐件循序解析：查資料庫→補封面→AI補全，完全比照 doAnalyze 單品邏輯，
 // 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
 // v02.42（3張候選封面）：蒐集最多 3 張候選封面圖，不直接判定「用哪張」，交給確認清單讓使用者選。
-// 呼叫時序：假設 entry.cover_img 若已有值，代表資料庫（crossRef／bookLookup）已查到，當候選1；
-// 不足 3 張時用 Google CSE 補（GAS 後端 googleImageSearchProxy 本來就支援 num 最多 3，一次要足額）。
+// 優先順序：資料庫（若有）→ 維基百科 → Google CSE（v02.44 加入維基百科，插在CSE之前；
+// CSE 呼叫仍保留不拿掉，未設定金鑰或呼叫失敗都只是安靜跳過，不影響前面已蒐集到的候選）。
 function _batchFetchCoverCandidates(cb){
   var cands=[];
   if(entry.cover_img)cands.push({url:entry.cover_img,src:(entry._src&&entry._src.cover_img)||'db'});
-  var need=3-cands.length;
-  if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
   var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.code||'';
-  if(!name){cb(cands);return;}
   var platform=entry.platform||_selectedPlatform||'';
-  var q=name+(platform?' '+platform:'');
-  var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
-  shGetSecP(params)
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      if(d&&d.ok&&Array.isArray(d.items)){
-        d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
-      }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
-        cands.push({url:d.imageUrl,src:'google_cse'});
-      }
-      cb(cands);
-    }).catch(function(){cb(cands);});
+
+  function fetchCSE(){
+    var need=3-cands.length;
+    if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
+    if(!name){cb(cands);return;}
+    var q=name+(platform?' '+platform:'');
+    var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
+    shGetSecP(params)
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(d){
+        if(d&&d.ok&&Array.isArray(d.items)){
+          d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
+        }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
+          cands.push({url:d.imageUrl,src:'google_cse'});
+        }
+        cb(cands);
+      }).catch(function(){cb(cands);});
+  }
+
+  if(cands.length<3&&name){
+    _wikipediaCoverSearch(name,platform,function(img){
+      if(img&&cands.length<3)cands.push({url:img,src:'wikipedia'});
+      fetchCSE();
+    });
+  }else{
+    fetchCSE();
+  }
 }
 
 function _batchResolveNext(idx){
@@ -10084,6 +10130,10 @@ function _batchResolveNext(idx){
   entry=Object.assign({},_defaultsFor(type),{
     category:type,platform:_selectedPlatform||'',
     primary_name:item.title_guess||'',code:item.code||''
+    // v02.48：序號改回提早帶入 entry.code。ScreenScraper 對日版序號比對精確度高（它本身就是
+    // 為此設計的資料庫），且 ssSearch() 本來就會用 _selectedPlatform 帶入 systemeid 參數，
+    // 已經是「平台+序號」查詢；其他資料庫（Giant Bomb/IGDB/RAWG/楽天）沒有可靠的序號索引，
+    // 序號傳給它們等於送出不是名稱的亂碼查詢，這幾家維持只用「品名+平台」（見下方 _nameQ）。
   });
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   function finishItem(failed){
@@ -10120,10 +10170,12 @@ function _batchResolveNext(idx){
       coverThenComplete();
     }).catch(coverThenComplete);
   }else{
-    // v02.40：查詢鍵改用品名優先（原本用序號優先，但序號字串對 ScreenScraper 以外的資料庫
-    // 如 IGDB/RAWG/楽天等，會被當成「名稱」去查，等於送出一串不是名稱的亂碼查詢，容易查到不相關結果；
-    // ScreenScraper 本身另外從全域 entry.code 讀序號做精確比對，不受這裡查詢鍵順序影響，序號查詢能力仍保留）
-    crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
+    // v02.48：查詢字串維持「品名＋平台」給 Giant Bomb/IGDB/RAWG/楽天用；ScreenScraper 這條
+    // 走獨立路徑（見 crossRefLookupPromise 內部），從 entry.code 讀序號＋ssSearch()內建的
+    // _selectedPlatform 系統ID，兩邊分工不衝突：ScreenScraper用序號查最準，其餘用品名查。
+    var _platQ=_selectedPlatform||'';
+    var _nameQ=(item.title_guess||'')+(_platQ?' '+_platQ:'');
+    crossRefLookupPromise(_nameQ,item.title_guess).then(function(db){
       // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
       [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
         if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
@@ -10152,6 +10204,7 @@ function _batchImgSrcLabel(item){
   var src=(e._src&&e._src.cover_img)||'';
   var labels={
     google_cse:'圖片來源：Google 搜尋',
+    wikipedia:'圖片來源：維基百科',
     screenscraper:'圖片來源：ScreenScraper',
     igdb:'圖片來源：IGDB',
     rawg:'圖片來源：RAWG',
