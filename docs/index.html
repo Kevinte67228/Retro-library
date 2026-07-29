@@ -2501,7 +2501,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.43';
+const APP_VERSION='v02.44';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10039,31 +10039,65 @@ function batchDetectStart(){
   r.readAsDataURL(_batchImgFile);
 }
 
+// v02.44：維基百科封面搜尋。不需要API金鑰，MediaWiki API本身支援跨網域請求（origin=*參數），
+// 可直接前端呼叫不用經過GAS後端代理。先查日文維基（對JP老遊戲命中率較高），沒結果才退回英文維基。
+// 只用商品名稱查（不加平台字串），維基文章標題通常就是純名稱，加了平台反而可能降低比對命中率。
+function _wikipediaCoverSearch(name, cb){
+  if(!name){cb(null);return;}
+  function tryLang(lang, fallback){
+    var url='https://'+lang+'.wikipedia.org/w/api.php?action=query&format=json&origin=*'+
+      '&generator=search&gsrsearch='+encodeURIComponent(name)+'&gsrlimit=1'+
+      '&prop=pageimages&piprop=original';
+    fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(d){
+      var pages=d&&d.query&&d.query.pages;
+      var keys=pages?Object.keys(pages):[];
+      var page=keys.length?pages[keys[0]]:null;
+      var img=page&&page.original&&page.original.source;
+      if(img)cb(img);
+      else if(fallback)fallback();
+      else cb(null);
+    }).catch(function(){if(fallback)fallback();else cb(null);});
+  }
+  tryLang('ja',function(){tryLang('en',null);});
+}
+
 // 逐件循序解析：查資料庫→補封面→AI補全，完全比照 doAnalyze 單品邏輯，
 // 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
 // v02.42（3張候選封面）：蒐集最多 3 張候選封面圖，不直接判定「用哪張」，交給確認清單讓使用者選。
-// 呼叫時序：假設 entry.cover_img 若已有值，代表資料庫（crossRef／bookLookup）已查到，當候選1；
-// 不足 3 張時用 Google CSE 補（GAS 後端 googleImageSearchProxy 本來就支援 num 最多 3，一次要足額）。
+// 優先順序：資料庫（若有）→ 維基百科 → Google CSE（v02.44 加入維基百科，插在CSE之前；
+// CSE 呼叫仍保留不拿掉，未設定金鑰或呼叫失敗都只是安靜跳過，不影響前面已蒐集到的候選）。
 function _batchFetchCoverCandidates(cb){
   var cands=[];
   if(entry.cover_img)cands.push({url:entry.cover_img,src:(entry._src&&entry._src.cover_img)||'db'});
-  var need=3-cands.length;
-  if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
   var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.code||'';
-  if(!name){cb(cands);return;}
   var platform=entry.platform||_selectedPlatform||'';
-  var q=name+(platform?' '+platform:'');
-  var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
-  shGetSecP(params)
-    .then(function(r){return r.ok?r.json():null;})
-    .then(function(d){
-      if(d&&d.ok&&Array.isArray(d.items)){
-        d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
-      }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
-        cands.push({url:d.imageUrl,src:'google_cse'});
-      }
-      cb(cands);
-    }).catch(function(){cb(cands);});
+
+  function fetchCSE(){
+    var need=3-cands.length;
+    if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
+    if(!name){cb(cands);return;}
+    var q=name+(platform?' '+platform:'');
+    var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
+    shGetSecP(params)
+      .then(function(r){return r.ok?r.json():null;})
+      .then(function(d){
+        if(d&&d.ok&&Array.isArray(d.items)){
+          d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
+        }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
+          cands.push({url:d.imageUrl,src:'google_cse'});
+        }
+        cb(cands);
+      }).catch(function(){cb(cands);});
+  }
+
+  if(cands.length<3&&name){
+    _wikipediaCoverSearch(name,function(img){
+      if(img&&cands.length<3)cands.push({url:img,src:'wikipedia'});
+      fetchCSE();
+    });
+  }else{
+    fetchCSE();
+  }
 }
 
 function _batchResolveNext(idx){
@@ -10152,6 +10186,7 @@ function _batchImgSrcLabel(item){
   var src=(e._src&&e._src.cover_img)||'';
   var labels={
     google_cse:'圖片來源：Google 搜尋',
+    wikipedia:'圖片來源：維基百科',
     screenscraper:'圖片來源：ScreenScraper',
     igdb:'圖片來源：IGDB',
     rawg:'圖片來源：RAWG',
