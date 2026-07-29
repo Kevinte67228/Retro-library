@@ -561,7 +561,9 @@ function trashImg(id) {
 //   auditOrphanImages()   → 只「列出」孤兒檔，不刪任何東西（建議先跑這個確認）
 //   cleanupOrphanImages() → 實際把孤兒檔移到垃圾桶（可在 Drive 垃圾桶 30 天內救回）
  
-// 蒐集四張工作表中所有「仍在使用」的圖片 file ID
+// 蒐集所有工作表中每個圖片 file ID 被引用的次數（v02.51 起：原本只回傳布林值「是否在使用」，
+// 改成回傳次數，讓 updateRow/deleteRow 能判斷一張圖是否被「多筆」記錄共用——只有次數<=1
+// （只有自己這一筆用到）才能安全刪除，避免刪掉別筆記錄還在用的共用圖）
 function collectUsedImgIds_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheetDefs = [
@@ -590,8 +592,8 @@ function collectUsedImgIds_() {
     if (!idxs.length && eiIdxCollect < 0) return;
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
     data.forEach(function(row) {
-      idxs.forEach(function(i) { if (isDriveId(row[i])) used[row[i]] = true; });
-      if (eiIdxCollect >= 0) extractExtraImageIds(row[eiIdxCollect]).forEach(function(id) { used[id] = true; });
+      idxs.forEach(function(i) { if (isDriveId(row[i])) used[row[i]] = (used[row[i]] || 0) + 1; });
+      if (eiIdxCollect >= 0) extractExtraImageIds(row[eiIdxCollect]).forEach(function(id) { used[id] = (used[id] || 0) + 1; });
     });
   });
   return used;
@@ -943,6 +945,11 @@ function updateRow(rowNum, row, type, fields) {
     const v = byName ? fields[h] : row[i];
     return (v !== undefined && v !== null) ? v : '';
   });
+  // v02.51：修復資料遺失漏洞——原本換圖/清圖時無條件刪除舊 Drive 檔，若同一張圖被「其他列」
+  // 共用（例如同一款遊戲的不同拷貝各建一筆，共用同一張封面圖），編輯其中一筆換圖時會連帶把
+  // 別筆記錄還在用的圖也刪掉，造成別筆資料圖片憑空消失。改成刪除前先確認這張圖的使用次數，
+  // 只有「只有自己這一列引用」（count<=1）才安全刪除；被其他列共用的圖保留，只是這一列不再指向它。
+  const _imgUsageCount = collectUsedImgIds_();
   const imgs = {};
   IMG_COLS.forEach(function(col) {
     const idx = headers.indexOf(col);
@@ -951,7 +958,7 @@ function updateRow(rowNum, row, type, fields) {
     const newVal = saveImgToDrive(padded[idx]); // base64 才上傳；已是 ID/空字串則原樣
     padded[idx] = newVal;
     imgs[col] = newVal;
-    if (isDriveId(oldVal) && oldVal !== newVal) trashImg(oldVal); // 舊檔被換掉或清空
+    if (isDriveId(oldVal) && oldVal !== newVal && (_imgUsageCount[oldVal] || 0) <= 1) trashImg(oldVal); // 舊檔被換掉或清空，且沒有被其他列共用才刪除
   });
   // v47.04：extra_images 是 JSON 陣列欄位，比對舊/新陣列的 ID 差異，被移除的圖才回收
   const eiIdxUpd = headers.indexOf(EXTRA_IMG_COL);
@@ -962,7 +969,8 @@ function updateRow(rowNum, row, type, fields) {
     imgs[EXTRA_IMG_COL] = processedUpd.json;
     const newExtraIdSet = {};
     processedUpd.ids.forEach(function(id) { newExtraIdSet[id] = 1; });
-    oldExtraIds.forEach(function(id) { if (!newExtraIdSet[id]) trashImg(id); });
+    // v02.51：同樣套用共用檢查，避免刪掉被其他列共用的額外圖片
+    oldExtraIds.forEach(function(id) { if (!newExtraIdSet[id] && (_imgUsageCount[id] || 0) <= 1) trashImg(id); });
   }
   sheet.getRange(actualRow, 1, 1, headers.length).setValues([padded]);
   // created_at 防呆（E1）：與 addRow 一致，強制純文字避免回讀變 ISO
@@ -1000,14 +1008,17 @@ function deleteRow(rowNum, type, keepImg) {
   const last = sheet.getLastRow();
   if (actualRow < 2 || actualRow > last) throw new Error('列號超出範圍：' + actualRow);
   // 刪列前先刪掉該列的 Drive 圖檔（同步刪除，避免孤兒檔）；keepImg 時保留（與收藏共用之圖）
+  // v02.51：即使沒有傳 keepImg，也再檢查一次這張圖有沒有被其他列共用（第二道防線，
+  // 避免前端沒有正確判斷/傳遞 keepImg 時，誤刪別筆記錄還在用的圖）
   if (!keepImg) {
     const rowVals = sheet.getRange(actualRow, 1, 1, headers.length).getValues()[0];
+    const _imgUsageCountDel = collectUsedImgIds_();
     IMG_COLS.forEach(function(col) {
       const idx = headers.indexOf(col);
-      if (idx >= 0) trashImg(rowVals[idx]);
+      if (idx >= 0 && (_imgUsageCountDel[rowVals[idx]] || 0) <= 1) trashImg(rowVals[idx]);
     });
     const eiIdxDel = headers.indexOf(EXTRA_IMG_COL);
-    if (eiIdxDel >= 0) extractExtraImageIds(rowVals[eiIdxDel]).forEach(function(id) { trashImg(id); });
+    if (eiIdxDel >= 0) extractExtraImageIds(rowVals[eiIdxDel]).forEach(function(id) { if ((_imgUsageCountDel[id] || 0) <= 1) trashImg(id); });
   }
   sheet.deleteRow(actualRow);
   return { ok: true, sheetType: resolvedType };
