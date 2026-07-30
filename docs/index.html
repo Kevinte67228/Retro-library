@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.51';
+const APP_VERSION='v02.52';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5351,6 +5351,10 @@ function colRefresh(){
 }
 var _saving=false;
 function doSave(){
+  // v02.52：防護——不管 save-btn.onclick 有沒有被其他背景流程（如資料庫比對的 loading 狀態
+  // 管理）意外重置回 doSave，只要人還在批次項目編輯模式（_batchEditIndex 不是 null），
+  // 一律轉向「存回這一筆批次項目、返回清單」，不會真的寫入試算表，也不會跳出整個批次流程。
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchApplyItemEdit();return;}
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
   if(_saving)return; // 防連點（用旗標，不依賴按鈕狀態）
   if(!entry||!entry.primary_name){
@@ -5886,6 +5890,15 @@ function _mergeDbIntoEntry(db){
     if(!db[k])return;
     if(entry._src[k]==='img'&&(''+(entry[k]||'')).trim())return; // 圖片實讀優先，不覆蓋
     var dv=(k==='genre')?matchGenreMulti(db[k]):db[k];
+    // v02.52：genre 若資料庫給的文字完全比對不到任何已知類型、matchGenreMulti 落回通用的
+    // 「OTHER 其他」，不當作資料庫已經給出可信答案——這種情況通常代表資料庫的類型文字本身
+    // 不精確或格式對不上（尤其西方資料庫對冷門日版遊戲），硬填「OTHER」反而會讓這個欄位看起來
+    // 「已填寫」，導致後面 AI 補全階段永遠不會再被問到，AI 用真正的遊戲知識判斷反而更準。
+    // entry 目前若已經是別的值（非空且非OTHER）則保留，不要拿較不可信的「OTHER」蓋掉。
+    if(k==='genre'&&dv==='OTHER 其他'){
+      if((''+(entry[k]||'')).trim())return; // 目前已有其他值就保留，不覆蓋
+      return; // 目前是空的也不填「OTHER」，留給AI補
+    }
     if(entry[k]!==dv)filled++;
     entry[k]=dv;entry._src[k]='db';
   });
@@ -14625,6 +14638,10 @@ function findDuplicate(e){
 }
 
 function resetAll(){
+  // v02.52：同樣的批次編輯模式防護——resetAll 會把 entry 整個清空並顯示方法選擇畫面，
+  // 如果在批次項目編輯模式下被意外觸發（例如取消鈕的 onclick 被其他背景流程重置回預設），
+  // 會造成「整個跳出批次書背建檔」的症狀。改成優先轉向捨棄這次編輯、安全返回批次清單。
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchCancelItemEdit();return;}
   stopScanner();if(typeof stopComboScanner==='function')stopComboScanner();
   entry={};edited.clear();
   _scanBC=''; // 清除上一筆條碼暫存，避免帶入下一筆（無條碼裸卡誤判重複的根因）
