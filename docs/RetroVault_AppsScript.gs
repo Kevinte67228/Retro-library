@@ -618,6 +618,10 @@ function findOrphanImages_(dryRun, usedIds) {
  
 // 只列出孤兒檔，不刪除（安全預覽）
 function auditOrphanImages() {
+  // v02.53：先印出實際使用中的資料夾連結，避免 Drive 裡若有同名資料夾時，
+  // 使用者手動比對的跟程式實際在用的不是同一個（getImgFolder 用快取 ID，不是每次重新用名稱搜尋）
+  const _folder = getImgFolder();
+  Logger.log('圖片資料夾：%s', _folder.getUrl());
   const used = collectUsedImgIds_();
   const orphans = findOrphanImages_(true, used);
   const usedCount = Object.keys(used).length;
@@ -631,6 +635,7 @@ function auditOrphanImages() {
  
 // 實際清除孤兒檔（移到垃圾桶）
 function cleanupOrphanImages() {
+  Logger.log('圖片資料夾：%s', getImgFolder().getUrl());
   const orphans = findOrphanImages_(false);
   Logger.log('已將 %s 個孤兒檔移到垃圾桶', orphans.length);
   orphans.forEach(function(o) { Logger.log('  已清除 → %s (%s)', o.name, o.id); });
