@@ -487,6 +487,23 @@ body{
 .dact .btn{width:100%;min-height:38px;padding:8px 8px;font-size:13px}
 .dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 #dsheet.on .dnav-float{display:flex}
+/* 收藏詳情頁 FAB（v02.50：比照尋寶頁•••收合群組，含日系資料庫查詢/條碼品名查詢/拍照辨識三個功能，
+   位置刻意比 .dnav-float（bottom:86px）更低，避免跟上一筆/下一筆翻頁按鈕重疊） */
+#det-fab-wrap{position:fixed;right:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:12px}
+#dsheet.on #det-fab-wrap{display:flex}
+#det-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
+#det-fab-main:active{transform:scale(.93)}
+#det-lens-fab,#det-barcode-fab,#det-cd-fab{
+  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
+}
+#det-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
+#det-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
+#det-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:12px;overflow:hidden}
+#det-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#det-lens-fab svg,#det-barcode-fab svg{width:26px;height:26px}
+#det-fab-wrap.open #det-lens-fab,#det-fab-wrap.open #det-barcode-fab,#det-fab-wrap.open #det-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#det-fab-wrap.open #det-fab-main{transform:rotate(90deg)}
 #dprev-float{left:8px}
 #dnext-float{right:8px}
 .dnav-float.off{opacity:.2;pointer-events:none}
@@ -2181,6 +2198,12 @@ body{
   <div id="dov"></div>
   <button class="dnav-float" id="dprev-float" title="上一筆" type="button">‹</button>
   <button class="dnav-float" id="dnext-float" title="下一筆" type="button">›</button>
+  <div id="det-fab-wrap">
+    <button id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button">•••</button>
+    <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
+    <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
+    <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+  </div>
   <div id="dp">
     <div class="dhandle"></div>
     <div class="dhdr">
@@ -2501,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.45';
+const APP_VERSION='v02.50';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7000,6 +7023,11 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
   // 遊戲資料庫要用「名稱」查；若 q 是條碼，改用 hint（AI 辨識的名稱）
   var nameQ=isBarcode?(hint||''):q;  // 給遊戲資料庫的名稱
   var codeQ=isBarcode?q:'';          // 給條碼資料庫的條碼
+  // v02.46：楽天市場專用查詢字串，帶入平台字樣——楽天是一般商城搜尋，同系列跨平台作品
+  // （如PS2/PS3/PS4/PS5都有推出的續作系列）沒有平台字串容易搜到別平台的商品照。
+  // 只加在rakuten這條查詢，不影響其他共用nameQ的遊戲資料庫（那些多半有自己的平台篩選機制）。
+  var _platQ=(typeof entry!=='undefined'&&entry&&entry.platform)||_selectedPlatform||'';
+  var nameQRakuten=_platQ?(nameQ+' '+_platQ):nameQ;
 
   // 1. Giant Bomb（API 暫停中）— 用名稱查
   if(cfg.gbkey&&cfg.url&&nameQ&&_ok('giantbomb')) tasks.push(
@@ -7024,8 +7052,8 @@ function _crossRefQuery(codeOrName,hint,forceId,group){
     rawgSearch(nameQ).then(function(r){return r?{src:'rawg',data:r}:null;}).catch(function(){return null;})
   );
   // 4b. 楽天市場（日系）— JAN 條碼或名稱查
-  if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQ)&&_ok('rakuten')) tasks.push(
-    shPost({action:'rakuten_search',q:codeQ||nameQ,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
+  if(cfg.rktid&&cfg.rktkey&&cfg.url&&(codeQ||nameQRakuten)&&_ok('rakuten')) tasks.push(
+    shPost({action:'rakuten_search',q:codeQ||nameQRakuten,rakuten_appid:cfg.rktid,rakuten_accesskey:cfg.rktkey})
       .then(function(r){return r&&r.item_name?{src:'rakuten',data:r}:null;})
       .catch(function(){return null;})
   );
@@ -10125,6 +10153,10 @@ function _batchResolveNext(idx){
   entry=Object.assign({},_defaultsFor(type),{
     category:type,platform:_selectedPlatform||'',
     primary_name:item.title_guess||'',code:item.code||''
+    // v02.48：序號改回提早帶入 entry.code。ScreenScraper 對日版序號比對精確度高（它本身就是
+    // 為此設計的資料庫），且 ssSearch() 本來就會用 _selectedPlatform 帶入 systemeid 參數，
+    // 已經是「平台+序號」查詢；其他資料庫（Giant Bomb/IGDB/RAWG/楽天）沒有可靠的序號索引，
+    // 序號傳給它們等於送出不是名稱的亂碼查詢，這幾家維持只用「品名+平台」（見下方 _nameQ）。
   });
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   function finishItem(failed){
@@ -10161,10 +10193,12 @@ function _batchResolveNext(idx){
       coverThenComplete();
     }).catch(coverThenComplete);
   }else{
-    // v02.40：查詢鍵改用品名優先（原本用序號優先，但序號字串對 ScreenScraper 以外的資料庫
-    // 如 IGDB/RAWG/楽天等，會被當成「名稱」去查，等於送出一串不是名稱的亂碼查詢，容易查到不相關結果；
-    // ScreenScraper 本身另外從全域 entry.code 讀序號做精確比對，不受這裡查詢鍵順序影響，序號查詢能力仍保留）
-    crossRefLookupPromise(item.title_guess||item.code,item.title_guess).then(function(db){
+    // v02.48：查詢字串維持「品名＋平台」給 Giant Bomb/IGDB/RAWG/楽天用；ScreenScraper 這條
+    // 走獨立路徑（見 crossRefLookupPromise 內部），從 entry.code 讀序號＋ssSearch()內建的
+    // _selectedPlatform 系統ID，兩邊分工不衝突：ScreenScraper用序號查最準，其餘用品名查。
+    var _platQ=_selectedPlatform||'';
+    var _nameQ=(item.title_guess||'')+(_platQ?' '+_platQ:'');
+    crossRefLookupPromise(_nameQ,item.title_guess).then(function(db){
       // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
       [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
         if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
@@ -14478,11 +14512,13 @@ function _initDetailTouch(){
 }
 function closeDetail(){
   $('dsheet').classList.remove('on');
+  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('open');
   detailRow=null;
 }
 // 純關閉詳細頁（供刪除/更新等程式化呼叫使用）
 function closeDetailSilent(){
   var ds=$('dsheet');if(ds)ds.classList.remove('on');
+  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('open');
   detailRow=null;
 }
 
@@ -15219,7 +15255,9 @@ function _openExternalLink(url){
 function _bcWebCopyAndOpen(code){
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
   if(!d)return;
-  var prompt='這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品，並簡短說明。';
+  var prompt=_bcWebMode==='name'
+    ?'這是一個商品名稱：'+code+'，請幫我找這個商品的正確封面圖／包裝圖，並簡短說明來源。'
+    :'這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品，並簡短說明。';
   var notice='已複製查詢文字 ✓\n\n接下來會開啟 '+d.label+' 網頁，進入後請在輸入框「貼上」文字並送出，即可查詢。\n\n按「確定」開啟 '+d.label+'。';
   navigator.clipboard.writeText(prompt).then(function(){
     if(confirm(notice))_openExternalLink(d.homeUrl);
@@ -15238,6 +15276,16 @@ var _bcWebScan=createScanner({videoId:'barcode-web-video',
   onUnsupported:function(){var h=$('barcode-web-hint');if(h)h.textContent='裝置不支援即時掃描，請在下方手動輸入條碼';},
   onError:function(){var h=$('barcode-web-hint');if(h)h.textContent='無法啟動相機，請在下方手動輸入條碼';}});
 // v54.66：尋寶頁 ••• 主按鈕展開/收合子功能
+// v02.50：收藏詳情頁的 ••• FAB 群組（比照尋寶頁），三個子功能都是全域函式，直接沿用不重複實作
+function toggleDetFab(){
+  var wrap=document.getElementById('det-fab-wrap');
+  if(wrap)wrap.classList.toggle('open');
+}
+function detFabAction(fn){
+  var wrap=document.getElementById('det-fab-wrap');
+  if(wrap)wrap.classList.remove('open'); // 選了子功能後自動收合
+  if(typeof window[fn]==='function')window[fn]();
+}
 function toggleHuntFab(){
   var wrap=document.getElementById('hunt-fab-wrap');
   if(wrap)wrap.classList.toggle('open');
@@ -15247,15 +15295,66 @@ function huntFabAction(fn){
   if(wrap)wrap.classList.remove('open'); // 選了子功能後自動收合
   if(typeof window[fn]==='function')window[fn]();
 }
+// v02.49：條碼查詢工具加入「品名」模式——條碼比對交叉比對持續不夠準確，讓使用者自己
+// 用品名（可拍照OCR辨識）搜尋，自行挑出正確的商品/圖片，比繼續調整自動比對邏輯更實際。
+var _bcWebMode='barcode';
+function setBcWebMode(mode){
+  _bcWebMode=mode;
+  var bBar=$('bc-web-mode-barcode'),bName=$('bc-web-mode-name');
+  if(bBar)bBar.classList.toggle('on',mode==='barcode');
+  if(bName)bName.classList.toggle('on',mode==='name');
+  var camWrap=$('bc-web-camera-wrap'),ocrWrap=$('bc-web-name-ocr-wrap'),inp=$('barcode-web-input');
+  if(mode==='barcode'){
+    if(camWrap)camWrap.style.display='block';
+    if(ocrWrap)ocrWrap.style.display='none';
+    if(inp){inp.type='text';inp.setAttribute('inputmode','numeric');inp.placeholder='或手動輸入條碼，如 4902370540734';}
+    // v54.44：修正第二次開啟時掃描框黑屏的 bug——上一次的相機串流可能還沒完全釋放，
+    // 緊接著重新 getUserMedia() 容易拿到尚未就緒的串流。延遲一小段時間再啟動，讓硬體確實釋放。
+    setTimeout(function(){if(_bcWebMode==='barcode')_bcWebScan.start();},250);
+  }else{
+    _bcWebScan.stop(); // 切到品名模式不需要相機掃描條碼，停止釋放鏡頭
+    if(camWrap)camWrap.style.display='none';
+    if(ocrWrap)ocrWrap.style.display='block';
+    if(inp){inp.setAttribute('inputmode','text');inp.placeholder='或手動輸入商品名稱';}
+  }
+}
+// 品名模式的OCR拍照：讀取圖片→送Gemini只要求回傳看到的文字，不做結構化辨識（比對交給使用者自己判斷）
+var BC_WEB_OCR_SCHEMA={type:'OBJECT',properties:{text:{type:'STRING'}},required:['text']};
+function bcWebOcrPick(input){
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  if(!cfg.gkey){toast('請先在設定頁填入 Gemini 金鑰','er');return;}
+  var st=$('bc-web-ocr-status');
+  var r=new FileReader();
+  r.onload=function(){
+    compressImg(r.result,1200,0.85,function(compressed){
+      if(st)st.textContent='AI 辨識文字中...';
+      var parts=[
+        {inlineData:{mimeType:'image/jpeg',data:compressed.split(',')[1]}},
+        {text:'請讀出這張照片裡最主要的商品名稱／標題文字（書背、封面、標籤上看到的文字），只回傳看到的文字本身，不要翻譯、不要加說明。如果看不清楚就盡量填寫看得懂的部分。'}
+      ];
+      callGemini(parts,{customSchema:BC_WEB_OCR_SCHEMA,customSystem:'你是文字辨識助手，只根據圖片實際內容回答，不要編造看不到的文字。'})
+        .then(function(res){
+          var txt=(res&&res.text||'').trim();
+          if(!txt){if(st)st.textContent='沒有辨識到文字，請換張照片或手動輸入';return;}
+          var inp=$('barcode-web-input');if(inp)inp.value=txt;
+          if(st)st.textContent='✓ 已帶入下方輸入框，可再自行修改';
+        }).catch(function(e){
+          if(st)st.textContent='辨識失敗：'+_friendlyError(e.message);
+        });
+    },'bcwebocr');
+  };
+  r.onerror=function(){if(st)st.textContent='圖片讀取失敗';};
+  r.readAsDataURL(f);
+  input.value=''; // 清空，允許重複選同一張圖再次觸發onchange
+}
 function openBarcodeWebSearch(){
   var ov=$('barcode-web-ov');if(ov)ov.style.display='flex';
   var inp=$('barcode-web-input');
   if(inp)inp.value='';
   _bcWebRenderDestTabs();
   setBarcodeWebDest(_bcWebDest);
-  // v54.44：修正第二次開啟時掃描框黑屏的 bug——上一次的相機串流可能還沒完全釋放，
-  // 緊接著重新 getUserMedia() 容易拿到尚未就緒的串流。延遲一小段時間再啟動，讓硬體確實釋放。
-  setTimeout(function(){_bcWebScan.start();},250);
+  setBcWebMode('barcode'); // 每次開啟預設回到條碼模式，行為跟改動前一致，使用者可自行切換品名模式
 }
 function closeBarcodeWebSearch(){
   _bcWebScan.stop();
@@ -15263,8 +15362,9 @@ function closeBarcodeWebSearch(){
 }
 function goBarcodeWebSearch(){
   var raw=($('barcode-web-input')&&$('barcode-web-input').value||'').trim();
-  var code=raw.replace(/[^0-9A-Za-z]/g,'');
-  if(!code){toast('請輸入或掃描條碼','er');return;}
+  // v02.49：品名模式允許任何文字（含中日文），只有條碼模式才清成純英數字
+  var code=_bcWebMode==='name'?raw:raw.replace(/[^0-9A-Za-z]/g,'');
+  if(!code){toast(_bcWebMode==='name'?'請輸入或拍照辨識商品名稱':'請輸入或掃描條碼','er');return;}
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
   // v54.45：開啟外部網頁後不再自動關閉條碼查詢畫面，使用者從瀏覽器分頁切回來時
   // 還停留在原本的查詢頁面（可以換個目的地或重新掃描），不會被送回尋寶首頁
@@ -15277,7 +15377,8 @@ function goBarcodeWebSearch(){
 document.addEventListener('visibilitychange',function(){
   if(document.visibilityState==='visible'){
     var ov=$('barcode-web-ov');
-    if(ov&&ov.style.display==='flex'){
+    // v02.49：只有條碼模式才需要重啟相機掃描，品名模式沒有在跑相機掃描，不用處理
+    if(ov&&ov.style.display==='flex'&&_bcWebMode==='barcode'){
       var h=$('barcode-web-hint');if(h)h.textContent='對準條碼自動掃描…';
       _bcWebScan.start();
     }
@@ -16385,14 +16486,32 @@ function _imgToB64(src){
     <button type="button" onclick="closeBarcodeWebSearch()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
   </div>
   <div style="padding:20px 16px;overflow-y:auto">
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button type="button" onclick="setBcWebMode('barcode')" id="bc-web-mode-barcode" class="genre-chip on" style="flex:1;justify-content:center;height:38px;font-size:13px">📷 條碼</button>
+      <button type="button" onclick="setBcWebMode('name')" id="bc-web-mode-name" class="genre-chip" style="flex:1;justify-content:center;height:38px;font-size:13px">🔤 品名</button>
+    </div>
     <div style="font-size:11px;color:#69f0ae;font-weight:700;margin-bottom:6px">🔍 商品搜尋（直接開網頁帶入條碼）</div>
     <div id="bc-web-dest-tabs-1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px"></div>
     <div style="font-size:11px;color:#7c4dff;font-weight:700;margin-bottom:6px">🤖 AI 助手（複製查詢文字，需自行貼上送出）</div>
     <div id="bc-web-dest-tabs-2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px"></div>
     <div style="font-size:12px;color:#7986cb;margin-bottom:14px;line-height:1.6" id="barcode-web-hint">對準條碼自動掃描，掃到會直接開啟 Barcode Lookup 查詢結果。</div>
-    <div style="border-radius:12px;overflow:hidden;border:1.5px solid #69f0ae;background:#000;position:relative;margin-bottom:14px">
+    <div id="bc-web-camera-wrap" style="border-radius:12px;overflow:hidden;border:1.5px solid #69f0ae;background:#000;position:relative;margin-bottom:14px">
       <video id="barcode-web-video" autoplay playsinline muted style="width:100%;display:block;max-height:280px;object-fit:cover"></video>
       <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none"><div class="scan-box"></div><div class="scan-line"></div></div>
+    </div>
+    <div id="bc-web-name-ocr-wrap" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;color:#7986cb;margin-bottom:8px;line-height:1.5">拍照片裡的商品名稱文字（書背/封面/標籤都可以），AI 讀出文字後自動帶入下方輸入框，可再自行修改。</div>
+      <div style="display:flex;gap:8px">
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(105,240,174,.1);border:1.5px solid rgba(105,240,174,.5);border-radius:10px;padding:12px;cursor:pointer;color:#69f0ae;font-size:13px;font-weight:700">
+          📷 拍照辨識文字
+          <input type="file" accept="image/*" capture="environment" style="display:none" id="bc-web-ocr-cam" onchange="bcWebOcrPick(this)">
+        </label>
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
+          🖼 相簿
+          <input type="file" accept="image/*" style="display:none" id="bc-web-ocr-gal" onchange="bcWebOcrPick(this)">
+        </label>
+      </div>
+      <div id="bc-web-ocr-status" style="font-size:11px;color:#7986cb;margin-top:8px"></div>
     </div>
     <div class="sw" style="margin:0 0 14px;position:relative">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
