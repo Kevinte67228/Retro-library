@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.52';
+const APP_VERSION='v02.53';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5885,20 +5885,16 @@ function _mergeDbIntoEntry(db){
   var filled=0;
   entry._src=entry._src||{};
   if(!db||!Object.keys(db).length)return 0;
-  var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
+  // v02.53：genre 徹底移出 factFields，不再信任資料庫給的類型資料。上一版只擋掉「比對不到
+  // 落回OTHER」的情況，但這次遇到新案例：資料庫給的類型文字「能比對到」某個標準選項，但不夠
+  // 精確（如戰略類遊戲被資料庫粗略標成「Action」，比對後變成「ACT 動作」，跟實際類型差異很大）。
+  // 兩次問題都指向同一件事——資料庫的類型分類資料本身不夠可靠，尤其是複合類型的日系遊戲，改成
+  // genre 一律交給 AI 用真正的遊戲知識判斷（AI 提示詞已要求務必只輸出標準代碼，見 aiKnowledgeFill）。
+  var factFields=['developer','publisher','release_date','players','age_rating','series'];
   factFields.forEach(function(k){
     if(!db[k])return;
     if(entry._src[k]==='img'&&(''+(entry[k]||'')).trim())return; // 圖片實讀優先，不覆蓋
-    var dv=(k==='genre')?matchGenreMulti(db[k]):db[k];
-    // v02.52：genre 若資料庫給的文字完全比對不到任何已知類型、matchGenreMulti 落回通用的
-    // 「OTHER 其他」，不當作資料庫已經給出可信答案——這種情況通常代表資料庫的類型文字本身
-    // 不精確或格式對不上（尤其西方資料庫對冷門日版遊戲），硬填「OTHER」反而會讓這個欄位看起來
-    // 「已填寫」，導致後面 AI 補全階段永遠不會再被問到，AI 用真正的遊戲知識判斷反而更準。
-    // entry 目前若已經是別的值（非空且非OTHER）則保留，不要拿較不可信的「OTHER」蓋掉。
-    if(k==='genre'&&dv==='OTHER 其他'){
-      if((''+(entry[k]||'')).trim())return; // 目前已有其他值就保留，不覆蓋
-      return; // 目前是空的也不填「OTHER」，留給AI補
-    }
+    var dv=db[k];
     if(entry[k]!==dv)filled++;
     entry[k]=dv;entry._src[k]='db';
   });
@@ -16319,9 +16315,12 @@ function huntConvertAIFill(){
     }
     entry._src=entry._src||{};
     // ── 資料庫事實欄位加值合併（不做名稱 gate；事實類覆蓋、版本類僅補空白）──
+    // v02.53：genre 移出 factFields，理由與 _mergeDbIntoEntry 相同——資料庫的類型分類資料
+    // 不夠可靠（曾出現比對不到落回OTHER、以及比對到但不準確如把戰略類誤標成動作類等案例），
+    // 交給 AI 視覺辨識結果判斷（下方 matchGenreMulti 正規化那行會正確處理 ai.genre 的原始值）。
     if(db&&Object.keys(db).length){
-      var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
-      factFields.forEach(function(k){if(db[k]){entry[k]=(k==='genre')?matchGenreMulti(db[k]):db[k];entry._src[k]='db';}});
+      var factFields=['developer','publisher','release_date','players','age_rating','series'];
+      factFields.forEach(function(k){if(db[k]){entry[k]=db[k];entry._src[k]='db';}});
       if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)){entry.summary=db.summary;entry._src.summary='db';}
       normalizeLanguageFields(db);
       ['platform','region','voice_language','subtitle_language','media'].forEach(function(k){if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';}});
