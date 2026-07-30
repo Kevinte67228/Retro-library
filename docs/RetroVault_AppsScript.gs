@@ -605,14 +605,17 @@ function findOrphanImages_(dryRun, usedIds) {
   const folder = getImgFolder();
   const files = folder.getFiles();
   const orphans = [];
+  let total = 0; // v02.54：反正都在迭代了，順便統計資料夾內實際檔案總數（最客觀的數字，跟網頁UI手動計數無關）
   while (files.hasNext()) {
     const f = files.next();
+    total++;
     const id = f.getId();
     if (!used[id]) {
       orphans.push({ name: f.getName(), id: id });
       if (!dryRun) f.setTrashed(true);
     }
   }
+  orphans.total = total; // 掛在陣列物件上，不改變既有呼叫端讀取 orphans.length/orphans.forEach 的行為
   return orphans;
 }
  
@@ -625,12 +628,17 @@ function auditOrphanImages() {
   const used = collectUsedImgIds_();
   const orphans = findOrphanImages_(true, used);
   const usedCount = Object.keys(used).length;
-  Logger.log('使用中的圖檔：%s 個', usedCount);
+  // v02.54：印出資料夾內實際檔案總數（folder.getFiles() 直接迭代算出來的，不是網頁UI手動選取，
+  // 不受Drive網頁清單延遲載入影響）。注意：這個數字不會剛好等於「使用中+孤兒」——如果 Sheet
+  // 裡記錄的某個 ID 對應的檔案已經不在資料夾（例如已被誤刪、還在垃圾桶或已尋回),
+  // 那個 ID 會被算進「使用中」但不會出現在資料夾迭代裡，這是正常現象，不代表本次統計有誤。
+  Logger.log('資料夾內實際檔案總數：%s 個', orphans.total);
+  Logger.log('使用中的圖檔（Sheet裡記錄到的不重複ID數）：%s 個', usedCount);
   Logger.log('找到孤兒檔：%s 個', orphans.length);
   orphans.forEach(function(o) { Logger.log('  孤兒 → %s (%s)', o.name, o.id); });
   if (!orphans.length) Logger.log('✓ 沒有孤兒檔，資料夾很乾淨');
   else Logger.log('如要清除，請執行 cleanupOrphanImages()');
-  return { ok: true, used: usedCount, orphans: orphans.length, list: orphans };
+  return { ok: true, total: orphans.total, used: usedCount, orphans: orphans.length, list: orphans };
 }
  
 // 實際清除孤兒檔（移到垃圾桶）
