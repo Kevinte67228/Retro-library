@@ -2673,9 +2673,46 @@ function fixSheetHeaders() {
       sheet.setFrozenRows(1);
       return 'header_inserted';
     } else {
-      // 確保 header 完整正確
+      // v02.55：修復欄位錯置漏洞——原本這裡無條件把 header 列覆寫成目前的 canonical headers
+      // 常數順序，但完全沒有搬動第2列以後的實際資料欄位。如果現有工作表的欄位順序（可能是舊
+      // 版本建立當下的順序）跟目前 headers 常數順序不一樣（例如中途在中間插入新欄位），header
+      // 列被改寫成新順序後，底下資料還留在原本的欄位位置，就會造成「標題說是這欄，資料其實是
+      // 別欄」的錯置。改成：先比對新舊順序是否相同，相同才走原本單純更新 header 文字的快速路徑；
+      // 不同的話，若有「舊表存在、新 headers 已經沒有」的欄位（無法安全判斷資料歸屬）或標題列
+      // 有重複欄名，一律跳過不動、只記錄警告，避免自動搬動反而造成資料遺失；其餘安全情況才依
+      // 欄位名稱重新對應搬移資料（不是依位置，位置正是原本出錯的原因）。
+      const sameOrder = headers.every(function(h, i) { return headerRow[i] === h; });
+      if (sameOrder) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        return 'header_updated';
+      }
+      const nonEmptyOld = headerRow.filter(function(h) { return h; });
+      const seen = {};
+      let hasDup = false;
+      nonEmptyOld.forEach(function(h) { if (seen[h]) hasDup = true; seen[h] = true; });
+      if (hasDup) {
+        Logger.log('fixSheet: %s 標題列有重複欄名，無法安全判斷資料歸屬，不自動搬動，請人工檢查', sheetName);
+        return 'skipped_duplicate_headers';
+      }
+      const droppedCols = nonEmptyOld.filter(function(h) { return headers.indexOf(h) < 0; });
+      if (droppedCols.length) {
+        Logger.log('fixSheet: %s 有欄位「%s」在目前的標準欄位清單裡已經不存在，為避免資料遺失不自動搬動，請人工檢查', sheetName, droppedCols.join('、'));
+        return 'skipped_has_dropped_columns:' + droppedCols.join(',');
+      }
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const data = sheet.getRange(2, 1, lastRow - 1, headerRow.length).getValues();
+        const remapped = data.map(function(row) {
+          return headers.map(function(h) {
+            const oldIdx = headerRow.indexOf(h);
+            return oldIdx >= 0 ? row[oldIdx] : '';
+          });
+        });
+        sheet.getRange(2, 1, remapped.length, headers.length).setValues(remapped);
+        Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, remapped.length);
+      }
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      return 'header_updated';
+      return 'header_and_data_realigned';
     }
   }
  
