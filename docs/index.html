@@ -1316,7 +1316,7 @@ body{
             <div id="batch-progress" style="display:none;font-size:12px;color:#7986cb;text-align:center;margin:8px 0"></div>
 
             <div id="batch-list-wrap" style="display:none;margin-top:16px">
-              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">② 確認結果（取消勾選可剃除該筆）</div>
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">② 確認結果（取消勾選可剔除該筆）</div>
               <div id="batch-list"></div>
             </div>
 
@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.58';
+const APP_VERSION='v02.59';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9994,7 +9994,7 @@ function doAnalyze(){
 // 🤖 [AI辨識進入點] 批次書背辨識模式（v02.38）：一次拍照辨識最多 8 件商品書背，
 // 逐件循序查資料庫＋補封面＋AI補全，列成確認清單讓使用者勾選後批次存檔。
 // 設計對照：整批鎖死使用者已選定的分類/平台/區域（不逐件覆蓋），序號辨識不清楚時
-// 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剃除；只支援無子類型的 4 個分類。
+// 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剔除；只支援無子類型的 4 個分類。
 var _batchItems=[]; // {order,code,title_guess,code_clear,status,include,entry,dup}
 var _batchImgFile=null;
 // v02.54：整批解析進行中的全域鎖。_batchResolveNext 是循序背景流程，過程中會暫時把解析中
