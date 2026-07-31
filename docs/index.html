@@ -489,8 +489,8 @@ body{
 #dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁 FAB（v02.50：比照尋寶頁•••收合群組，含日系資料庫查詢/條碼品名查詢/拍照辨識三個功能，
    位置刻意比 .dnav-float（bottom:86px）更低，避免跟上一筆/下一筆翻頁按鈕重疊） */
-#det-fab-wrap{position:fixed;right:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:12px}
-#dsheet.on #det-fab-wrap{display:flex}
+#det-fab-wrap{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:12px}
+#det-fab-wrap.show{display:flex}
 #det-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #det-fab-main:active{transform:scale(.93)}
 #det-lens-fab,#det-barcode-fab,#det-cd-fab{
@@ -1403,6 +1403,12 @@ body{
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
           </div>
           <div id="form-body"></div>
+          <div id="det-fab-wrap">
+            <button id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button">•••</button>
+            <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
+            <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
+            <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+          </div>
           <div id="save-bar">
             <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
             <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button">儲存至收藏</button>
@@ -2198,12 +2204,6 @@ body{
   <div id="dov"></div>
   <button class="dnav-float" id="dprev-float" title="上一筆" type="button">‹</button>
   <button class="dnav-float" id="dnext-float" title="下一筆" type="button">›</button>
-  <div id="det-fab-wrap">
-    <button id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button">•••</button>
-    <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
-    <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
-    <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
-  </div>
   <div id="dp">
     <div class="dhandle"></div>
     <div class="dhdr">
@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.55';
+const APP_VERSION='v02.56';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10372,6 +10372,9 @@ function _pickBestPrimaryName(){
   }
 }
 function showForm(src){
+  // v02.56：showForm 用於新建檔／批次項目編輯等流程，不是編輯既有收藏記錄（那條路走
+  // editDetail()，不經過這裡），FAB群組只在編輯既有記錄時才顯示，這裡一律先隱藏
+  var _fw=$('det-fab-wrap');if(_fw)_fw.classList.remove('show');
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
   // v02.37：原本只手動隱藏 bar-sec/img-sec，是舊模式年代寫的，後來新增的
@@ -14461,13 +14464,11 @@ function _initDetailTouch(){
 }
 function closeDetail(){
   $('dsheet').classList.remove('on');
-  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('open');
   detailRow=null;
 }
 // 純關閉詳細頁（供刪除/更新等程式化呼叫使用）
 function closeDetailSilent(){
   var ds=$('dsheet');if(ds)ds.classList.remove('on');
-  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('open');
   detailRow=null;
 }
 
@@ -14526,6 +14527,8 @@ function editDetail(){
   renderForm();
   var btn=$('save-btn');
   if(btn){btn.disabled=false;btn.textContent='更新記錄';btn.onclick=function(){doUpdate(rn);};}
+  // v02.56：條碼/品名查詢等FAB群組從詳情頁搬到編輯表單頁，只在編輯既有記錄時顯示
+  var fw=$('det-fab-wrap');if(fw)fw.classList.add('show');
 }
 $('dov').addEventListener('click',closeDetail);
 
@@ -14670,6 +14673,7 @@ function resetAll(){
   var tw=$('thumb-wrap');if(tw)tw.innerHTML='';
   if(typeof resetEntryStep1==='function')resetEntryStep1(); // #4：預設回到乾淨 Step 1
   var btn=$('save-btn');if(btn){btn.textContent='儲存至收藏';btn.onclick=doSave;}
+  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('show'); // v02.56：離開表單一律隱藏FAB
 }
 
 function registerServiceWorker(){

@@ -1404,7 +1404,7 @@ body{
           </div>
           <div id="form-body"></div>
           <div id="save-bar">
-            <button class="btn bo" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+            <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
             <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button">儲存至收藏</button>
           </div>
         </div>
@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.50';
+const APP_VERSION='v02.55';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3949,6 +3949,7 @@ function _pushGuard(){
 // ── Utils ──
 function $(id){return document.getElementById(id)}
 var _loadingTimer=null;
+var _loadingSafetyTimer=null;
 function _clearLoadingTimer(){if(_loadingTimer){clearInterval(_loadingTimer);_loadingTimer=null;}}
 function loading(t){
   _clearLoadingTimer();
@@ -3960,6 +3961,11 @@ function loading(t){
     ||t.indexOf('比對')>=0||t.indexOf('資料庫')>=0);
   var cb=$('l-cancel-btn');if(cb)cb.style.display=showCancel?'block':'none';
   if(cb&&showCancel)cb.textContent=t&&t.indexOf('AI')>=0?'取消，手動填寫':'略過等待，直接填寫';
+  // v02.55：安全逾時保護——不管是哪個呼叫路徑忘記配對 noLoad()（或網路請求真的卡住沒有
+  // resolve/reject），20秒後強制關閉載入圈，避免畫面永久卡住看起來像「不停載入」。
+  // 不影響正常情況：正常請求通常幾秒內就會自己呼叫 noLoad()，這裡的逾時只在異常時才會生效。
+  if(_loadingSafetyTimer)clearTimeout(_loadingSafetyTimer);
+  _loadingSafetyTimer=setTimeout(function(){noLoad();},20000);
 }
 function loadingTimed(t){
   var base=t||'處理中...';
@@ -3970,7 +3976,7 @@ function loadingTimed(t){
     var el=$('ltxt');if(el)el.textContent=base+'（'+sec+'秒）';
   },1000);
 }
-function noLoad(){_clearLoadingTimer();$('lov').classList.remove('sh');releaseAwake();}
+function noLoad(){_clearLoadingTimer();if(_loadingSafetyTimer){clearTimeout(_loadingSafetyTimer);_loadingSafetyTimer=null;}$('lov').classList.remove('sh');releaseAwake();}
 // ── 螢幕保持喚醒（處理中不熄屏）── 需 HTTPS、iOS Safari 16.4+
 var _wl=null;
 function keepAwake(){
@@ -5351,6 +5357,10 @@ function colRefresh(){
 }
 var _saving=false;
 function doSave(){
+  // v02.52：防護——不管 save-btn.onclick 有沒有被其他背景流程（如資料庫比對的 loading 狀態
+  // 管理）意外重置回 doSave，只要人還在批次項目編輯模式（_batchEditIndex 不是 null），
+  // 一律轉向「存回這一筆批次項目、返回清單」，不會真的寫入試算表，也不會跳出整個批次流程。
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchApplyItemEdit();return;}
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
   if(_saving)return; // 防連點（用旗標，不依賴按鈕狀態）
   if(!entry||!entry.primary_name){
@@ -5881,11 +5891,16 @@ function _mergeDbIntoEntry(db){
   var filled=0;
   entry._src=entry._src||{};
   if(!db||!Object.keys(db).length)return 0;
-  var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
+  // v02.53：genre 徹底移出 factFields，不再信任資料庫給的類型資料。上一版只擋掉「比對不到
+  // 落回OTHER」的情況，但這次遇到新案例：資料庫給的類型文字「能比對到」某個標準選項，但不夠
+  // 精確（如戰略類遊戲被資料庫粗略標成「Action」，比對後變成「ACT 動作」，跟實際類型差異很大）。
+  // 兩次問題都指向同一件事——資料庫的類型分類資料本身不夠可靠，尤其是複合類型的日系遊戲，改成
+  // genre 一律交給 AI 用真正的遊戲知識判斷（AI 提示詞已要求務必只輸出標準代碼，見 aiKnowledgeFill）。
+  var factFields=['developer','publisher','release_date','players','age_rating','series'];
   factFields.forEach(function(k){
     if(!db[k])return;
     if(entry._src[k]==='img'&&(''+(entry[k]||'')).trim())return; // 圖片實讀優先，不覆蓋
-    var dv=(k==='genre')?matchGenreMulti(db[k]):db[k];
+    var dv=db[k];
     if(entry[k]!==dv)filled++;
     entry[k]=dv;entry._src[k]='db';
   });
@@ -5962,11 +5977,25 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region){
   if(missingFields.indexOf('jp_name')>=0||missingFields.indexOf('en_name')>=0){
     nameTip='\n【名稱補全】jp_name 請填此品在日本市場流通的官方日文名稱、en_name 填官方英文名稱。遊戲、主機、週邊、攻略本幾乎都有官方日文與英文名稱，請盡量提供——這是跨市場估值比對能否命中的關鍵。僅在確實查無對應語言名稱時才留空；嚴禁音譯、直譯或自行杜撰名稱。';
   }
+  // v02.56：zh_name 原本只靠欄位說明「官方繁中譯名優先」，沒講清楚沒有官方譯名時該怎麼處理，
+  // 容易讓 AI 誤把日文/英文原文直接填進這個欄位。明確要求：一定要是中文字元，沒有官方名稱時
+  // 提供社群慣用的中文翻譯／意譯，絕對不能填日文或英文。
+  var zhTip='';
+  if(missingFields.indexOf('zh_name')>=0){
+    zhTip='\n【中文名稱】zh_name 一定要是中文字元組成的名稱：有官方繁體中文譯名優先使用官方譯名；沒有官方譯名時，請提供社群普遍使用的中文翻譯或意譯名稱；絕對不能把日文或英文原文直接填進這個欄位，也不要留下任何日文假名或英文字母；真的完全沒有適合的中文名稱、連常見譯名都查無資料時才留空字串。';
+  }
+  // v02.56：genre 原本的欄位說明比圖片辨識那邊（_SYS_GAME）弱很多，沒有明確要求「只輸出代碼」，
+  // 容易讓 AI 用日文或自由文字描述類型，導致後續 matchGenreMulti 比對不到標準選項、命中率差。
+  // 比照圖片辨識那邊同樣嚴格的措辭，兩邊提示詞一致。
+  var genreTip='';
+  if(missingFields.indexOf('genre')>=0){
+    genreTip='\n【遊戲類型】genre 務必只從下列代碼清單擇一或多個（多個用、分隔），只輸出代碼本身（如 ACT、RPG），不要輸出日文、中文全名或自行創造的分類：AADV ACT ADV ARPG AVG CARD EDU FAM FMV FPS FTG H&S HOR LVG MOBA MUS PARTY PLT PZL RAC RAI RPG RTS SAND SHT SLG SPT SRPG STG STH SVL TBL TD TPS VN VR OTHER。真的沒有符合的分類才用 OTHER，不要留空。';
+  }
   var prompt='你是'+spec.role+'。請提供以下【'+cat+'】的準確資訊：\n'+
     rgCtx+spec.itemLabel+'：'+gameName+(platform?'\n平台：'+platform:'')+'\n\n'+
     '請僅輸出 JSON 物件，包含這些欄位（用繁體中文，不知道的欄位留空字串）：\n'+
     JSON.stringify(missingFields)+'\n欄位說明：'+ask.join('、')+'\n'+
-    '嚴格要求：'+spec.constraint+suggestPriceTip+nameTip+'\n只輸出 JSON，不要說明文字。';
+    '嚴格要求：'+spec.constraint+suggestPriceTip+nameTip+zhTip+genreTip+'\n只輸出 JSON，不要說明文字。';
 
   // 用純文字呼叫（優先 Gemini 免費，無圖片）
   function geminiText(){
@@ -9968,6 +9997,12 @@ function doAnalyze(){
 // 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剃除；只支援無子類型的 4 個分類。
 var _batchItems=[]; // {order,code,title_guess,code_clear,status,include,entry,dup}
 var _batchImgFile=null;
+// v02.54：整批解析進行中的全域鎖。_batchResolveNext 是循序背景流程，過程中會暫時把解析中
+// 項目的資料放進全域可變 entry 變數；如果在「其他項目還在背景解析中」時，使用者點進「已完成」
+// 的項目編輯（batchEditItem 也會暫用同一個全域 entry），會跟正在解析的項目搶用同一個變數，
+// 造成資料互相污染（使用者實測確認過這個現象）。這個旗標在整批解析完全結束前一律鎖住編輯功能，
+// 不只是看單一項目自己的狀態。
+var _batchResolving=false;
 
 var BATCH_DETECT_SCHEMA={
   type:'OBJECT',
@@ -10007,8 +10042,7 @@ function initBatchSpineMode(){
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
-    var _cseWarn=(!cfg.gcsekey||!cfg.gcxid)?'<br><span style="color:#ffb74d">⚠️ 尚未設定 Google 圖片搜尋金鑰，封面候選只會有資料庫查到的 1 張（如果查到的話），沒有其他候選可挑。到「設定」頁填入 Google API Key + Search Engine ID 可以取得更多候選圖。</span>':'';
-    $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。'+_cseWarn;
+    $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
   });
 }
 
@@ -10056,6 +10090,7 @@ function batchDetectStart(){
           });
           $('batch-list-wrap').style.display='block';
           _batchRenderList();
+          _batchResolving=true;
           _batchResolveNext(0);
         }).catch(function(e){
           noLoad();
@@ -10067,76 +10102,13 @@ function batchDetectStart(){
   r.readAsDataURL(_batchImgFile);
 }
 
-// v02.44：維基百科封面搜尋。不需要API金鑰，MediaWiki API本身支援跨網域請求（origin=*參數），
-// 可直接前端呼叫不用經過GAS後端代理。
-// v02.45：加入平台參數，查詢改成依序嘗試「品名+平台」優先、查無結果才退回「純品名」——
-// 純品名容易撞到系列總覽頁/消歧義頁（例如「ドラムマニア」查到整個街機系列的機台照片，不是特定平台版本封面），
-// 帶平台字串有機會命中該平台專屬條目/段落。日文維基先查（對JP老遊戲命中率較高），沒結果才退回英文維基。
-// 不加商品編碼查詢：維基百科文章不會用商品序號索引，加了幾乎不會有結果。
-function _wikipediaCoverSearch(name, platform, cb){
-  if(!name){cb(null);return;}
-  var queries=platform?[name+' '+platform,name]:[name];
-  var langs=['ja','en'];
-  var attempts=[];
-  langs.forEach(function(lang){queries.forEach(function(q){attempts.push({lang:lang,q:q});});});
-  function tryNext(i){
-    if(i>=attempts.length){cb(null);return;}
-    var a=attempts[i];
-    var url='https://'+a.lang+'.wikipedia.org/w/api.php?action=query&format=json&origin=*'+
-      '&generator=search&gsrsearch='+encodeURIComponent(a.q)+'&gsrlimit=1'+
-      '&prop=pageimages&piprop=original';
-    fetch(url).then(function(r){return r.ok?r.json():null;}).then(function(d){
-      var pages=d&&d.query&&d.query.pages;
-      var keys=pages?Object.keys(pages):[];
-      var page=keys.length?pages[keys[0]]:null;
-      var img=page&&page.original&&page.original.source;
-      if(img)cb(img);else tryNext(i+1);
-    }).catch(function(){tryNext(i+1);});
-  }
-  tryNext(0);
-}
-
-// 逐件循序解析：查資料庫→補封面→AI補全，完全比照 doAnalyze 單品邏輯，
+// 逐件循序解析：查資料庫→AI補全其他欄位，完全比照 doAnalyze 單品邏輯，
 // 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
-// v02.42（3張候選封面）：蒐集最多 3 張候選封面圖，不直接判定「用哪張」，交給確認清單讓使用者選。
-// 優先順序：資料庫（若有）→ 維基百科 → Google CSE（v02.44 加入維基百科，插在CSE之前；
-// CSE 呼叫仍保留不拿掉，未設定金鑰或呼叫失敗都只是安靜跳過，不影響前面已蒐集到的候選）。
-function _batchFetchCoverCandidates(cb){
-  var cands=[];
-  if(entry.cover_img)cands.push({url:entry.cover_img,src:(entry._src&&entry._src.cover_img)||'db'});
-  var name=entry.primary_name||entry.zh_name||entry.jp_name||entry.code||'';
-  var platform=entry.platform||_selectedPlatform||'';
-
-  function fetchCSE(){
-    var need=3-cands.length;
-    if(need<=0||!cfg.gcsekey||!cfg.gcxid||!cfg.url){cb(cands);return;}
-    if(!name){cb(cands);return;}
-    var q=name+(platform?' '+platform:'');
-    var params=new URLSearchParams({action:'google_image_search',q:q,gcsekey:cfg.gcsekey,gcxid:cfg.gcxid,num:String(need)});
-    shGetSecP(params)
-      .then(function(r){return r.ok?r.json():null;})
-      .then(function(d){
-        if(d&&d.ok&&Array.isArray(d.items)){
-          d.items.forEach(function(u){if(u&&cands.length<3)cands.push({url:u,src:'google_cse'});});
-        }else if(d&&d.ok&&d.imageUrl&&cands.length<3){
-          cands.push({url:d.imageUrl,src:'google_cse'});
-        }
-        cb(cands);
-      }).catch(function(){cb(cands);});
-  }
-
-  if(cands.length<3&&name){
-    _wikipediaCoverSearch(name,platform,function(img){
-      if(img&&cands.length<3)cands.push({url:img,src:'wikipedia'});
-      fetchCSE();
-    });
-  }else{
-    fetchCSE();
-  }
-}
-
+// v02.57：移除自動抓封面圖的機制（資料庫/維基百科/Google搜尋圖片一律不再自動採用），
+// 命中率始終不理想，改成解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上。
 function _batchResolveNext(idx){
   if(idx>=_batchItems.length){
+    _batchResolving=false; // 整批解析完成，解除編輯鎖
     $('batch-progress').style.display='none';
     _batchRenderList();
     toast('批次辨識完成，請確認後儲存','ok',3000);
@@ -10144,19 +10116,14 @@ function _batchResolveNext(idx){
   }
   var item=_batchItems[idx];
   item.status='resolving';
-  item.coverCandidates=item.coverCandidates||[];
   $('batch-progress').style.display='block';
-  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...';
+  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）';
   _batchRenderList();
   var type=_selectedType||'遊戲';
   var _backupEntry=entry;
   entry=Object.assign({},_defaultsFor(type),{
     category:type,platform:_selectedPlatform||'',
     primary_name:item.title_guess||'',code:item.code||''
-    // v02.48：序號改回提早帶入 entry.code。ScreenScraper 對日版序號比對精確度高（它本身就是
-    // 為此設計的資料庫），且 ssSearch() 本來就會用 _selectedPlatform 帶入 systemeid 參數，
-    // 已經是「平台+序號」查詢；其他資料庫（Giant Bomb/IGDB/RAWG/楽天）沒有可靠的序號索引，
-    // 序號傳給它們等於送出不是名稱的亂碼查詢，這幾家維持只用「品名+平台」（見下方 _nameQ）。
   });
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   function finishItem(failed){
@@ -10168,30 +10135,22 @@ function _batchResolveNext(idx){
     _batchResolveNext(idx+1);
   }
   function completeThenFinish(){aiCompleteMissing(function(){finishItem(false);});}
-  // v02.42（3張候選封面）：不再「查到就直接用、查不到才補」，改成一律蒐集最多 3 張候選
-  // （DB 查到的優先當候選1，不夠再用 Google CSE 補），交給確認清單讓使用者挑選，預設先選第1張
-  function coverThenComplete(){
-    _batchFetchCoverCandidates(function(cands){
-      item.coverCandidates=cands;
-      if(cands.length){
-        entry.cover_img=cands[0].url;
-        entry._src=entry._src||{};entry._src.cover_img=cands[0].src;
-      }
-      completeThenFinish();
-    });
-  }
   if(!item.code&&!item.title_guess){finishItem(true);return;}
   if(catInternal(type)==='攻略'){
     var isISBN=item.code.indexOf('978')===0||item.code.indexOf('979')===0;
-    if(!isISBN){coverThenComplete();return;}
+    if(!isISBN){completeThenFinish();return;}
     bookLookupPromise(item.code).then(function(bk){
       if(bk){
         entry._src=entry._src||{};
-        // 書籍資料庫只補空欄（含 cover_img，通用鍵值迴圈）；img 來源不覆蓋，與單品 doAnalyze 同精神
-        Object.keys(bk).forEach(function(k){if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';}});
+        // 書籍資料庫只補空欄（含 cover_img 等圖片欄位）；img 來源不覆蓋，與單品 doAnalyze 同精神。
+        // v02.57：批次模式不再自動採用圖片欄位，跳過cover_img/back_img/spine_img，只補文字欄位。
+        Object.keys(bk).forEach(function(k){
+          if(k==='cover_img'||k==='back_img'||k==='spine_img')return;
+          if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';}
+        });
       }
-      coverThenComplete();
-    }).catch(coverThenComplete);
+      completeThenFinish();
+    }).catch(completeThenFinish);
   }else{
     // v02.48：查詢字串維持「品名＋平台」給 Giant Bomb/IGDB/RAWG/楽天用；ScreenScraper 這條
     // 走獨立路徑（見 crossRefLookupPromise 內部），從 entry.code 讀序號＋ssSearch()內建的
@@ -10199,13 +10158,10 @@ function _batchResolveNext(idx){
     var _platQ=_selectedPlatform||'';
     var _nameQ=(item.title_guess||'')+(_platQ?' '+_platQ:'');
     crossRefLookupPromise(_nameQ,item.title_guess).then(function(db){
-      // crossRef 回傳的圖片是候選欄位 cover_url/back_url/spine_url，需轉存到 cover_img/back_img/spine_img
-      [['cover_img','cover_url'],['back_img','back_url'],['spine_img','spine_url']].forEach(function(p){
-        if(!entry[p[0]]&&db[p[1]]){entry[p[0]]=db[p[1]];entry._src=entry._src||{};if(p[0]==='cover_img')entry._src.cover_img=db._coverSrc||'db';}
-      });
+      // v02.57：批次模式不再自動採用資料庫回傳的封面圖，_mergeDbIntoEntry 本身也不處理圖片欄位
       _mergeDbIntoEntry(db);
-      coverThenComplete();
-    }).catch(coverThenComplete);
+      completeThenFinish();
+    }).catch(completeThenFinish);
   }
 }
 
@@ -10220,74 +10176,27 @@ function _batchStatusBadge(item){
   return parts.join('　');
 }
 
-// v02.42（3張候選封面）：來源標籤依「目前選中的那張」顯示，讓使用者知道現在採用的封面是資料庫還是Google搜尋來的
-function _batchImgSrcLabel(item){
-  var e=item.entry;
-  if(!e||!e.cover_img)return '';
-  var src=(e._src&&e._src.cover_img)||'';
-  var labels={
-    google_cse:'圖片來源：Google 搜尋',
-    wikipedia:'圖片來源：維基百科',
-    screenscraper:'圖片來源：ScreenScraper',
-    igdb:'圖片來源：IGDB',
-    rawg:'圖片來源：RAWG',
-    rakuten:'圖片來源：楽天市場（⚠️賣場商品照，非官方封面，畫質/內容可能不理想）',
-    db:'圖片來源：資料庫'
-  };
-  return labels[src]||'';
-}
-
-// 選這件項目要用哪一張候選封面（candIdx為-1代表不使用任何封面）
-function batchSelectCover(i,candIdx){
-  var item=_batchItems[i];
-  if(!item||!item.entry)return;
-  if(candIdx<0){
-    item.entry.cover_img='';
-    if(item.entry._src)delete item.entry._src.cover_img;
-  }else{
-    var c=item.coverCandidates&&item.coverCandidates[candIdx];
-    if(!c)return;
-    item.entry.cover_img=c.url;
-    item.entry._src=item.entry._src||{};
-    item.entry._src.cover_img=c.src;
-  }
-  _batchRenderList();
-}
-
-// 候選封面選擇列：最多3張小縮圖可點選切換，選中的用外框標示，另外一顆「不使用」選項
-function _batchCoverPicker(item,i){
-  var cands=item.coverCandidates||[];
-  if(!cands.length)return '';
-  var curUrl=item.entry&&item.entry.cover_img;
-  var thumbs=cands.map(function(c,ci){
-    var sel=curUrl===c.url;
-    return '<img src="'+esc(imgUrl(c.url,80))+'" onclick="batchSelectCover('+i+','+ci+')" title="選這張當封面" style="width:30px;height:30px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid '+(sel?'#ce93d8':'transparent')+'">';
-  }).join('');
-  var noneSel=!curUrl;
-  var noneBtn='<button type="button" onclick="batchSelectCover('+i+',-1)" title="不使用封面" style="width:30px;height:30px;border-radius:6px;background:#141b30;border:2px solid '+(noneSel?'#ce93d8':'#1e2a45')+';color:#7986cb;font-size:13px;cursor:pointer;padding:0">✕</button>';
-  return '<div style="display:flex;gap:5px;margin-top:5px">'+thumbs+noneBtn+'</div>';
-}
-
 function _batchRenderList(){
   var wrap=$('batch-list');if(!wrap)return;
   wrap.innerHTML=_batchItems.map(function(item,i){
     var e=item.entry;
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
     var hasImg=!!(e&&e.cover_img);
+    var editable=item.status==='ok'&&!_batchResolving; // v02.54：整批解析完成前一律不可編輯，不只看單一項目狀態
+    // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
+    // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
-      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" onclick="window.open(\''+esc(imgUrl(e.cover_img,800))+'\',\'_blank\')" style="width:44px;height:44px;object-fit:cover;border-radius:8px;cursor:pointer;background:#141b30;flex-shrink:0" title="點圖放大看清楚">'
-      : '<div style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>';
+      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'"'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;object-fit:cover;border-radius:8px;'+(editable?'cursor:pointer;':'')+'background:#141b30;flex-shrink:0" title="'+(editable?'點擊編輯／補拍照片':'')+'">'
+      : '<div'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;'+(editable?'cursor:pointer;':'')+'color:#7986cb;text-align:center;line-height:1.2" title="'+(editable?'點擊拍照補上圖片':'')+'">📷</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
-    var srcLabel=_batchImgSrcLabel(item);
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
       '<input type="checkbox" '+checked+' '+disabled+' onchange="batchToggleInclude('+i+',this.checked)" style="width:18px;height:18px;flex-shrink:0;accent-color:#ce93d8">'+
       imgTag+
-      '<div style="flex:1;min-width:0">'+
+      '<div style="flex:1;min-width:0"'+(editable?' onclick="batchEditItem('+i+')" style="cursor:pointer"':'')+'>'+
         '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
         '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
-        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(srcLabel?'　<span style="color:#7986cb">'+srcLabel+'</span>':'')+'</div>'+
-        _batchCoverPicker(item,i)+
+        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+'</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -10305,6 +10214,46 @@ function batchToggleInclude(i,checked){
   if(!_batchItems[i])return;
   _batchItems[i].include=checked;
   _batchRenderList();
+}
+
+// v02.57：批次項目編輯——點縮圖開啟既有的完整單品表單（跟其他建檔模式共用同一套 renderForm／
+// 圖片紀錄區塊），讓使用者手動拍照補圖或修改任何欄位。「儲存」在這個模式下不是直接寫入試算表，
+// 是把編輯結果存回這一筆批次項目、回到批次確認清單；真正寫入試算表要等使用者按批次清單的
+// 「儲存已勾選項目」才會發生。透過暫時替換全域 entry 重用既有表單渲染機制（與批次解析階段的
+// 「單一可變 entry」慣例一致），save-btn／取消鈕的 onclick 動態切換，離開時記得換回預設行為。
+var _batchEditIndex=null;
+var _batchEditBackupEntry=null;
+function batchEditItem(i){
+  // v02.54：整批解析進行中一律鎖住編輯，不只看這一筆自己的狀態——其他項目還在背景解析時，
+  // 編輯已完成的項目會跟解析中的項目搶用同一個全域entry變數，造成資料互相污染（已實測確認）。
+  if(_batchResolving){toast('批次還在解析中，請等全部解析完成後再編輯','',3000);return;}
+  if(!_batchItems[i]||_batchItems[i].status!=='ok')return;
+  _batchEditIndex=i;
+  _batchEditBackupEntry=entry;
+  entry=Object.assign({},_batchItems[i].entry); // 複製一份，取消時不影響原本已解析的資料
+  showForm('批次項目編輯（第'+(i+1)+'件）');
+  renderForm();
+  var sb=$('save-btn');if(sb){sb.textContent='✓ 完成編輯，返回清單';sb.onclick=batchApplyItemEdit;}
+  var cb=$('form-cancel-btn');if(cb)cb.onclick=batchCancelItemEdit;
+}
+function _batchExitEditMode(){
+  entry=_batchEditBackupEntry;
+  _batchEditIndex=null;_batchEditBackupEntry=null;
+  hideAllSecs();
+  $('batch-sec').style.display='block';
+  var sb=$('save-btn');if(sb){sb.textContent='儲存至收藏';sb.onclick=doSave;}
+  var cb=$('form-cancel-btn');if(cb)cb.onclick=resetAll;
+  _batchRenderList();
+}
+function batchApplyItemEdit(){
+  if(_batchEditIndex===null)return;
+  var _savedIdx=_batchEditIndex;
+  _batchItems[_savedIdx].entry=Object.assign({},entry); // 存回這一筆批次項目（含使用者拍的照片）
+  _batchExitEditMode();
+  toast('已更新第'+(_savedIdx+1)+'筆，記得確認後再儲存整批','ok',2500);
+}
+function batchCancelItemEdit(){
+  _batchExitEditMode(); // 不寫回_batchItems，捨棄這次編輯的修改
 }
 
 // 批次存檔：逐筆循序呼叫，核心持久化步驟比照 doSave（壓縮→組列→shPost），
@@ -14607,7 +14556,11 @@ function showPg(name){
       filterCol();
     }else{
       localforage.getItem('gv_col').then(function(cached){
-        if(cached&&cached.length){
+        // v02.55：修正快取判斷——原本用「cached && cached.length」判斷有沒有快取，
+        // 但快取確認「真的是0筆」時 cached=[]，[].length===0 會被誤判成「沒有快取」，
+        // 導致每次切換到收藏頁都重新打網路請求、跳一次載入圈，快速切換分頁會像不停載入。
+        // 改用 Array.isArray 判斷：只要曾經成功快取過（即使是空陣列），就不用再自動連網。
+        if(Array.isArray(cached)){
           col=normalizeColRows(cached);refreshColAfterLoad();
           var ts=localStorage.getItem('gv_col_ts');
           if(ts){var ago=Math.round((Date.now()-parseInt(ts))/60000);if(ago>30)toast('快取資料（'+ago+'分鐘前），點↻同步最新','',4000);}
@@ -14624,7 +14577,8 @@ function showPg(name){
       renderHuntList();                       // 記憶體已有 → 直接顯示，不連網
     }else{
       localforage.getItem('gv_hunt').then(function(c){
-        if(c&&c.length){
+        // v02.55：同樣修正——空陣列快取代表已經確認是0筆，不該每次都重新連網
+        if(Array.isArray(c)){
           hunt=normalizeHuntRows(c);renderHuntList();             // 用快取即時顯示，不自動連網
           var ts=localStorage.getItem('gv_hunt_ts');
           if(ts){var ago=Math.round((Date.now()-parseInt(ts))/60000);if(ago>30)toast('快取資料（'+ago+'分鐘前），點↻同步最新','',4000);}
@@ -14702,6 +14656,10 @@ function findDuplicate(e){
 }
 
 function resetAll(){
+  // v02.52：同樣的批次編輯模式防護——resetAll 會把 entry 整個清空並顯示方法選擇畫面，
+  // 如果在批次項目編輯模式下被意外觸發（例如取消鈕的 onclick 被其他背景流程重置回預設），
+  // 會造成「整個跳出批次書背建檔」的症狀。改成優先轉向捨棄這次編輯、安全返回批次清單。
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchCancelItemEdit();return;}
   stopScanner();if(typeof stopComboScanner==='function')stopComboScanner();
   entry={};edited.clear();
   _scanBC=''; // 清除上一筆條碼暫存，避免帶入下一筆（無條碼裸卡誤判重複的根因）
@@ -16379,9 +16337,12 @@ function huntConvertAIFill(){
     }
     entry._src=entry._src||{};
     // ── 資料庫事實欄位加值合併（不做名稱 gate；事實類覆蓋、版本類僅補空白）──
+    // v02.53：genre 移出 factFields，理由與 _mergeDbIntoEntry 相同——資料庫的類型分類資料
+    // 不夠可靠（曾出現比對不到落回OTHER、以及比對到但不準確如把戰略類誤標成動作類等案例），
+    // 交給 AI 視覺辨識結果判斷（下方 matchGenreMulti 正規化那行會正確處理 ai.genre 的原始值）。
     if(db&&Object.keys(db).length){
-      var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
-      factFields.forEach(function(k){if(db[k]){entry[k]=(k==='genre')?matchGenreMulti(db[k]):db[k];entry._src[k]='db';}});
+      var factFields=['developer','publisher','release_date','players','age_rating','series'];
+      factFields.forEach(function(k){if(db[k]){entry[k]=db[k];entry._src[k]='db';}});
       if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)){entry.summary=db.summary;entry._src.summary='db';}
       normalizeLanguageFields(db);
       ['platform','region','voice_language','subtitle_language','media'].forEach(function(k){if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';}});
