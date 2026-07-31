@@ -1410,8 +1410,8 @@ body{
           </div>
           <div id="save-bar">
             <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
-            <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button">儲存至收藏</button>
-            <button class="btn bo" id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button" style="display:none">•••</button>
+            <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button" style="flex:1;min-width:0">儲存至收藏</button>
+            <button class="btn bo" id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button" style="display:none;flex-shrink:0;padding:10px 14px">•••</button>
           </div>
         </div>
       </div>
@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.57';
+const APP_VERSION='v02.58';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14531,6 +14531,7 @@ function editDetail(){
   if(btn){btn.disabled=false;btn.textContent='更新記錄';btn.onclick=function(){doUpdate(rn);};}
   // v02.56：條碼/品名查詢等FAB群組從詳情頁搬到編輯表單頁，只在編輯既有記錄時顯示
   var fw=$('det-fab-wrap');if(fw)fw.classList.add('show');
+  setTimeout(_positionDetFabWrap,0); // 等這一輪渲染完成、save-bar確實有正確尺寸後再量測
   var fm=$('det-fab-main');if(fm)fm.style.display='';
 }
 $('dov').addEventListener('click',closeDetail);
@@ -15243,7 +15244,24 @@ var _bcWebScan=createScanner({videoId:'barcode-web-video',
   onError:function(){var h=$('barcode-web-hint');if(h)h.textContent='無法啟動相機，請在下方手動輸入條碼';}});
 // v54.66：尋寶頁 ••• 主按鈕展開/收合子功能
 // v02.50：收藏詳情頁的 ••• FAB 群組（比照尋寶頁），三個子功能都是全域函式，直接沿用不重複實作
+// v02.58：改用實際量測 save-bar 的位置來定位展開子按鈕，取代猜測的固定像素值——
+// 前兩版都用猜的 calc(Npx+...) 估計 save-bar 高度，但按鈕實際尺寸/字型渲染跟猜測有落差，
+// 導致還是會重疊。改成用 getBoundingClientRect() 量測 save-bar 真正的螢幕位置，
+// 直接算出「剛好貼在 save-bar 上方」的 bottom 值，不管尺寸怎麼變都不會重疊。
+function _positionDetFabWrap(){
+  var sb=$('save-bar'),fw=$('det-fab-wrap');
+  if(!sb||!fw)return;
+  var r=sb.getBoundingClientRect();
+  if(!r||!r.top)return; // save-bar 目前不在畫面上（display:none等），不更動位置
+  var gap=14; // 跟 save-bar 之間的視覺間距
+  fw.style.bottom=Math.max(0,window.innerHeight-r.top+gap)+'px';
+}
+window.addEventListener('resize',function(){
+  var fw=$('det-fab-wrap');
+  if(fw&&fw.classList.contains('show'))_positionDetFabWrap();
+});
 function toggleDetFab(){
+  _positionDetFabWrap(); // 每次開合前重新量測，避免版面變動後位置過時
   var wrap=document.getElementById('det-fab-wrap');
   if(wrap)wrap.classList.toggle('open');
   // v02.57：主觸發鈕搬進save-bar後不再是det-fab-wrap的子元素，展開視覺回饋改直接切換自己的class
