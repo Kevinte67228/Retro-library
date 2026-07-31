@@ -1,3 +1,26 @@
+## v02.60 (2026-07-27)
+
+### 變更內容
+處理上一版掃描出的重複邏輯：`huntConvertAIFill()`（尋寶轉入收藏的「✨ AI 補齊資料」）原本自己重複實作了一份跟 `_mergeDbIntoEntry()` 完全相同的資料庫事實欄位合併邏輯，這正是 v02.53 genre 漏洞需要修兩處的根本原因。
+
+改成 `huntConvertAIFill()` 直接呼叫既有的 `_mergeDbIntoEntry(db)`，刪掉自己重複的那份，兩處合併邏輯合併成一份共用。順帶效果：`huntConvertAIFill()` 原本沒有「圖片實讀來源優先、不被資料庫覆蓋」的保護（`_mergeDbIntoEntry` 本來就有），這次也一併補上，行為更一致也更安全。
+
+自我檢查：`node --check` 通過；無 U+FFFD；確認 `factFields` 陣列定義從 2 處減少為 1 處；抽取真實函式跑 7 項自我檢查全過，含 DB 事實欄位正確合併、含中文簡介正確採用、圖片來源保護正確延伸到原本沒有這個保護的呼叫端、`db` 為空物件或 `null` 時都安全處理不報錯（因為改成直接呼叫，不再有外層 `if(db&&...)` 包住，需要函式自己扛得住這些邊界情況）。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_60_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-59 → retrovault-v02-60
+
+### 對應備份
+- _internal/old/v02_59/
+
+
 ## v02.59 (2026-07-27)
 
 ### 變更內容
@@ -74,28 +97,3 @@
 
 ### 對應備份
 - _internal/old/v02_56/
-
-
-## v02.56 (2026-07-27)
-
-### 變更內容
-依使用者要求，把收藏詳情頁右下角的「•••」FAB群組（日系資料庫查詢／條碼品名查詢／拍照辨識）搬到下一層的編輯表單頁，放在「更新記錄」按鈕上方、不重疊：
-
-- CSS 定位改成 `bottom:96px`（原本 `20px`），留出足夠空間避開 `save-bar`（更新記錄／取消按鈕列）
-- 只在編輯既有收藏記錄時顯示（`editDetail()` 觸發時加上 `show` class）；新建檔流程（`showForm()`）與取消/更新成功返回（`resetAll()`）都會正確隱藏，不會誤留在其他情境
-- 詳情頁（`#dsheet`）不再顯示這組 FAB，`closeDetail()`／`closeDetailSilent()` 移除了對它的處理（不再相關）
-
-自我檢查：`node --check` 通過；無 U+FFFD；CSS 606/606；確認 FAB 群組 id 沒有重複；抽取真實函式跑 3 項自我檢查全過，含編輯既有記錄時正確顯示、新建檔流程正確隱藏、取消/返回流程正確隱藏等情境。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_56_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-55 → retrovault-v02-56
-
-### 對應備份
-- _internal/old/v02_55/

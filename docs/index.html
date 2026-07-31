@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.59';
+const APP_VERSION='v02.60';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -16368,17 +16368,12 @@ function huntConvertAIFill(){
     }
     entry._src=entry._src||{};
     // ── 資料庫事實欄位加值合併（不做名稱 gate；事實類覆蓋、版本類僅補空白）──
-    // v02.53：genre 移出 factFields，理由與 _mergeDbIntoEntry 相同——資料庫的類型分類資料
-    // 不夠可靠（曾出現比對不到落回OTHER、以及比對到但不準確如把戰略類誤標成動作類等案例），
-    // 交給 AI 視覺辨識結果判斷（下方 matchGenreMulti 正規化那行會正確處理 ai.genre 的原始值）。
-    if(db&&Object.keys(db).length){
-      var factFields=['developer','publisher','release_date','players','age_rating','series'];
-      factFields.forEach(function(k){if(db[k]){entry[k]=db[k];entry._src[k]='db';}});
-      if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)){entry.summary=db.summary;entry._src.summary='db';}
-      normalizeLanguageFields(db);
-      ['platform','region','voice_language','subtitle_language','media'].forEach(function(k){if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';}});
-      if(!entry.primary_name&&db.primary_name){entry.primary_name=db.primary_name;entry._src.primary_name='db';}
-    }
+    // v02.60：改成直接呼叫既有的 _mergeDbIntoEntry(db)，不再各自維護一份重複邏輯——
+    // 原本這裡跟 _mergeDbIntoEntry 各自獨立實作了完全相同的合併規則，這正是 v02.53 genre
+    // 漏洞要修兩處的根本原因（同一段邏輯散在兩處，改一個容易忘記改另一個）。改成共用同一份，
+    // 這裡也連帶吃到 _mergeDbIntoEntry 原本就有、但這裡沒有的「圖片實讀來源優先，不被資料庫
+    // 覆蓋」保護（entry._src[k]==='img' 那段），行為更一致也更安全。
+    _mergeDbIntoEntry(db);
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
     if(entry.genre)entry.genre=matchGenreMulti(entry.genre)||entry.genre;
     // 還原入手資料（若 AI 有名稱會重建 entry 而清掉這些）
