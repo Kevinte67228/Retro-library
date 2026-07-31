@@ -561,7 +561,9 @@ function trashImg(id) {
 //   auditOrphanImages()   → 只「列出」孤兒檔，不刪任何東西（建議先跑這個確認）
 //   cleanupOrphanImages() → 實際把孤兒檔移到垃圾桶（可在 Drive 垃圾桶 30 天內救回）
  
-// 蒐集四張工作表中所有「仍在使用」的圖片 file ID
+// 蒐集所有工作表中每個圖片 file ID 被引用的次數（v02.51 起：原本只回傳布林值「是否在使用」，
+// 改成回傳次數，讓 updateRow/deleteRow 能判斷一張圖是否被「多筆」記錄共用——只有次數<=1
+// （只有自己這一筆用到）才能安全刪除，避免刪掉別筆記錄還在用的共用圖）
 function collectUsedImgIds_() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheetDefs = [
@@ -590,8 +592,8 @@ function collectUsedImgIds_() {
     if (!idxs.length && eiIdxCollect < 0) return;
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
     data.forEach(function(row) {
-      idxs.forEach(function(i) { if (isDriveId(row[i])) used[row[i]] = true; });
-      if (eiIdxCollect >= 0) extractExtraImageIds(row[eiIdxCollect]).forEach(function(id) { used[id] = true; });
+      idxs.forEach(function(i) { if (isDriveId(row[i])) used[row[i]] = (used[row[i]] || 0) + 1; });
+      if (eiIdxCollect >= 0) extractExtraImageIds(row[eiIdxCollect]).forEach(function(id) { used[id] = (used[id] || 0) + 1; });
     });
   });
   return used;
@@ -603,38 +605,114 @@ function findOrphanImages_(dryRun, usedIds) {
   const folder = getImgFolder();
   const files = folder.getFiles();
   const orphans = [];
+  let total = 0; // v02.54：反正都在迭代了，順便統計資料夾內實際檔案總數（最客觀的數字，跟網頁UI手動計數無關）
   while (files.hasNext()) {
     const f = files.next();
+    total++;
     const id = f.getId();
     if (!used[id]) {
       orphans.push({ name: f.getName(), id: id });
       if (!dryRun) f.setTrashed(true);
     }
   }
+  orphans.total = total; // 掛在陣列物件上，不改變既有呼叫端讀取 orphans.length/orphans.forEach 的行為
   return orphans;
 }
  
 // 只列出孤兒檔，不刪除（安全預覽）
 function auditOrphanImages() {
+  // v02.53：先印出實際使用中的資料夾連結，避免 Drive 裡若有同名資料夾時，
+  // 使用者手動比對的跟程式實際在用的不是同一個（getImgFolder 用快取 ID，不是每次重新用名稱搜尋）
+  const _folder = getImgFolder();
+  Logger.log('圖片資料夾：%s', _folder.getUrl());
   const used = collectUsedImgIds_();
   const orphans = findOrphanImages_(true, used);
   const usedCount = Object.keys(used).length;
-  Logger.log('使用中的圖檔：%s 個', usedCount);
+  // v02.54：印出資料夾內實際檔案總數（folder.getFiles() 直接迭代算出來的，不是網頁UI手動選取，
+  // 不受Drive網頁清單延遲載入影響）。注意：這個數字不會剛好等於「使用中+孤兒」——如果 Sheet
+  // 裡記錄的某個 ID 對應的檔案已經不在資料夾（例如已被誤刪、還在垃圾桶或已尋回),
+  // 那個 ID 會被算進「使用中」但不會出現在資料夾迭代裡，這是正常現象，不代表本次統計有誤。
+  Logger.log('資料夾內實際檔案總數：%s 個', orphans.total);
+  Logger.log('使用中的圖檔（Sheet裡記錄到的不重複ID數）：%s 個', usedCount);
   Logger.log('找到孤兒檔：%s 個', orphans.length);
   orphans.forEach(function(o) { Logger.log('  孤兒 → %s (%s)', o.name, o.id); });
   if (!orphans.length) Logger.log('✓ 沒有孤兒檔，資料夾很乾淨');
   else Logger.log('如要清除，請執行 cleanupOrphanImages()');
-  return { ok: true, used: usedCount, orphans: orphans.length, list: orphans };
+  return { ok: true, total: orphans.total, used: usedCount, orphans: orphans.length, list: orphans };
 }
  
 // 實際清除孤兒檔（移到垃圾桶）
 function cleanupOrphanImages() {
+  Logger.log('圖片資料夾：%s', getImgFolder().getUrl());
   const orphans = findOrphanImages_(false);
   Logger.log('已將 %s 個孤兒檔移到垃圾桶', orphans.length);
   orphans.forEach(function(o) { Logger.log('  已清除 → %s (%s)', o.name, o.id); });
   if (!orphans.length) Logger.log('✓ 沒有孤兒檔需要清除');
   return { ok: true, trashed: orphans.length, list: orphans };
 }
+
+// ── v02.52：圖片健康檢查（診斷用，不會刪除或修改任何資料）─────────────────
+// 掃描所有列的 cover_img/back_img/spine_img/extra_images，對每個 Drive ID 實際去問
+// Google Drive「這個檔案現在還開得了嗎」，抓出「Sheet 裡寫著 ID、但 Drive 上有問題」的項目，
+// 分成兩種狀態：trashed（還在垃圾桶，可還原）／notfound（垃圾桶已清空或ID有誤，救不回來）。
+// 用法：Apps Script 編輯器函式選單選 auditMissingImages 執行，結果在「執行紀錄」查看。
+function checkFileStatus_(id) {
+  try {
+    const f = DriveApp.getFileById(id);
+    return f.isTrashed() ? 'trashed（垃圾桶內，可還原）' : 'ok';
+  } catch (e) {
+    return 'notfound（已找不到，垃圾桶可能已清空或ID有誤）';
+  }
+}
+function auditMissingImages() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetDefs = [
+    [GAMES_SHEET, GAME_HEADERS], [BOOKS_SHEET, BOOK_HEADERS],
+    [CONSOLE_SHEET, CONSOLE_HEADERS], [PERIPH_SHEET, PERIPH_HEADERS],
+    [HUNT_SHEET, HUNT_HEADERS],
+    [DIGIGAME_SHEET, DIGIGAME_HEADERS], [DIGIDLC_SHEET, DIGIDLC_HEADERS],
+    [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
+    [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
+    [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS],
+    [OSTMAIN_SHEET, OSTMAIN_HEADERS], [OSTSINGLE_SHEET, OSTSINGLE_HEADERS],
+    [OSTCHAR_SHEET, OSTCHAR_HEADERS], [OSTDRAMA_SHEET, OSTDRAMA_HEADERS], [OSTLIVE_SHEET, OSTLIVE_HEADERS],
+    [ANMANGA_SHEET, ANMANGA_HEADERS], [ANARTBOOK_SHEET, ANARTBOOK_HEADERS],
+    [ANSETTING_SHEET, ANSETTING_HEADERS], [ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS],
+    [ANMAG_SHEET, ANMAG_HEADERS], [ANTV_SHEET, ANTV_HEADERS], [ANMOVIE_SHEET, ANMOVIE_HEADERS], [ANOTHER_SHEET, ANOTHER_HEADERS],
+    [FIGSCALE_SHEET, FIGSCALE_HEADERS], [FIGACTION_SHEET, FIGACTION_HEADERS], [FIGNENDO_SHEET, FIGNENDO_HEADERS],
+    [FIGPRIZE_SHEET, FIGPRIZE_HEADERS], [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
+  ];
+  const results = [];
+  const checked = {}; // 同一個ID只查一次Drive（省時間），但每個引用它的列都要記錄進結果
+  sheetDefs.forEach(function(def) {
+    const sheet = ss.getSheetByName(def[0]);
+    if (!sheet || sheet.getLastRow() < 2) return;
+    const headers = def[1];
+    const nameIdx = headers.indexOf('primary_name');
+    const colDefs = IMG_COLS.map(function(c) { return { col: c, idx: headers.indexOf(c) }; }).filter(function(o) { return o.idx >= 0; });
+    const eiIdx = headers.indexOf(EXTRA_IMG_COL);
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
+    data.forEach(function(row, i) {
+      const rowNum = i + 2;
+      const name = nameIdx >= 0 ? row[nameIdx] : '(無名稱欄位)';
+      function checkAndRecord(id, fieldLabel) {
+        if (!isDriveId(id)) return;
+        if (!(id in checked)) checked[id] = checkFileStatus_(id);
+        if (checked[id] !== 'ok') results.push({ sheet: def[0], row: rowNum, name: name, field: fieldLabel, id: id, status: checked[id] });
+      }
+      colDefs.forEach(function(o) { checkAndRecord(row[o.idx], o.col); });
+      if (eiIdx >= 0) extractExtraImageIds(row[eiIdx]).forEach(function(id) { checkAndRecord(id, EXTRA_IMG_COL); });
+    });
+  });
+  Logger.log('=== 圖片健康檢查報告：共 %s 個異常（已檢查 %s 個不重複的圖片ID）===', results.length, Object.keys(checked).length);
+  results.forEach(function(r) {
+    Logger.log('[%s] 第%s列「%s」欄位=%s → ID=%s → 狀態：%s', r.sheet, r.row, r.name, r.field, r.id, r.status);
+  });
+  if (!results.length) Logger.log('✓ 全部圖片檔案都正常，沒有異常');
+  else Logger.log('提示：status=trashed 的項目可到 Google Drive 垃圾桶搜尋該 ID 或檔名還原；notfound 的項目垃圾桶內可能已經找不到了');
+  return { ok: true, total: results.length, list: results };
+}
+
  
 // ── GET handler ───────────────────────────────────
 function doGet(e) {
@@ -943,6 +1021,11 @@ function updateRow(rowNum, row, type, fields) {
     const v = byName ? fields[h] : row[i];
     return (v !== undefined && v !== null) ? v : '';
   });
+  // v02.51：修復資料遺失漏洞——原本換圖/清圖時無條件刪除舊 Drive 檔，若同一張圖被「其他列」
+  // 共用（例如同一款遊戲的不同拷貝各建一筆，共用同一張封面圖），編輯其中一筆換圖時會連帶把
+  // 別筆記錄還在用的圖也刪掉，造成別筆資料圖片憑空消失。改成刪除前先確認這張圖的使用次數，
+  // 只有「只有自己這一列引用」（count<=1）才安全刪除；被其他列共用的圖保留，只是這一列不再指向它。
+  const _imgUsageCount = collectUsedImgIds_();
   const imgs = {};
   IMG_COLS.forEach(function(col) {
     const idx = headers.indexOf(col);
@@ -951,7 +1034,7 @@ function updateRow(rowNum, row, type, fields) {
     const newVal = saveImgToDrive(padded[idx]); // base64 才上傳；已是 ID/空字串則原樣
     padded[idx] = newVal;
     imgs[col] = newVal;
-    if (isDriveId(oldVal) && oldVal !== newVal) trashImg(oldVal); // 舊檔被換掉或清空
+    if (isDriveId(oldVal) && oldVal !== newVal && (_imgUsageCount[oldVal] || 0) <= 1) trashImg(oldVal); // 舊檔被換掉或清空，且沒有被其他列共用才刪除
   });
   // v47.04：extra_images 是 JSON 陣列欄位，比對舊/新陣列的 ID 差異，被移除的圖才回收
   const eiIdxUpd = headers.indexOf(EXTRA_IMG_COL);
@@ -962,7 +1045,8 @@ function updateRow(rowNum, row, type, fields) {
     imgs[EXTRA_IMG_COL] = processedUpd.json;
     const newExtraIdSet = {};
     processedUpd.ids.forEach(function(id) { newExtraIdSet[id] = 1; });
-    oldExtraIds.forEach(function(id) { if (!newExtraIdSet[id]) trashImg(id); });
+    // v02.51：同樣套用共用檢查，避免刪掉被其他列共用的額外圖片
+    oldExtraIds.forEach(function(id) { if (!newExtraIdSet[id] && (_imgUsageCount[id] || 0) <= 1) trashImg(id); });
   }
   sheet.getRange(actualRow, 1, 1, headers.length).setValues([padded]);
   // created_at 防呆（E1）：與 addRow 一致，強制純文字避免回讀變 ISO
@@ -1000,14 +1084,17 @@ function deleteRow(rowNum, type, keepImg) {
   const last = sheet.getLastRow();
   if (actualRow < 2 || actualRow > last) throw new Error('列號超出範圍：' + actualRow);
   // 刪列前先刪掉該列的 Drive 圖檔（同步刪除，避免孤兒檔）；keepImg 時保留（與收藏共用之圖）
+  // v02.51：即使沒有傳 keepImg，也再檢查一次這張圖有沒有被其他列共用（第二道防線，
+  // 避免前端沒有正確判斷/傳遞 keepImg 時，誤刪別筆記錄還在用的圖）
   if (!keepImg) {
     const rowVals = sheet.getRange(actualRow, 1, 1, headers.length).getValues()[0];
+    const _imgUsageCountDel = collectUsedImgIds_();
     IMG_COLS.forEach(function(col) {
       const idx = headers.indexOf(col);
-      if (idx >= 0) trashImg(rowVals[idx]);
+      if (idx >= 0 && (_imgUsageCountDel[rowVals[idx]] || 0) <= 1) trashImg(rowVals[idx]);
     });
     const eiIdxDel = headers.indexOf(EXTRA_IMG_COL);
-    if (eiIdxDel >= 0) extractExtraImageIds(rowVals[eiIdxDel]).forEach(function(id) { trashImg(id); });
+    if (eiIdxDel >= 0) extractExtraImageIds(rowVals[eiIdxDel]).forEach(function(id) { if ((_imgUsageCountDel[id] || 0) <= 1) trashImg(id); });
   }
   sheet.deleteRow(actualRow);
   return { ok: true, sheetType: resolvedType };
@@ -2586,9 +2673,46 @@ function fixSheetHeaders() {
       sheet.setFrozenRows(1);
       return 'header_inserted';
     } else {
-      // 確保 header 完整正確
+      // v02.55：修復欄位錯置漏洞——原本這裡無條件把 header 列覆寫成目前的 canonical headers
+      // 常數順序，但完全沒有搬動第2列以後的實際資料欄位。如果現有工作表的欄位順序（可能是舊
+      // 版本建立當下的順序）跟目前 headers 常數順序不一樣（例如中途在中間插入新欄位），header
+      // 列被改寫成新順序後，底下資料還留在原本的欄位位置，就會造成「標題說是這欄，資料其實是
+      // 別欄」的錯置。改成：先比對新舊順序是否相同，相同才走原本單純更新 header 文字的快速路徑；
+      // 不同的話，若有「舊表存在、新 headers 已經沒有」的欄位（無法安全判斷資料歸屬）或標題列
+      // 有重複欄名，一律跳過不動、只記錄警告，避免自動搬動反而造成資料遺失；其餘安全情況才依
+      // 欄位名稱重新對應搬移資料（不是依位置，位置正是原本出錯的原因）。
+      const sameOrder = headers.every(function(h, i) { return headerRow[i] === h; });
+      if (sameOrder) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        return 'header_updated';
+      }
+      const nonEmptyOld = headerRow.filter(function(h) { return h; });
+      const seen = {};
+      let hasDup = false;
+      nonEmptyOld.forEach(function(h) { if (seen[h]) hasDup = true; seen[h] = true; });
+      if (hasDup) {
+        Logger.log('fixSheet: %s 標題列有重複欄名，無法安全判斷資料歸屬，不自動搬動，請人工檢查', sheetName);
+        return 'skipped_duplicate_headers';
+      }
+      const droppedCols = nonEmptyOld.filter(function(h) { return headers.indexOf(h) < 0; });
+      if (droppedCols.length) {
+        Logger.log('fixSheet: %s 有欄位「%s」在目前的標準欄位清單裡已經不存在，為避免資料遺失不自動搬動，請人工檢查', sheetName, droppedCols.join('、'));
+        return 'skipped_has_dropped_columns:' + droppedCols.join(',');
+      }
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const data = sheet.getRange(2, 1, lastRow - 1, headerRow.length).getValues();
+        const remapped = data.map(function(row) {
+          return headers.map(function(h) {
+            const oldIdx = headerRow.indexOf(h);
+            return oldIdx >= 0 ? row[oldIdx] : '';
+          });
+        });
+        sheet.getRange(2, 1, remapped.length, headers.length).setValues(remapped);
+        Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, remapped.length);
+      }
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      return 'header_updated';
+      return 'header_and_data_realigned';
     }
   }
  

@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.53';
+const APP_VERSION='v02.54';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9991,6 +9991,12 @@ function doAnalyze(){
 // 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剃除；只支援無子類型的 4 個分類。
 var _batchItems=[]; // {order,code,title_guess,code_clear,status,include,entry,dup}
 var _batchImgFile=null;
+// v02.54：整批解析進行中的全域鎖。_batchResolveNext 是循序背景流程，過程中會暫時把解析中
+// 項目的資料放進全域可變 entry 變數；如果在「其他項目還在背景解析中」時，使用者點進「已完成」
+// 的項目編輯（batchEditItem 也會暫用同一個全域 entry），會跟正在解析的項目搶用同一個變數，
+// 造成資料互相污染（使用者實測確認過這個現象）。這個旗標在整批解析完全結束前一律鎖住編輯功能，
+// 不只是看單一項目自己的狀態。
+var _batchResolving=false;
 
 var BATCH_DETECT_SCHEMA={
   type:'OBJECT',
@@ -10078,6 +10084,7 @@ function batchDetectStart(){
           });
           $('batch-list-wrap').style.display='block';
           _batchRenderList();
+          _batchResolving=true;
           _batchResolveNext(0);
         }).catch(function(e){
           noLoad();
@@ -10095,6 +10102,7 @@ function batchDetectStart(){
 // 命中率始終不理想，改成解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上。
 function _batchResolveNext(idx){
   if(idx>=_batchItems.length){
+    _batchResolving=false; // 整批解析完成，解除編輯鎖
     $('batch-progress').style.display='none';
     _batchRenderList();
     toast('批次辨識完成，請確認後儲存','ok',3000);
@@ -10103,7 +10111,7 @@ function _batchResolveNext(idx){
   var item=_batchItems[idx];
   item.status='resolving';
   $('batch-progress').style.display='block';
-  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...';
+  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）';
   _batchRenderList();
   var type=_selectedType||'遊戲';
   var _backupEntry=entry;
@@ -10168,7 +10176,7 @@ function _batchRenderList(){
     var e=item.entry;
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
     var hasImg=!!(e&&e.cover_img);
-    var editable=item.status==='ok'; // 只有解析完成的項目才能點進去編輯
+    var editable=item.status==='ok'&&!_batchResolving; // v02.54：整批解析完成前一律不可編輯，不只看單一項目狀態
     // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
     // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
@@ -10210,6 +10218,9 @@ function batchToggleInclude(i,checked){
 var _batchEditIndex=null;
 var _batchEditBackupEntry=null;
 function batchEditItem(i){
+  // v02.54：整批解析進行中一律鎖住編輯，不只看這一筆自己的狀態——其他項目還在背景解析時，
+  // 編輯已完成的項目會跟解析中的項目搶用同一個全域entry變數，造成資料互相污染（已實測確認）。
+  if(_batchResolving){toast('批次還在解析中，請等全部解析完成後再編輯','',3000);return;}
   if(!_batchItems[i]||_batchItems[i].status!=='ok')return;
   _batchEditIndex=i;
   _batchEditBackupEntry=entry;
