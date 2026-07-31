@@ -489,8 +489,8 @@ body{
 #dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁 FAB（v02.50：比照尋寶頁•••收合群組，含日系資料庫查詢/條碼品名查詢/拍照辨識三個功能，
    位置刻意比 .dnav-float（bottom:86px）更低，避免跟上一筆/下一筆翻頁按鈕重疊） */
-#det-fab-wrap{position:fixed;right:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:12px}
-#dsheet.on #det-fab-wrap{display:flex}
+#det-fab-wrap{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:12px}
+#det-fab-wrap.show{display:flex}
 #det-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #det-fab-main:active{transform:scale(.93)}
 #det-lens-fab,#det-barcode-fab,#det-cd-fab{
@@ -1403,6 +1403,12 @@ body{
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
           </div>
           <div id="form-body"></div>
+          <div id="det-fab-wrap">
+            <button id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button">•••</button>
+            <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
+            <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
+            <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
+          </div>
           <div id="save-bar">
             <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
             <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button">儲存至收藏</button>
@@ -2198,12 +2204,6 @@ body{
   <div id="dov"></div>
   <button class="dnav-float" id="dprev-float" title="上一筆" type="button">‹</button>
   <button class="dnav-float" id="dnext-float" title="下一筆" type="button">›</button>
-  <div id="det-fab-wrap">
-    <button id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button">•••</button>
-    <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
-    <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
-    <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
-  </div>
   <div id="dp">
     <div class="dhandle"></div>
     <div class="dhdr">
@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.51';
+const APP_VERSION='v02.56';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3949,6 +3949,7 @@ function _pushGuard(){
 // ── Utils ──
 function $(id){return document.getElementById(id)}
 var _loadingTimer=null;
+var _loadingSafetyTimer=null;
 function _clearLoadingTimer(){if(_loadingTimer){clearInterval(_loadingTimer);_loadingTimer=null;}}
 function loading(t){
   _clearLoadingTimer();
@@ -3960,6 +3961,11 @@ function loading(t){
     ||t.indexOf('比對')>=0||t.indexOf('資料庫')>=0);
   var cb=$('l-cancel-btn');if(cb)cb.style.display=showCancel?'block':'none';
   if(cb&&showCancel)cb.textContent=t&&t.indexOf('AI')>=0?'取消，手動填寫':'略過等待，直接填寫';
+  // v02.55：安全逾時保護——不管是哪個呼叫路徑忘記配對 noLoad()（或網路請求真的卡住沒有
+  // resolve/reject），20秒後強制關閉載入圈，避免畫面永久卡住看起來像「不停載入」。
+  // 不影響正常情況：正常請求通常幾秒內就會自己呼叫 noLoad()，這裡的逾時只在異常時才會生效。
+  if(_loadingSafetyTimer)clearTimeout(_loadingSafetyTimer);
+  _loadingSafetyTimer=setTimeout(function(){noLoad();},20000);
 }
 function loadingTimed(t){
   var base=t||'處理中...';
@@ -3970,7 +3976,7 @@ function loadingTimed(t){
     var el=$('ltxt');if(el)el.textContent=base+'（'+sec+'秒）';
   },1000);
 }
-function noLoad(){_clearLoadingTimer();$('lov').classList.remove('sh');releaseAwake();}
+function noLoad(){_clearLoadingTimer();if(_loadingSafetyTimer){clearTimeout(_loadingSafetyTimer);_loadingSafetyTimer=null;}$('lov').classList.remove('sh');releaseAwake();}
 // ── 螢幕保持喚醒（處理中不熄屏）── 需 HTTPS、iOS Safari 16.4+
 var _wl=null;
 function keepAwake(){
@@ -5351,6 +5357,10 @@ function colRefresh(){
 }
 var _saving=false;
 function doSave(){
+  // v02.52：防護——不管 save-btn.onclick 有沒有被其他背景流程（如資料庫比對的 loading 狀態
+  // 管理）意外重置回 doSave，只要人還在批次項目編輯模式（_batchEditIndex 不是 null），
+  // 一律轉向「存回這一筆批次項目、返回清單」，不會真的寫入試算表，也不會跳出整個批次流程。
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchApplyItemEdit();return;}
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
   if(_saving)return; // 防連點（用旗標，不依賴按鈕狀態）
   if(!entry||!entry.primary_name){
@@ -5881,11 +5891,16 @@ function _mergeDbIntoEntry(db){
   var filled=0;
   entry._src=entry._src||{};
   if(!db||!Object.keys(db).length)return 0;
-  var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
+  // v02.53：genre 徹底移出 factFields，不再信任資料庫給的類型資料。上一版只擋掉「比對不到
+  // 落回OTHER」的情況，但這次遇到新案例：資料庫給的類型文字「能比對到」某個標準選項，但不夠
+  // 精確（如戰略類遊戲被資料庫粗略標成「Action」，比對後變成「ACT 動作」，跟實際類型差異很大）。
+  // 兩次問題都指向同一件事——資料庫的類型分類資料本身不夠可靠，尤其是複合類型的日系遊戲，改成
+  // genre 一律交給 AI 用真正的遊戲知識判斷（AI 提示詞已要求務必只輸出標準代碼，見 aiKnowledgeFill）。
+  var factFields=['developer','publisher','release_date','players','age_rating','series'];
   factFields.forEach(function(k){
     if(!db[k])return;
     if(entry._src[k]==='img'&&(''+(entry[k]||'')).trim())return; // 圖片實讀優先，不覆蓋
-    var dv=(k==='genre')?matchGenreMulti(db[k]):db[k];
+    var dv=db[k];
     if(entry[k]!==dv)filled++;
     entry[k]=dv;entry._src[k]='db';
   });
@@ -9982,6 +9997,12 @@ function doAnalyze(){
 // 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剃除；只支援無子類型的 4 個分類。
 var _batchItems=[]; // {order,code,title_guess,code_clear,status,include,entry,dup}
 var _batchImgFile=null;
+// v02.54：整批解析進行中的全域鎖。_batchResolveNext 是循序背景流程，過程中會暫時把解析中
+// 項目的資料放進全域可變 entry 變數；如果在「其他項目還在背景解析中」時，使用者點進「已完成」
+// 的項目編輯（batchEditItem 也會暫用同一個全域 entry），會跟正在解析的項目搶用同一個變數，
+// 造成資料互相污染（使用者實測確認過這個現象）。這個旗標在整批解析完全結束前一律鎖住編輯功能，
+// 不只是看單一項目自己的狀態。
+var _batchResolving=false;
 
 var BATCH_DETECT_SCHEMA={
   type:'OBJECT',
@@ -10069,6 +10090,7 @@ function batchDetectStart(){
           });
           $('batch-list-wrap').style.display='block';
           _batchRenderList();
+          _batchResolving=true;
           _batchResolveNext(0);
         }).catch(function(e){
           noLoad();
@@ -10086,6 +10108,7 @@ function batchDetectStart(){
 // 命中率始終不理想，改成解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上。
 function _batchResolveNext(idx){
   if(idx>=_batchItems.length){
+    _batchResolving=false; // 整批解析完成，解除編輯鎖
     $('batch-progress').style.display='none';
     _batchRenderList();
     toast('批次辨識完成，請確認後儲存','ok',3000);
@@ -10094,7 +10117,7 @@ function _batchResolveNext(idx){
   var item=_batchItems[idx];
   item.status='resolving';
   $('batch-progress').style.display='block';
-  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...';
+  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）';
   _batchRenderList();
   var type=_selectedType||'遊戲';
   var _backupEntry=entry;
@@ -10159,7 +10182,7 @@ function _batchRenderList(){
     var e=item.entry;
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
     var hasImg=!!(e&&e.cover_img);
-    var editable=item.status==='ok'; // 只有解析完成的項目才能點進去編輯
+    var editable=item.status==='ok'&&!_batchResolving; // v02.54：整批解析完成前一律不可編輯，不只看單一項目狀態
     // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
     // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
@@ -10201,6 +10224,9 @@ function batchToggleInclude(i,checked){
 var _batchEditIndex=null;
 var _batchEditBackupEntry=null;
 function batchEditItem(i){
+  // v02.54：整批解析進行中一律鎖住編輯，不只看這一筆自己的狀態——其他項目還在背景解析時，
+  // 編輯已完成的項目會跟解析中的項目搶用同一個全域entry變數，造成資料互相污染（已實測確認）。
+  if(_batchResolving){toast('批次還在解析中，請等全部解析完成後再編輯','',3000);return;}
   if(!_batchItems[i]||_batchItems[i].status!=='ok')return;
   _batchEditIndex=i;
   _batchEditBackupEntry=entry;
@@ -10346,6 +10372,9 @@ function _pickBestPrimaryName(){
   }
 }
 function showForm(src){
+  // v02.56：showForm 用於新建檔／批次項目編輯等流程，不是編輯既有收藏記錄（那條路走
+  // editDetail()，不經過這裡），FAB群組只在編輯既有記錄時才顯示，這裡一律先隱藏
+  var _fw=$('det-fab-wrap');if(_fw)_fw.classList.remove('show');
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
   // v02.37：原本只手動隱藏 bar-sec/img-sec，是舊模式年代寫的，後來新增的
@@ -14435,13 +14464,11 @@ function _initDetailTouch(){
 }
 function closeDetail(){
   $('dsheet').classList.remove('on');
-  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('open');
   detailRow=null;
 }
 // 純關閉詳細頁（供刪除/更新等程式化呼叫使用）
 function closeDetailSilent(){
   var ds=$('dsheet');if(ds)ds.classList.remove('on');
-  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('open');
   detailRow=null;
 }
 
@@ -14500,6 +14527,8 @@ function editDetail(){
   renderForm();
   var btn=$('save-btn');
   if(btn){btn.disabled=false;btn.textContent='更新記錄';btn.onclick=function(){doUpdate(rn);};}
+  // v02.56：條碼/品名查詢等FAB群組從詳情頁搬到編輯表單頁，只在編輯既有記錄時顯示
+  var fw=$('det-fab-wrap');if(fw)fw.classList.add('show');
 }
 $('dov').addEventListener('click',closeDetail);
 
@@ -14530,7 +14559,11 @@ function showPg(name){
       filterCol();
     }else{
       localforage.getItem('gv_col').then(function(cached){
-        if(cached&&cached.length){
+        // v02.55：修正快取判斷——原本用「cached && cached.length」判斷有沒有快取，
+        // 但快取確認「真的是0筆」時 cached=[]，[].length===0 會被誤判成「沒有快取」，
+        // 導致每次切換到收藏頁都重新打網路請求、跳一次載入圈，快速切換分頁會像不停載入。
+        // 改用 Array.isArray 判斷：只要曾經成功快取過（即使是空陣列），就不用再自動連網。
+        if(Array.isArray(cached)){
           col=normalizeColRows(cached);refreshColAfterLoad();
           var ts=localStorage.getItem('gv_col_ts');
           if(ts){var ago=Math.round((Date.now()-parseInt(ts))/60000);if(ago>30)toast('快取資料（'+ago+'分鐘前），點↻同步最新','',4000);}
@@ -14547,7 +14580,8 @@ function showPg(name){
       renderHuntList();                       // 記憶體已有 → 直接顯示，不連網
     }else{
       localforage.getItem('gv_hunt').then(function(c){
-        if(c&&c.length){
+        // v02.55：同樣修正——空陣列快取代表已經確認是0筆，不該每次都重新連網
+        if(Array.isArray(c)){
           hunt=normalizeHuntRows(c);renderHuntList();             // 用快取即時顯示，不自動連網
           var ts=localStorage.getItem('gv_hunt_ts');
           if(ts){var ago=Math.round((Date.now()-parseInt(ts))/60000);if(ago>30)toast('快取資料（'+ago+'分鐘前），點↻同步最新','',4000);}
@@ -14625,6 +14659,10 @@ function findDuplicate(e){
 }
 
 function resetAll(){
+  // v02.52：同樣的批次編輯模式防護——resetAll 會把 entry 整個清空並顯示方法選擇畫面，
+  // 如果在批次項目編輯模式下被意外觸發（例如取消鈕的 onclick 被其他背景流程重置回預設），
+  // 會造成「整個跳出批次書背建檔」的症狀。改成優先轉向捨棄這次編輯、安全返回批次清單。
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchCancelItemEdit();return;}
   stopScanner();if(typeof stopComboScanner==='function')stopComboScanner();
   entry={};edited.clear();
   _scanBC=''; // 清除上一筆條碼暫存，避免帶入下一筆（無條碼裸卡誤判重複的根因）
@@ -14635,6 +14673,7 @@ function resetAll(){
   var tw=$('thumb-wrap');if(tw)tw.innerHTML='';
   if(typeof resetEntryStep1==='function')resetEntryStep1(); // #4：預設回到乾淨 Step 1
   var btn=$('save-btn');if(btn){btn.textContent='儲存至收藏';btn.onclick=doSave;}
+  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('show'); // v02.56：離開表單一律隱藏FAB
 }
 
 function registerServiceWorker(){
@@ -16302,9 +16341,12 @@ function huntConvertAIFill(){
     }
     entry._src=entry._src||{};
     // ── 資料庫事實欄位加值合併（不做名稱 gate；事實類覆蓋、版本類僅補空白）──
+    // v02.53：genre 移出 factFields，理由與 _mergeDbIntoEntry 相同——資料庫的類型分類資料
+    // 不夠可靠（曾出現比對不到落回OTHER、以及比對到但不準確如把戰略類誤標成動作類等案例），
+    // 交給 AI 視覺辨識結果判斷（下方 matchGenreMulti 正規化那行會正確處理 ai.genre 的原始值）。
     if(db&&Object.keys(db).length){
-      var factFields=['developer','publisher','release_date','genre','players','age_rating','series'];
-      factFields.forEach(function(k){if(db[k]){entry[k]=(k==='genre')?matchGenreMulti(db[k]):db[k];entry._src[k]='db';}});
+      var factFields=['developer','publisher','release_date','players','age_rating','series'];
+      factFields.forEach(function(k){if(db[k]){entry[k]=db[k];entry._src[k]='db';}});
       if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)){entry.summary=db.summary;entry._src.summary='db';}
       normalizeLanguageFields(db);
       ['platform','region','voice_language','subtitle_language','media'].forEach(function(k){if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';}});
