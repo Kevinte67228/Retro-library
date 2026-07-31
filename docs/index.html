@@ -2524,7 +2524,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.54';
+const APP_VERSION='v02.55';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3949,6 +3949,7 @@ function _pushGuard(){
 // ── Utils ──
 function $(id){return document.getElementById(id)}
 var _loadingTimer=null;
+var _loadingSafetyTimer=null;
 function _clearLoadingTimer(){if(_loadingTimer){clearInterval(_loadingTimer);_loadingTimer=null;}}
 function loading(t){
   _clearLoadingTimer();
@@ -3960,6 +3961,11 @@ function loading(t){
     ||t.indexOf('比對')>=0||t.indexOf('資料庫')>=0);
   var cb=$('l-cancel-btn');if(cb)cb.style.display=showCancel?'block':'none';
   if(cb&&showCancel)cb.textContent=t&&t.indexOf('AI')>=0?'取消，手動填寫':'略過等待，直接填寫';
+  // v02.55：安全逾時保護——不管是哪個呼叫路徑忘記配對 noLoad()（或網路請求真的卡住沒有
+  // resolve/reject），20秒後強制關閉載入圈，避免畫面永久卡住看起來像「不停載入」。
+  // 不影響正常情況：正常請求通常幾秒內就會自己呼叫 noLoad()，這裡的逾時只在異常時才會生效。
+  if(_loadingSafetyTimer)clearTimeout(_loadingSafetyTimer);
+  _loadingSafetyTimer=setTimeout(function(){noLoad();},20000);
 }
 function loadingTimed(t){
   var base=t||'處理中...';
@@ -3970,7 +3976,7 @@ function loadingTimed(t){
     var el=$('ltxt');if(el)el.textContent=base+'（'+sec+'秒）';
   },1000);
 }
-function noLoad(){_clearLoadingTimer();$('lov').classList.remove('sh');releaseAwake();}
+function noLoad(){_clearLoadingTimer();if(_loadingSafetyTimer){clearTimeout(_loadingSafetyTimer);_loadingSafetyTimer=null;}$('lov').classList.remove('sh');releaseAwake();}
 // ── 螢幕保持喚醒（處理中不熄屏）── 需 HTTPS、iOS Safari 16.4+
 var _wl=null;
 function keepAwake(){
@@ -14550,7 +14556,11 @@ function showPg(name){
       filterCol();
     }else{
       localforage.getItem('gv_col').then(function(cached){
-        if(cached&&cached.length){
+        // v02.55：修正快取判斷——原本用「cached && cached.length」判斷有沒有快取，
+        // 但快取確認「真的是0筆」時 cached=[]，[].length===0 會被誤判成「沒有快取」，
+        // 導致每次切換到收藏頁都重新打網路請求、跳一次載入圈，快速切換分頁會像不停載入。
+        // 改用 Array.isArray 判斷：只要曾經成功快取過（即使是空陣列），就不用再自動連網。
+        if(Array.isArray(cached)){
           col=normalizeColRows(cached);refreshColAfterLoad();
           var ts=localStorage.getItem('gv_col_ts');
           if(ts){var ago=Math.round((Date.now()-parseInt(ts))/60000);if(ago>30)toast('快取資料（'+ago+'分鐘前），點↻同步最新','',4000);}
@@ -14567,7 +14577,8 @@ function showPg(name){
       renderHuntList();                       // 記憶體已有 → 直接顯示，不連網
     }else{
       localforage.getItem('gv_hunt').then(function(c){
-        if(c&&c.length){
+        // v02.55：同樣修正——空陣列快取代表已經確認是0筆，不該每次都重新連網
+        if(Array.isArray(c)){
           hunt=normalizeHuntRows(c);renderHuntList();             // 用快取即時顯示，不自動連網
           var ts=localStorage.getItem('gv_hunt_ts');
           if(ts){var ago=Math.round((Date.now()-parseInt(ts))/60000);if(ago>30)toast('快取資料（'+ago+'分鐘前），點↻同步最新','',4000);}
