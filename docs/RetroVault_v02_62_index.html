@@ -487,23 +487,23 @@ body{
 .dact .btn{width:100%;min-height:38px;padding:8px 8px;font-size:13px}
 .dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 #dsheet.on .dnav-float{display:flex}
-/* 收藏詳情頁 FAB（v02.50：比照尋寶頁•••收合群組，含日系資料庫查詢/條碼品名查詢/拍照辨識三個功能，
-   位置刻意比 .dnav-float（bottom:86px）更低，避免跟上一筆/下一筆翻頁按鈕重疊） */
-#det-fab-wrap{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:12px}
+/* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
+   跟 save-bar 的浮動定位跑位問題——主觸發鈕改成跟「取消」同樣大小的晶片，直接排進 save-bar
+   那一排（走一般 flex 排版，不用猜固定像素間距），只有展開後的3個子按鈕維持浮動於上方） */
+#det-fab-wrap{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:230;display:none;flex-direction:column-reverse;align-items:center;gap:10px;pointer-events:none}
 #det-fab-wrap.show{display:flex}
-#det-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
-#det-fab-main:active{transform:scale(.93)}
+#det-fab-main{flex:0 0 auto;width:48px;padding:10px 0;color:#7986cb;font-weight:900;font-size:15px}
+#det-fab-main.open-ind{color:#ce93d8;border-color:#ce93d8}
 #det-lens-fab,#det-barcode-fab,#det-cd-fab{
-  width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
 #det-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
 #det-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
-#det-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:12px;overflow:hidden}
+#det-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:10px;overflow:hidden}
 #det-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-#det-lens-fab svg,#det-barcode-fab svg{width:26px;height:26px}
+#det-lens-fab svg,#det-barcode-fab svg{width:24px;height:24px}
 #det-fab-wrap.open #det-lens-fab,#det-fab-wrap.open #det-barcode-fab,#det-fab-wrap.open #det-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
-#det-fab-wrap.open #det-fab-main{transform:rotate(90deg)}
 #dprev-float{left:8px}
 #dnext-float{right:8px}
 .dnav-float.off{opacity:.2;pointer-events:none}
@@ -1249,6 +1249,12 @@ body{
         <!-- 批次書背辨識模式（v02.38）：一次拍照辨識多件商品書背，比照 combo-sec 單頁版面風格 -->
         <div id="batch-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
           <div style="padding:0 16px">
+            <!-- v02.61：批次書背/攤平多件 模式切換 -->
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+              <button type="button" onclick="setBatchMode('spine')" id="batch-mode-spine" class="genre-chip on" style="flex:1;justify-content:center;height:38px;font-size:13px">📚 書背模式</button>
+              <button type="button" onclick="setBatchMode('flat')" id="batch-mode-flat" class="genre-chip" style="flex:1;justify-content:center;height:38px;font-size:13px">🀄 攤平模式</button>
+            </div>
+            <div id="batch-spine-sub">
             <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 8 件）</div>
             <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
               <svg viewBox="0 0 320 170" style="width:100%;height:auto;display:block">
@@ -1313,10 +1319,66 @@ body{
               <img id="batch-preview-img" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #1e2a45">
             </div>
             <button id="batch-start-btn" class="btn bp bw" disabled onclick="batchDetectStart()" type="button" style="margin-bottom:6px">✨ 開始批次辨識</button>
+            </div>
+            <!-- v02.61：攤平多件模式——固定2x2方格佈局，位置一律對應1=左上/2=右上/3=左下/4=右下，
+                 拍前先選件數（1~4），照片直接裁切成每一件的封面圖，不用另外抓封面 -->
+            <div id="batch-flat-sub" style="display:none">
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 選擇件數並攤平拍照（最多 4 件）</div>
+              <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
+                <svg viewBox="0 0 320 200" style="width:100%;height:auto;display:block">
+                  <g stroke="#7986cb" stroke-width="2" fill="none" opacity=".6">
+                    <path d="M10 8 L10 24 M10 8 L26 8"/>
+                    <path d="M310 8 L310 24 M310 8 L294 8"/>
+                    <path d="M10 192 L10 176 M10 192 L26 192"/>
+                    <path d="M310 192 L310 176 M310 192 L294 192"/>
+                  </g>
+                  <!-- 十字分隔線示意2x2方格 -->
+                  <line x1="160" y1="15" x2="160" y2="185" stroke="#1e2a45" stroke-width="2" stroke-dasharray="4 3"/>
+                  <line x1="15" y1="100" x2="305" y2="100" stroke="#1e2a45" stroke-width="2" stroke-dasharray="4 3"/>
+                  <!-- 四個方格內的商品示意(封面朝上) -->
+                  <rect x="35" y="30" width="90" height="55" rx="4" fill="#3949ab"/>
+                  <circle cx="45" cy="40" r="9" fill="#ffb300"/>
+                  <text x="80" y="63" text-anchor="middle" font-size="14" font-weight="900" fill="#fff">1</text>
+                  <rect x="195" y="30" width="90" height="55" rx="4" fill="#00897b"/>
+                  <circle cx="205" cy="40" r="9" fill="#ffb300"/>
+                  <text x="240" y="63" text-anchor="middle" font-size="14" font-weight="900" fill="#fff">2</text>
+                  <rect x="35" y="115" width="90" height="55" rx="4" fill="#8e24aa"/>
+                  <circle cx="45" cy="125" r="9" fill="#ffb300"/>
+                  <text x="80" y="148" text-anchor="middle" font-size="14" font-weight="900" fill="#fff">3</text>
+                  <rect x="195" y="115" width="90" height="55" rx="4" fill="#d81b60"/>
+                  <circle cx="205" cy="125" r="9" fill="#ffb300"/>
+                  <text x="240" y="148" text-anchor="middle" font-size="14" font-weight="900" fill="#fff">4</text>
+                </svg>
+                <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:6px">封面朝上，攤平成 2×2 方格：左上=1／右上=2／左下=3／右下=4</div>
+                <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 請盡量正上方俯拍、四格大小平均，歪斜角度會影響裁切準確度</div>
+              </div>
+              <div style="font-size:12px;color:#7986cb;margin-bottom:8px">這次有幾件？未使用的方格不用拍</div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+                <button type="button" onclick="flatCountSelect(1)" id="flat-count-1" class="genre-chip" style="justify-content:center;height:44px;font-size:16px;font-weight:700">1</button>
+                <button type="button" onclick="flatCountSelect(2)" id="flat-count-2" class="genre-chip" style="justify-content:center;height:44px;font-size:16px;font-weight:700">2</button>
+                <button type="button" onclick="flatCountSelect(3)" id="flat-count-3" class="genre-chip" style="justify-content:center;height:44px;font-size:16px;font-weight:700">3</button>
+                <button type="button" onclick="flatCountSelect(4)" id="flat-count-4" class="genre-chip" style="justify-content:center;height:44px;font-size:16px;font-weight:700">4</button>
+              </div>
+              <div id="batch-flat-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+              <div style="display:flex;gap:8px;margin-bottom:10px">
+                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
+                  📷 拍照
+                  <input type="file" accept="image/*" capture="environment" style="display:none" id="flat-cam" onchange="flatPhotoPick(this)">
+                </label>
+                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
+                  🖼 相簿
+                  <input type="file" accept="image/*" style="display:none" id="flat-gal" onchange="flatPhotoPick(this)">
+                </label>
+              </div>
+              <div id="flat-preview" style="display:none;text-align:center;margin-bottom:12px">
+                <img id="flat-preview-img" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #1e2a45">
+              </div>
+              <button id="flat-start-btn" class="btn bp bw" disabled onclick="flatDetectStart()" type="button" style="margin-bottom:6px">✨ 開始裁切辨識</button>
+            </div>
             <div id="batch-progress" style="display:none;font-size:12px;color:#7986cb;text-align:center;margin:8px 0"></div>
 
             <div id="batch-list-wrap" style="display:none;margin-top:16px">
-              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">② 確認結果（取消勾選可剃除該筆）</div>
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">② 確認結果（取消勾選可剔除該筆）</div>
               <div id="batch-list"></div>
             </div>
 
@@ -1404,14 +1466,14 @@ body{
           </div>
           <div id="form-body"></div>
           <div id="det-fab-wrap">
-            <button id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button">•••</button>
             <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
             <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
             <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
           </div>
           <div id="save-bar">
             <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
-            <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button">儲存至收藏</button>
+            <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button" style="flex:1;min-width:0">儲存至收藏</button>
+            <button class="btn bo" id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button" style="display:none;flex-shrink:0;padding:10px 14px">•••</button>
           </div>
         </div>
       </div>
@@ -2524,7 +2586,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.56';
+const APP_VERSION='v02.62';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9994,7 +10056,7 @@ function doAnalyze(){
 // 🤖 [AI辨識進入點] 批次書背辨識模式（v02.38）：一次拍照辨識最多 8 件商品書背，
 // 逐件循序查資料庫＋補封面＋AI補全，列成確認清單讓使用者勾選後批次存檔。
 // 設計對照：整批鎖死使用者已選定的分類/平台/區域（不逐件覆蓋），序號辨識不清楚時
-// 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剃除；只支援無子類型的 4 個分類。
+// 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剔除；只支援無子類型的 4 個分類。
 var _batchItems=[]; // {order,code,title_guess,code_clear,status,include,entry,dup}
 var _batchImgFile=null;
 // v02.54：整批解析進行中的全域鎖。_batchResolveNext 是循序背景流程，過程中會暫時把解析中
@@ -10003,6 +10065,10 @@ var _batchImgFile=null;
 // 造成資料互相污染（使用者實測確認過這個現象）。這個旗標在整批解析完全結束前一律鎖住編輯功能，
 // 不只是看單一項目自己的狀態。
 var _batchResolving=false;
+// v02.61：攤平多件模式的全域狀態
+var _batchMode='spine'; // 'spine'書背模式｜'flat'攤平模式
+var _flatCount=0; // 1~4，0=尚未選擇
+var _flatImgFile=null;
 
 var BATCH_DETECT_SCHEMA={
   type:'OBJECT',
@@ -10026,12 +10092,178 @@ function _batchDetectPrompt(){
     'code_clear：這件商品的編碼是否印刷清晰、有把握辨識正確，模糊、被遮擋、看不清楚或不確定請填 false；order 為由左到右的順序（1 起算）。只輸出 JSON，不要其他文字。';
 }
 
+// v02.61：批次書背／攤平多件 模式切換
+function setBatchMode(mode){
+  _batchMode=mode;
+  var mb=$('batch-mode-spine'),mf=$('batch-mode-flat');
+  if(mb)mb.classList.toggle('on',mode==='spine');
+  if(mf)mf.classList.toggle('on',mode==='flat');
+  var sub=$('batch-spine-sub'),fub=$('batch-flat-sub');
+  if(sub)sub.style.display=mode==='spine'?'block':'none';
+  if(fub)fub.style.display=mode==='flat'?'block':'none';
+}
+function flatCountSelect(n){
+  _flatCount=n;
+  for(var i=1;i<=4;i++){var b=$('flat-count-'+i);if(b)b.classList.toggle('on',i===n);}
+  var btn=$('flat-start-btn');if(btn)btn.disabled=!(_flatCount&&_flatImgFile);
+}
+function flatPhotoPick(input){
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  _flatImgFile=f;
+  var r=new FileReader();
+  r.onload=function(){
+    $('flat-preview-img').src=r.result;
+    $('flat-preview').style.display='block';
+    var btn=$('flat-start-btn');if(btn)btn.disabled=!(_flatCount&&_flatImgFile);
+  };
+  r.readAsDataURL(f);
+}
+// v02.61：依件數把整張照片裁成2x2方格（規則：1件=整張；2件=左右對切；3~4件=十字對切成
+// 左上/右上/左下/右下，1234對應，3件時不用第4格）。純幾何裁切，不靠AI判斷框線位置，
+// 只要使用者攤平擺放時大致對齊十字線，準確度就是穩定的。
+function _flatCropRects(count,W,H){
+  if(count===1)return [{x:0,y:0,w:W,h:H}];
+  if(count===2)return [{x:0,y:0,w:W/2,h:H},{x:W/2,y:0,w:W/2,h:H}];
+  var rects=[{x:0,y:0,w:W/2,h:H/2},{x:W/2,y:0,w:W/2,h:H/2},{x:0,y:H/2,w:W/2,h:H/2},{x:W/2,y:H/2,w:W/2,h:H/2}];
+  return rects.slice(0,count);
+}
+function _flatCropImage(srcDataUrl,count,cb){
+  var img=new Image();
+  img.onload=function(){
+    var W=img.naturalWidth,H=img.naturalHeight;
+    var rects=_flatCropRects(count,W,H);
+    var results=rects.map(function(r){
+      var maxSide=900; // 每格最長邊上限，控制上傳大小
+      var scale=Math.min(1,maxSide/Math.max(r.w,r.h));
+      var cw=Math.round(r.w*scale),ch=Math.round(r.h*scale);
+      var canvas=document.createElement('canvas');
+      canvas.width=cw;canvas.height=ch;
+      var ctx=canvas.getContext('2d');
+      ctx.drawImage(img,r.x,r.y,r.w,r.h,0,0,cw,ch);
+      return canvas.toDataURL('image/jpeg',0.85);
+    });
+    cb(results);
+  };
+  img.onerror=function(){cb(null);};
+  img.src=srcDataUrl;
+}
+var FLAT_DETECT_SCHEMA={
+  type:'OBJECT',
+  properties:{
+    items:{type:'ARRAY',items:{type:'OBJECT',properties:{
+      order:{type:'NUMBER'},
+      code:{type:'STRING'},
+      title_guess:{type:'STRING'},
+      code_clear:{type:'BOOLEAN'},
+      has_bbox:{type:'BOOLEAN'},
+      ymin:{type:'NUMBER'},xmin:{type:'NUMBER'},ymax:{type:'NUMBER'},xmax:{type:'NUMBER'}
+    },required:['order','code','title_guess','code_clear','has_bbox','ymin','xmin','ymax','xmax']}}
+  },
+  required:['items']
+};
+function _flatDetectPrompt(count){
+  var cat=catLabel(_selectedType)||'遊戲';
+  var platTxt=_selectedPlatform?('，平台為「'+_selectedPlatform+'」'):'';
+  return '以下依序提供 '+count+' 張圖片，每一張都是同一批「'+cat+'」商品裡「不同一件」的封面照片'+platTxt+'（每張圖片是從一張攤平合照裡粗略切出來的，可能還帶有背景桌面／墊子邊緣、或裁到隔壁商品的一小角，不是每張都已經對齊得很準）。'+
+    '請針對「每一張」圖片個別回答：'+
+    '1. 找出封面上印刷的商品名稱與商品編碼（如果封面上有印的話，常見格式如 SLPS-01234、SLPM-12345、SCPS-15041、CUSA-00001 等）；title_guess 填封面上看到的標題文字；code_clear：編碼是否印刷清晰、有把握辨識正確，模糊或看不到請填 false。'+
+    '2. 框出這張圖片裡「商品本體」（封面/包裝盒）實際佔據的範圍，用 ymin/xmin/ymax/xmax 四個數字表示，數值範圍 0~1000，代表在這張圖片裡的相對位置（0,0 是左上角，1000,1000 是右下角），只框商品本體，不要包含背景桌面、墊子、其他商品的一角。如果這張圖片裡看不出明確的商品邊界（例如整張都是背景、或商品佔滿全圖已經沒有多餘背景可裁），has_bbox 填 false，ymin/xmin/ymax/xmax 都填 0 即可；能明確框出來才把 has_bbox 填 true 並給出座標。'+
+    'order 為我提供圖片的順序（第1張=1，第2張=2，以此類推）。務必針對每一張圖片都回傳一筆結果，共 '+count+' 筆。只輸出 JSON，不要其他文字。';
+}
+// v02.62：用AI回傳的bbox對「原本的四等分裁切圖」做第二次裁切，框出商品實際邊界，
+// 排除四等分時可能帶到的背景/截圖/隔壁商品一角等雜訊。bbox是0~1000正規化座標，
+// 換算成這張裁切圖的實際像素範圍再裁一次。驗證不通過(範圍太小/座標顛倒/超出範圍)
+// 一律安全退回原本的四等分裁切結果，不會比之前更差。
+function _flatApplyBBox(cropDataUrl,bbox,cb){
+  if(!bbox||!bbox.has_bbox){cb(cropDataUrl);return;}
+  var ymin=bbox.ymin,xmin=bbox.xmin,ymax=bbox.ymax,xmax=bbox.xmax;
+  var valid=[ymin,xmin,ymax,xmax].every(function(v){return typeof v==='number'&&isFinite(v)&&v>=0&&v<=1000;})
+    &&xmax>xmin&&ymax>ymin&&(xmax-xmin)>=100&&(ymax-ymin)>=100; // 框選範圍至少要佔原圖10%以上邊長，太小視為異常
+  if(!valid){cb(cropDataUrl);return;} // 座標異常，安全退回原圖
+  var img=new Image();
+  img.onload=function(){
+    var W=img.naturalWidth,H=img.naturalHeight;
+    var x=Math.round(xmin/1000*W),y=Math.round(ymin/1000*H);
+    var w=Math.round((xmax-xmin)/1000*W),h=Math.round((ymax-ymin)/1000*H);
+    if(w<10||h<10){cb(cropDataUrl);return;} // 換算後太小，安全退回
+    var canvas=document.createElement('canvas');
+    canvas.width=w;canvas.height=h;
+    var ctx=canvas.getContext('2d');
+    ctx.drawImage(img,x,y,w,h,0,0,w,h);
+    cb(canvas.toDataURL('image/jpeg',0.85));
+  };
+  img.onerror=function(){cb(cropDataUrl);}; // 讀取失敗，安全退回原圖
+  img.src=cropDataUrl;
+}
+function flatDetectStart(){
+  if(!_flatCount){toast('請先選擇這次有幾件','er');return;}
+  if(!_flatImgFile){toast('請先拍照或選擇圖片','er');return;}
+  if(!cfg.gkey){toast('請先在設定頁填入 Gemini 金鑰','er');showPg('cfg');return;}
+  var r=new FileReader();
+  r.onload=function(){
+    _flatCropImage(r.result,_flatCount,function(crops){
+      if(!crops){toast('圖片讀取失敗','er');return;}
+      loading('AI 辨識 '+_flatCount+' 件商品封面... 約需 10~30 秒');
+      var parts=crops.map(function(c){return {inlineData:{mimeType:'image/jpeg',data:c.split(',')[1]}};});
+      parts.push({text:_flatDetectPrompt(_flatCount)});
+      callGemini(parts,{customSchema:FLAT_DETECT_SCHEMA,customSystem:'你是商品封面辨識助手，只根據圖片實際內容回答，不要編造看不到的資訊。'})
+        .then(function(res){
+          var items=(res&&Array.isArray(res.items))?res.items:[];
+          if(!items.length){noLoad();toast('沒有辨識到任何商品，請確認照片清楚拍到封面','er',4000);return;}
+          // 依order排序、對齊裁切圖，確保第N筆資料配對到第N張裁切圖（不依賴AI回傳順序）
+          var byOrder={};
+          items.forEach(function(it){byOrder[it.order]=it;});
+          _batchItems=crops.map(function(cropDataUrl,i){
+            var order=i+1;
+            var it=byOrder[order]||{};
+            return {
+              order:order,
+              code:(''+(it.code||'')).trim(),
+              title_guess:(''+(it.title_guess||'')).trim(),
+              code_clear:it.code_clear!==false,
+              status:'pending',
+              include:true,
+              entry:{cover_img:cropDataUrl}, // v02.61：先用原始四等分裁切結果，下面再視情況套用AI框選精修
+              dup:null,
+              _bboxInfo:it // 暫存供下面套用bbox用
+            };
+          });
+          // v02.62：對每一筆套用AI回傳的bbox做第二次裁切，框出商品實際邊界（排除四等分時
+          // 可能帶到的背景/雜訊）；全部套用完成才進入渲染跟解析階段，避免半套用狀態被畫出來
+          var pending=_batchItems.length;
+          function afterAllBBox(){
+            noLoad();
+            $('batch-list-wrap').style.display='block';
+            _batchRenderList();
+            _batchResolving=true;
+            _batchResolveNext(0);
+          }
+          _batchItems.forEach(function(item){
+            _flatApplyBBox(item.entry.cover_img,item._bboxInfo,function(refinedDataUrl){
+              item.entry.cover_img=refinedDataUrl;
+              delete item._bboxInfo;
+              pending--;
+              if(pending<=0)afterAllBBox();
+            });
+          });
+        }).catch(function(e){
+          noLoad();
+          toast('AI 辨識失敗：'+_friendlyError(e.message),'er',6000);
+        });
+    });
+  };
+  r.onerror=function(){toast('圖片讀取失敗','er');};
+  r.readAsDataURL(_flatImgFile);
+}
+
 function initBatchSpineMode(){
   pickTypeAndPlatform('batch',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
     setMbActive('batch');enterMode();
     hideAllSecs();
     $('batch-sec').style.display='block';
+    setBatchMode('spine'); // 每次進入預設回書背模式，使用者可自行切換
     _batchItems=[];_batchImgFile=null;
     $('batch-preview').style.display='none';
     $('batch-start-btn').disabled=true;
@@ -10041,8 +10273,17 @@ function initBatchSpineMode(){
     $('batch-progress').style.display='none';
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
+    // v02.61：攤平模式狀態也一併重置
+    _flatCount=0;_flatImgFile=null;
+    $('flat-preview').style.display='none';
+    var fsb=$('flat-start-btn');if(fsb)fsb.disabled=true;
+    for(var i=1;i<=4;i++){var fcb=$('flat-count-'+i);if(fcb)fcb.classList.remove('on');}
+    var fc=$('flat-cam');if(fc)fc.value='';
+    var fg=$('flat-gal');if(fg)fg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
     $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
+    var flatLockNote=$('batch-flat-lock-note');
+    if(flatLockNote)flatLockNote.innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
   });
 }
 
@@ -10121,10 +10362,16 @@ function _batchResolveNext(idx){
   _batchRenderList();
   var type=_selectedType||'遊戲';
   var _backupEntry=entry;
+  // v02.61：保留item.entry既有的cover_img（攤平模式在解析前就已經把裁切圖設進item.entry.cover_img，
+  // 這裡如果直接用Object.assign蓋掉一個全新entry會把裁切圖弄丟）；書背模式item.entry目前還是null，
+  // (item.entry&&item.entry.cover_img)在那種情況安全回傳undefined，不影響原本行為。
+  var _preCover=(item.entry&&item.entry.cover_img)||'';
   entry=Object.assign({},_defaultsFor(type),{
     category:type,platform:_selectedPlatform||'',
-    primary_name:item.title_guess||'',code:item.code||''
+    primary_name:item.title_guess||'',code:item.code||'',
+    cover_img:_preCover
   });
+  if(_preCover){entry._src=entry._src||{};entry._src.cover_img='img';}
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   function finishItem(failed){
     item.entry=Object.assign({},entry);
@@ -10374,7 +10621,9 @@ function _pickBestPrimaryName(){
 function showForm(src){
   // v02.56：showForm 用於新建檔／批次項目編輯等流程，不是編輯既有收藏記錄（那條路走
   // editDetail()，不經過這裡），FAB群組只在編輯既有記錄時才顯示，這裡一律先隱藏
-  var _fw=$('det-fab-wrap');if(_fw)_fw.classList.remove('show');
+  // v02.57：主觸發鈕搬進save-bar後，det-fab-main要另外控制display(不再是det-fab-wrap的子元素)
+  var _fw=$('det-fab-wrap');if(_fw){_fw.classList.remove('show');_fw.classList.remove('open');}
+  var _fm=$('det-fab-main');if(_fm)_fm.style.display='none';
   // #4：若進入的不是「尋寶轉入」表單，清除殘留旗標，避免誤標記
   if(typeof _huntConvertUid!=='undefined'&&_huntConvertUid&&src.indexOf('尋寶轉入')<0)_huntConvertUid=null;
   // v02.37：原本只手動隱藏 bar-sec/img-sec，是舊模式年代寫的，後來新增的
@@ -14529,6 +14778,8 @@ function editDetail(){
   if(btn){btn.disabled=false;btn.textContent='更新記錄';btn.onclick=function(){doUpdate(rn);};}
   // v02.56：條碼/品名查詢等FAB群組從詳情頁搬到編輯表單頁，只在編輯既有記錄時顯示
   var fw=$('det-fab-wrap');if(fw)fw.classList.add('show');
+  setTimeout(_positionDetFabWrap,0); // 等這一輪渲染完成、save-bar確實有正確尺寸後再量測
+  var fm=$('det-fab-main');if(fm)fm.style.display='';
 }
 $('dov').addEventListener('click',closeDetail);
 
@@ -14673,7 +14924,8 @@ function resetAll(){
   var tw=$('thumb-wrap');if(tw)tw.innerHTML='';
   if(typeof resetEntryStep1==='function')resetEntryStep1(); // #4：預設回到乾淨 Step 1
   var btn=$('save-btn');if(btn){btn.textContent='儲存至收藏';btn.onclick=doSave;}
-  var fw=$('det-fab-wrap');if(fw)fw.classList.remove('show'); // v02.56：離開表單一律隱藏FAB
+  var fw=$('det-fab-wrap');if(fw){fw.classList.remove('show');fw.classList.remove('open');} // v02.56：離開表單一律隱藏FAB
+  var fm=$('det-fab-main');if(fm)fm.style.display='none';
 }
 
 function registerServiceWorker(){
@@ -15239,13 +15491,35 @@ var _bcWebScan=createScanner({videoId:'barcode-web-video',
   onError:function(){var h=$('barcode-web-hint');if(h)h.textContent='無法啟動相機，請在下方手動輸入條碼';}});
 // v54.66：尋寶頁 ••• 主按鈕展開/收合子功能
 // v02.50：收藏詳情頁的 ••• FAB 群組（比照尋寶頁），三個子功能都是全域函式，直接沿用不重複實作
+// v02.58：改用實際量測 save-bar 的位置來定位展開子按鈕，取代猜測的固定像素值——
+// 前兩版都用猜的 calc(Npx+...) 估計 save-bar 高度，但按鈕實際尺寸/字型渲染跟猜測有落差，
+// 導致還是會重疊。改成用 getBoundingClientRect() 量測 save-bar 真正的螢幕位置，
+// 直接算出「剛好貼在 save-bar 上方」的 bottom 值，不管尺寸怎麼變都不會重疊。
+function _positionDetFabWrap(){
+  var sb=$('save-bar'),fw=$('det-fab-wrap');
+  if(!sb||!fw)return;
+  var r=sb.getBoundingClientRect();
+  if(!r||!r.top)return; // save-bar 目前不在畫面上（display:none等），不更動位置
+  var gap=14; // 跟 save-bar 之間的視覺間距
+  fw.style.bottom=Math.max(0,window.innerHeight-r.top+gap)+'px';
+}
+window.addEventListener('resize',function(){
+  var fw=$('det-fab-wrap');
+  if(fw&&fw.classList.contains('show'))_positionDetFabWrap();
+});
 function toggleDetFab(){
+  _positionDetFabWrap(); // 每次開合前重新量測，避免版面變動後位置過時
   var wrap=document.getElementById('det-fab-wrap');
   if(wrap)wrap.classList.toggle('open');
+  // v02.57：主觸發鈕搬進save-bar後不再是det-fab-wrap的子元素，展開視覺回饋改直接切換自己的class
+  var main=document.getElementById('det-fab-main');
+  if(main)main.classList.toggle('open-ind');
 }
 function detFabAction(fn){
   var wrap=document.getElementById('det-fab-wrap');
   if(wrap)wrap.classList.remove('open'); // 選了子功能後自動收合
+  var main=document.getElementById('det-fab-main');
+  if(main)main.classList.remove('open-ind');
   if(typeof window[fn]==='function')window[fn]();
 }
 function toggleHuntFab(){
@@ -16341,17 +16615,12 @@ function huntConvertAIFill(){
     }
     entry._src=entry._src||{};
     // ── 資料庫事實欄位加值合併（不做名稱 gate；事實類覆蓋、版本類僅補空白）──
-    // v02.53：genre 移出 factFields，理由與 _mergeDbIntoEntry 相同——資料庫的類型分類資料
-    // 不夠可靠（曾出現比對不到落回OTHER、以及比對到但不準確如把戰略類誤標成動作類等案例），
-    // 交給 AI 視覺辨識結果判斷（下方 matchGenreMulti 正規化那行會正確處理 ai.genre 的原始值）。
-    if(db&&Object.keys(db).length){
-      var factFields=['developer','publisher','release_date','players','age_rating','series'];
-      factFields.forEach(function(k){if(db[k]){entry[k]=db[k];entry._src[k]='db';}});
-      if(db.summary&&/[\u4e00-\u9fff]/.test(db.summary)){entry.summary=db.summary;entry._src.summary='db';}
-      normalizeLanguageFields(db);
-      ['platform','region','voice_language','subtitle_language','media'].forEach(function(k){if(!entry[k]&&db[k]){entry[k]=db[k];entry._src[k]='db';}});
-      if(!entry.primary_name&&db.primary_name){entry.primary_name=db.primary_name;entry._src.primary_name='db';}
-    }
+    // v02.60：改成直接呼叫既有的 _mergeDbIntoEntry(db)，不再各自維護一份重複邏輯——
+    // 原本這裡跟 _mergeDbIntoEntry 各自獨立實作了完全相同的合併規則，這正是 v02.53 genre
+    // 漏洞要修兩處的根本原因（同一段邏輯散在兩處，改一個容易忘記改另一個）。改成共用同一份，
+    // 這裡也連帶吃到 _mergeDbIntoEntry 原本就有、但這裡沒有的「圖片實讀來源優先，不被資料庫
+    // 覆蓋」保護（entry._src[k]==='img' 那段），行為更一致也更安全。
+    _mergeDbIntoEntry(db);
     _carrySelPlat();_carrySelRegion();_carrySelSubtype();
     if(entry.genre)entry.genre=matchGenreMulti(entry.genre)||entry.genre;
     // 還原入手資料（若 AI 有名稱會重建 entry 而清掉這些）
