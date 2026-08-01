@@ -2586,7 +2586,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.64';
+const APP_VERSION='v02.65';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10179,7 +10179,7 @@ function _flatDetectPrompt(count){
   return '以下依序提供 '+count+' 張圖片，每一張都是同一批「'+cat+'」商品裡「不同一件」的封面照片'+platTxt+'（每張圖片是從一張攤平合照裡粗略切出來的，可能還帶有背景桌面／墊子邊緣、或裁到隔壁商品的一小角，不是每張都已經對齊得很準）。'+
     '請針對「每一張」圖片個別回答：'+
     '1. 找出封面上印刷的商品名稱與商品編碼（如果封面上有印的話，常見格式如 SLPS-01234、SLPM-12345、SCPS-15041、CUSA-00001 等）；title_guess 填封面上看到的標題文字；code_clear：編碼是否印刷清晰、有把握辨識正確，模糊或看不到請填 false。'+
-    '2. 框出這張圖片裡「商品本體」（封面/包裝盒）實際佔據的範圍，用 ymin/xmin/ymax/xmax 四個數字表示，數值範圍 0~1000，代表在這張圖片裡的相對位置（0,0 是左上角，1000,1000 是右下角），只框商品本體，不要包含背景桌面、墊子、其他商品的一角。如果這張圖片裡看不出明確的商品邊界（例如整張都是背景、或商品佔滿全圖已經沒有多餘背景可裁），has_bbox 填 false，ymin/xmin/ymax/xmax 都填 0 即可；能明確框出來才把 has_bbox 填 true 並給出座標。'+
+    '2. 框出這張圖片裡「商品本體」（封面/包裝盒）實際佔據的範圍，用 ymin/xmin/ymax/xmax 四個數字表示，數值範圍 0~1000，代表在這張圖片裡的相對位置（0,0 是左上角，1000,1000 是右下角）。框選要盡量貼緊商品實際的四個邊緣，不要留多餘的背景留白空間，只框商品本體，不要包含背景桌面、墊子、其他商品的一角。如果這張圖片裡看不出明確的商品邊界（例如整張都是背景、或商品佔滿全圖已經沒有多餘背景可裁），has_bbox 填 false，ymin/xmin/ymax/xmax 都填 0 即可；能明確框出來才把 has_bbox 填 true 並給出座標。'+
     'order 為我提供圖片的順序（第1張=1，第2張=2，以此類推）。務必針對每一張圖片都回傳一筆結果，共 '+count+' 筆。只輸出 JSON，不要其他文字。';
 }
 // v02.62：用AI回傳的bbox對「原本的四等分裁切圖」做第二次裁切，框出商品實際邊界，
@@ -10208,12 +10208,15 @@ function _isCropSuspiciouslyBlank(ctx,w,h){
     return false; // 抽樣本身失敗(如canvas安全性限制)不擋，保守放行，不影響原本功能
   }
 }
+// v02.65：cb的第二個參數改回報「有沒有真的套用框選精修」跟原因，方便使用者實測回報
+// 「邊界不夠貼緊」時，能立刻分辨是「AI給的框選本身不夠精準」還是「框選被防護機制擋掉、
+// 退回原始四等分結果」——這兩種情況要調整的地方完全不同，不能再靠猜的。
 function _flatApplyBBox(cropDataUrl,bbox,cb){
-  if(!bbox||!bbox.has_bbox){cb(cropDataUrl);return;}
+  if(!bbox||!bbox.has_bbox){cb(cropDataUrl,false,'no_bbox');return;}
   var ymin=bbox.ymin,xmin=bbox.xmin,ymax=bbox.ymax,xmax=bbox.xmax;
   var valid=[ymin,xmin,ymax,xmax].every(function(v){return typeof v==='number'&&isFinite(v)&&v>=0&&v<=1000;})
     &&xmax>xmin&&ymax>ymin&&(xmax-xmin)>=100&&(ymax-ymin)>=100; // 框選範圍至少要佔原圖10%以上邊長，太小視為異常
-  if(!valid){cb(cropDataUrl);return;} // 座標異常，安全退回原圖
+  if(!valid){cb(cropDataUrl,false,'invalid_coords');return;} // 座標異常，安全退回原圖
   var img=new Image();
   img.onload=function(){
     var W=img.naturalWidth,H=img.naturalHeight;
@@ -10226,15 +10229,15 @@ function _flatApplyBBox(cropDataUrl,bbox,cb){
     y=Math.max(0,Math.min(y,H-1));
     w=Math.min(w,W-x);
     h=Math.min(h,H-y);
-    if(w<10||h<10){cb(cropDataUrl);return;} // 換算/clamp後太小，安全退回
+    if(w<10||h<10){cb(cropDataUrl,false,'too_small_after_clamp');return;} // 換算/clamp後太小，安全退回
     var canvas=document.createElement('canvas');
     canvas.width=w;canvas.height=h;
     var ctx=canvas.getContext('2d');
     ctx.drawImage(img,x,y,w,h,0,0,w,h);
-    if(_isCropSuspiciouslyBlank(ctx,w,h)){cb(cropDataUrl);return;} // 內容可疑，安全退回原圖
-    cb(canvas.toDataURL('image/jpeg',0.85));
+    if(_isCropSuspiciouslyBlank(ctx,w,h)){cb(cropDataUrl,false,'suspicious_blank');return;} // 內容可疑，安全退回原圖
+    cb(canvas.toDataURL('image/jpeg',0.85),true,'ok');
   };
-  img.onerror=function(){cb(cropDataUrl);}; // 讀取失敗，安全退回原圖
+  img.onerror=function(){cb(cropDataUrl,false,'img_load_error');}; // 讀取失敗，安全退回原圖
   img.src=cropDataUrl;
 }
 function flatDetectStart(){
@@ -10281,8 +10284,10 @@ function flatDetectStart(){
             _batchResolveNext(0);
           }
           _batchItems.forEach(function(item){
-            _flatApplyBBox(item.entry.cover_img,item._bboxInfo,function(refinedDataUrl){
+            _flatApplyBBox(item.entry.cover_img,item._bboxInfo,function(refinedDataUrl,refined,reason){
               item.entry.cover_img=refinedDataUrl;
+              item._cropRefined=refined; // v02.65：記錄這筆是否成功套用AI框選精修，供清單顯示診斷用
+              item._cropReason=reason;
               delete item._bboxInfo;
               pending--;
               if(pending<=0)afterAllBBox();
@@ -10478,13 +10483,20 @@ function _batchRenderList(){
       : '<div'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;'+(editable?'cursor:pointer;':'')+'color:#7986cb;text-align:center;line-height:1.2" title="'+(editable?'點擊拍照補上圖片':'')+'">📷</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
+    // v02.65：攤平模式的裁切來源診斷標記，只在_cropRefined有定義時顯示（書背模式沒有這個欄位，不受影響）
+    var cropTag='';
+    if(item._cropRefined!==undefined){
+      cropTag=item._cropRefined
+        ? '<span style="color:#69f0ae" title="AI已框選精修邊界">◎精修邊界</span>'
+        : '<span style="color:#7986cb" title="原因：'+esc(item._cropReason||'')+'">◇原始四等分</span>';
+    }
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
       '<input type="checkbox" '+checked+' '+disabled+' onchange="batchToggleInclude('+i+',this.checked)" style="width:18px;height:18px;flex-shrink:0;accent-color:#ce93d8">'+
       imgTag+
       '<div style="flex:1;min-width:0"'+(editable?' onclick="batchEditItem('+i+')" style="cursor:pointer"':'')+'>'+
         '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
         '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
-        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+'</div>'+
+        '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+(cropTag?'　'+cropTag:'')+'</div>'+
       '</div>'+
     '</div>';
   }).join('');
