@@ -2586,7 +2586,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.65';
+const APP_VERSION='v02.66';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10229,7 +10229,15 @@ function _flatApplyBBox(cropDataUrl,bbox,cb){
     y=Math.max(0,Math.min(y,H-1));
     w=Math.min(w,W-x);
     h=Math.min(h,H-y);
-    if(w<10||h<10){cb(cropDataUrl,false,'too_small_after_clamp');return;} // 換算/clamp後太小，安全退回
+    // v02.66：使用者實測回報「已套用精修」的框選，邊界仍留有明顯背景空隙——AI給的座標
+    // 傾向偏鬆/保守。加一個內縮修正：往內收一小段固定比例，抵銷這個偏鬆傾向。這是根據
+    // 觀察到的行為模式做的經驗值修正，不是精確解法，需要使用者持續實測回報效果，
+    // 如果矯枉過正切到商品邊緣，這個比例還需要再調整或拿掉。
+    var SHRINK_RATIO=0.04; // 每邊往內收4%
+    var shrinkX=Math.round(w*SHRINK_RATIO),shrinkY=Math.round(h*SHRINK_RATIO);
+    x=x+shrinkX;y=y+shrinkY;
+    w=w-shrinkX*2;h=h-shrinkY*2;
+    if(w<10||h<10){cb(cropDataUrl,false,'too_small_after_shrink');return;} // 內縮後太小，安全退回
     var canvas=document.createElement('canvas');
     canvas.width=w;canvas.height=h;
     var ctx=canvas.getContext('2d');
