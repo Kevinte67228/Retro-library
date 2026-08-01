@@ -2586,7 +2586,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.62';
+const APP_VERSION='v02.63';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10175,6 +10175,28 @@ function _flatDetectPrompt(count){
 // 排除四等分時可能帶到的背景/截圖/隔壁商品一角等雜訊。bbox是0~1000正規化座標，
 // 換算成這張裁切圖的實際像素範圍再裁一次。驗證不通過(範圍太小/座標顛倒/超出範圍)
 // 一律安全退回原本的四等分裁切結果，不會比之前更差。
+// v02.63：座標數字「技術上合法」不代表裁出來的內容是對的——使用者實測發現AI有時會把
+// 陰影/暗色背景區塊誤判成商品邊界，框出來的座標範圍合理，但裁出來的內容其實是一片黑/空白。
+// 新增內容抽樣檢查：從裁切結果均勻抽樣約2000個像素點，算平均亮度跟變異數，太暗或顏色太
+// 單一（像純黑/純色色塊）就視為裁壞了，捨棄這次bbox精修結果、安全退回原本的四等分裁切圖。
+function _isCropSuspiciouslyBlank(ctx,w,h){
+  try{
+    var data=ctx.getImageData(0,0,w,h).data;
+    var totalPx=data.length/4;
+    var step=Math.max(1,Math.floor(totalPx/2000)); // 不管圖多大，固定抽約2000個點，開銷穩定
+    var sum=0,sumSq=0,count=0;
+    for(var i=0;i<data.length;i+=4*step){
+      var lum=data[i]*0.299+data[i+1]*0.587+data[i+2]*0.114;
+      sum+=lum;sumSq+=lum*lum;count++;
+    }
+    if(!count)return false;
+    var mean=sum/count;
+    var variance=sumSq/count-mean*mean;
+    return mean<15||variance<10; // 平均亮度太低(接近全黑)或變異數太小(顏色太單一)都視為可疑
+  }catch(e){
+    return false; // 抽樣本身失敗(如canvas安全性限制)不擋，保守放行，不影響原本功能
+  }
+}
 function _flatApplyBBox(cropDataUrl,bbox,cb){
   if(!bbox||!bbox.has_bbox){cb(cropDataUrl);return;}
   var ymin=bbox.ymin,xmin=bbox.xmin,ymax=bbox.ymax,xmax=bbox.xmax;
@@ -10191,6 +10213,7 @@ function _flatApplyBBox(cropDataUrl,bbox,cb){
     canvas.width=w;canvas.height=h;
     var ctx=canvas.getContext('2d');
     ctx.drawImage(img,x,y,w,h,0,0,w,h);
+    if(_isCropSuspiciouslyBlank(ctx,w,h)){cb(cropDataUrl);return;} // 內容可疑，安全退回原圖
     cb(canvas.toDataURL('image/jpeg',0.85));
   };
   img.onerror=function(){cb(cropDataUrl);}; // 讀取失敗，安全退回原圖
