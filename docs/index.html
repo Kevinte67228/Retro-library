@@ -2586,7 +2586,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.63';
+const APP_VERSION='v02.64';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10131,7 +10131,18 @@ function _flatCropRects(count,W,H){
 function _flatCropImage(srcDataUrl,count,cb){
   var img=new Image();
   img.onload=function(){
-    var W=img.naturalWidth,H=img.naturalHeight;
+    // v02.64：先把完整原圖畫到一張中繼canvas上，取得瀏覽器已經處理過的乾淨像素緩衝，
+    // 之後的四等分裁切一律從這張中繼canvas取值，不再直接對<img>元素做「部分區域」drawImage。
+    // 原因：使用者實測發現下半部（第3/4格）裁出來上半有正確內容、下半是一大塊黑邊，
+    // 研判是手機拍照的方向資訊在只取部分來源區域時解讀不一致，導致實際讀取範圍跟
+    // naturalWidth/naturalHeight算出來的四等分座標對不齊，讀到超出實際影像邊界的空白區域
+    // （canvas對超出來源邊界的區域預設是透明，匯出成JPEG時會變成黑色）。
+    var fullCanvas=document.createElement('canvas');
+    fullCanvas.width=img.naturalWidth;
+    fullCanvas.height=img.naturalHeight;
+    var fullCtx=fullCanvas.getContext('2d');
+    fullCtx.drawImage(img,0,0); // 單純完整畫一次，不取部分區域，行為最單純可預期
+    var W=fullCanvas.width,H=fullCanvas.height;
     var rects=_flatCropRects(count,W,H);
     var results=rects.map(function(r){
       var maxSide=900; // 每格最長邊上限，控制上傳大小
@@ -10140,7 +10151,7 @@ function _flatCropImage(srcDataUrl,count,cb){
       var canvas=document.createElement('canvas');
       canvas.width=cw;canvas.height=ch;
       var ctx=canvas.getContext('2d');
-      ctx.drawImage(img,r.x,r.y,r.w,r.h,0,0,cw,ch);
+      ctx.drawImage(fullCanvas,r.x,r.y,r.w,r.h,0,0,cw,ch); // 從中繼canvas取值，不是原始img
       return canvas.toDataURL('image/jpeg',0.85);
     });
     cb(results);
@@ -10208,7 +10219,14 @@ function _flatApplyBBox(cropDataUrl,bbox,cb){
     var W=img.naturalWidth,H=img.naturalHeight;
     var x=Math.round(xmin/1000*W),y=Math.round(ymin/1000*H);
     var w=Math.round((xmax-xmin)/1000*W),h=Math.round((ymax-ymin)/1000*H);
-    if(w<10||h<10){cb(cropDataUrl);return;} // 換算後太小，安全退回
+    // v02.64：強制把矩形clamp在來源圖片實際尺寸內，不管前面算出來的座標有沒有誤差，
+    // 都不會讀取超出邊界的區域——這正是黑邊的根本成因：canvas對超出來源圖片邊界的
+    // 區域預設是透明，drawImage讀取超出範圍時那塊會維持透明，匯出JPEG時變成黑色。
+    x=Math.max(0,Math.min(x,W-1));
+    y=Math.max(0,Math.min(y,H-1));
+    w=Math.min(w,W-x);
+    h=Math.min(h,H-y);
+    if(w<10||h<10){cb(cropDataUrl);return;} // 換算/clamp後太小，安全退回
     var canvas=document.createElement('canvas');
     canvas.width=w;canvas.height=h;
     var ctx=canvas.getContext('2d');
