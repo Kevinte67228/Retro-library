@@ -1,3 +1,29 @@
+## v02.71 (2026-07-28)
+
+### 變更內容
+依使用者要求，Step4封面照的裁切功能整個換掉：拿掉v02.68~70自己搞的一套（即時相機串流+DOM拖曳裁切UI），改用「圖片辨識」模式（`initImgMode`/`onSlotPhoto`）本來就在用、全站唯一、已經過長期驗證的裁切系統——`cropImageFile()` + `#crop-ov`（Canvas繪製的裁切工具，支援拖曳移動整個框、拖曳4個角落縮放、三分格線、「使用原圖」跳過裁切等功能）。
+
+- 移除v02.68新增的`openFieldScanner`的`mode:'photo'`分支、`fscanCapturePhoto`
+- 移除v02.70自己刻的手動裁切UI：`_fitContainBox`／`_cropHandleDown`／`_cropHandleMove`／`_cropHandleUp`／`_fscanShowCropUI`／`_fscanCropConfirm`等10餘個函式，以及對應的CSS／HTML（`#fscan-crop-wrap`等）
+- `openFieldScanner`／`_fscanBuildCaptureBar`／`fscanStop`復原成只服務barcode/OCR兩種模式（v02.68之前的狀態）
+- Step4改成跟「圖片辨識」模式一樣的「📷拍照／🖼相簿」兩按鈕，選圖後呼叫既有的`cropImageFile(file)`（Promise模式），開啟全站共用的裁切器，確認裁切後存入`item.entry.cover_img`、顯示縮圖預覽，使用者按「確認，下一件」才推進（原生檔案選取器每次都需要使用者主動點擊觸發相機/相簿，沒辦法做到完全自動連續拍攝，但換來裁切功能真正可靠好用）
+
+自我檢查：`node --check` 通過；無 U+FFFD；CSS 605/605（確認清乾淨、跟v02.67修改前一致）；全檔案HTML div巢狀完整性通過；確認v02.68~70引入的photo/裁切相關函式全數移除、無殘留；抽取真實函式跑16項自我檢查全過，含Step4選圖後正確呼叫既有裁切器、裁切確認/取消(reject)都正確處理不誤設定資料、確認/跳過正確推進、最後一件正確轉場進入解析管線、以及barcode/OCR既有模式的回歸測試確認復原後完全正常。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_71_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-70 → retrovault-v02-71
+
+### 對應備份
+- _internal/old/v02_70/
+
+
 ## v02.70 (2026-07-28)
 
 ### 變更內容
@@ -80,31 +106,3 @@
 
 ### 對應備份
 - _internal/old/v02_67/
-
-
-## v02.67 (2026-07-27)
-
-### 變更內容
-重大改版：依使用者要求，放棄「攤平多件」批次模式（裁切準確度多輪調整後仍不理想），改把「批次書背」拆成 4 步驟精靈，核心思路是條碼／商品編碼改用手機相機本身可靠的掃描/OCR能力取得，不再讓 AI 從一張書背合照裡同時猜文字＋編碼＋條碼：
-
-- **移除**：攤平多件模式全部程式碼（10 個函式、CSS、HTML、全域變數），沒有殘留
-- **Step 1**（拍攝書背）：功能不變，但 AI 只需要辨識件數＋粗略品名，不再要求同時猜編碼（簡化 schema 與提示詞）
-- **Step 2**（逐件輸入條碼）：畫面顯示「第 X／N 件：{品名參考}」，可用相機即時掃描（重用既有 `createScanner`/`BarcodeDetector`）或手動輸入，掃描成功自動推進到下一件；每件可跳過，也可一次跳過整個步驟
-- **Step 3**（逐件輸入商品編碼／序號）：同樣的逐件模式，改用既有的 `fscanCapture` OCR 拍照辨識管線（依分類自動套用對應編碼格式提示詞，如 PS/Nintendo/Sega 各自常見格式），也支援手動輸入與跳過
-- **Step 4**（逐件拍攝封面）：每件只拍 1 張當封面即可，其餘圖片（背面/側邊等）之後在確認清單點縮圖進編輯頁再補；同樣支援跳過
-- 4 步驟收集完成後，自動合併進既有的資料庫查詢＋AI補全其餘欄位管線（`_batchResolveNext`），沿用既有的確認清單／批次項目編輯／整批解析鎖／批次儲存等基礎設施，沒有重複實作
-
-自我檢查：`node --check` 通過；無 U+FFFD；CSS 605/605；全檔案 HTML div 巢狀完整性檢查通過（含發現並修正一處區塊替換邊界誤差造成的多餘 `</div>`）；19 個新函式皆恰好定義 1 次；抽取真實函式跑 26 項自我檢查全過，含 Step 切換顯示邏輯、Step2/3/4 逐件 confirm/skip 正確推進與參考標題正確顯示、SkipAll 正確跳過剩餘所有件並直接轉場、Step4 拍照正確設定封面圖且跳過時不誤設定、4 步驟全部完成後正確轉場進入既有解析管線。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_67_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-66 → retrovault-v02-67
-
-### 對應備份
-- _internal/old/v02_66/
