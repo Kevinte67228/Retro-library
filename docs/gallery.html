@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>我的收藏 · RetroVault Gallery</title>
+<style>
+:root{
+  --bg:#080c18;--card:#0f1525;--border:#1e2a45;--text:#e8eaf6;--sub:#7986cb;
+  --accent:#69f0ae;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg) url('./bg.webp') center top/cover fixed;color:var(--text);
+  font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;font-size:14px}
+#wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px;background:rgba(8,12,24,.87);min-height:100vh}
+h1{font-size:20px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+h1 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.sub{color:var(--sub);font-size:12px;margin-bottom:18px}
+#toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+#q{flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;color:var(--text);font-size:14px}
+#q:focus{outline:none;border-color:var(--accent)}
+select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px}
+#stats{color:var(--sub);font-size:12px;margin-bottom:14px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;
+  transition:transform .15s,border-color .15s}
+.card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.card .thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;color:var(--sub);font-size:28px}
+.card .thumb img{width:100%;height:100%;object-fit:cover}
+.card .info{padding:10px}
+.card .name{font-size:12.5px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.card .meta{font-size:10.5px;color:var(--sub);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .tag{display:inline-block;font-size:9.5px;padding:2px 6px;border-radius:5px;margin-top:5px;
+  background:rgba(105,240,174,.15);color:var(--accent)}
+#empty,#loading,#err{text-align:center;color:var(--sub);padding:60px 20px;font-size:13px}
+#err{color:#ff8a80}
+#setup{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:420px;margin:60px auto}
+#setup h2{font-size:15px;margin:0 0 10px}
+#setup p{color:var(--sub);font-size:12px;line-height:1.6;margin-bottom:14px}
+#setup input{width:100%;background:#0a0e1a;border:1px solid var(--border);border-radius:8px;padding:10px;
+  color:var(--text);font-size:13px;margin-bottom:10px}
+#setup button{width:100%;background:var(--accent);color:#001a10;border:none;border-radius:8px;padding:11px;
+  font-weight:700;font-size:13px;cursor:pointer}
+/* 詳情彈窗 */
+#detail{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:flex-end;justify-content:center;z-index:50}
+#detail.on{display:flex}
+#detail-card{background:var(--bg);border-radius:18px 18px 0 0;max-width:520px;width:100%;max-height:85vh;
+  overflow-y:auto;padding:20px}
+#detail-card img{width:100%;border-radius:12px;margin-bottom:14px;background:#141b30}
+#detail-card h2{font-size:17px;margin:0 0 4px}
+#detail-card .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px}
+#detail-card .row span:first-child{color:var(--sub)}
+#detail-close{display:block;margin:14px auto 0;background:none;border:1px solid var(--border);color:var(--sub);
+  border-radius:8px;padding:9px 20px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1><span class="dot"></span>我的收藏</h1>
+  <div class="sub">RetroVault Gallery · 唯讀瀏覽頁</div>
+
+  <div id="setup" style="display:none">
+    <h2>連線設定</h2>
+    <p>這個頁面跟主 App 共用同一份 GAS 連線設定；如果讀不到，手動貼一次 GAS Web App 網址即可（只需要設定一次，之後會記住）。</p>
+    <input id="setup-url" placeholder="https://script.google.com/macros/s/.../exec">
+    <button onclick="saveSetupUrl()">開始瀏覽</button>
+  </div>
+
+  <div id="main" style="display:none">
+    <div id="toolbar">
+      <input id="q" placeholder="搜尋名稱、平台、開發商…" oninput="render()">
+      <select id="catSel" onchange="render()"><option value="">全部分類</option></select>
+    </div>
+    <div id="stats"></div>
+    <div id="loading">載入收藏資料中…</div>
+    <div id="empty" style="display:none">沒有符合條件的收藏</div>
+    <div id="err" style="display:none"></div>
+    <div id="grid"></div>
+  </div>
+</div>
+
+<div id="detail" onclick="if(event.target===this)closeDetail()">
+  <div id="detail-card"></div>
+</div>
+
+<script>
+var ALL=[];
+var GAS_URL='';
+
+function imgUrl(v,sz){
+  if(!v||typeof v!=='string')return '';
+  if(v.indexOf('data:')===0||v.indexOf('http')===0)return v;
+  return 'https://drive.google.com/thumbnail?id='+v+'&sz=w'+(sz||400);
+}
+function esc(s){
+  return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+function init(){
+  try{
+    var cfg=JSON.parse(localStorage.getItem('gv_cfg')||'{}');
+    if(cfg.url){GAS_URL=cfg.url;}
+  }catch(e){}
+  try{
+    var savedUrl=localStorage.getItem('gallery_gas_url');
+    if(!GAS_URL&&savedUrl)GAS_URL=savedUrl;
+  }catch(e){}
+  if(!GAS_URL){
+    document.getElementById('setup').style.display='block';
+    return;
+  }
+  document.getElementById('main').style.display='block';
+  loadData();
+}
+function saveSetupUrl(){
+  var v=(document.getElementById('setup-url').value||'').trim();
+  if(!v){alert('請輸入 GAS Web App 網址');return;}
+  GAS_URL=v;
+  try{localStorage.setItem('gallery_gas_url',v);}catch(e){}
+  document.getElementById('setup').style.display='none';
+  document.getElementById('main').style.display='block';
+  loadData();
+}
+
+function loadData(){
+  document.getElementById('loading').style.display='block';
+  document.getElementById('err').style.display='none';
+  var url=GAS_URL+(GAS_URL.indexOf('?')>=0?'&':'?')+'action=list&type=all';
+  fetch(url).then(function(r){return r.json();}).then(function(d){
+    document.getElementById('loading').style.display='none';
+    if(!d||!d.ok){throw new Error((d&&d.error)||'讀取失敗');}
+    ALL=(d.rows||[]).filter(function(r){return r&&r.data;});
+    buildCatFilter();
+    render();
+  }).catch(function(e){
+    document.getElementById('loading').style.display='none';
+    var err=document.getElementById('err');
+    err.style.display='block';
+    err.textContent='讀取收藏資料失敗：'+e.message+'（請確認 GAS 網址正確、Apps Script 部署仍在運作）';
+  });
+}
+
+function buildCatFilter(){
+  var cats={};
+  ALL.forEach(function(r){var c=r.data.category;if(c)cats[c]=(cats[c]||0)+1;});
+  var sel=document.getElementById('catSel');
+  Object.keys(cats).sort().forEach(function(c){
+    var opt=document.createElement('option');
+    opt.value=c;opt.textContent=c+'（'+cats[c]+'）';
+    sel.appendChild(opt);
+  });
+}
+
+function _filteredList(){
+  var q=(document.getElementById('q').value||'').trim().toLowerCase();
+  var cat=document.getElementById('catSel').value;
+  return ALL.filter(function(r){
+    if(!r||!r.data)return false; // 防禦性檢查：不完全依賴loadData那邊已經過濾過，避免單一異常資料讓整頁崩潰
+    var d=r.data;
+    if(cat&&d.category!==cat)return false;
+    if(!q)return true;
+    var hay=[d.primary_name,d.zh_name,d.jp_name,d.en_name,d.platform,d.developer,d.publisher]
+      .filter(Boolean).join(' ').toLowerCase();
+    return hay.indexOf(q)>=0;
+  });
+}
+
+function render(){
+  var list=_filteredList();
+  document.getElementById('stats').textContent='共 '+list.length+' 筆（總收藏 '+ALL.length+' 筆）';
+  document.getElementById('empty').style.display=list.length?'none':'block';
+  var grid=document.getElementById('grid');
+  grid.innerHTML=list.map(function(r,i){
+    var d=r.data;
+    var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（未命名）';
+    var img=imgUrl(d.cover_img,300);
+    var thumb=img?'<img src="'+esc(img)+'" loading="lazy" alt="">':'📦';
+    return '<div class="card" onclick="openDetail('+i+')">'+
+      '<div class="thumb">'+thumb+'</div>'+
+      '<div class="info">'+
+        '<div class="name">'+esc(name)+'</div>'+
+        '<div class="meta">'+esc(d.platform||'')+'</div>'+
+        (d.category?'<span class="tag">'+esc(d.category)+'</span>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openDetail(i){
+  var list=_filteredList();
+  var r=list[i];if(!r)return;
+  var d=r.data;
+  var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（未命名）';
+  var img=imgUrl(d.cover_img,800);
+  var rows=[
+    ['分類',d.category],['平台',d.platform],['地區',d.region],
+    ['開發商',d.developer],['發行商',d.publisher],['發售日',d.release_date],
+    ['類型',d.genre],['商品編碼',d.code],['條碼',d.barcode],
+    ['收藏狀態',d.collect_status],['購入日期',d.purchase_date],['購入價格',d.purchase_price],
+    ['目前估值',d.current_value]
+  ].filter(function(p){return p[1];});
+  document.getElementById('detail-card').innerHTML=
+    (img?'<img src="'+esc(img)+'" alt="">':'')+
+    '<h2>'+esc(name)+'</h2>'+
+    rows.map(function(p){return '<div class="row"><span>'+esc(p[0])+'</span><span>'+esc(p[1])+'</span></div>';}).join('')+
+    (d.summary?'<div class="row" style="display:block"><span>簡介</span><div style="margin-top:6px;color:#e8eaf6">'+esc(d.summary)+'</div></div>':'')+
+    '<button id="detail-close" onclick="closeDetail()">關閉</button>';
+  document.getElementById('detail').classList.add('on');
+}
+function closeDetail(){document.getElementById('detail').classList.remove('on');}
+
+init();
+</script>
+</body>
+</html>
