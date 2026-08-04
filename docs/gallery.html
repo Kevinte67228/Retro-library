@@ -22,6 +22,12 @@ h1 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shad
 #q:focus{outline:none;border-color:var(--accent)}
 select{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px}
 #stats{color:var(--sub);font-size:12px;margin-bottom:14px}
+#refresh-btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;
+  font-size:15px;cursor:pointer;color:var(--text);flex-shrink:0}
+#refresh-btn:disabled{opacity:.5}
+#refresh-btn.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#cache-note{color:var(--sub);font-size:11px;margin-bottom:10px}
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;
   transition:transform .15s,border-color .15s}
@@ -73,7 +79,9 @@ select{background:var(--card);border:1px solid var(--border);border-radius:10px;
     <div id="toolbar">
       <input id="q" placeholder="搜尋名稱、平台、開發商…" oninput="render()">
       <select id="catSel" onchange="render()"><option value="">全部分類</option></select>
+      <button id="refresh-btn" onclick="refreshData()" title="重新抓取最新資料">🔄</button>
     </div>
+    <div id="cache-note"></div>
     <div id="stats"></div>
     <div id="loading">載入收藏資料中…</div>
     <div id="empty" style="display:none">沒有符合條件的收藏</div>
@@ -95,12 +103,30 @@ function imgUrl(v,sz){
   if(v.indexOf('data:')===0||v.indexOf('http')===0)return v;
   return 'https://drive.google.com/thumbnail?id='+v+'&sz=w'+(sz||400);
 }
+// v1.2：GAS的日期欄位回傳完整ISO時間戳記(如2026-07-29T16:00:00.000Z)，這是UTC時間，
+// 直接顯示會讓日期跟實際輸入的台北時間日期對不上(UTC+8換算後才是正確的日曆日期，
+// 例如16:00 UTC實際是台北時間隔天00:00)。統一用台北時區格式化成YYYY-MM-DD。
+function fmtDate(v){
+  if(!v)return '';
+  var s=String(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s; // 已經是純日期格式，不用再處理
+  var d=new Date(s);
+  if(isNaN(d.getTime()))return s; // 不是合法日期，原樣回傳，避免破壞非日期文字內容
+  try{
+    return new Intl.DateTimeFormat('zh-TW',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'})
+      .format(d).replace(/\//g,'-');
+  }catch(e){return s;}
+}
 function esc(s){
   return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
   });
 }
 
+// v1.3：使用者實測回報「不想每次都要花時間載入」，改成快取優先——
+// 有快取就立刻用快取渲染（瞬間顯示，不等待），資料新鮮度由使用者自己按🔄決定要不要更新，
+// 不再每次進頁面都自動重新打API。
+var CACHE_KEY='gallery_cache_v1';
 function init(){
   try{
     var cfg=JSON.parse(localStorage.getItem('gv_cfg')||'{}');
@@ -115,7 +141,40 @@ function init(){
     return;
   }
   document.getElementById('main').style.display='block';
-  loadData();
+  var cached=_readCache();
+  if(cached){
+    ALL=cached.rows;
+    buildCatFilter();
+    render();
+    _updateCacheNote(cached.time);
+    document.getElementById('loading').style.display='none';
+  }else{
+    loadData(); // 完全沒有快取(第一次使用)，才需要真的等待一次
+  }
+}
+function _readCache(){
+  try{
+    var raw=localStorage.getItem(CACHE_KEY);
+    if(!raw)return null;
+    var d=JSON.parse(raw);
+    if(!d||!Array.isArray(d.rows))return null;
+    return d;
+  }catch(e){return null;}
+}
+function _updateCacheNote(time){
+  var note=document.getElementById('cache-note');
+  if(!note)return;
+  if(!time){note.textContent='';return;}
+  var mins=Math.round((Date.now()-time)/60000);
+  var txt=mins<1?'剛剛更新':(mins<60?mins+' 分鐘前更新':Math.round(mins/60)+' 小時前更新');
+  note.textContent='資料'+txt+'　·　點右上角 🔄 抓最新資料';
+}
+function refreshData(){
+  var btn=document.getElementById('refresh-btn');
+  if(btn){btn.disabled=true;btn.classList.add('spin');}
+  loadData(function(){
+    if(btn){btn.disabled=false;btn.classList.remove('spin');}
+  });
 }
 function saveSetupUrl(){
   var v=(document.getElementById('setup-url').value||'').trim();
@@ -127,7 +186,7 @@ function saveSetupUrl(){
   loadData();
 }
 
-function loadData(){
+function loadData(doneCb){
   document.getElementById('loading').style.display='block';
   document.getElementById('err').style.display='none';
   var url=GAS_URL+(GAS_URL.indexOf('?')>=0?'&':'?')+'action=list&type=all';
@@ -138,13 +197,18 @@ function loadData(){
     // 不是包在 row.data 底下——這是 App 前端另外正規化過後才有的內部格式，GAS 原始回傳不是這樣。
     // 用 rowNum 判斷是不是一筆有效的工作表資料列。
     ALL=(d.rows||[]).filter(function(r){return r&&r.rowNum;});
+    var now=Date.now();
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({rows:ALL,time:now}));}catch(e){}
+    _updateCacheNote(now);
     buildCatFilter();
     render();
+    if(doneCb)doneCb();
   }).catch(function(e){
     document.getElementById('loading').style.display='none';
     var err=document.getElementById('err');
     err.style.display='block';
     err.textContent='讀取收藏資料失敗：'+e.message+'（請確認 GAS 網址正確、Apps Script 部署仍在運作）';
+    if(doneCb)doneCb();
   });
 }
 
@@ -202,9 +266,9 @@ function openDetail(i){
   var img=imgUrl(d.cover_img,800);
   var rows=[
     ['分類',d.category],['平台',d.platform],['地區',d.region],
-    ['開發商',d.developer],['發行商',d.publisher],['發售日',d.release_date],
+    ['開發商',d.developer],['發行商',d.publisher],['發售日',fmtDate(d.release_date)],
     ['類型',d.genre],['商品編碼',d.code],['條碼',d.barcode],
-    ['收藏狀態',d.collect_status],['購入日期',d.purchase_date],['購入價格',d.purchase_price],
+    ['收藏狀態',d.collect_status],['購入日期',fmtDate(d.purchase_date)],['購入價格',d.purchase_price],
     ['目前估值',d.current_value]
   ].filter(function(p){return p[1];});
   document.getElementById('detail-card').innerHTML=
@@ -214,8 +278,12 @@ function openDetail(i){
     (d.summary?'<div class="row" style="display:block"><span>簡介</span><div style="margin-top:6px;color:#e8eaf6">'+esc(d.summary)+'</div></div>':'')+
     '<button id="detail-close" onclick="closeDetail()">關閉</button>';
   document.getElementById('detail').classList.add('on');
+  document.body.style.overflow='hidden'; // 鎖住背景捲動，避免底層頁面跟著滑動
 }
-function closeDetail(){document.getElementById('detail').classList.remove('on');}
+function closeDetail(){
+  document.getElementById('detail').classList.remove('on');
+  document.body.style.overflow='';
+}
 
 init();
 </script>
