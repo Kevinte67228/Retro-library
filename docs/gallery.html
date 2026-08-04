@@ -134,7 +134,10 @@ function loadData(){
   fetch(url).then(function(r){return r.json();}).then(function(d){
     document.getElementById('loading').style.display='none';
     if(!d||!d.ok){throw new Error((d&&d.error)||'讀取失敗');}
-    ALL=(d.rows||[]).filter(function(r){return r&&r.data;});
+    // v1.1：GAS listSheet() 回傳的是扁平結構（欄位直接掛在row物件上，如row.primary_name），
+    // 不是包在 row.data 底下——這是 App 前端另外正規化過後才有的內部格式，GAS 原始回傳不是這樣。
+    // 用 rowNum 判斷是不是一筆有效的工作表資料列。
+    ALL=(d.rows||[]).filter(function(r){return r&&r.rowNum;});
     buildCatFilter();
     render();
   }).catch(function(e){
@@ -147,7 +150,7 @@ function loadData(){
 
 function buildCatFilter(){
   var cats={};
-  ALL.forEach(function(r){var c=r.data.category;if(c)cats[c]=(cats[c]||0)+1;});
+  ALL.forEach(function(r){var c=r.category;if(c)cats[c]=(cats[c]||0)+1;});
   var sel=document.getElementById('catSel');
   Object.keys(cats).sort().forEach(function(c){
     var opt=document.createElement('option');
@@ -160,8 +163,8 @@ function _filteredList(){
   var q=(document.getElementById('q').value||'').trim().toLowerCase();
   var cat=document.getElementById('catSel').value;
   return ALL.filter(function(r){
-    if(!r||!r.data)return false; // 防禦性檢查：不完全依賴loadData那邊已經過濾過，避免單一異常資料讓整頁崩潰
-    var d=r.data;
+    if(!r)return false; // 防禦性檢查：不完全依賴loadData那邊已經過濾過，避免單一異常資料讓整頁崩潰
+    var d=r; // GAS回傳的是扁平結構，欄位直接掛在row物件上
     if(cat&&d.category!==cat)return false;
     if(!q)return true;
     var hay=[d.primary_name,d.zh_name,d.jp_name,d.en_name,d.platform,d.developer,d.publisher]
@@ -176,7 +179,7 @@ function render(){
   document.getElementById('empty').style.display=list.length?'none':'block';
   var grid=document.getElementById('grid');
   grid.innerHTML=list.map(function(r,i){
-    var d=r.data;
+    var d=r; // 扁平結構
     var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（未命名）';
     var img=imgUrl(d.cover_img,300);
     var thumb=img?'<img src="'+esc(img)+'" loading="lazy" alt="">':'📦';
@@ -194,7 +197,7 @@ function render(){
 function openDetail(i){
   var list=_filteredList();
   var r=list[i];if(!r)return;
-  var d=r.data;
+  var d=r; // 扁平結構
   var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（未命名）';
   var img=imgUrl(d.cover_img,800);
   var rows=[
