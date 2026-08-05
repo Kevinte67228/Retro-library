@@ -2602,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.76';
+const APP_VERSION='v02.77';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6611,6 +6611,11 @@ function _matchGCode(up){
   return _extractGCode(up);
 }
 
+// v02.77：使用者實測回報兩行式編碼（字母代號單獨一行、數字序號單獨下一行）辨識時字母
+// 常被截掉，查證後發現全站有5處獨立的OCR提示詞(fscanCapture預設值/openCodeScanFor/
+// fieldScan的code與serial_no欄位/gcodeOCR的promptMap)，上次(v02.76)只改到其中一部分，
+// 沒有統一涵蓋。這次抽成共用常數，所有OCR提示詞統一附加這句提醒，之後要調整只改這裡。
+var _OCR_TWOLINE_HINT='注意：有些編碼是分成兩行印刷的（例如字母代號單獨一行、數字單獨下一行），如果看到這種情況，兩行文字都要辨識出來、各自回傳一行，不要只回傳其中一行、也不要自己先合併成一行。';
 function cleanOCRByCategory(raw,cat){
   if(!raw)return '';
   // v02.76：跨行拼接（字母代號行 + 含數字的序號行）提升到最前面、涵蓋主機/週邊跟遊戲兩種
@@ -6721,10 +6726,10 @@ function gcodeOCR(input){
   // 依分類給專屬 prompt：攻略本=ISBN、主機/週邊=型號、遊戲=產品編碼
   var promptMap={
     '攻略':'請從圖片中找出 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），不要其他文字。如找不到，回傳空字串。',
-    '主機':'請從圖片中找出主機型號（格式如 SCPH-10000、CFI-1000A、HAC-001 等）。只回傳型號本身，不要其他文字。如找不到，回傳空字串。',
-    '週邊':'請從圖片中找出週邊型號（格式如 SCEH-0004、HAC-013 等）。只回傳型號本身，不要其他文字。如找不到，回傳空字串。'
+    '主機':'請從圖片中找出主機型號（格式如 SCPH-10000、CFI-1000A、HAC-001 等）。'+_OCR_TWOLINE_HINT+'只回傳型號本身，不要其他文字。如找不到，回傳空字串。',
+    '週邊':'請從圖片中找出週邊型號（格式如 SCEH-0004、HAC-013 等）。'+_OCR_TWOLINE_HINT+'只回傳型號本身，不要其他文字。如找不到，回傳空字串。'
   };
-  var prompt=promptMap[cat]||'請從圖片中找出遊戲產品編碼（格式如 CUSA-00001、SLUS-00001、SLPM-12345、HAC-001 等）。只回傳編碼本身，不要其他文字。如果看不清楚或找不到，回傳空字串；不要回傳「遊戲」、分類名稱或猜測結果。';
+  var prompt=promptMap[cat]||('請從圖片中找出遊戲產品編碼（格式如 CUSA-00001、SLUS-00001、SLPM-12345、HAC-001 等）。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，不要其他文字。如果看不清楚或找不到，回傳空字串；不要回傳「遊戲」、分類名稱或猜測結果。');
   _gcodeOCRShared(input,{
     inputId:'gcode-inp',
     prompt:prompt,
@@ -9631,9 +9636,9 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
       {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
       {text:_fscanOpt.prompt||(function(){
         var cat=_selectedType||'遊戲';
-        if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。注意：有些編碼是分成兩行印刷的（例如字母代號單獨一行、數字單獨下一行），如果看到這種情況，兩行文字都要辨識出來、各自回傳一行，不要只回傳其中一行、也不要自己先合併成一行。只回傳編碼本身，找不到回傳空字串。';
+        if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。注意：有些編碼是分成兩行印刷的（例如字母代號單獨一行、數字單獨下一行，像「ELAS」跟「11286」分開兩行印），如果看到這種情況，兩行文字都要辨識出來、各自回傳一行，不要只回傳其中一行、也不要自己先合併成一行。只回傳編碼本身，找不到回傳空字串。';
+        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，找不到回傳空字串。';
       })()}
     ]).then(function(rawTxt){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();
@@ -9693,9 +9698,9 @@ function openCodeScanFor(inputId,fallbackId){
     resultToast:function(v){return (isCombo?'已帶入商品編碼：':'已帶入編碼：')+v;},
     prompt:(function(){
       var cat=_selectedType||'遊戲';
-      if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、說明文字或猜測結果。';
+      if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、說明文字或猜測結果。';
       if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身（含連字號），找不到回傳空字串。';
-      return '請從圖片中找出並回傳遊戲產品編碼（編碼可能分兩行印刷，請將字母與數字合並後回傳）。常見格式：PS系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo光碟（CTR-P-ARXJ、RVL-P-RMCJ、WUP-P-ARPJ、HAC-P-AAAA）、Nintendo卡帶（AGB-AXPJ-JPN、NTR-AXXJ-JPN、DMG-TRAJ-JPN、HVC-NSMJ）、Sega（T-00001G、MK-1234、G-4049）、Neo Geo（NGH-001）、WonderSwan（SWJ-BAN001）、Xbox（FKW-00001）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。PC 遊戲請直接回傳標籤上的任何編碼。';
+      return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo光碟（CTR-P-ARXJ、RVL-P-RMCJ、WUP-P-ARPJ、HAC-P-AAAA）、Nintendo卡帶（AGB-AXPJ-JPN、NTR-AXXJ-JPN、DMG-TRAJ-JPN、HVC-NSMJ）、Sega（T-00001G、MK-1234、G-4049）、Neo Geo（NGH-001）、WonderSwan（SWJ-BAN001）、Xbox（FKW-00001）、條碼（EAN/UPC）。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，找不到回傳空字串。不要回傳品牌名、分類或猜測。PC 遊戲請直接回傳標籤上的任何編碼。';
     })(),
     fallback:function(){var fi=$(fallbackId||'gcode-cam-inp');if(fi)fi.click();}});
 }
@@ -9705,15 +9710,15 @@ function fieldScan(k){
     openFieldScanner({mode:'barcode',inputId:'fld-'+k,onResult:function(val){onFld(k,val);}});
   }else if(k==='serial_no'){
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,
-      prompt:'請從圖片中找出並回傳主機機身序號（serial number，一串英數字，常標示為 S/N、SN 或「序號」）。只回傳序號本身，找不到回傳空字串。',
+      prompt:'請從圖片中找出並回傳主機機身序號（serial number，一串英數字，常標示為 S/N、SN 或「序號」）。'+_OCR_TWOLINE_HINT+'只回傳序號本身，找不到回傳空字串。',
       onResult:function(val){onFld(k,val);}});
   }else{
     openFieldScanner({mode:'ocr',inputId:'fld-'+k,normalize:(k==='code'),ocrClean:true,
       prompt:(function(){
         var cat=_selectedType||'遊戲';
-        if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。';
+        if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號（格式如 978-4-XXXXXXXX-X 或 4-XXXXXXXXXX）。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
+        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001、PPSA-01234）、PSP（ULJM-05000）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。'+_OCR_TWOLINE_HINT+'只回傳編碼本身，找不到回傳空字串。';
       })(),
       onResult:function(val){onFld(k,val);}});
   }
