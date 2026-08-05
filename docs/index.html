@@ -2602,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.72';
+const APP_VERSION='v02.73';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6418,22 +6418,12 @@ function _cropLayout(){
     _crop.box={x:Math.round(x+fx*w),y:Math.round(y+fy*h),w:Math.round(fw*w),h:Math.round(fh*h)};
     _cropDraw();_cropBind();return;
   }
-  // 首次布局：初始裁切框優先用邊緣偵測對齊商品外框，降低手動調整機率；偵測失敗退回內縮 6%
-  var box=null;
-  try{
-    var det=detectCropBox(img); // 回傳原圖座標 {x,y,w,h}
-    if(det){
-      // 原圖座標 → 畫面座標（view 是等比置中後的顯示區）
-      var bx=x+det.x*scale, by=y+det.y*scale, bw=det.w*scale, bh=det.h*scale;
-      // 合理性防呆：偵測框過小（<影像 25%）或明顯異常時不採用
-      if(bw>=w*0.25&&bh>=h*0.25){box={x:Math.round(bx),y:Math.round(by),w:Math.round(bw),h:Math.round(bh)};}
-    }
-  }catch(e){box=null;}
-  if(!box){
-    var ins=Math.round(Math.min(w,h)*0.06);
-    box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
-  }
-  _crop.box=box;
+  // v02.73：使用者要求所有拍照模式的裁切預覽，初始框一律先貼齊四邊（整張圖），
+  // 不再嘗試用detectCropBox自動偵測商品邊界去猜測初始範圍——自動偵測在很多情境下
+  // 不夠準（尤其背景有紋理、或商品沒有明顯色差邊界時），反而讓使用者要先搞懂AI猜的
+  // 框在哪裡、有沒有猜對，才知道要不要修正，增加認知負擔。改成永遠從整張圖開始，
+  // 使用者自己拖曳角落往內裁切，行為固定、可預期，不管圖片內容是什麼都一樣。
+  _crop.box={x:x,y:y,w:w,h:h};
   _crop._autoDetected=true; // 標記已完成首次偵測，往後 resize 不再重置
   _cropDraw();
   _cropBind();
