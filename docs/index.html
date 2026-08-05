@@ -142,7 +142,7 @@ body{
 #method-sel{padding:14px 16px 0}
 
 /* === Scanner === */
-.scan-box{width:200px;height:80px;border:2px solid #00e5ff;border-radius:4px;box-shadow:0 0 0 1000px rgba(0,0,0,.5);transition:border-color .3s,box-shadow .3s}
+.scan-box{width:200px;height:130px;border:2px solid #00e5ff;border-radius:4px;box-shadow:0 0 0 1000px rgba(0,0,0,.5);transition:border-color .3s,box-shadow .3s}
 /* F2：掃描／OCR 偵測期間，框線綠色呼吸燈（微閃）*/
 .scan-box.detecting{border-color:#00e676;animation:scanPulse 1.15s ease-in-out infinite}
 @keyframes scanPulse{0%,100%{border-color:#00e676;box-shadow:0 0 0 1000px rgba(0,0,0,.5),0 0 4px rgba(0,230,118,.45)}50%{border-color:#69ffa0;box-shadow:0 0 0 1000px rgba(0,0,0,.5),0 0 16px rgba(0,230,118,.95)}}
@@ -2602,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.75';
+const APP_VERSION='v02.76';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6613,6 +6613,27 @@ function _matchGCode(up){
 
 function cleanOCRByCategory(raw,cat){
   if(!raw)return '';
+  // v02.76：跨行拼接（字母代號行 + 含數字的序號行）提升到最前面、涵蓋主機/週邊跟遊戲兩種
+  // 分類，不是只有遊戲分類才處理——兩行式編碼（字母跟數字分開印）在主機/週邊商品上也常見。
+  // ISBN(攻略)本身就是純數字格式、PC沒有統一編碼格式，這兩種不適用，不處理。
+  if(cat!=='攻略'&&_selectedPlatform!=='PC'&&_selectedType!=='PC'){
+    var _allLines0=(''+raw).split(/[\r\n]+/).map(function(l){return l.trim();}).filter(Boolean);
+    for(var _li0=0;_li0<_allLines0.length-1;_li0++){
+      var _a0=_allLines0[_li0].toUpperCase();
+      var _b0=_allLines0[_li0+1].toUpperCase();
+      // _b 要求「必須含有數字」（不是只要開頭是英數字元），避免兩個純字母行
+      // （例如廠牌字樣跟真正的編碼前綴恰好相鄰）被誤判成一組。
+      if(/^[A-Z]{2,4}$/.test(_a0)&&/[0-9]/.test(_b0)&&/^[0-9A-Z]/.test(_b0)){
+        var _j1=_a0+'-'+_b0, _j2=_a0+_b0;
+        if(cat==='主機'||cat==='週邊'){
+          if(/^[A-Z][A-Z0-9]{1,6}-[A-Z0-9]{2,10}(?:-[A-Z0-9]{1,6})*$/.test(_j1)&&_j1.replace(/-/g,'').length>=4&&_j1.length<=20)return _j1;
+        }else{
+          if(_isValidGCode(_j1))return _j1;
+          if(_isValidGCode(_j2))return _j2;
+        }
+      }
+    }
+  }
   var lines=(''+raw).split(/[\r\n]+/);
   var firstNonEmpty='';
   for(var i=0;i<lines.length;i++){
@@ -6632,21 +6653,9 @@ function cleanOCRByCategory(raw,cat){
       if(_selectedPlatform==='PC'||_selectedType==='PC'){
         return firstNonEmpty?'?'+firstNonEmpty.slice(0,30).trim():'';
       }
-      // 先嘗試相鄰兩行拼接（純字母行 + 數字/英數行）
-      var _allLines=(''+ raw).split(/[\r\n]+/).map(function(l){return l.trim();}).filter(Boolean);
-      for(var _li=0;_li<_allLines.length-1;_li++){
-        var _a=_allLines[_li].toUpperCase();
-        var _b=_allLines[_li+1].toUpperCase();
-        if(/^[A-Z]{2,4}$/.test(_a)&&/^[0-9A-Z]/.test(_b)){
-          var _joined=_a+'-'+_b;
-          if(_isValidGCode(_joined))return _joined;
-          var _joined2=_a+_b;
-          if(_isValidGCode(_joined2))return _joined2;
-        }
-      }
-      // 再逐行擷取
-      for(var _li=0;_li<_allLines.length;_li++){
-        var _got=_extractGCode(_allLines[_li]);
+      // 逐行擷取（跨行拼接已在函式最前面優先嘗試過）
+      for(var _li=0;_li<lines.length;_li++){
+        var _got=_extractGCode(lines[_li].trim());
         if(_got)return _got;
       }
     }
@@ -9622,9 +9631,9 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
       {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
       {text:_fscanOpt.prompt||(function(){
         var cat=_selectedType||'遊戲';
-        if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。只回傳編碼本身，找不到回傳空字串。';
+        if(cat==='主機'||cat==='週邊')return '請從圖片中找出並回傳產品型號或編碼（格式如 SCPH-10000、CUH-2000A、HAC-001、810-010805）。P/N、Model No. 也算編碼。注意：有些編碼是分成兩行印刷的（例如字母代號單獨一行、數字單獨下一行），如果看到這種情況，兩行文字都要辨識出來、各自回傳一行，不要只回傳其中一行、也不要自己先合併成一行。只回傳編碼本身，找不到回傳空字串。';
         if(cat==='攻略')return '請從圖片中找出並回傳 ISBN 書號。只回傳 ISBN 本身，找不到回傳空字串。';
-        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。只回傳編碼本身，找不到回傳空字串。';
+        return '請從圖片中找出並回傳遊戲產品編碼。常見格式：PS 系列（SLPS-01234、CUSA-00001、BCJS-30000、PCSB-00001）、Nintendo（CTR-P-ARXJ、AGB-AXPJ-JPN、HAC-P-AAAA）、Sega（T-00001G、MK-1234）、條碼（EAN/UPC）。注意：有些編碼是分成兩行印刷的（例如字母代號單獨一行、數字單獨下一行，像「ELAS」跟「11286」分開兩行印），如果看到這種情況，兩行文字都要辨識出來、各自回傳一行，不要只回傳其中一行、也不要自己先合併成一行。只回傳編碼本身，找不到回傳空字串。';
       })()}
     ]).then(function(rawTxt){
       _fscanBusy=false;_fscanDetect(false);_fscanClearBusy();

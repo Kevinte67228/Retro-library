@@ -413,6 +413,16 @@ body{
 .gc.sel,.hc.sel{border-color:#ff6e9c;box-shadow:0 0 4px rgba(255,110,156,.85),0 0 14px rgba(255,110,156,.45)}
 .gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
 .gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
+/* v02.72：畫廊視圖（收藏頁第三個展示模式，封面圖優先的2欄網格） */
+#gallery-view{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px}
+.gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden}
+.gv-card.sel{outline:2px solid #ff6e9c}
+.gv-thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:#7986cb}
+.gv-thumb img{width:100%;height:100%;object-fit:cover}
+.gv-info{padding:10px}
+.gv-name{font-size:12.5px;font-weight:700;color:#e8eaf6;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.gv-meta{font-size:10.5px;color:#7986cb;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gv-sel-mark{position:absolute;top:6px;left:6px;font-size:22px;line-height:1;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.6)}
 .gfav:active{transform:scale(.85)}
 .ginfo{flex:1;min-width:0}
 .gn{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -716,15 +726,6 @@ body{
 #fscan-head{flex:0 0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;text-align:center;color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;background:#0b0f1a}
 #fscan-head small{display:block;font-size:11px;font-weight:400;color:#7986cb;margin-top:3px;letter-spacing:0}
 #fscan-stage{flex:1 1 auto;position:relative;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center}
-/* v02.70：Step4拍照後的手動裁切調整UI */
-#fscan-crop-wrap{position:absolute;inset:0;display:none}
-#fscan-crop-img{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%}
-#fscan-crop-box{position:absolute;border:2px solid #00e5ff;box-shadow:0 0 0 1000px rgba(0,0,0,.55);touch-action:none}
-.fscan-crop-handle{position:absolute;width:30px;height:30px;background:#00e5ff;border-radius:50%;border:3px solid #001018;touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,.4);transform:translate(-50%,-50%)}
-.fscan-crop-handle.tl{top:0;left:0}
-.fscan-crop-handle.tr{top:0;left:100%}
-.fscan-crop-handle.bl{top:100%;left:0}
-.fscan-crop-handle.br{top:100%;left:100%}
 #fscan-video{width:100%;height:100%;display:block;max-height:none;object-fit:cover}
 #fscan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 #fscan-status{flex:0 0 auto;padding:8px 16px;text-align:center;font-size:13px;color:#7986cb;min-height:18px;background:#0b0f1a}
@@ -1366,16 +1367,23 @@ body{
                 <button type="button" onclick="b4SkipAll()" style="background:none;border:none;color:#7986cb;font-size:11px;text-decoration:underline;padding:0">全部跳過此步驟</button>
               </div>
               <div id="b4-title" style="font-size:15px;font-weight:700;color:#e8eaf6;margin-bottom:12px;padding:10px;background:#0f1525;border-radius:10px;border:1px solid #1e2a45"></div>
-              <!-- v02.68：正常情況下相機overlay會自動開啟蓋住這裡，以下是相機不支援/開啟失敗時的備援畫面 -->
-              <div id="b4-fallback" style="display:none">
-                <div style="font-size:11px;color:#ffb74d;margin-bottom:10px">⚠️ 無法開啟即時相機，請改用相簿選圖</div>
-                <label style="display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px;margin-bottom:8px">
-                  🖼 從相簿選擇
-                  <input type="file" accept="image/*" style="display:none" id="b4-gal-fallback" onchange="b4FallbackPick(this)">
+              <!-- v02.71：改用跟「圖片辨識」模式(img-sec)一樣的拍照/相簿按鈕＋既有的cropImageFile()
+                   裁切器，不再另外搞一套相機/裁切UI -->
+              <div style="display:flex;gap:8px;margin-bottom:10px">
+                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
+                  📷 拍照
+                  <input type="file" accept="image/*" capture="environment" style="display:none" id="b4-cam" onchange="b4PhotoPick(this)">
                 </label>
-                <button type="button" class="btn bo" onclick="b4Skip()" style="width:100%;color:#7986cb">⏭ 跳過此件</button>
+                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
+                  🖼 相簿
+                  <input type="file" accept="image/*" style="display:none" id="b4-gal" onchange="b4PhotoPick(this)">
+                </label>
               </div>
-              <div id="b4-opening" style="font-size:12px;color:#7986cb;text-align:center;padding:20px 0">正在開啟相機...</div>
+              <div id="b4-preview" style="display:none;text-align:center;margin-bottom:12px">
+                <img id="b4-preview-img" style="max-width:100%;max-height:240px;border-radius:10px;border:1px solid #1e2a45">
+              </div>
+              <button type="button" class="btn bp bw" id="b4-confirm-btn" disabled onclick="b4Confirm()" style="margin-bottom:8px">確認，下一件</button>
+              <button type="button" class="btn bo" onclick="b4Skip()" style="width:100%;color:#7986cb">⏭ 跳過此件（之後在編輯頁再補）</button>
             </div>
 
             <div id="batch-progress" style="display:none;font-size:12px;color:#7986cb;text-align:center;margin:8px 0"></div>
@@ -1499,6 +1507,10 @@ body{
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
                 分類
               </button>
+              <button id="vbtn-gallery" onclick="setView('gallery')" style="background:transparent;color:#7986cb" title="畫廊模式" type="button">
+                <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="16" rx="2"/><rect x="10" y="1" width="7" height="16" rx="2"/></svg>
+                畫廊
+              </button>
             </div>
             <!-- 大量刪除 -->
             <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除" style="width:40px;height:40px" type="button">
@@ -1604,6 +1616,7 @@ body{
       </div>
       <div id="glist"></div>
       <div id="shelf-view" style="display:none"></div>
+      <div id="gallery-view" style="display:none"></div>
       <!-- 進階篩選底板 -->
       <div id="filter-sheet">
         <div id="fov" onclick="closeFilterSheet()"></div>
@@ -2589,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.70';
+const APP_VERSION='v02.75';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6405,7 +6418,10 @@ function _cropLayout(){
     _crop.box={x:Math.round(x+fx*w),y:Math.round(y+fy*h),w:Math.round(fw*w),h:Math.round(fh*h)};
     _cropDraw();_cropBind();return;
   }
-  // 首次布局：初始裁切框優先用邊緣偵測對齊商品外框，降低手動調整機率；偵測失敗退回內縮 6%
+  // v02.74：修正誤解——使用者要的「四邊角落先定位」是指貼緊「被攝商品」的實際邊緣，
+  // 不是貼齊整張照片的邊緣（v02.73 誤把這兩者搞反了）。改回用 detectCropBox 邊緣色差
+  // 偵測商品邊界當初始框，偵測失敗（框太小/明顯異常）才退回內縮 6% 的保守框，使用者
+  // 再從這個起始位置自行微調確認。
   var box=null;
   try{
     var det=detectCropBox(img); // 回傳原圖座標 {x,y,w,h}
@@ -9477,14 +9493,13 @@ function restartScanner(){
 var _fscanStream=null,_fscanInst=null,_fscanOpt=null,_fscanBusy=false,_fscanTimer=null;
 // v02.69：底部拇指操作區的按鈕列建置抽成共用函式，openFieldScanner初次開啟跟
 // photo模式「重新拍攝」回到取景畫面時都會用到，避免兩處各寫一份容易漏改。
-function _fscanBuildCaptureBar(isBar,isPhoto){
+function _fscanBuildCaptureBar(isBar){
   var bar=$('fscan-bar');
   if(!bar)return;
   var html='';
   (_fscanOpt.secondary||[]).forEach(function(b,i){html+='<button data-fsx="'+i+'" type="button">'+b.label+'</button>';});
   html+='<button id="fscan-cancel-btn" type="button">取消</button>';
-  if(isPhoto)html+='<button id="fscan-shot" class="cp" onclick="fscanCapturePhoto()" type="button">'+(_fscanOpt.shotLabel||'📷 拍攝')+'</button>';
-  else if(!isBar)html+='<button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">'+(_fscanOpt.shotLabel||'📷 拍攝並辨識')+'</button>';
+  if(!isBar)html+='<button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">'+(_fscanOpt.shotLabel||'📷 拍攝並辨識')+'</button>';
   bar.innerHTML=html;
   (_fscanOpt.secondary||[]).forEach(function(b,i){
     var el=bar.querySelector('[data-fsx="'+i+'"]');
@@ -9492,148 +9507,15 @@ function _fscanBuildCaptureBar(isBar,isPhoto){
   });
   var cb=$('fscan-cancel-btn');if(cb)cb.onclick=fscanCancel;
 }
-// v02.70：photo模式拍攝後改成手動裁切調整——拍完先用既有的detectCropBox自動偵測結果
-// 當初始建議框，顯示「未裁切」的原始照片讓使用者可以拖曳四個角落調整裁切範圍，確認後
-// 才真正依調整後的範圍裁切。裁切框用「相對於原始照片的正規化座標(0~1)」儲存，跟實際
-// 顯示尺寸脫鉤，方便換算成最終要裁切的實際像素範圍。
-var _cropRawImg=null; // 原始(未裁切)照片的Image物件
-var _cropRect={x:0,y:0,w:1,h:1}; // 目前的裁切框，正規化座標
-var _cropDragHandle=null;
-var _cropDragStart=null;
-// 算出object-fit:contain後，圖片在容器內實際顯示的區域（位置+尺寸）
-function _fitContainBox(containerW,containerH,naturalW,naturalH){
-  if(!containerW||!containerH||!naturalW||!naturalH)return{x:0,y:0,w:containerW||0,h:containerH||0,scale:1};
-  var scale=Math.min(containerW/naturalW,containerH/naturalH);
-  var dispW=naturalW*scale,dispH=naturalH*scale;
-  return{x:(containerW-dispW)/2,y:(containerH-dispH)/2,w:dispW,h:dispH,scale:scale};
-}
-function _fscanShowCropUI(rawDataUrl){
-  var img=new Image();
-  img.onload=function(){
-    _cropRawImg=img;
-    var box=null;
-    try{box=detectCropBox(img);}catch(e){}
-    _cropRect=box
-      ? {x:box.x/img.width,y:box.y/img.height,w:box.w/img.width,h:box.h/img.height}
-      : {x:0.05,y:0.05,w:0.9,h:0.9}; // 偵測不到就給一個保守的置中初始範圍，不是整張(避免使用者誤以為不用調整)
-    var cimg=$('fscan-crop-img');if(cimg)cimg.src=rawDataUrl;
-    var v=$('fscan-video');if(v)v.style.display='none';
-    var cw=$('fscan-crop-wrap');if(cw)cw.style.display='block';
-    var st=$('fscan-status');if(st)st.textContent='拖曳四個角落調整裁切範圍，滿意後按「確認裁切」';
-    var bar=$('fscan-bar');
-    if(bar){
-      bar.innerHTML='<button id="fscan-retake-btn" type="button">🔄 重新拍攝</button><button id="fscan-cropok-btn" class="cp" type="button">✓ 確認裁切</button>';
-      var rb=$('fscan-retake-btn');if(rb)rb.onclick=_fscanRetake;
-      var cb=$('fscan-cropok-btn');if(cb)cb.onclick=_fscanCropConfirm;
-    }
-    _cropBindHandles();
-    setTimeout(_renderCropBox,0); // 等瀏覽器完成這輪版面配置，容器才有正確尺寸可量測
-  };
-  img.onerror=function(){toast('圖片讀取失敗，請重拍','er');_fscanRetake();};
-  img.src=rawDataUrl;
-}
-function _renderCropBox(){
-  var wrap=$('fscan-crop-wrap'),box=$('fscan-crop-box');
-  if(!wrap||!box||!_cropRawImg)return;
-  var cr=wrap.getBoundingClientRect();
-  var fit=_fitContainBox(cr.width,cr.height,_cropRawImg.width,_cropRawImg.height);
-  box.style.left=(fit.x+_cropRect.x*fit.w)+'px';
-  box.style.top=(fit.y+_cropRect.y*fit.h)+'px';
-  box.style.width=(_cropRect.w*fit.w)+'px';
-  box.style.height=(_cropRect.h*fit.h)+'px';
-}
-function _cropClamp(v,min,max){return Math.max(min,Math.min(max,v));}
-function _cropBindHandles(){
-  ['tl','tr','bl','br'].forEach(function(corner){
-    var el=document.querySelector('.fscan-crop-handle.'+corner);
-    if(!el)return;
-    el.onpointerdown=function(e){_cropHandleDown(corner,e);};
-  });
-}
-function _cropHandleDown(corner,e){
-  if(e.preventDefault)e.preventDefault();
-  _cropDragHandle=corner;
-  _cropDragStart={x:e.clientX,y:e.clientY,rect:Object.assign({},_cropRect)};
-  document.addEventListener('pointermove',_cropHandleMove);
-  document.addEventListener('pointerup',_cropHandleUp);
-}
-var _CROP_MIN=0.08; // 裁切框最小邊長(正規化)，避免拖到消失或反轉
-function _cropHandleMove(e){
-  if(!_cropDragHandle)return;
-  if(e.preventDefault)e.preventDefault();
-  var wrap=$('fscan-crop-wrap');if(!wrap||!_cropRawImg)return;
-  var cr=wrap.getBoundingClientRect();
-  var fit=_fitContainBox(cr.width,cr.height,_cropRawImg.width,_cropRawImg.height);
-  if(!fit.w||!fit.h)return;
-  var dx=(e.clientX-_cropDragStart.x)/fit.w;
-  var dy=(e.clientY-_cropDragStart.y)/fit.h;
-  var r=_cropDragStart.rect;
-  var nx=r.x,ny=r.y,nw=r.w,nh=r.h;
-  if(_cropDragHandle==='tl'){
-    nx=_cropClamp(r.x+dx,0,r.x+r.w-_CROP_MIN);
-    ny=_cropClamp(r.y+dy,0,r.y+r.h-_CROP_MIN);
-    nw=r.x+r.w-nx;nh=r.y+r.h-ny;
-  }else if(_cropDragHandle==='tr'){
-    ny=_cropClamp(r.y+dy,0,r.y+r.h-_CROP_MIN);
-    nw=_cropClamp(r.w+dx,_CROP_MIN,1-r.x);
-    nh=r.y+r.h-ny;
-  }else if(_cropDragHandle==='bl'){
-    nx=_cropClamp(r.x+dx,0,r.x+r.w-_CROP_MIN);
-    nw=r.x+r.w-nx;
-    nh=_cropClamp(r.h+dy,_CROP_MIN,1-r.y);
-  }else if(_cropDragHandle==='br'){
-    nw=_cropClamp(r.w+dx,_CROP_MIN,1-r.x);
-    nh=_cropClamp(r.h+dy,_CROP_MIN,1-r.y);
-  }
-  _cropRect={x:nx,y:ny,w:nw,h:nh};
-  _renderCropBox();
-}
-function _cropHandleUp(){
-  _cropDragHandle=null;
-  document.removeEventListener('pointermove',_cropHandleMove);
-  document.removeEventListener('pointerup',_cropHandleUp);
-}
-function _fscanRetake(){
-  _cropHandleUp(); // 保險：中斷任何進行中的拖曳監聽
-  _cropRawImg=null;
-  var cw=$('fscan-crop-wrap');if(cw)cw.style.display='none';
-  var v=$('fscan-video');if(v)v.style.display='';
-  var st=$('fscan-status');if(st)st.textContent=_fscanOpt.readyText||'相機已開啟，對準商品後按「拍攝」';
-  _fscanBuildCaptureBar(false,true);
-}
-function _fscanCropConfirm(){
-  if(!_cropRawImg){_fscanRetake();return;}
-  var W=_cropRawImg.width,H=_cropRawImg.height;
-  var x=Math.round(_cropRect.x*W),y=Math.round(_cropRect.y*H);
-  var w=Math.round(_cropRect.w*W),h=Math.round(_cropRect.h*H);
-  x=_cropClamp(x,0,W-1);y=_cropClamp(y,0,H-1);
-  w=Math.min(w,W-x);h=Math.min(h,H-y);
-  var maxPx=1200;
-  var scale=Math.min(1,maxPx/Math.max(w,h));
-  var canvas=document.createElement('canvas');
-  canvas.width=Math.round(w*scale);canvas.height=Math.round(h*scale);
-  canvas.getContext('2d').drawImage(_cropRawImg,x,y,w,h,0,0,canvas.width,canvas.height);
-  var result=canvas.toDataURL('image/jpeg',0.85);
-  _cropRawImg=null;
-  var cw=$('fscan-crop-wrap');if(cw)cw.style.display='none';
-  var v=$('fscan-video');if(v)v.style.display='';
-  if(_fscanOpt.onCapture)_fscanOpt.onCapture(result);
-}
 function openFieldScanner(opt){
   _fscanClearBusy();
   _fscanOpt=opt||{};_fscanBusy=false;
   var ov=$('fscan-ov');if(!ov)return;
   var isBar=_fscanOpt.mode==='barcode';
-  var isPhoto=_fscanOpt.mode==='photo'; // v02.68：批次逐件拍封面用，即時相機、不需要AI，拍完先預覽確認（連續拍攝）
-  var ttl=$('fscan-title');if(ttl)ttl.textContent=_fscanOpt.title||(isBar?'掃描條碼':(isPhoto?'拍攝':'掃描編碼'));
-  var sub=$('fscan-sub');if(sub)sub.textContent=_fscanOpt.subtitle||(isBar?'對準條碼，自動偵測中…':(isPhoto?'對準商品後拍攝':'對準編碼後按下拍攝'));
-  _fscanBuildCaptureBar(isBar,isPhoto);
-  // v02.69：photo模式隱藏掃描用的小取景框（.scan-box是給條碼/OCR文字用的200x80px小框，
-  // 拍整個商品封面應該用滿版取景，套用這個小框反而誤導使用者只需要對準框內）
-  var fov=$('fscan-overlay');if(fov)fov.style.display=isPhoto?'none':'';
-  var cw0=$('fscan-crop-wrap');if(cw0){cw0.style.display='none';}
-  var v0=$('fscan-video');if(v0)v0.style.display='';
-  var st=$('fscan-status');if(st){st.classList.remove('busy');st.textContent=_fscanOpt.openingText||(isBar?'正在啟動相機，對準條碼即可自動偵測':(isPhoto?'正在啟動相機...':'正在啟動相機...'));}
+  var ttl=$('fscan-title');if(ttl)ttl.textContent=_fscanOpt.title||(isBar?'掃描條碼':'掃描編碼');
+  var sub=$('fscan-sub');if(sub)sub.textContent=_fscanOpt.subtitle||(isBar?'對準條碼，自動偵測中…':'對準編碼後按下拍攝');
+  _fscanBuildCaptureBar(isBar);
+  var st=$('fscan-status');if(st){st.classList.remove('busy');st.textContent=_fscanOpt.openingText||(isBar?'正在啟動相機，對準條碼即可自動偵測':'正在啟動相機...');}
   ov.classList.add('on');
   if(isBar){
     _fscanDetect(true); // F2：條碼即時偵測整段期間，框線綠色呼吸燈
@@ -9643,11 +9525,6 @@ function openFieldScanner(opt){
       onUnsupported:function(){_fscanClearBusy();if(st)st.textContent=_fscanOpt.unsupportedText||'此裝置不支援即時條碼偵測，請改用手動輸入';},
       onError:function(){_fscanClearBusy();if(st)st.textContent=_fscanOpt.errorText||'無法開啟相機，請檢查相機權限';}});
     _fscanInst.start();
-  }else if(isPhoto){
-    // v02.68：純拍照不需要Gemini金鑰，直接開相機
-    navigator.mediaDevices.getUserMedia(_fscanOpt.constraints||{video:{facingMode:'environment',width:{ideal:1280}}})
-      .then(function(s){_fscanStream=s;var v=$('fscan-video');if(v){v.srcObject=s;v.play();}if(st)st.textContent=_fscanOpt.readyText||'相機已開啟，對準商品後按「拍攝」';})
-      .catch(function(){fscanClose();if(_fscanOpt.onUnsupported)_fscanOpt.onUnsupported();else toast('無法開啟相機，請檢查權限','er');});
   }else{
     if(!cfg.gkey){toast('需要 Gemini 金鑰才能 OCR 識別','er');fscanClose();return;}
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}}})
@@ -9698,11 +9575,6 @@ function fscanStop(){
   if(_fscanInst){_fscanInst.stop();_fscanInst=null;}
   if(_fscanStream){_fscanStream.getTracks().forEach(function(t){t.stop();});_fscanStream=null;}
   var v=$('fscan-video');if(v){v.srcObject=null;v.style.display='';}
-  // v02.70：清理photo模式的裁切UI狀態，避免殘留影響下次開啟(不管是photo模式再次開啟、
-  // 還是切換去用barcode/OCR模式)；也保險中斷任何進行中的拖曳監聽，避免記憶體洩漏
-  if(typeof _cropHandleUp==='function')_cropHandleUp();
-  _cropRawImg=null;
-  var cw=$('fscan-crop-wrap');if(cw)cw.style.display='none';
 }
 function fscanClose(){fscanStop();var ov=$('fscan-ov');if(ov)ov.classList.remove('on');}
 function fscanCancel(){
@@ -9789,21 +9661,7 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
 // v02.68：批次逐件拍封面用——擷取整個畫格(不像OCR只取小取景框，商品封面要完整入鏡)，
 // 透過既有的compressImg（內部會自動呼叫autoCropCanvas依背景色差異裁掉多餘邊緣）處理，
 // 拍完呼叫onCapture回呼但不自動關閉overlay，讓呼叫端決定要不要留在同一個相機畫面連續拍下一件。
-function fscanCapturePhoto(){
-  if(_fscanBusy)return;
-  var v=$('fscan-video');if(!v||!v.videoWidth){toast('相機尚未就緒，請稍候','er');return;}
-  _fscanBusy=true;
-  var shot=$('fscan-shot');if(shot){shot.disabled=true;}
-  var c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;
-  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
-  var rawDataUrl=c.toDataURL('image/jpeg',0.92);
-  _fscanBusy=false;
-  if(shot)shot.disabled=false;
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate(60);}catch(e){}
-  // v02.70：交給未裁切的原始畫格給裁切UI，不先呼叫compressImg（那會先自動裁掉，
-  // 使用者就看不到完整原圖去調整範圍了）；裁切UI內部會自己跑detectCropBox當初始建議框。
-  _fscanShowCropUI(rawDataUrl);
-}
+
 function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉
   if(!val)return;
   try{if(typeof navigator.vibrate==='function')navigator.vibrate(60);}catch(e){}
@@ -10439,101 +10297,49 @@ function b3SkipAll(){
 function _batchStartStep4(){
   _batchStep=4;_batchStepIdx=0;
   _batchGotoStep(4);
-  _b4OpenCamera();
+  _b4RenderCurrent();
 }
-// v02.68：Step4改成相機優先、自動開啟、連續拍攝——不用每件都手動點「拍照」按鈕。
-// 每次呼叫都會（重新）開啟即時相機對準目前這一件，拍攝成功後自動停止串流、推進到下一件、
-// 再重新呼叫自己開下一件的相機，形成連續拍攝流程；相簿／跳過走openFieldScanner的secondary
-// 次要按鈕（點下去會先關閉目前overlay再執行對應處理）。
-function _b4RenderStatic(){
+// v02.71：改用跟「圖片辨識」模式(img-sec/onSlotPhoto)一樣的拍照/相簿按鈕＋既有的
+// cropImageFile()裁切器，不再另外搞一套相機/裁切UI——那套（v02.68~70）問題很多，
+// 這套是全站唯一、已經過使用者長期使用驗證的裁切工具，直接沿用最可靠。
+function _b4RenderCurrent(){
+  if(_batchStepIdx>=_batchItems.length){_batchFinishSteps();return;}
   var item=_batchItems[_batchStepIdx];if(!item)return;
   $('b4-idx').textContent=_batchStepIdx+1;$('b4-total').textContent=_batchItems.length;
   $('b4-title').textContent=item.title_guess||'（未辨識到品名，第'+(_batchStepIdx+1)+'件）';
+  var pv=$('b4-preview');if(pv)pv.style.display=item.entry&&item.entry.cover_img?'block':'none';
+  var pvImg=$('b4-preview-img');if(pvImg&&item.entry&&item.entry.cover_img)pvImg.src=item.entry.cover_img;
+  var cb=$('b4-confirm-btn');if(cb)cb.disabled=!(item.entry&&item.entry.cover_img);
+  var bc=$('b4-cam');if(bc)bc.value='';
+  var bg=$('b4-gal');if(bg)bg.value='';
 }
-function _b4OpenCamera(){
-  if(_batchStepIdx>=_batchItems.length){
-    fscanClose(); // v02.69：關鍵修復——全部完成時要真正關閉整個相機視窗(fscanClose)，
-    // 不能只停止串流(fscanStop)，不然視窗還蓋在畫面上、擋住後面的AI解析進度，看起來像卡住
-    _batchFinishSteps();
-    return;
-  }
-  _b4RenderStatic();
-  var f=$('b4-fallback');if(f)f.style.display='none';
-  var op=$('b4-opening');if(op)op.style.display='block';
-  var item=_batchItems[_batchStepIdx];
-  openFieldScanner({mode:'photo',
-    title:'拍攝封面（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
-    subtitle:item.title_guess||'對準商品封面拍攝',
-    secondary:[
-      {label:'🖼 從相簿選',fn:b4GalleryPick},
-      {label:'⏭ 跳過此件',fn:b4Skip}
-    ],
-    onCancel:function(){ // v02.69：拍照過程中按「取消」，視同取消整批建檔，避免卡在半途進退不得
-      if(confirm('確定要取消整個批次建檔嗎？已輸入的資料都會遺失。'))resetAll();
-      else _b4OpenCamera(); // 使用者反悔，繼續回到目前這一件的相機畫面
-    },
-    onCapture:function(dataUrl){ // v02.69：使用者在預覽畫面按「使用這張」才會呼叫到這裡
-      item.entry=item.entry||{};
-      item.entry.cover_img=dataUrl;
-      toast('✓ 第'+(_batchStepIdx+1)+'件已拍攝','ok',1200);
-      _batchStepIdx++;
-      fscanStop(); // 先停止目前串流，避免下一次getUserMedia時資源沒釋放
-      _b4OpenCamera(); // 繼續開相機處理下一件（或全部完成則轉場到既有解析管線）
-    },
-    onUnsupported:function(){
-      // 相機無法使用：顯示靜態備援畫面，改用相簿選圖
-      var op2=$('b4-opening');if(op2)op2.style.display='none';
-      var f2=$('b4-fallback');if(f2)f2.style.display='block';
-    }
-  });
-}
-function b4GalleryPick(){
-  var item=_batchItems[_batchStepIdx];
-  if(!item){_b4OpenCamera();return;}
-  var input=document.createElement('input');
-  input.type='file';input.accept='image/*';
-  input.onchange=function(){
-    var f=input.files&&input.files[0];
-    if(!f){_b4OpenCamera();return;} // 使用者取消選擇，回到相機繼續這一件
+function b4PhotoPick(input){
+  var f=input.files&&input.files[0];
+  if(!f)return;
+  var item=_batchItems[_batchStepIdx];if(!item)return;
+  cropImageFile(f).then(function(blob){
     var r=new FileReader();
     r.onload=function(){
-      compressImg(r.result,1200,0.85,function(compressed){
-        item.entry=item.entry||{};
-        item.entry.cover_img=compressed;
-        toast('✓ 第'+(_batchStepIdx+1)+'件已從相簿選取','ok',1200);
-        _batchStepIdx++;
-        _b4OpenCamera();
-      },'batch');
-    };
-    r.readAsDataURL(f);
-  };
-  input.click();
-}
-function b4FallbackPick(input){ // 相機不支援時的備援畫面用
-  var f=input.files&&input.files[0];
-  var item=_batchItems[_batchStepIdx];
-  if(!f||!item){return;}
-  var r=new FileReader();
-  r.onload=function(){
-    compressImg(r.result,1200,0.85,function(compressed){
       item.entry=item.entry||{};
-      item.entry.cover_img=compressed;
-      toast('✓ 第'+(_batchStepIdx+1)+'件已從相簿選取','ok',1200);
-      _batchStepIdx++;
-      if(_batchStepIdx>=_batchItems.length){_batchFinishSteps();}
-      else{_b4RenderStatic();var fb=$('b4-gal-fallback');if(fb)fb.value='';}
-    },'batch');
-  };
-  r.readAsDataURL(f);
+      item.entry.cover_img=r.result;
+      var pv=$('b4-preview');if(pv)pv.style.display='block';
+      var pvImg=$('b4-preview-img');if(pvImg)pvImg.src=r.result;
+      var cb=$('b4-confirm-btn');if(cb)cb.disabled=false;
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){}); // 使用者取消裁切，什麼都不做，留在原本畫面讓使用者重選
+}
+function b4Confirm(){
+  _batchStepIdx++;
+  _b4RenderCurrent();
 }
 function b4Skip(){
   _batchStepIdx++;
-  _b4OpenCamera();
+  _b4RenderCurrent();
 }
 function b4SkipAll(){
   var remain=_batchItems.length-_batchStepIdx;
   if(!confirm('確定要跳過拍攝封面嗎？\n\n將只影響「第'+(_batchStepIdx+1)+'件起」剩下 '+remain+' 件（已拍攝過的前面幾件不受影響），這些項目之後可以在確認清單點縮圖再補拍。'))return;
-  fscanClose(); // 相機可能還開著，先關閉
   _batchStepIdx=_batchItems.length;
   _batchFinishSteps();
 }
@@ -11084,13 +10890,21 @@ function detectCropBox(img){
     return Math.abs(r-bgR)+Math.abs(g-bgG)+Math.abs(b-bgB)>tol*3;
   }
 
-  // ── 全行/列掃描（不再只取中間 80%）──
+  // v02.75：原本只要「一整行/列裡有1個像素跟背景不同」就整行判定為有內容，太敏感——
+  // 只要照片邊緣剛好有一個反光點、陰影邊界或雜訊像素，就會讓那個方向的掃描線從頭到尾
+  // 都判定為「有內容」，導致完全不往內縮、卡在照片最外圍（使用者實測回報「右下沒貼齊
+  // 商品邊緣、停在整張照片邊緣」正是這個原因）。改成要求該行/列有足夠比例的像素都跟
+  // 背景不同才算，單一離群像素不會再讓整條掃描線誤判。
+  var _rowColMinCount=Math.max(3,Math.round(ww*0.02)); // 至少2%且至少3個像素
+  var _colMinCount=Math.max(3,Math.round(wh*0.02));
   function rowHas(y){
-    for(var x=0;x<ww;x++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2]))return true;}
+    var c=0;
+    for(var x=0;x<ww;x++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2])){c++;if(c>=_rowColMinCount)return true;}}
     return false;
   }
   function colHas(x){
-    for(var y=0;y<wh;y++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2]))return true;}
+    var c=0;
+    for(var y=0;y<wh;y++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2])){c++;if(c>=_colMinCount)return true;}}
     return false;
   }
 
@@ -12801,7 +12615,7 @@ function initColImgSearch(source){
 }
 
 // ── 書架模式 ──
-var currentView='card'; // 'card' | 'shelf'
+var currentView='card'; // 'card' | 'shelf' | 'gallery'
 // 書架分組鍵（單一真實來源）：renderShelf 與詳細頁翻頁範圍共用。
 // 僅回傳分組「鍵」，與 renderShelf 內 shelfGroupOf 的 key 必須完全一致。
 function shelfKeyOf(item){
@@ -12841,13 +12655,51 @@ function nextSpineColor(platform){
 
 function setView(mode){
   currentView=mode;
-  var card=$('vbtn-card'),shelf=$('vbtn-shelf');
+  var card=$('vbtn-card'),shelf=$('vbtn-shelf'),gallery=$('vbtn-gallery');
   if(card){card.style.background=mode==='card'?'#00e5ff':'transparent';card.style.color=mode==='card'?'#001018':'#7986cb';}
   if(shelf){shelf.style.background=mode==='shelf'?'#00e5ff':'transparent';shelf.style.color=mode==='shelf'?'#001018':'#7986cb';}
-  var gl=$('glist'),sv=$('shelf-view');
+  if(gallery){gallery.style.background=mode==='gallery'?'#00e5ff':'transparent';gallery.style.color=mode==='gallery'?'#001018':'#7986cb';}
+  var gl=$('glist'),sv=$('shelf-view'),gv=$('gallery-view');
   if(gl)gl.style.display=mode==='card'?'block':'none';
   if(sv)sv.style.display=mode==='shelf'?'block':'none';
+  if(gv)gv.style.display=mode==='gallery'?'grid':'none';
   if(mode==='shelf')renderShelf();
+  if(mode==='gallery')renderGalleryView();
+}
+// v02.72：畫廊視圖——封面圖優先的2欄網格，跟卡片/分類模式共用同一份filtered結果，
+// 也沿用既有的_colPressAttr(短按看詳情/長按開操作選單)跟收藏愛心(.gfav)機制，
+// 不重做一套新的互動邏輯，只是排版不同。
+function renderGalleryView(){
+  var c=$('gallery-view');
+  if(!c)return;
+  if(!filtered.length){
+    c.style.display='block';
+    c.innerHTML=col.length?
+      '<div class="empty"><div class="eico">🔍</div><div class="etxt">找不到相符記錄</div></div>':
+      '<div class="empty"><div class="eico">🎮</div><div class="etxt">尚無收藏記錄<br><small style="font-size:11px;display:block;margin-top:6px">點「建檔」開始新增</small></div></div>';
+    return;
+  }
+  c.style.display='grid';
+  c.innerHTML=filtered.map(function(item){
+    var d=item.data;
+    var cat=catInternal(d.category)||'遊戲';
+    var _icon=_catMeta(cat,d.subtype).icon;
+    var uid=item.uid||item.rowNum;
+    var thumb=hasImgVal(d.cover_img)?
+      '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+      '<div>'+_icon+'</div>';
+    var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
+    var _isSel=_colSel&&_colSelSet.has(String(uid));
+    return '<div class="gv-card'+(_isSel?' sel':'')+'" '+_colPressAttr(uid)+'>'+
+      (_colSel?'<div class="gv-sel-mark" style="color:'+(_isSel?'#ff6e9c':'#e8eaf6')+'">'+(_isSel?'☑':'☐')+'</div>':
+        '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(uid)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>')+
+      '<div class="gv-thumb">'+thumb+'</div>'+
+      '<div class="gv-info">'+
+        '<div class="gv-name">'+esc(name)+'</div>'+
+        '<div class="gv-meta">'+esc(platShort(d.platform||'')||catLabel(cat))+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 function renderShelf(){
@@ -13240,6 +13092,7 @@ function filterCol(){
   renderSortChips();
   renderGlist();
   if(currentView==='shelf')renderShelf();
+  if(currentView==='gallery')renderGalleryView();
   _updateFilterBadge();
   renderFilterSummary();
 }
@@ -17031,15 +16884,6 @@ function _imgToB64(src){
     <div id="fscan-head"><span id="fscan-title">掃描編碼</span><small id="fscan-sub">對準後拍攝</small></div>
     <div id="fscan-stage">
       <video id="fscan-video" autoplay playsinline muted></video>
-      <div id="fscan-crop-wrap">
-        <img id="fscan-crop-img" alt="">
-        <div id="fscan-crop-box">
-          <div class="fscan-crop-handle tl" data-corner="tl"></div>
-          <div class="fscan-crop-handle tr" data-corner="tr"></div>
-          <div class="fscan-crop-handle bl" data-corner="bl"></div>
-          <div class="fscan-crop-handle br" data-corner="br"></div>
-        </div>
-      </div>
       <div id="fscan-overlay"><div class="scan-box"></div><div class="scan-line"></div></div>
     </div>
     <div id="fscan-status"></div>
