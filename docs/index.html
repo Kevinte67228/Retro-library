@@ -2602,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.78';
+const APP_VERSION='v02.79';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8609,8 +8609,12 @@ function cancelTypePicker(){
 }
 
 // 隱藏所有模式的執行區（避免疊加）
+// v02.79：建檔頁所有「執行區」sec的清單抽成共用常數，hideAllSecs()跟showPg()裡
+// 判斷「有沒有任何sec正在顯示」的邏輯共用同一份，避免各自維護一份清單、新增sec時
+// 忘記同步更新其中一處（batch-sec新增時就是只改了hideAllSecs()，漏了showPg()那份）。
+var _ALL_SECS=['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec','aiweb-sec','batch-sec'];
 function hideAllSecs(){
-  ['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec','digital-link-sec','aiweb-sec','batch-sec'].forEach(function(id){
+  _ALL_SECS.forEach(function(id){
     var el=$(id);if(el)el.style.display='none';
   });
 }
@@ -14871,10 +14875,15 @@ function showPg(name){
   if(pg)pg.classList.add('on');if(nb)nb.classList.add('on');
   // 進入建檔頁守門：若編輯記錄後用返回鍵離開、再點建檔分頁返回，
   // method-sel 與所有執行區都會是隱藏狀態 → 整頁空白。偵測到此空白態時復原為「選擇建檔方式」起始畫面。
+  // v02.79：這份檢查清單原本沒有涵蓋 batch-sec（批次書背，v02.61新增）、digital-link-sec、
+  // aiweb-sec，導致批次流程Step2/3/4進行中如果showPg('scan')被觸發（不管是使用者不小心
+  // 點到底部「建檔」分頁、還是其他背景流程呼叫），這裡會誤判「沒有任何sec在顯示」，
+  // 把method-sel重新顯示出來，但完全沒有連帶隱藏batch-sec，造成方法選單卡片跟批次
+  // Step畫面同時疊加顯示在畫面上（使用者實測回報的症狀）。改成用hideAllSecs()同一份
+  // 清單，兩處永遠保持同步，不會再各自維護一份、其中一份漏改。
   if(name==='scan'){
     var _ms=$('method-sel');
-    var _anySec=['bar-sec','img-sec','form-sec','gcode-sec','gcode-combo-sec','combo-sec']
-      .some(function(id){var el=$(id);return el&&el.style.display==='block';});
+    var _anySec=_ALL_SECS.some(function(id){var el=$(id);return el&&el.style.display==='block';});
     if(_ms&&_ms.style.display==='none'&&!_anySec){
       _ms.style.display='block';
       var _mbb=$('mode-back-bar');if(_mbb)_mbb.style.display='none';
