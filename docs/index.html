@@ -1136,7 +1136,10 @@ body{
             <div style="font-size:12px;color:#7986cb;margin-bottom:6px">📋 貼上 AI 回覆的 JSON 內容</div>
             <textarea class="ft" id="aiweb-paste" placeholder='{"primary_name":"...","platform":"...", ...}'
               style="min-height:110px;margin-bottom:10px;font-size:13px"></textarea>
-            <button type="button" class="btn bp bw" onclick="aiWebParseAndImport()">✨ 解析並匯入手動建檔</button>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button type="button" class="btn bp bw" style="flex:1;font-size:14px" onclick="aiWebParseAndImport()">✨ 解析並匯入手動建檔</button>
+            </div>
             <div id="aiweb-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:10px"></div>
           </div>
         </div>
@@ -1327,7 +1330,10 @@ body{
               <div id="batch-preview" style="display:none;text-align:center;margin-bottom:12px">
                 <img id="batch-preview-img" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #1e2a45">
               </div>
-              <button id="batch-start-btn" class="btn bp bw" disabled onclick="batchDetectStart()" type="button" style="margin-bottom:6px">✨ 開始批次辨識</button>
+              <div style="display:flex;gap:10px;margin-top:4px">
+                <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+                <button id="batch-start-btn" class="btn bp bw" disabled onclick="batchDetectStart()" type="button" style="flex:1;font-size:14px">✨ 開始批次辨識</button>
+              </div>
             </div>
 
             <!-- Step 2：逐件掃描/輸入條碼 -->
@@ -1393,7 +1399,7 @@ body{
               <div id="batch-list"></div>
             </div>
 
-            <div style="display:flex;gap:10px;margin-top:16px">
+            <div id="batch-final-actions" style="display:none;gap:10px;margin-top:16px">
               <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
               <button id="batch-save-btn" class="btn bp bw" style="flex:1;font-size:14px;display:none" onclick="batchSaveAll()" type="button">儲存已勾選項目</button>
             </div>
@@ -2602,7 +2608,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.79';
+const APP_VERSION='v02.80';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10143,6 +10149,7 @@ function initBatchSpineMode(){
     $('batch-start-btn').disabled=true;
     $('batch-list').innerHTML='';
     $('batch-list-wrap').style.display='none';
+    $('batch-final-actions').style.display='none'; // v02.80：重新進入時重置確認清單階段的按鈕列
     $('batch-save-btn').style.display='none';
     $('batch-progress').style.display='none';
     var bc=$('batch-cam');if(bc)bc.value='';
@@ -10367,6 +10374,7 @@ function _batchFinishSteps(){
   _batchGotoStep(1); // 逐件步驟畫面收起，改顯示進度＋確認清單
   $('batch-step1-sec').style.display='none';
   $('batch-list-wrap').style.display='block';
+  $('batch-final-actions').style.display='flex'; // v02.80：確認清單階段才顯示這組取消/儲存按鈕列
   _batchRenderList();
   _batchResolving=true;
   _batchResolveNext(0);
