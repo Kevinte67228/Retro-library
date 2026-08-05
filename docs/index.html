@@ -2602,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.74';
+const APP_VERSION='v02.75';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10890,13 +10890,21 @@ function detectCropBox(img){
     return Math.abs(r-bgR)+Math.abs(g-bgG)+Math.abs(b-bgB)>tol*3;
   }
 
-  // ── 全行/列掃描（不再只取中間 80%）──
+  // v02.75：原本只要「一整行/列裡有1個像素跟背景不同」就整行判定為有內容，太敏感——
+  // 只要照片邊緣剛好有一個反光點、陰影邊界或雜訊像素，就會讓那個方向的掃描線從頭到尾
+  // 都判定為「有內容」，導致完全不往內縮、卡在照片最外圍（使用者實測回報「右下沒貼齊
+  // 商品邊緣、停在整張照片邊緣」正是這個原因）。改成要求該行/列有足夠比例的像素都跟
+  // 背景不同才算，單一離群像素不會再讓整條掃描線誤判。
+  var _rowColMinCount=Math.max(3,Math.round(ww*0.02)); // 至少2%且至少3個像素
+  var _colMinCount=Math.max(3,Math.round(wh*0.02));
   function rowHas(y){
-    for(var x=0;x<ww;x++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2]))return true;}
+    var c=0;
+    for(var x=0;x<ww;x++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2])){c++;if(c>=_rowColMinCount)return true;}}
     return false;
   }
   function colHas(x){
-    for(var y=0;y<wh;y++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2]))return true;}
+    var c=0;
+    for(var y=0;y<wh;y++){var i=(y*ww+x)*4;if(isDiff(data[i],data[i+1],data[i+2])){c++;if(c>=_colMinCount)return true;}}
     return false;
   }
 
