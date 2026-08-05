@@ -413,6 +413,16 @@ body{
 .gc.sel,.hc.sel{border-color:#ff6e9c;box-shadow:0 0 4px rgba(255,110,156,.85),0 0 14px rgba(255,110,156,.45)}
 .gi{width:104px;height:104px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:34px}
 .gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
+/* v02.72：畫廊視圖（收藏頁第三個展示模式，封面圖優先的2欄網格） */
+#gallery-view{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px}
+.gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden}
+.gv-card.sel{outline:2px solid #ff6e9c}
+.gv-thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:#7986cb}
+.gv-thumb img{width:100%;height:100%;object-fit:cover}
+.gv-info{padding:10px}
+.gv-name{font-size:12.5px;font-weight:700;color:#e8eaf6;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.gv-meta{font-size:10.5px;color:#7986cb;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gv-sel-mark{position:absolute;top:6px;left:6px;font-size:22px;line-height:1;z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.6)}
 .gfav:active{transform:scale(.85)}
 .ginfo{flex:1;min-width:0}
 .gn{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1497,6 +1507,10 @@ body{
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="2" width="3" height="14" rx="1.5"/><rect x="6" y="2" width="3" height="14" rx="1.5"/><rect x="11" y="2" width="3" height="14" rx="1.5"/></svg>
                 分類
               </button>
+              <button id="vbtn-gallery" onclick="setView('gallery')" style="background:transparent;color:#7986cb" title="畫廊模式" type="button">
+                <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="16" rx="2"/><rect x="10" y="1" width="7" height="16" rx="2"/></svg>
+                畫廊
+              </button>
             </div>
             <!-- 大量刪除 -->
             <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除" style="width:40px;height:40px" type="button">
@@ -1602,6 +1616,7 @@ body{
       </div>
       <div id="glist"></div>
       <div id="shelf-view" style="display:none"></div>
+      <div id="gallery-view" style="display:none"></div>
       <!-- 進階篩選底板 -->
       <div id="filter-sheet">
         <div id="fov" onclick="closeFilterSheet()"></div>
@@ -2587,7 +2602,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.71';
+const APP_VERSION='v02.72';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12589,7 +12604,7 @@ function initColImgSearch(source){
 }
 
 // ── 書架模式 ──
-var currentView='card'; // 'card' | 'shelf'
+var currentView='card'; // 'card' | 'shelf' | 'gallery'
 // 書架分組鍵（單一真實來源）：renderShelf 與詳細頁翻頁範圍共用。
 // 僅回傳分組「鍵」，與 renderShelf 內 shelfGroupOf 的 key 必須完全一致。
 function shelfKeyOf(item){
@@ -12629,13 +12644,51 @@ function nextSpineColor(platform){
 
 function setView(mode){
   currentView=mode;
-  var card=$('vbtn-card'),shelf=$('vbtn-shelf');
+  var card=$('vbtn-card'),shelf=$('vbtn-shelf'),gallery=$('vbtn-gallery');
   if(card){card.style.background=mode==='card'?'#00e5ff':'transparent';card.style.color=mode==='card'?'#001018':'#7986cb';}
   if(shelf){shelf.style.background=mode==='shelf'?'#00e5ff':'transparent';shelf.style.color=mode==='shelf'?'#001018':'#7986cb';}
-  var gl=$('glist'),sv=$('shelf-view');
+  if(gallery){gallery.style.background=mode==='gallery'?'#00e5ff':'transparent';gallery.style.color=mode==='gallery'?'#001018':'#7986cb';}
+  var gl=$('glist'),sv=$('shelf-view'),gv=$('gallery-view');
   if(gl)gl.style.display=mode==='card'?'block':'none';
   if(sv)sv.style.display=mode==='shelf'?'block':'none';
+  if(gv)gv.style.display=mode==='gallery'?'grid':'none';
   if(mode==='shelf')renderShelf();
+  if(mode==='gallery')renderGalleryView();
+}
+// v02.72：畫廊視圖——封面圖優先的2欄網格，跟卡片/分類模式共用同一份filtered結果，
+// 也沿用既有的_colPressAttr(短按看詳情/長按開操作選單)跟收藏愛心(.gfav)機制，
+// 不重做一套新的互動邏輯，只是排版不同。
+function renderGalleryView(){
+  var c=$('gallery-view');
+  if(!c)return;
+  if(!filtered.length){
+    c.style.display='block';
+    c.innerHTML=col.length?
+      '<div class="empty"><div class="eico">🔍</div><div class="etxt">找不到相符記錄</div></div>':
+      '<div class="empty"><div class="eico">🎮</div><div class="etxt">尚無收藏記錄<br><small style="font-size:11px;display:block;margin-top:6px">點「建檔」開始新增</small></div></div>';
+    return;
+  }
+  c.style.display='grid';
+  c.innerHTML=filtered.map(function(item){
+    var d=item.data;
+    var cat=catInternal(d.category)||'遊戲';
+    var _icon=_catMeta(cat,d.subtype).icon;
+    var uid=item.uid||item.rowNum;
+    var thumb=hasImgVal(d.cover_img)?
+      '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+      '<div>'+_icon+'</div>';
+    var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
+    var _isSel=_colSel&&_colSelSet.has(String(uid));
+    return '<div class="gv-card'+(_isSel?' sel':'')+'" '+_colPressAttr(uid)+'>'+
+      (_colSel?'<div class="gv-sel-mark" style="color:'+(_isSel?'#ff6e9c':'#e8eaf6')+'">'+(_isSel?'☑':'☐')+'</div>':
+        '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(uid)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>')+
+      '<div class="gv-thumb">'+thumb+'</div>'+
+      '<div class="gv-info">'+
+        '<div class="gv-name">'+esc(name)+'</div>'+
+        '<div class="gv-meta">'+esc(platShort(d.platform||'')||catLabel(cat))+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
 
 function renderShelf(){
@@ -13028,6 +13081,7 @@ function filterCol(){
   renderSortChips();
   renderGlist();
   if(currentView==='shelf')renderShelf();
+  if(currentView==='gallery')renderGalleryView();
   _updateFilterBadge();
   renderFilterSummary();
 }
