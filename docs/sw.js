@@ -1,8 +1,8 @@
-const CACHE_NAME = 'retrovault-v02-82';
+const CACHE_NAME = 'retrovault-v02-83';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './RetroVault_v02_82_index.html',
+  './RetroVault_v02_83_index.html',
   './manifest.json',
   './manual.html',
   './bg.webp'
