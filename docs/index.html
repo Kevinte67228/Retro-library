@@ -2627,7 +2627,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.90';
+const APP_VERSION='v02.91';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6460,6 +6460,13 @@ function _cropLayout(){
   if(!box){
     var ins=Math.round(Math.min(w,h)*0.06);
     box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  }else{
+    // v02.91：使用者實測回報，偵測到的商品邊界常常直接貼齊照片最外緣，導致四角的拖曳
+    // 把手緊貼畫面邊界，手指很難精準抓到、也很難再往外拉調整。偵測到的框額外往內收一點
+    // 安全間距，讓把手離邊界有空間可操作；「貼緊商品邊緣」的原意不變，只是留一點緩衝，
+    // 使用者原本就可以自行拖曳微調。fallback 的保守框本來就已內縮 6%，不需要再加。
+    var pad=Math.round(Math.min(w,h)*0.025);
+    box={x:box.x+pad,y:box.y+pad,w:Math.max(20,box.w-pad*2),h:Math.max(20,box.h-pad*2)};
   }
   _crop.box=box;
   _crop._autoDetected=true; // 標記已完成首次偵測，往後 resize 不再重置
