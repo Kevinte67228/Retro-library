@@ -723,8 +723,14 @@ body{
 #fscan-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;align-items:stretch;justify-content:center;touch-action:none}
 #fscan-ov.on{display:flex}
 #fscan-card{width:100%;max-width:none;height:100%;background:#000;border:none;border-radius:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:none}
-#fscan-head{flex:0 0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;text-align:center;color:#fff;font-size:15px;font-weight:700;letter-spacing:1px;background:#0b0f1a}
-#fscan-head small{display:block;font-size:11px;font-weight:400;color:#7986cb;margin-top:3px;letter-spacing:0}
+#fscan-head{flex:0 0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;text-align:center;color:#fff;background:#0b0f1a;display:flex;flex-direction:column}
+/* v02.82：使用者實測回報「上面的說明文字太小不明顯」——原本#fscan-title(步驟資訊，如
+   「拍照辨識商品編碼(第2/10件)」)是主標題(較大)，#fscan-sub(品名)是副標題(較小)，
+   但品名才是使用者需要視覺確認「拍的是不是這一件」最重要的資訊。改成品名視覺上排在
+   最前面且放大，步驟資訊縮小成次要說明；用flex order調整視覺順序，不用改動任何JS
+   呼叫端傳入title/subtitle的內容語意（title依然是步驟資訊，subtitle依然是品名）。 */
+#fscan-title{order:2;display:block;font-size:11px;font-weight:400;color:#7986cb;letter-spacing:0;margin-top:4px}
+#fscan-sub{order:1;display:block;font-size:19px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1.3}
 #fscan-stage{flex:1 1 auto;position:relative;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center}
 #fscan-video{width:100%;height:100%;display:block;max-height:none;object-fit:cover}
 #fscan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
@@ -2611,7 +2617,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.81';
+const APP_VERSION='v02.82';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9526,7 +9532,7 @@ function _fscanBuildCaptureBar(isBar){
   var html='';
   (_fscanOpt.secondary||[]).forEach(function(b,i){html+='<button data-fsx="'+i+'" type="button">'+b.label+'</button>';});
   html+='<button id="fscan-cancel-btn" type="button">取消</button>';
-  if(!isBar)html+='<button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">'+(_fscanOpt.shotLabel||'📷 拍攝並辨識')+'</button>';
+  if(!isBar)html+='<button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">'+(_fscanOpt.shotLabel||'📷 拍照辨識')+'</button>';
   bar.innerHTML=html;
   (_fscanOpt.secondary||[]).forEach(function(b,i){
     var el=bar.querySelector('[data-fsx="'+i+'"]');
@@ -9558,7 +9564,7 @@ function openFieldScanner(opt){
   }else{
     if(!cfg.gkey){toast('需要 Gemini 金鑰才能 OCR 識別','er');fscanClose();return;}
     navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}}})
-      .then(function(s){_fscanStream=s;var v=$('fscan-video');if(v){v.srcObject=s;v.play();}if(st)st.textContent=_fscanOpt.readyText||'相機已開啟，對準編碼後按「拍攝並辨識」';})
+      .then(function(s){_fscanStream=s;var v=$('fscan-video');if(v){v.srcObject=s;v.play();}if(st)st.textContent=_fscanOpt.readyText||'相機已開啟，對準編碼後按「拍照辨識」';})
       .catch(function(){ // 即時相機開啟失敗 → 回退原生相機檔案輸入 OCR
         fscanClose();
         if(_fscanOpt.fallback)_fscanOpt.fallback();
@@ -9571,7 +9577,7 @@ function _fscanDetect(on){ // F2：切換 fscan 取景框綠色呼吸燈
 }
 function _fscanClearBusy(){
   if(_fscanTimer){clearInterval(_fscanTimer);_fscanTimer=null;}
-  var shot=$('fscan-shot');if(shot){shot.disabled=false;shot.textContent=(_fscanOpt&&_fscanOpt.shotLabel)||'📷 拍攝並辨識';}
+  var shot=$('fscan-shot');if(shot){shot.disabled=false;shot.textContent=(_fscanOpt&&_fscanOpt.shotLabel)||'📷 拍照辨識';}
   var cancel=$('fscan-cancel-btn');if(cancel)cancel.textContent='取消';
   var st=$('fscan-status');if(st)st.classList.remove('busy');
 }
@@ -9715,9 +9721,9 @@ function openCodeScanFor(inputId,fallbackId){
     title:isCombo?'拍攝編碼＋照片':'拍攝商品編碼',
     subtitle:isCombo?'先拍產品代碼，辨識後再拍封面':'對準盒側、碟片或卡帶上的產品代碼',
     openingText:'正在開啟相機...',
-    readyText:'相機已開啟，對準編碼後按「拍攝並辨識」',
+    readyText:'相機已開啟，對準編碼後按「拍照辨識」',
     busyText:isCombo?'AI 正在辨識商品編碼':'AI 正在辨識編碼',
-    shotLabel:'📷 拍攝並辨識',
+    shotLabel:'📷 拍照辨識',
     resultToast:function(v){return (isCombo?'已帶入商品編碼：':'已帶入編碼：')+v;},
     prompt:(function(){
       var cat=_selectedType||'遊戲';
@@ -10336,7 +10342,7 @@ function _batchStartStep3(){
 }
 function b3Ocr(){
   // v02.81：連續拍攝OCR——每次辨識完不關閉overlay，相機串流保持live，更新標題文字後
-  // 使用者可以直接按「拍攝並辨識」處理下一件，不用重新啟動相機；跳過此件也留在
+  // 使用者可以直接按「拍照辨識」處理下一件，不用重新啟動相機；跳過此件也留在
   // overlay內繼續；使用者按取消視為主動中斷，回到Step3正常畫面保留進度。
   function updateOverlayText(){
     var item=_batchItems[_batchStepIdx];
@@ -17001,7 +17007,7 @@ function _imgToB64(src){
     <div id="fscan-status"></div>
     <div id="fscan-bar">
       <button onclick="fscanCancel()" type="button">取消</button>
-      <button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">📷 拍攝並辨識</button>
+      <button id="fscan-shot" class="cp" onclick="fscanCapture()" type="button">📷 拍照辨識</button>
     </div>
   </div>
 </div>
