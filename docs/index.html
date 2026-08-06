@@ -1267,7 +1267,7 @@ body{
                  每步驟都可針對單一件跳過(不是每件都有條碼/序號)，最後合併進AI補全其餘欄位流程。
                  v02.67取消「攤平多件」模式(裁切準確度一直無法達到可用水準，使用者確認放棄)。 -->
             <div id="batch-step1-sec">
-              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 8 件）</div>
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 10 件）</div>
               <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
                 <svg viewBox="0 0 320 170" style="width:100%;height:auto;display:block">
                 <!-- 觀景窗取景框（四角括號，示意「把商品都拍進這個框裡」） -->
@@ -1339,6 +1339,7 @@ body{
             <!-- Step 2：逐件掃描/輸入條碼 -->
             <div id="batch-step2-sec" style="display:none">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+                <button type="button" id="b2-back-btn" onclick="_batchStepBack()" style="background:none;border:none;color:#7986cb;font-size:11px;padding:0" disabled>‹ 上一件</button>
                 <div style="font-size:12px;color:#ce93d8;font-weight:700">② 逐件輸入條碼（第 <span id="b2-idx">1</span>／<span id="b2-total">1</span> 件）</div>
                 <button type="button" onclick="b2SkipAll()" style="background:none;border:none;color:#7986cb;font-size:11px;text-decoration:underline;padding:0">全部跳過此步驟</button>
               </div>
@@ -1354,6 +1355,7 @@ body{
             <!-- Step 3：逐件輸入商品編碼／序號 -->
             <div id="batch-step3-sec" style="display:none">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+                <button type="button" id="b3-back-btn" onclick="_batchStepBack()" style="background:none;border:none;color:#7986cb;font-size:11px;padding:0" disabled>‹ 上一件</button>
                 <div style="font-size:12px;color:#ce93d8;font-weight:700">③ 逐件輸入商品編碼／序號（第 <span id="b3-idx">1</span>／<span id="b3-total">1</span> 件）</div>
                 <button type="button" onclick="b3SkipAll()" style="background:none;border:none;color:#7986cb;font-size:11px;text-decoration:underline;padding:0">全部跳過此步驟</button>
               </div>
@@ -1369,6 +1371,7 @@ body{
             <!-- Step 4：逐件拍攝封面 -->
             <div id="batch-step4-sec" style="display:none">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+                <button type="button" id="b4-back-btn" onclick="_batchStepBack()" style="background:none;border:none;color:#7986cb;font-size:11px;padding:0" disabled>‹ 上一件</button>
                 <div style="font-size:12px;color:#ce93d8;font-weight:700">④ 逐件拍攝封面（第 <span id="b4-idx">1</span>／<span id="b4-total">1</span> 件）</div>
                 <button type="button" onclick="b4SkipAll()" style="background:none;border:none;color:#7986cb;font-size:11px;text-decoration:underline;padding:0">全部跳過此步驟</button>
               </div>
@@ -2608,7 +2611,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.80';
+const APP_VERSION='v02.81';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9527,7 +9530,10 @@ function _fscanBuildCaptureBar(isBar){
   bar.innerHTML=html;
   (_fscanOpt.secondary||[]).forEach(function(b,i){
     var el=bar.querySelector('[data-fsx="'+i+'"]');
-    if(el)el.onclick=function(){fscanClose();if(typeof b.fn==='function')b.fn();};
+    if(el)el.onclick=function(){
+      if(_fscanOpt.continuous){if(typeof b.fn==='function')b.fn();} // 連續模式：不自動關閉，讓fn自己決定(通常是跳過此件、留在overlay繼續下一件)
+      else{fscanClose();if(typeof b.fn==='function')b.fn();}
+    };
   });
   var cb=$('fscan-cancel-btn');if(cb)cb.onclick=fscanCancel;
 }
@@ -9686,14 +9692,21 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
 // 透過既有的compressImg（內部會自動呼叫autoCropCanvas依背景色差異裁掉多餘邊緣）處理，
 // 拍完呼叫onCapture回呼但不自動關閉overlay，讓呼叫端決定要不要留在同一個相機畫面連續拍下一件。
 
-function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉
+function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉（連續模式除外）
   if(!val)return;
   try{if(typeof navigator.vibrate==='function')navigator.vibrate(60);}catch(e){}
   var inp=$(_fscanOpt.inputId);if(inp)inp.value=val;
   if(_fscanOpt.onResult)_fscanOpt.onResult(val);
   var okMsg=(typeof _fscanOpt.resultToast==='function')?_fscanOpt.resultToast(val):('✓ '+val);
   toast(okMsg,'ok',2500);
-  fscanClose();
+  // v02.81：連續模式（批次逐件掃描用）——不自動關閉overlay，相機/偵測繼續運作，
+  // 交給呼叫端的onContinue決定要不要更新畫面文字、或是全部處理完才真正關閉。
+  if(_fscanOpt.continuous){
+    _fscanClearBusy(); // OCR模式下清除「AI辨識中」忙碌狀態，讓使用者能立刻拍下一件
+    if(typeof _fscanOpt.onContinue==='function')_fscanOpt.onContinue();
+  }else{
+    fscanClose();
+  }
 }
 // 商品編碼建檔模式：開 OCR 取景框帶入目標欄位（失敗回退原生相機）
 function openCodeScanFor(inputId,fallbackId){
@@ -10103,7 +10116,7 @@ function doAnalyze(){
   }).finally(noLoad);
 }
 
-// 🤖 [AI辨識進入點] 批次書背辨識模式（v02.38）：一次拍照辨識最多 8 件商品書背，
+// 🤖 [AI辨識進入點] 批次書背辨識模式（v02.38）：一次拍照辨識最多 10 件商品書背，
 // 逐件循序查資料庫＋補封面＋AI補全，列成確認清單讓使用者勾選後批次存檔。
 // 設計對照：整批鎖死使用者已選定的分類/平台/區域（不逐件覆蓋），序號辨識不清楚時
 // 標「⚠️序號模糊」但仍列出讓使用者自行決定是否剔除；只支援無子類型的 4 個分類。
@@ -10132,7 +10145,7 @@ var BATCH_DETECT_SCHEMA={
 function _batchDetectPrompt(){
   var cat=catLabel(_selectedType)||'遊戲';
   var platTxt=_selectedPlatform?('，平台為「'+_selectedPlatform+'」'):'';
-  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 8 件（超過 8 件只取最左邊 8 件；忽略書背以外的背景物件）。'+
+  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 10 件（超過 10 件只取最左邊 10 件；忽略書背以外的背景物件）。'+
     'title_guess 填書背上看到的標題文字（僅供人工比對確認用，看到什麼填什麼，不需要完整或保證正確，看不清楚可以留空）；'+
     'order 為由左到右的順序（1 起算）。不需要辨識商品編碼／條碼，這些之後會逐件實際掃描取得，比從照片猜測準確。只輸出 JSON，不要其他文字。';
 }
@@ -10188,7 +10201,7 @@ function batchDetectStart(){
           noLoad();
           var items=(res&&Array.isArray(res.items))?res.items:[];
           if(!items.length){toast('沒有辨識到任何商品，請確認照片有清楚拍到書背','er',4000);return;}
-          items=items.slice(0,8); // 防禦：即使 AI 超量回傳也裁切
+          items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
           _batchItems=items.map(function(it,i){
@@ -10234,6 +10247,15 @@ function _batchStepAdvance(nextStepFn){
   if(_batchStepIdx>=_batchItems.length){nextStepFn();}
   else{_bRenderCurrent();}
 }
+// v02.81：三個逐件步驟共用的「返回上一件」邏輯——只在同一個Step內回溯，
+// 已經是第1件時不做任何事（沒有更早的可以回）。跨Step返回（例如Step3第1件
+// 想回到Step2最後一件）暫不支援，範圍先限定在同一Step內修正輸入錯誤這個
+// 最常見的情境。
+function _batchStepBack(){
+  if(_batchStepIdx<=0)return;
+  _batchStepIdx--;
+  if(_batchStep===4){_b4RenderCurrent();}else{_bRenderCurrent();}
+}
 // 依目前所在Step，畫出對應畫面的目前第幾件＋參考標題（Step2/3/4共用同一份標題參考文字）
 function _bRenderCurrent(){
   var item=_batchItems[_batchStepIdx];
@@ -10243,10 +10265,12 @@ function _bRenderCurrent(){
     $('b2-idx').textContent=_batchStepIdx+1;$('b2-total').textContent=_batchItems.length;
     $('b2-title').textContent=titleTxt;
     $('b2-inp').value=item.barcode||'';
+    $('b2-back-btn').disabled=(_batchStepIdx<=0);
   }else if(_batchStep===3){
     $('b3-idx').textContent=_batchStepIdx+1;$('b3-total').textContent=_batchItems.length;
     $('b3-title').textContent=titleTxt;
     $('b3-inp').value=item.code||'';
+    $('b3-back-btn').disabled=(_batchStepIdx<=0);
   }
 }
 
@@ -10257,14 +10281,34 @@ function _batchStartStep2(){
   _bRenderCurrent();
 }
 function b2Scan(){
-  var item=_batchItems[_batchStepIdx];if(!item)return;
-  openFieldScanner({mode:'barcode',
+  // v02.81：連續掃描——偵測到條碼後不關閉overlay，更新標題文字繼續偵測下一件，
+  // 全部處理完才真正關閉並轉場到Step3；使用者按overlay的「取消」視為主動中斷，
+  // 回到Step2正常畫面、保留目前已掃到的進度，之後可以手動繼續。
+  function updateOverlayText(){
+    var item=_batchItems[_batchStepIdx];
+    var ttl=$('fscan-title');if(ttl)ttl.textContent='掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
+    var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準包裝上的條碼';
+  }
+  function advance(){
+    _batchStepIdx++;
+    if(_batchStepIdx>=_batchItems.length){fscanClose();_batchStartStep3();}
+    else{updateOverlayText();}
+  }
+  var item0=_batchItems[_batchStepIdx];if(!item0)return;
+  openFieldScanner({mode:'barcode',continuous:true,
     title:'掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
-    subtitle:item.title_guess||'對準包裝上的條碼',
+    subtitle:item0.title_guess||'對準包裝上的條碼',
     detectText:'正在偵測條碼',
     resultToast:function(v){return '已帶入條碼：'+v;},
-    secondary:[{label:'⏭ 跳過此件',fn:b2Skip}],
-    onResult:function(bc){$('b2-inp').value=bc;b2Confirm();}
+    secondary:[{label:'⏭ 跳過此件',fn:function(){
+      var item=_batchItems[_batchStepIdx];if(item)item.barcode='';
+      advance();
+    }}],
+    onResult:function(bc){
+      var item=_batchItems[_batchStepIdx];if(item)item.barcode=bc;
+    },
+    onContinue:advance,
+    onCancel:function(){_bRenderCurrent();}
   });
 }
 function b2Confirm(){
@@ -10291,14 +10335,34 @@ function _batchStartStep3(){
   _bRenderCurrent();
 }
 function b3Ocr(){
-  var item=_batchItems[_batchStepIdx];if(!item)return;
+  // v02.81：連續拍攝OCR——每次辨識完不關閉overlay，相機串流保持live，更新標題文字後
+  // 使用者可以直接按「拍攝並辨識」處理下一件，不用重新啟動相機；跳過此件也留在
+  // overlay內繼續；使用者按取消視為主動中斷，回到Step3正常畫面保留進度。
+  function updateOverlayText(){
+    var item=_batchItems[_batchStepIdx];
+    var ttl=$('fscan-title');if(ttl)ttl.textContent='拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
+    var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準編碼後拍攝';
+  }
+  function advance(){
+    _batchStepIdx++;
+    if(_batchStepIdx>=_batchItems.length){fscanClose();_batchStartStep4();}
+    else{updateOverlayText();}
+  }
+  var item0=_batchItems[_batchStepIdx];if(!item0)return;
   // v02.67：直接重用既有的fscanCapture OCR管線(mode:'ocr')，內建依_selectedType自動選擇
   // 對應分類的編碼格式提示詞＋清理正規化，不用另外重寫辨識邏輯
-  openFieldScanner({mode:'ocr',ocrClean:true,normalize:true,
+  openFieldScanner({mode:'ocr',ocrClean:true,normalize:true,continuous:true,
     title:'拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
-    subtitle:item.title_guess||'對準編碼後拍攝',
-    secondary:[{label:'⏭ 跳過此件',fn:b3Skip}],
-    onResult:function(code){$('b3-inp').value=code;b3Confirm();}
+    subtitle:item0.title_guess||'對準編碼後拍攝',
+    secondary:[{label:'⏭ 跳過此件',fn:function(){
+      var item=_batchItems[_batchStepIdx];if(item)item.code='';
+      advance();
+    }}],
+    onResult:function(code){
+      var item=_batchItems[_batchStepIdx];if(item)item.code=code;
+    },
+    onContinue:advance,
+    onCancel:function(){_bRenderCurrent();}
   });
 }
 function b3Confirm(){
@@ -10337,6 +10401,7 @@ function _b4RenderCurrent(){
   var cb=$('b4-confirm-btn');if(cb)cb.disabled=!(item.entry&&item.entry.cover_img);
   var bc=$('b4-cam');if(bc)bc.value='';
   var bg=$('b4-gal');if(bg)bg.value='';
+  $('b4-back-btn').disabled=(_batchStepIdx<=0);
 }
 function b4PhotoPick(input){
   var f=input.files&&input.files[0];
@@ -10356,11 +10421,21 @@ function b4PhotoPick(input){
 }
 function b4Confirm(){
   _batchStepIdx++;
+  if(_batchStepIdx>=_batchItems.length){_batchFinishSteps();return;}
   _b4RenderCurrent();
+  // v02.81：確認後自動觸發下一件的相機——這個click()是在使用者按下「確認，下一件」
+  // 的同一個事件處理堆疊內同步呼叫，符合瀏覽器trusted user gesture要求，不會被阻擋；
+  // 不用使用者每次都手動點「拍照」按鈕。使用者若不想繼續，原生相機App自己按返回即可
+  // （不觸發onchange），停在Step4正常畫面，這就是自然的中斷方式。
+  var camInput=$('b4-cam');
+  if(camInput)camInput.click();
 }
 function b4Skip(){
   _batchStepIdx++;
+  if(_batchStepIdx>=_batchItems.length){_batchFinishSteps();return;}
   _b4RenderCurrent();
+  var camInput=$('b4-cam');
+  if(camInput)camInput.click();
 }
 function b4SkipAll(){
   var remain=_batchItems.length-_batchStepIdx;
