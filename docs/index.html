@@ -2618,7 +2618,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.86';
+const APP_VERSION='v02.87';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -15999,7 +15999,10 @@ function _huntAIBannerEl(){
   if(!el){
     el=document.createElement('div');
     el.id='hunt-ai-banner';
-    el.style.cssText='position:fixed;left:12px;right:12px;top:calc(60px + env(safe-area-inset-top));z-index:330;background:linear-gradient(135deg,#1a2540,#141b30);border:1.5px solid #ff6e9c;border-radius:12px;padding:12px 14px;display:none;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.5);font-size:13px;color:#e8eaf6';
+    // v02.87：使用者實測回報希望banner不要貼在最上方(會跟表單第一個欄位擠在一起、
+    // 也可能擋住分類/平台這種需要優先看到/操作的欄位)，改成垂直置中——不管裝置螢幕
+    // 大小如何都會穩定出現在畫面中央附近，比寫死一個pixel offset更穩健。
+    el.style.cssText='position:fixed;left:12px;right:12px;top:50%;transform:translateY(-50%);z-index:330;background:linear-gradient(135deg,#1a2540,#141b30);border:1.5px solid #ff6e9c;border-radius:12px;padding:14px;display:none;align-items:center;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,.6);font-size:14px;color:#e8eaf6';
     document.body.appendChild(el);
   }
   return el;

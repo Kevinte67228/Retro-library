@@ -1,3 +1,26 @@
+## v02.87 (2026-08-06)
+
+### 變更內容
+使用者實測回報，尋寶AI辨識banner（v02.86）貼在畫面最上方，跟表單第一個欄位（日文品名）擠在一起，還可能擋住分類/平台這種需要優先看到/操作的欄位，希望移到畫面中間偏下的位置。
+
+改成用`top:50%;transform:translateY(-50%)`達成真正的垂直置中，不再寫死一個貼頂的pixel offset。不管裝置螢幕大小如何，都會穩定出現在畫面中央附近，比猜測特定欄位的精確位置更穩健。
+
+自我檢查：`node --check` 通過；無 U+FFFD；跑4項自我檢查全過，含【關鍵】驗證transform:translateY(-50%)正確設定達成垂直置中、確認舊的貼頂定位方式已經移除、仍維持fixed定位不受表單捲動影響。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_87_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-86 → retrovault-v02-87
+
+### 對應備份
+- _internal/old/v02_86/
+
+
 ## v02.86 (2026-08-06)
 
 ### 變更內容
@@ -69,26 +92,3 @@
 
 ### 對應備份
 - _internal/old/v02_83/
-
-
-## v02.83 (2026-08-06)
-
-### 變更內容
-使用者實測回報，希望品名（`#fscan-sub`）從畫面最上方搬到相機畫面下方、狀態文字（「正在偵測條碼...」）上方——那個位置離拍攝當下的視線跟拇指操作區更近，比放在畫面最上方更容易對照確認「拍的是不是這一件」。
-
-v02.82是用CSS flex `order`屬性把品名視覺上調到`#fscan-head`裡的上方（DOM位置沒變，只是視覺順序）；這次直接把`#fscan-sub`的DOM位置搬到`#fscan-stage`（相機畫面）跟`#fscan-status`（狀態文字）之間，不再用order技巧。`#fscan-head`現在只剩`#fscan-title`（步驟資訊），簡化回單一元素、縮小成次要說明樣式，留在畫面最上方；品名維持v02.82設定的放大樣式（19px、粗體、白色），只是換了位置。
-
-自我檢查：`node --check` 通過；無 U+FFFD；CSS 614/614；全檔案HTML div巢狀完整性通過；跑7項自我檢查全過，含【關鍵】驗證品名在DOM順序上正確排在相機畫面之後、狀態文字之前（符合使用者標示的位置），品名字體大小/粗細維持不變，fscan-head簡化後不再需要flex column佈局。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_83_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-82 → retrovault-v02-83
-
-### 對應備份
-- _internal/old/v02_82/
