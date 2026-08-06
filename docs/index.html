@@ -737,6 +737,15 @@ body{
 #fscan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 #fscan-status{flex:0 0 auto;padding:4px 16px 8px;text-align:center;font-size:13px;color:#7986cb;min-height:18px;background:#0b0f1a}
 #fscan-status.busy{color:#00e5ff}
+/* v02.88：辨識成功時鏡頭畫面內的大字確認banner——原本只靠toast()提示，
+   但toast的z-index(999)低於全螢幕相機overlay(#fscan-ov,99999)，掃描/OCR進行中
+   toast其實被蓋住看不到；改在鏡頭畫面正中央疊一個大字banner，確保使用者看得到辨識結果。 */
+#fscan-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:6;opacity:0;transition:opacity .18s ease}
+#fscan-flash.on{opacity:1}
+#fscan-flash-box{background:rgba(0,20,12,.92);border:2px solid #00e676;border-radius:16px;padding:16px 22px;max-width:86%;text-align:center;transform:scale(.92);transition:transform .18s ease;box-shadow:0 0 24px rgba(0,230,118,.35)}
+#fscan-flash.on #fscan-flash-box{transform:scale(1)}
+#fscan-flash-lbl{font-size:13px;color:#69f0ae;letter-spacing:1px;margin-bottom:6px;font-weight:700}
+#fscan-flash-val{font-size:26px;font-weight:900;color:#fff;letter-spacing:.5px;word-break:break-all;line-height:1.3}
 #fscan-bar{flex:0 0 auto;display:flex;gap:10px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b0f1a;min-height:18vh;align-items:center}
 #fscan-bar button{flex:1;padding:18px 8px;border-radius:12px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:15px;font-weight:700;cursor:pointer}
 #fscan-bar button.cp{background:linear-gradient(135deg,#00e5ff,#2979ff);border-color:transparent;color:#001018}
@@ -2618,7 +2627,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.87';
+const APP_VERSION='v02.88';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9699,20 +9708,32 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
 // 透過既有的compressImg（內部會自動呼叫autoCropCanvas依背景色差異裁掉多餘邊緣）處理，
 // 拍完呼叫onCapture回呼但不自動關閉overlay，讓呼叫端決定要不要留在同一個相機畫面連續拍下一件。
 
+var _fscanFlashTimer=null;
+function _fscanShowFlash(val){
+  // v02.88：辨識成功的大字確認——顯示在鏡頭畫面正中央，蓋過toast被全螢幕overlay擋住看不到的問題
+  var el=$('fscan-flash'),v=$('fscan-flash-val');
+  if(!el||!v)return;
+  v.textContent=val;
+  el.classList.add('on');
+  if(_fscanFlashTimer){clearTimeout(_fscanFlashTimer);_fscanFlashTimer=null;}
+  _fscanFlashTimer=setTimeout(function(){el.classList.remove('on');_fscanFlashTimer=null;},1100);
+}
 function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉（連續模式除外）
   if(!val)return;
   try{if(typeof navigator.vibrate==='function')navigator.vibrate(60);}catch(e){}
   var inp=$(_fscanOpt.inputId);if(inp)inp.value=val;
   if(_fscanOpt.onResult)_fscanOpt.onResult(val);
   var okMsg=(typeof _fscanOpt.resultToast==='function')?_fscanOpt.resultToast(val):('✓ '+val);
+  _fscanShowFlash(val);
   toast(okMsg,'ok',2500);
   // v02.81：連續模式（批次逐件掃描用）——不自動關閉overlay，相機/偵測繼續運作，
   // 交給呼叫端的onContinue決定要不要更新畫面文字、或是全部處理完才真正關閉。
+  // v02.88：延後約900ms才進入下一件，讓使用者先看清楚上面的大字確認banner再切換畫面文字。
   if(_fscanOpt.continuous){
     _fscanClearBusy(); // OCR模式下清除「AI辨識中」忙碌狀態，讓使用者能立刻拍下一件
-    if(typeof _fscanOpt.onContinue==='function')_fscanOpt.onContinue();
+    if(typeof _fscanOpt.onContinue==='function')setTimeout(_fscanOpt.onContinue,900);
   }else{
-    fscanClose();
+    setTimeout(fscanClose,700); // v02.88：非連續模式也延後關閉，讓大字確認banner有時間被看到
   }
 }
 // 商品編碼建檔模式：開 OCR 取景框帶入目標欄位（失敗回退原生相機）
@@ -10295,6 +10316,11 @@ function b2Scan(){
     var item=_batchItems[_batchStepIdx];
     var ttl=$('fscan-title');if(ttl)ttl.textContent='掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
     var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準包裝上的條碼';
+    // v02.88修正：條碼偵測到之後 createScanner 內部會自行停止串流（鏡頭畫面變黑），
+    // 原本這裡只更新文字、沒有重新啟動掃描器，導致連續批次掃描第2件起完全偵測不到條碼。
+    _fscanDetect(true);
+    _fscanSetScanning('正在偵測條碼');
+    if(_fscanInst)_fscanInst.start();
   }
   function advance(){
     _batchStepIdx++;
@@ -10562,14 +10588,23 @@ function _batchRenderList(){
       : '<div'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;'+(editable?'cursor:pointer;':'')+'color:#7986cb;text-align:center;line-height:1.2" title="'+(editable?'點擊拍照補上圖片':'')+'">📷</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
+    // v02.88：名稱辨識常出錯，但這一步之前完全不能改名稱，錯了只能等轉入收藏後再編輯，
+    // 容易忘記修正。改成直接在勾選清單這一步就能改名稱（input直接改，不用另外開完整表單），
+    // 其餘欄位仍點「✎」開完整表單編輯（沿用既有batchEditItem，不重造一套）。
+    var nameField=editable
+      ? '<div style="font-size:10px;color:#7986cb;margin-bottom:3px">第'+(item.order||(i+1))+'件名稱</div>'+
+        '<input type="text" value="'+esc(name)+'" placeholder="商品名稱" oninput="_batchUpdateName('+i+',this.value)" '+
+        'style="width:100%;background:#0f1525;border:1px solid #2a3a5a;border-radius:6px;color:#e8eaf6;font-size:13px;font-weight:600;padding:6px 8px;font-family:inherit;box-sizing:border-box">'
+      : '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
       '<input type="checkbox" '+checked+' '+disabled+' onchange="batchToggleInclude('+i+',this.checked)" style="width:18px;height:18px;flex-shrink:0;accent-color:#ce93d8">'+
       imgTag+
-      '<div style="flex:1;min-width:0"'+(editable?' onclick="batchEditItem('+i+')" style="cursor:pointer"':'')+'>'+
-        '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        nameField+
         '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
         '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+'</div>'+
       '</div>'+
+      (editable?'<button type="button" onclick="batchEditItem('+i+')" title="編輯其他欄位" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#9fa8c8;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer">✎</button>':'')+
     '</div>';
   }).join('');
   var doneCount=_batchItems.filter(function(it){return it.status==='ok'||it.status==='failed';}).length;
@@ -10586,6 +10621,12 @@ function batchToggleInclude(i,checked){
   if(!_batchItems[i])return;
   _batchItems[i].include=checked;
   _batchRenderList();
+}
+// v02.88：確認清單直接改名稱——只更新資料，不呼叫_batchRenderList()（會整批重繪innerHTML，
+// 打字打到一半輸入框會被重建、游標位置跑掉），存檔時直接讀取_batchItems[i].entry.primary_name。
+function _batchUpdateName(i,val){
+  var item=_batchItems[i];if(!item||!item.entry)return;
+  item.entry.primary_name=val;
 }
 
 // v02.57：批次項目編輯——點縮圖開啟既有的完整單品表單（跟其他建檔模式共用同一套 renderForm／
@@ -17113,6 +17154,7 @@ function _imgToB64(src){
     <div id="fscan-stage">
       <video id="fscan-video" autoplay playsinline muted></video>
       <div id="fscan-overlay"><div class="scan-box"></div><div class="scan-line"></div></div>
+      <div id="fscan-flash"><div id="fscan-flash-box"><div id="fscan-flash-lbl">✓ 辨識成功</div><div id="fscan-flash-val"></div></div></div>
     </div>
     <div id="fscan-info">
       <span id="fscan-title">掃描編碼</span>

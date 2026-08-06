@@ -723,18 +723,19 @@ body{
 #fscan-ov{position:fixed;inset:0;z-index:99999;background:#000;display:none;align-items:stretch;justify-content:center;touch-action:none}
 #fscan-ov.on{display:flex}
 #fscan-card{width:100%;max-width:none;height:100%;background:#000;border:none;border-radius:0;overflow:hidden;display:flex;flex-direction:column;box-shadow:none}
-#fscan-head{flex:0 0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;text-align:center;color:#fff;background:#0b0f1a;display:flex;flex-direction:column}
-/* v02.82：使用者實測回報「上面的說明文字太小不明顯」——原本#fscan-title(步驟資訊，如
-   「拍照辨識商品編碼(第2/10件)」)是主標題(較大)，#fscan-sub(品名)是副標題(較小)，
-   但品名才是使用者需要視覺確認「拍的是不是這一件」最重要的資訊。改成品名視覺上排在
-   最前面且放大，步驟資訊縮小成次要說明；用flex order調整視覺順序，不用改動任何JS
-   呼叫端傳入title/subtitle的內容語意（title依然是步驟資訊，subtitle依然是品名）。 */
-#fscan-title{order:2;display:block;font-size:11px;font-weight:400;color:#7986cb;letter-spacing:0;margin-top:4px}
-#fscan-sub{order:1;display:block;font-size:19px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1.3}
+#fscan-head{flex:0 0 auto;padding-top:calc(10px + env(safe-area-inset-top));background:#0b0f1a}
+/* v02.84：使用者實測回報希望「步驟進度」（如「掃描條碼(第1/6件)」）也跟著品名一起
+   搬到相機畫面下方——不要留一個在最上方、一個在下方，兩者合併成同一個資訊區塊
+   (fscan-info)：進度文字(小字、次要)在上，品名(大字、粗體)在下，一起位於相機畫面
+   跟狀態文字之間。fscan-head簡化成只負責safe-area頂部間距的空容器，不再放文字。
+   這是共用元件，barcode/OCR拍照兩種模式都會一併套用到。 */
+#fscan-info{flex:0 0 auto;text-align:center;padding:8px 16px 2px;background:#0b0f1a}
+#fscan-title{display:block;font-size:11px;font-weight:400;color:#7986cb;letter-spacing:0;margin-bottom:2px}
+#fscan-sub{display:block;font-size:19px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1.3}
 #fscan-stage{flex:1 1 auto;position:relative;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center}
 #fscan-video{width:100%;height:100%;display:block;max-height:none;object-fit:cover}
 #fscan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-#fscan-status{flex:0 0 auto;padding:8px 16px;text-align:center;font-size:13px;color:#7986cb;min-height:18px;background:#0b0f1a}
+#fscan-status{flex:0 0 auto;padding:4px 16px 8px;text-align:center;font-size:13px;color:#7986cb;min-height:18px;background:#0b0f1a}
 #fscan-status.busy{color:#00e5ff}
 #fscan-bar{flex:0 0 auto;display:flex;gap:10px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b0f1a;min-height:18vh;align-items:center}
 #fscan-bar button{flex:1;padding:18px 8px;border-radius:12px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:15px;font-weight:700;cursor:pointer}
@@ -2617,7 +2618,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.82';
+const APP_VERSION='v02.87';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -15218,6 +15219,10 @@ var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barco
 var hunt=[];                 // [{rowNum,uid,data:{...}}]
 var _huntEntry=null;         // 新增目標暫存
 var _huntPhoto='';           // 目標照片暫存（base64；空＝沿用舊照）
+var _huntAIResult=null;      // v02.85：拍照後背景AI辨識結果暫存，進表單時套用
+var _huntAIBusy=false;
+var _huntDefaultCat='';      // v02.86：進入尋寶前預先選擇的分類，判斷AI結果是否該覆蓋用
+var _huntDefaultPlat='';
 var _huntLensData=null;      // v25.03 拍照辨識結果暫存
 var _huntDetailUid=null;
 var _huntConvertUid=null;     // #4：尋寶轉入收藏進行中的來源目標 uid
@@ -15867,6 +15872,10 @@ function huntStartAdd(){
   pickTypeAndPlatform('hunt',function(type,platform){
     _huntEntry={category:'狩獵',target_cat:type,platform:platform||'',primary_name:'',jp_name:'',barcode:'',notes:'',summary:'',region:'',cover_img:'',sightings:'[]',hunt_status:'追蹤中'};
     _huntPhoto='';
+    // v02.86：記錄進入尋寶前預先選擇的分類/平台，AI辨識完成後才知道判斷「使用者是否
+    // 已經在表單裡主動改過」——沒改過(目前值還等於這裡記錄的預設值)就讓AI結果覆蓋，
+    // 已經改過就尊重使用者的選擇，不覆蓋。
+    _huntDefaultCat=type;_huntDefaultPlat=platform||'';
     huntScanStep();
   });
 }
@@ -15911,6 +15920,8 @@ function huntCancelAdd(){
   huntStopScanner();
   var ov=$('hunt-add-ov');if(ov)ov.style.display='none';
   _huntEntry=null;_huntPhoto='';_huntLensData=null;
+  _huntAIResult=null;_huntAIBusy=false; // v02.85：避免下次尋寶記錄殘留上次的AI辨識結果
+  _huntAIStatusUpdate(''); // v02.86：同步隱藏banner，避免殘留在畫面上
 }
 function huntPhotoStep(){
   var ov=_huntOv();var e=_huntEntry||{};
@@ -15920,7 +15931,7 @@ function huntPhotoStep(){
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">② 拍照（選填）</div>'+
       '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+bcLine+
-      '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">拍一張參考照，方便日後在店裡認出是哪一款。轉入收藏後可再用 AI 補齊完整資料。</div>'+
+      '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">拍一張參考照，方便日後在店裡認出是哪一款。拍照後會自動嘗試用 AI 辨識填入品名等欄位，下一步表單可再手動調整。</div>'+
       '<div id="hunt-photo-prev" style="border-radius:12px;overflow:hidden;background:#0f1525;border:1.5px dashed #2a3a5a;min-height:200px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:#5c6b8a;font-size:13px">尚未拍照</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:8px">'+
         '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#141b30;border:1.5px solid #ff6e9c;border-radius:10px;padding:12px;cursor:pointer;color:#ff6e9c;font-size:13px;font-weight:600">'+
@@ -15941,9 +15952,104 @@ function huntPhotoPick(input){
     r.onload=function(){compressImg(r.result,1000,0.8,function(out){
       _huntPhoto=out;var p=$('hunt-photo-prev');
       if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:280px;object-fit:contain">';}
+      _huntStartAIFill(); // v02.85：拍照確認後背景觸發AI辨識，不阻塞使用者操作
     });};
     r.readAsDataURL(blob);
   }).catch(function(){});
+}
+// v02.85：尋寶拍照後背景AI辨識——沿用huntConvertAIFill()同一套「照片AI視覺辨識＋
+// 條碼DB查詢」邏輯，但這裡是寫入_huntEntry（尋寶暫存物件），不是全域entry（那是
+// 「轉入收藏」階段才會用到的）。沒有AI金鑰時靜默跳過，不打斷輕量的尋寶記錄流程。
+function _huntStartAIFill(){
+  if(!_huntPhoto)return;
+  if(!cfg.gkey&&!cfg.okey)return;
+  _huntAIResult=null;_huntAIBusy=true;
+  _huntAIStatusUpdate('AI 辨識中，請稍候…');
+  var barcode=(_huntEntry&&_huntEntry.barcode)||'';
+  var dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  var aiP=_imgToB64(_huntPhoto).then(function(b64){
+    if(!b64)return null;
+    var hint=barcode?('條碼：'+barcode+'。'):'';
+    return callAIVision([
+      {inlineData:{mimeType:'image/jpeg',data:b64.split(',')[1]}},
+      {text:hint+'請辨識這款商品，輸出所有已知欄位 JSON（品名、平台、簡介等）。'}
+    ]).catch(function(){return null;});
+  }).catch(function(){return null;});
+  Promise.all([dbP,aiP]).then(function(r){
+    var db=r[0]||{},ai=r[1]||null;
+    if(ai&&typeof ai==='object'){
+      normalizeLanguageFields(ai);
+      if(!ai.primary_name)ai.primary_name=ai.zh_name||ai.jp_name||ai.en_name||ai.title||ai.name||'';
+    }
+    var merged={};
+    if(ai&&typeof ai==='object')Object.assign(merged,ai);
+    if(db&&typeof db==='object')Object.keys(db).forEach(function(k){if(db[k]&&!merged[k])merged[k]=db[k];});
+    _huntAIResult=merged;
+    _huntAIBusy=false;
+    _huntAIStatusUpdate(merged.primary_name?('AI 已辨識：'+merged.primary_name):'AI 未能辨識出符合結果，可手動填寫',true);
+    _huntApplyAIResultIfFormOpen();
+  }).catch(function(){
+    _huntAIBusy=false;_huntAIResult=null;
+    _huntAIStatusUpdate('');
+  });
+}
+var _huntAIBannerTimer=null;
+function _huntAIBannerEl(){
+  var el=$('hunt-ai-banner');
+  if(!el){
+    el=document.createElement('div');
+    el.id='hunt-ai-banner';
+    // v02.87：使用者實測回報希望banner不要貼在最上方(會跟表單第一個欄位擠在一起、
+    // 也可能擋住分類/平台這種需要優先看到/操作的欄位)，改成垂直置中——不管裝置螢幕
+    // 大小如何都會穩定出現在畫面中央附近，比寫死一個pixel offset更穩健。
+    el.style.cssText='position:fixed;left:12px;right:12px;top:50%;transform:translateY(-50%);z-index:330;background:linear-gradient(135deg,#1a2540,#141b30);border:1.5px solid #ff6e9c;border-radius:12px;padding:14px;display:none;align-items:center;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,.6);font-size:14px;color:#e8eaf6';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+// v02.86：AI辨識狀態改成固定在畫面上方的顯眼浮動條，不會被表單內容捲動略過
+// （原本嵌在表單內文的小字提示使用者實測回報太容易忽略）。辨識中的訊息持續顯示直到
+// 完成；辨識完成的訊息顯示幾秒後自動收起，不會一直佔用畫面空間。
+function _huntAIStatusUpdate(msg,autoHide){
+  if(_huntAIBannerTimer){clearTimeout(_huntAIBannerTimer);_huntAIBannerTimer=null;}
+  var el=_huntAIBannerEl();
+  if(!msg){el.style.display='none';return;}
+  el.innerHTML='<span style="font-size:18px">'+(autoHide?'✅':'🤖')+'</span><span style="flex:1;line-height:1.4">'+esc(msg)+'</span>';
+  el.style.display='flex';
+  if(autoHide){_huntAIBannerTimer=setTimeout(function(){el.style.display='none';},3500);}
+}
+// 把AI辨識結果套用進_huntEntry：
+// - primary_name/jp_name/summary/region：只填目前是空白的欄位，不覆蓋使用者已輸入的內容
+// - platform：使用者實測回報「容易忘記調整平台」，改成如果目前值還等於「進入尋寶前
+//   預先選擇的預設值」（代表使用者沒有在表單裡主動改過），就讓AI辨識結果覆蓋，因為
+//   AI實際分析照片通常比進入前的粗略預設更準；使用者已經主動改過的話則不覆蓋，尊重
+//   使用者的選擇。
+// - target_cat（分類）：只填空白，不做覆蓋——分類切換牽涉子類型選單等UI結構重新渲染，
+//   風險較高，這次先保守不處理。
+function _huntApplyAIResultToEntry(e){
+  if(!_huntAIResult||!e)return;
+  var r=_huntAIResult;
+  ['primary_name','jp_name','region','summary'].forEach(function(k){
+    if(!e[k]&&r[k])e[k]=r[k];
+  });
+  if(r.platform&&e.platform===_huntDefaultPlat)e.platform=r.platform;
+  if(!e.target_cat&&r.category)e.target_cat=catInternal(r.category);
+}
+// AI辨識完成時，如果使用者已經進到Step3表單畫面，動態補上/更新對應欄位
+function _huntApplyAIResultIfFormOpen(){
+  if(!_huntAIResult)return;
+  var nameInp=$('hf-name');if(!nameInp)return; // 不在表單畫面，不用處理
+  var e=_huntEntry||{};
+  var platBefore=e.platform;
+  _huntApplyAIResultToEntry(e);
+  if(nameInp&&!nameInp.value&&e.primary_name)nameInp.value=e.primary_name;
+  var jpInp=$('hf-jpname');if(jpInp&&!jpInp.value&&e.jp_name)jpInp.value=e.jp_name;
+  var sumInp=$('hf-summary');if(sumInp&&!sumInp.value&&e.summary)sumInp.value=e.summary;
+  // 平台欄位是plat-card(顯示卡片)+隱藏select(實際值)的組合，值有變動時同步更新兩者
+  if(e.platform!==platBefore){
+    var platSel=$('hf-plat');if(platSel)platSel.value=e.platform;
+    var platVal=$('hf-plat-val');if(platVal)platVal.textContent=e.platform||'— 不指定 —';
+  }
 }
 // ── v25.03 拍照辨識 → 尋寶：拍照 → AI 辨識 → 結果卡 → 轉入既有目標表單記價 ──
 function huntLensStart(){
@@ -16057,6 +16163,7 @@ function huntLensToHunt(){
   _huntTranslateToZh(d).then(function(zhName){
     noLoad();
     _huntEntry={category:'狩獵',target_cat:'遊戲',platform:d.platform||'',primary_name:zhName||srcName||'',jp_name:jpFallback,barcode:'',notes:_huntLensNotes(d),summary:(d.summary||'').trim(),region:mapRegion(d.region)||'',cover_img:'',sightings:'[]',hunt_status:'追蹤中'};
+    _huntDefaultCat='遊戲';_huntDefaultPlat=d.platform||''; // v02.86：保持狀態一致
     // _huntPhoto 已是拍攝照片 → huntSaveTarget 會存為 cover_img
     huntFormStep();
   });
@@ -16214,6 +16321,9 @@ function _huntReadFormFields(e,p){
 }
 function huntFormStep(){
   var ov=_huntOv();var e=_huntEntry||{};
+  _huntApplyAIResultToEntry(e); // v02.85：進表單前先套用已完成的AI辨識結果(只填空白欄位/平台視情況覆蓋)
+  // v02.86：辨識中狀態改用固定顯眼的banner呈現(_huntAIBannerEl)，不再嵌入表單內文
+  if(_huntAIBusy)_huntAIStatusUpdate('AI 仍在背景辨識中，完成後會自動補上還沒填的欄位…');
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">③ 目標資訊</div>'+
@@ -16999,10 +17109,14 @@ function _imgToB64(src){
 <!-- ══ 欄位小取景框掃描器 overlay（OCR 編碼／條碼即時偵測 共用）══ -->
 <div id="fscan-ov">
   <div id="fscan-card">
-    <div id="fscan-head"><span id="fscan-title">掃描編碼</span><small id="fscan-sub">對準後拍攝</small></div>
+    <div id="fscan-head"></div>
     <div id="fscan-stage">
       <video id="fscan-video" autoplay playsinline muted></video>
       <div id="fscan-overlay"><div class="scan-box"></div><div class="scan-line"></div></div>
+    </div>
+    <div id="fscan-info">
+      <span id="fscan-title">掃描編碼</span>
+      <small id="fscan-sub">對準後拍攝</small>
     </div>
     <div id="fscan-status"></div>
     <div id="fscan-bar">
