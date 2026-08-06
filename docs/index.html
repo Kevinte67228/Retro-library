@@ -2618,7 +2618,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.84';
+const APP_VERSION='v02.85';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -15219,6 +15219,8 @@ var HUNT_HDR=['category','target_cat','primary_name','platform','subtype','barco
 var hunt=[];                 // [{rowNum,uid,data:{...}}]
 var _huntEntry=null;         // 新增目標暫存
 var _huntPhoto='';           // 目標照片暫存（base64；空＝沿用舊照）
+var _huntAIResult=null;      // v02.85：拍照後背景AI辨識結果暫存，進表單時套用
+var _huntAIBusy=false;
 var _huntLensData=null;      // v25.03 拍照辨識結果暫存
 var _huntDetailUid=null;
 var _huntConvertUid=null;     // #4：尋寶轉入收藏進行中的來源目標 uid
@@ -15912,6 +15914,7 @@ function huntCancelAdd(){
   huntStopScanner();
   var ov=$('hunt-add-ov');if(ov)ov.style.display='none';
   _huntEntry=null;_huntPhoto='';_huntLensData=null;
+  _huntAIResult=null;_huntAIBusy=false; // v02.85：避免下次尋寶記錄殘留上次的AI辨識結果
 }
 function huntPhotoStep(){
   var ov=_huntOv();var e=_huntEntry||{};
@@ -15921,8 +15924,9 @@ function huntPhotoStep(){
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">② 拍照（選填）</div>'+
       '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+bcLine+
-      '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">拍一張參考照，方便日後在店裡認出是哪一款。轉入收藏後可再用 AI 補齊完整資料。</div>'+
+      '<div style="font-size:12px;color:#7986cb;margin-bottom:12px;line-height:1.6">拍一張參考照，方便日後在店裡認出是哪一款。拍照後會自動嘗試用 AI 辨識填入品名等欄位，下一步表單可再手動調整。</div>'+
       '<div id="hunt-photo-prev" style="border-radius:12px;overflow:hidden;background:#0f1525;border:1.5px dashed #2a3a5a;min-height:200px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;color:#5c6b8a;font-size:13px">尚未拍照</div>'+
+      '<div id="hunt-ai-status" style="display:none;font-size:12px;color:#7986cb;margin-bottom:10px;text-align:center"></div>'+
       '<div style="display:flex;gap:8px;margin-bottom:8px">'+
         '<label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#141b30;border:1.5px solid #ff6e9c;border-radius:10px;padding:12px;cursor:pointer;color:#ff6e9c;font-size:13px;font-weight:600">'+
           '<span>📷</span><span>拍照</span>'+
@@ -15942,9 +15946,71 @@ function huntPhotoPick(input){
     r.onload=function(){compressImg(r.result,1000,0.8,function(out){
       _huntPhoto=out;var p=$('hunt-photo-prev');
       if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:280px;object-fit:contain">';}
+      _huntStartAIFill(); // v02.85：拍照確認後背景觸發AI辨識，不阻塞使用者操作
     });};
     r.readAsDataURL(blob);
   }).catch(function(){});
+}
+// v02.85：尋寶拍照後背景AI辨識——沿用huntConvertAIFill()同一套「照片AI視覺辨識＋
+// 條碼DB查詢」邏輯，但這裡是寫入_huntEntry（尋寶暫存物件），不是全域entry（那是
+// 「轉入收藏」階段才會用到的）。沒有AI金鑰時靜默跳過，不打斷輕量的尋寶記錄流程。
+function _huntStartAIFill(){
+  if(!_huntPhoto)return;
+  if(!cfg.gkey&&!cfg.okey)return;
+  _huntAIResult=null;_huntAIBusy=true;
+  _huntAIStatusUpdate('🤖 AI 辨識中...');
+  var barcode=(_huntEntry&&_huntEntry.barcode)||'';
+  var dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  var aiP=_imgToB64(_huntPhoto).then(function(b64){
+    if(!b64)return null;
+    var hint=barcode?('條碼：'+barcode+'。'):'';
+    return callAIVision([
+      {inlineData:{mimeType:'image/jpeg',data:b64.split(',')[1]}},
+      {text:hint+'請辨識這款商品，輸出所有已知欄位 JSON（品名、平台、簡介等）。'}
+    ]).catch(function(){return null;});
+  }).catch(function(){return null;});
+  Promise.all([dbP,aiP]).then(function(r){
+    var db=r[0]||{},ai=r[1]||null;
+    if(ai&&typeof ai==='object'){
+      normalizeLanguageFields(ai);
+      if(!ai.primary_name)ai.primary_name=ai.zh_name||ai.jp_name||ai.en_name||ai.title||ai.name||'';
+    }
+    var merged={};
+    if(ai&&typeof ai==='object')Object.assign(merged,ai);
+    if(db&&typeof db==='object')Object.keys(db).forEach(function(k){if(db[k]&&!merged[k])merged[k]=db[k];});
+    _huntAIResult=merged;
+    _huntAIBusy=false;
+    _huntAIStatusUpdate(merged.primary_name?('✓ AI 已辨識：'+merged.primary_name):'AI 未能辨識出符合結果，可手動填寫');
+    _huntApplyAIResultIfFormOpen();
+  }).catch(function(){
+    _huntAIBusy=false;_huntAIResult=null;
+    _huntAIStatusUpdate('');
+  });
+}
+function _huntAIStatusUpdate(msg){
+  var el=$('hunt-ai-status');if(!el)return;
+  el.textContent=msg;el.style.display=msg?'block':'none';
+}
+// 把AI辨識結果套用進_huntEntry，只填目前是空白的欄位，不覆蓋使用者已經手動輸入的內容
+function _huntApplyAIResultToEntry(e){
+  if(!_huntAIResult||!e)return;
+  var r=_huntAIResult;
+  ['primary_name','jp_name','platform','region','summary'].forEach(function(k){
+    if(!e[k]&&r[k])e[k]=r[k];
+  });
+  if(!e.target_cat&&r.category)e.target_cat=catInternal(r.category);
+}
+// AI辨識完成時，如果使用者已經進到Step3表單畫面，動態補上目前還是空白的欄位
+// （平台/分類等較複雜的UI元件不在這裡處理，那些已經在huntFormStep()渲染當下處理過了；
+// 這裡只處理簡單的文字input，避免過度複雜化）
+function _huntApplyAIResultIfFormOpen(){
+  if(!_huntAIResult)return;
+  var nameInp=$('hf-name');if(!nameInp)return; // 不在表單畫面，不用處理
+  var e=_huntEntry||{};
+  _huntApplyAIResultToEntry(e);
+  if(nameInp&&!nameInp.value&&e.primary_name)nameInp.value=e.primary_name;
+  var jpInp=$('hf-jpname');if(jpInp&&!jpInp.value&&e.jp_name)jpInp.value=e.jp_name;
+  var sumInp=$('hf-summary');if(sumInp&&!sumInp.value&&e.summary)sumInp.value=e.summary;
 }
 // ── v25.03 拍照辨識 → 尋寶：拍照 → AI 辨識 → 結果卡 → 轉入既有目標表單記價 ──
 function huntLensStart(){
@@ -16215,11 +16281,13 @@ function _huntReadFormFields(e,p){
 }
 function huntFormStep(){
   var ov=_huntOv();var e=_huntEntry||{};
+  _huntApplyAIResultToEntry(e); // v02.85：進表單前先套用已完成的AI辨識結果(只填空白欄位)
+  var aiHint=_huntAIBusy?'<div style="font-size:11px;color:#7986cb;margin-bottom:10px">🤖 AI 仍在背景辨識中，完成後會自動補上還沒填的欄位...</div>':'';
   ov.innerHTML=
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between">'+
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">③ 目標資訊</div>'+
       '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
-    '<div style="padding:16px;flex:1;overflow-y:auto">'+
+    '<div style="padding:16px;flex:1;overflow-y:auto">'+aiHint+
       _huntFormFieldsHtml(e,'hf')+
       '<button class="btn bp bw" onclick="huntSaveTarget()" type="button">儲存目標</button>'+
     '</div>';
