@@ -755,8 +755,12 @@ body{
 #fscan-flash.on #fscan-flash-box{transform:scale(1)}
 #fscan-flash-lbl{font-size:13px;color:#69f0ae;letter-spacing:1px;margin-bottom:6px;font-weight:700}
 #fscan-flash-val{font-size:26px;font-weight:900;color:#fff;letter-spacing:.5px;word-break:break-all;line-height:1.3}
-#fscan-bar{flex:0 0 auto;display:flex;gap:10px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b0f1a;min-height:18vh;align-items:center}
-#fscan-bar button{flex:1;padding:18px 8px;border-radius:12px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:15px;font-weight:700;cursor:pointer}
+#fscan-bar{flex:0 0 auto;display:flex;gap:8px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b0f1a;min-height:18vh;align-items:center}
+/* v02.101：使用者實測回報，四顆按鈕（上一件/跳過此件/取消/拍照辨識）並排時文字會換行、
+   四個外框大小也跟著看起來不一致。加上white-space:nowrap＋min-width:0強制不換行、單行
+   顯示（配合下方縮短過的按鈕文字），字級也略縮小；flex:1本身就會讓四顆等寬，換行只是
+   因為換行前內容的最小寬度需求超過等分寬度，加上這些規則後不會再有這個問題。 */
+#fscan-bar button{flex:1;min-width:0;padding:16px 6px;border-radius:12px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #fscan-bar button.cp{background:linear-gradient(135deg,#00e5ff,#2979ff);border-color:transparent;color:#001018}
 #fscan-bar button:disabled{opacity:.55;cursor:progress;transform:none}
 #fscan-bar button:active{transform:scale(.97)}
@@ -934,6 +938,16 @@ body{
       </div>
       <div style="padding-bottom:80px">
         <div id="method-sel" style="padding:14px 16px 0">
+          <!-- v02.100：快速查詢入口——逛店/翻箱時最常見的需求是「掃一下馬上知道有沒有」，
+               不需要走完整個選分類→建檔的流程。獨立放在最上面，不用先選分類就能用。 -->
+          <button type="button" onclick="quickCheckStart()" style="width:100%;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(0,229,255,.04));border:1.5px solid rgba(0,229,255,.4);border-radius:14px;padding:14px 16px;margin-bottom:16px;cursor:pointer;text-align:left;font-family:inherit">
+            <div style="font-size:26px;flex-shrink:0">🔍</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:800;color:#00e5ff">快速查詢：掃碼看是否已收藏</div>
+              <div style="font-size:11px;color:#7986cb;margin-top:2px">逛店/翻箱時用，不用選分類、不進建檔表單</div>
+            </div>
+            <div style="color:#00e5ff;font-size:18px;flex-shrink:0">›</div>
+          </button>
           <!-- 標題 -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px 14px;margin-bottom:14px;border-bottom:2px solid #7986cb">
             <div style="display:flex;align-items:center;gap:7px">
@@ -1447,7 +1461,7 @@ body{
             </div>
 
             <div id="batch-final-actions" style="display:none;gap:10px;margin-top:16px">
-              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
+              <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="batchCancelAll()" type="button">取消</button>
               <button id="batch-save-btn" class="btn bp bw" style="flex:1;font-size:14px;display:none" onclick="batchSaveAll()" type="button">儲存已勾選項目</button>
             </div>
           </div>
@@ -1573,6 +1587,10 @@ body{
             <div style="position:relative">
               <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px" type="button">⋯</button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                  依系列瀏覽
+                </button>
                 <button class="col-menu-item" onclick="colRefresh();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
                   從雲端同步
@@ -2655,7 +2673,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.99';
+const APP_VERSION='v02.101';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5663,6 +5681,7 @@ function colSelBar(){
   if(tools)tools.style.display='none';
   bar.style.display='flex';
   bar.innerHTML='<button class="btn bo" onclick="colSelectAllVisible()" type="button">全選</button>'+
+    '<button class="btn bo" onclick="bulkEditOpen()" type="button">批次編輯（'+_colSelSet.size+'）</button>'+
     '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="colDeleteSelected()" type="button">刪除（'+_colSelSet.size+'）</button>'+
     '<button class="btn bo" onclick="colToggleSelect()" type="button">取消</button>';
 }
@@ -5683,6 +5702,135 @@ function colDeleteSelected(){
     toast('已刪除 '+(res.deleted!=null?res.deleted:keys.length)+' 筆 ✓','ok');
     filterCol();
   }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
+}
+
+// v02.100：批次編輯——收藏頁多選原本只有全選／刪除，整理收藏最常見的「這批改存放位置／
+// 收藏狀態／系列」卻要一筆筆點進去改。沿用單筆更新既有的shPost({action:'update',...})
+// 模式（跟marketSaveEstimate同一套），逐筆循序送出，只覆蓋使用者勾選的欄位、其餘欄位
+// 完全不動。
+function bulkEditOpen(){
+  if(!_colSelSet.size){toast('尚未選取','er');return;}
+  $('bulk-edit-count').textContent=_colSelSet.size;
+  ['loc','status','series'].forEach(function(k){var cb=$('bulk-edit-'+k+'-on');if(cb)cb.checked=false;});
+  $('bulk-edit-loc').value='';
+  $('bulk-edit-series').value='';
+  $('bulk-edit-status').value='收藏中';
+  var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
+  if(ov)ov.style.display='block';
+  if(p)p.style.display='flex';
+}
+function bulkEditClose(){
+  var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
+  if(ov)ov.style.display='none';
+  if(p)p.style.display='none';
+}
+function bulkEditSave(){
+  if(!cfg.url){toast('請先設定試算表 URL','er');bulkEditClose();showPg('cfg');return;}
+  var patch={};
+  if($('bulk-edit-loc-on').checked)patch.storage_location=($('bulk-edit-loc').value||'').trim();
+  if($('bulk-edit-status-on').checked)patch.collect_status=$('bulk-edit-status').value;
+  if($('bulk-edit-series-on').checked)patch.series=($('bulk-edit-series').value||'').trim();
+  if(!Object.keys(patch).length){toast('請至少勾選一個要修改的欄位','er');return;}
+  var keys=Array.from(_colSelSet);
+  if(!keys.length){toast('尚未選取','er');return;}
+  var fieldLabels={storage_location:'存放位置',collect_status:'收藏狀態',series:'系列'};
+  var patchDesc=Object.keys(patch).map(function(k){return fieldLabels[k];}).join('、');
+  bulkEditClose();
+  if(!confirm('確定要把這 '+keys.length+' 筆的「'+patchDesc+'」都改成上面填的值嗎？'))return;
+  var keySet=new Set(keys);
+  var items=col.filter(function(c){return keySet.has(_colKey(c));});
+  if(!items.length){toast('找不到選取的項目','er');return;}
+  var i=0,okCount=0,failCount=0;
+  function next(){
+    if(i>=items.length){
+      localforage.setItem('gv_col',col).catch(function(){});
+      updateStats();filterCol();noLoad();
+      toast('批次編輯完成：成功 '+okCount+' 筆'+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4000);
+      colToggleSelect(); // 完成後退出選取模式，回到一般瀏覽
+      return;
+    }
+    var item=items[i];
+    loading('批次編輯中...（'+(i+1)+'／'+items.length+'）');
+    var updated=Object.assign({},item.data||{},patch);
+    var fields=fieldsFor(updated.category,updated.subtype);
+    var row=_rowFromFields(updated,fields);
+    var rowNum=item.uid||item.rowNum;
+    var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
+    shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
+      if(res&&res.ok){item.data=updated;okCount++;}else{failCount++;}
+    }).catch(function(){failCount++;}).finally(function(){i++;next();});
+  }
+  next();
+}
+
+// v02.100：依系列瀏覽——把有填「系列」欄位的收藏分組，一眼看出某系列收了幾件；同時對照
+// 「尋寶」清單，品名含有該系列名稱的項目視為「可能缺這款」。Hunt的欄位表（HUNT_HDR）本身
+// 沒有series欄位，沒辦法精確比對，用品名字串包含關係做best-effort比對，非嚴謹比對。
+function _seriesGroupsBuild(){
+  var groups={};
+  col.forEach(function(c){
+    var s=(c.data.series||'').trim();
+    if(!s)return;
+    (groups[s]=groups[s]||[]).push(c);
+  });
+  return groups;
+}
+function _seriesRelatedHunt(seriesName){
+  var s=(seriesName||'').trim().toLowerCase();
+  if(!s)return [];
+  return hunt.filter(function(h){
+    var d=h.data||{};
+    var n=(d.primary_name||'').toLowerCase();
+    var jn=(d.jp_name||'').toLowerCase();
+    return (n&&n.indexOf(s)>=0)||(jn&&jn.indexOf(s)>=0);
+  });
+}
+function renderSeriesBrowse(){
+  var wrap=$('series-list');if(!wrap)return;
+  var groups=_seriesGroupsBuild();
+  var names=Object.keys(groups).sort(function(a,b){return groups[b].length-groups[a].length||a.localeCompare(b);});
+  if(!names.length){
+    wrap.innerHTML='<div style="text-align:center;padding:40px 20px;color:#7986cb;font-size:13px;line-height:1.6">目前收藏裡沒有填寫「系列」欄位的項目<br><span style="font-size:11px">幫想追蹤的作品填上系列名稱，這裡就會自動分組顯示</span></div>';
+    return;
+  }
+  wrap.innerHTML=names.map(function(s){
+    var items=groups[s];
+    var related=_seriesRelatedHunt(s);
+    var itemsHtml=items.map(function(c){
+      var d=c.data;
+      var name=d.primary_name||d.zh_name||'—';
+      var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':'📦';
+      return '<div class="dv2-ri" onclick="closeSeriesBrowse();filterCol();showDetail(\''+_escAttr(c.uid||c.rowNum)+'\')">'+
+        '<div class="dv2-ri-ic">'+thumb+'</div>'+
+        '<div style="flex:1;min-width:0"><div class="dv2-ri-name">'+esc(name)+'</div>'+
+        '<div class="dv2-ri-sub">'+esc(platShort(d.platform||'')||'')+'</div></div>'+
+      '</div>';
+    }).join('');
+    var missingHtml=related.length?('<div style="margin-top:6px;padding-top:8px;border-top:1px dashed #2a3a5a">'+
+      related.map(function(h){
+        var d=h.data||{};
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:#ffb74d">'+
+          '<span style="flex-shrink:0">🔍 缺：</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.primary_name||'')+'</span>'+
+        '</div>';
+      }).join('')+'</div>') : '';
+    return '<div style="background:#141b30;border:1px solid #1e2a45;border-radius:12px;padding:12px;margin-bottom:12px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px">'+
+        '<div style="font-size:14px;font-weight:800;color:#ce93d8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s)+'</div>'+
+        '<div style="font-size:11px;color:#7986cb;flex-shrink:0">已收藏 '+items.length+' 件'+(related.length?'・尋寶中 '+related.length+' 件':'')+'</div>'+
+      '</div>'+itemsHtml+missingHtml+
+    '</div>';
+  }).join('');
+}
+function openSeriesBrowse(){
+  renderSeriesBrowse();
+  var ov=$('series-ov'),p=$('series-panel');
+  if(ov)ov.style.display='block';
+  if(p)p.style.display='flex';
+}
+function closeSeriesBrowse(){
+  var ov=$('series-ov'),p=$('series-panel');
+  if(ov)ov.style.display='none';
+  if(p)p.style.display='none';
 }
 
 // ── Gemini ──
@@ -6453,7 +6601,16 @@ function initGameCodeComboMode(){
 // 任何「辨識」用途的圖片（拍照或相簿）皆先進入裁切步驟，再進入後續流程。
 var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null,_autoDetected:false};
 // 讀檔→開啟裁切器，回傳裁切後的 Blob（image/jpeg）。取消則 reject。
-function cropImageFile(file){
+// v02.101：新增選用的第2個參數label——批次書背Step4裁切封面照時，使用者連續處理很多件，
+// 裁切畫面原本只有通用提示文字，看不出「現在裁的是哪一件」，容易跟手上實物對不起來。
+// 不傳label（既有所有呼叫端）行為完全不變，沿用原本固定的提示文字。
+function cropImageFile(file,label){
+  var head=$('crop-head');
+  if(head){
+    head.innerHTML=label
+      ? '裁切圖片<small>'+esc(label)+'</small><small style="margin-top:2px">拖曳調整框線範圍，可拖角縮放</small>'
+      : '裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small>';
+  }
   return new Promise(function(resolve,reject){
     var r=new FileReader();
     r.onload=function(){ _cropOpen(r.result,resolve,reject); };
@@ -9733,6 +9890,38 @@ function fscanCancel(){
   }
   var cb=_fscanOpt&&_fscanOpt.onCancel;fscanClose();if(typeof cb==='function')cb();
 }
+// v02.100：逛店/翻箱時的「快速查詢」——不用選分類、不進建檔表單，掃條碼直接告訴使用者
+// 有沒有收藏過。沿用共用的fscan掃描overlay跟findDuplicate()既有的比對邏輯，不另外寫一套。
+// 連續模式，可以一直掃下去，取消才會退出。
+function quickCheckStart(){
+  function restart(){
+    // v02.88修正過的同一個問題：偵測到後底層掃描器會自行停止串流，續掃前要重新啟動。
+    _fscanDetect(true);_fscanSetScanning('正在偵測條碼，可連續掃描');
+    if(_fscanInst)_fscanInst.start();
+  }
+  openFieldScanner({mode:'barcode',continuous:true,
+    title:'快速查詢',
+    subtitle:'掃條碼看是否已收藏，不會進入建檔流程',
+    detectText:'正在偵測條碼，可連續掃描',
+    flashHtml:true,flashLabel:'',flashMs:2400,
+    flashText:function(bc){
+      var dup=findDuplicate({barcode:bc});
+      if(dup){
+        var d=dup.data||{};
+        var dateTxt=(d.buy_date||'').slice(0,10);
+        return '<div style="color:#69f0ae;font-size:15px;font-weight:800">✅ 已收藏過</div>'+
+          '<div style="font-size:15px;margin-top:6px;color:#fff;font-weight:700">'+esc(d.primary_name||'（無名稱）')+'</div>'+
+          (dateTxt?'<div style="font-size:12px;margin-top:4px;color:#9fa8c8">購入日期：'+esc(dateTxt)+'</div>':'');
+      }
+      return '<div style="color:#ff8a65;font-size:17px;font-weight:800">❌ 尚未收藏</div>'+
+        '<div style="font-size:12px;margin-top:6px;color:#9fa8c8">條碼：'+esc(bc)+'</div>';
+    },
+    resultToast:function(){return '';}, // 結果已經用大字banner顯示，不需要另外跳toast
+    onResult:function(){},
+    onContinue:restart,
+    onCancel:function(){}
+  });
+}
 // 🤖 [AI辨識進入點] 拍照OCR掃描條碼模式：擷取畫面送Gemini辨識條碼數字
 function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
   if(_fscanBusy)return;
@@ -9813,12 +10002,18 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
 var _fscanFlashTimer=null;
 function _fscanShowFlash(val){
   // v02.88：辨識成功的大字確認——顯示在鏡頭畫面正中央，蓋過toast被全螢幕overlay擋住看不到的問題
+  // v02.100：新增選用的flashHtml/flashLabel/flashMs——快速查詢模式要顯示「已收藏/未收藏＋
+  // 品名/購入日期」這種多行結果，不是單純的掃描值，純文字textContent放不下換行版面。
+  // 沒有傳這些選項（既有所有呼叫端）行為完全不變。
   var el=$('fscan-flash'),v=$('fscan-flash-val');
   if(!el||!v)return;
-  v.textContent=val;
+  if(_fscanOpt&&_fscanOpt.flashHtml)v.innerHTML=val; else v.textContent=val;
+  var lbl=$('fscan-flash-lbl');
+  if(lbl)lbl.textContent=(_fscanOpt&&_fscanOpt.flashLabel!==undefined)?_fscanOpt.flashLabel:'✓ 辨識成功';
   el.classList.add('on');
   if(_fscanFlashTimer){clearTimeout(_fscanFlashTimer);_fscanFlashTimer=null;}
-  _fscanFlashTimer=setTimeout(function(){el.classList.remove('on');_fscanFlashTimer=null;},1100);
+  var ms=(_fscanOpt&&_fscanOpt.flashMs)||1100;
+  _fscanFlashTimer=setTimeout(function(){el.classList.remove('on');_fscanFlashTimer=null;},ms);
 }
 function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉（連續模式除外）
   if(!val)return;
@@ -9826,8 +10021,8 @@ function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉（
   var inp=$(_fscanOpt.inputId);if(inp)inp.value=val;
   if(_fscanOpt.onResult)_fscanOpt.onResult(val);
   var okMsg=(typeof _fscanOpt.resultToast==='function')?_fscanOpt.resultToast(val):('✓ '+val);
-  _fscanShowFlash(val);
-  toast(okMsg,'ok',2500);
+  _fscanShowFlash((typeof _fscanOpt.flashText==='function')?_fscanOpt.flashText(val):val);
+  if(okMsg)toast(okMsg,'ok',2500); // v02.100：resultToast可回傳空字串代表不需要另外跳toast（結果已用大字banner顯示）
   // v02.81：連續模式（批次逐件掃描用）——不自動關閉overlay，相機/偵測繼續運作，
   // 交給呼叫端的onContinue決定要不要更新畫面文字、或是全部處理完才真正關閉。
   // v02.88：延後約900ms才進入下一件，讓使用者先看清楚上面的大字確認banner再切換畫面文字。
@@ -10260,6 +10455,43 @@ var _batchImgFile=null;
 var _batchResolving=false;
 var _batchStep=1; // v02.67：1拍書背 2逐件條碼 3逐件商品編碼 4逐件封面照
 // v02.61：攤平多件模式的全域狀態
+// v02.100：批次流程韌性——'collect'＝還在Step1-4收集資料，'resolve'＝已進入Step5查詢/確認清單
+// 階段。續傳時靠這個決定要導回逐件收集畫面還是直接顯示確認清單。
+var _batchPhase='collect';
+
+var _batchDraftKey='gv_batch_draft';
+var _batchSaveDraftTimer=null;
+// v02.100：批次流程韌性——_batchItems只存在記憶體裡，手機跳出App／瀏覽器重整／誤觸返回
+// 都會讓已經掃描/拍攝好的進度整批歸零，掃一整排書背往往要花好幾分鐘，這種「重來」的挫折感
+// 很大。改成每完成一件的關鍵操作（Step2-4逐件確認/跳過、Step5每件解析完成）就順手存一份
+// 進度到localforage，下次進入批次模式時偵測到未完成的批次，主動問要不要接續。debounce
+// 300ms避免短時間內重複觸發（例如連續按鍵）造成過多次IndexedDB寫入。
+function _batchSaveDraft(){
+  if(_batchSaveDraftTimer){clearTimeout(_batchSaveDraftTimer);_batchSaveDraftTimer=null;}
+  _batchSaveDraftTimer=setTimeout(function(){
+    _batchSaveDraftTimer=null;
+    if(!_batchItems||!_batchItems.length)return;
+    var draft={
+      savedAt:Date.now(),
+      selectedType:_selectedType,selectedPlatform:_selectedPlatform,
+      region:_region,selectedSubtype:_selectedSubtype,
+      batchStep:_batchStep,batchStepIdx:_batchStepIdx,phase:_batchPhase,
+      dualSpine:!!($('batch-dual-spine')&&$('batch-dual-spine').checked),
+      items:_batchItems
+    };
+    localforage.setItem(_batchDraftKey,draft).catch(function(){});
+  },300);
+}
+function _batchClearDraft(){
+  if(_batchSaveDraftTimer){clearTimeout(_batchSaveDraftTimer);_batchSaveDraftTimer=null;}
+  localforage.removeItem(_batchDraftKey).catch(function(){});
+}
+// 使用者選擇不接續／整批取消時呼叫——先確認再清除，避免誤觸就把進度弄丟
+function batchCancelAll(){
+  if(!confirm('確定要取消這次批次建檔嗎？\n\n已經掃描/拍攝的進度會被清除，無法復原。'))return;
+  _batchClearDraft();
+  resetAll();
+}
 
 var BATCH_DETECT_SCHEMA={
   type:'OBJECT',
@@ -10289,13 +10521,30 @@ function _batchDetectPrompt(){
 }
 
 function initBatchSpineMode(){
+  // v02.100：進入批次模式前先檢查有沒有未完成的草稿，有的話先問要不要接續，
+  // 避免使用者選了分類/平台後才發現其實有進度可以接（那樣還要再問一次更奇怪）。
+  localforage.getItem(_batchDraftKey).then(function(draft){
+    if(draft&&draft.items&&draft.items.length){
+      var mins=Math.round((Date.now()-(draft.savedAt||0))/60000);
+      var timeTxt=mins<1?'剛剛':(mins<60?(mins+' 分鐘前'):(Math.round(mins/60)+' 小時前'));
+      var lockTxt=catLabel(draft.selectedType)+(draft.selectedPlatform?'・'+draft.selectedPlatform:'');
+      if(confirm('偵測到上次未完成的批次書背建檔（'+lockTxt+'，'+draft.items.length+' 件，'+timeTxt+'的進度）。\n\n要接續上次的進度嗎？\n選「取消」會捨棄上次進度、重新開始。')){
+        _batchResumeFromDraft(draft);
+        return;
+      }
+      _batchClearDraft();
+    }
+    _batchFreshInit();
+  }).catch(function(){_batchFreshInit();});
+}
+function _batchFreshInit(){
   pickTypeAndPlatform('batch',function(type,platform){
     _selectedType=type;_selectedPlatform=platform;
     setMbActive('batch');enterMode();
     hideAllSecs();
     $('batch-sec').style.display='block';
     _batchGotoStep(1); // v02.67：每次進入固定回到Step1
-    _batchItems=[];_batchImgFile=null;
+    _batchItems=[];_batchImgFile=null;_batchPhase='collect';
     $('batch-preview').style.display='none';
     $('batch-start-btn').disabled=true;
     $('batch-list').innerHTML='';
@@ -10310,6 +10559,52 @@ function initBatchSpineMode(){
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
     $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
   });
+}
+// v02.100：從草稿還原批次進度。'resolve'階段（已進入Step5查詢/確認清單）直接回到確認清單，
+// 若有項目卡在resolving/pending中斷狀態，重置成pending後自動接續解析（_batchResolveAll本身
+// 已支援略過status==='ok'的項目，見該函式內的說明，重複呼叫是安全的）。'collect'階段
+// （還在Step1-4收集資料）回到對應Step畫面，顯示手動輸入畫面（不自動開相機，避免使用者
+// 一進來就被要求授權相機權限嚇到）。
+function _batchResumeFromDraft(draft){
+  _selectedType=draft.selectedType;_selectedPlatform=draft.selectedPlatform;
+  _region=draft.region||_region;_selectedSubtype=draft.selectedSubtype||'';
+  setMbActive('batch');enterMode();hideAllSecs();
+  $('batch-sec').style.display='block';
+  _batchItems=draft.items||[];
+  _batchStep=draft.batchStep||1;_batchStepIdx=draft.batchStepIdx||0;
+  _batchPhase=draft.phase||'collect';
+  var bds=$('batch-dual-spine');if(bds)bds.checked=!!draft.dualSpine;
+  var bccs=$('batch-count-confirm-sec');if(bccs)bccs.style.display='none';
+  var lockTxt=catLabel(_selectedType)+(_selectedPlatform?'・'+_selectedPlatform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
+  $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
+  if(_batchPhase==='resolve'){
+    $('batch-step1-sec').style.display='none';
+    $('batch-list-wrap').style.display='block';
+    $('batch-final-actions').style.display='flex';
+    _batchGotoStep(0);
+    _batchRenderList();
+    var stillPending=_batchItems.some(function(it){return it.status==='pending'||it.status==='resolving';});
+    if(stillPending){
+      _batchItems.forEach(function(it){if(it.status==='resolving')it.status='pending';}); // 中斷時卡在resolving的重置回pending
+      _batchResolving=true;keepAwake();
+      _batchResolveAll().then(function(){
+        _batchResolving=false;releaseAwake();
+        $('batch-progress').style.display='none';
+        _batchRenderList();
+        _batchSaveDraft();
+        toast('已接續完成上次的解析，請確認後儲存','ok',3500);
+      });
+    }else{
+      toast('已還原上次批次進度（'+_batchItems.length+' 件，確認清單階段）','ok',3500);
+    }
+  }else{
+    $('batch-step1-sec').style.display='none';
+    $('batch-list-wrap').style.display='none';
+    $('batch-final-actions').style.display='none';
+    _batchGotoStep(_batchStep);
+    if(_batchStep===4){_b4RenderCurrent();}else{_bRenderCurrent();}
+    toast('已還原上次批次進度（第 '+(_batchStepIdx+1)+'／'+_batchItems.length+' 件，步驟 '+_batchStep+'）','ok',3500);
+  }
 }
 
 function batchPhotoPick(input){
@@ -10428,6 +10723,7 @@ function _batchCountConfirmRetake(){
 }
 function _batchCountConfirmProceed(){
   $('batch-count-confirm-sec').style.display='none';
+  _batchSaveDraft(); // v02.100：離開件數確認畫面時是第一次能存出完整項目清單的時機點
   _batchStartStep2();
 }
 
@@ -10449,6 +10745,7 @@ function _batchGotoStep(step){
 // 三個逐件步驟共用的「前進到下一件、或轉場到下一步」邏輯
 function _batchStepAdvance(nextStepFn){
   _batchStepIdx++;
+  _batchSaveDraft(); // v02.100：Step2/3手動確認/跳過都會經過這裡，順手存一份進度
   if(_batchStepIdx>=_batchItems.length){nextStepFn();}
   else{_bRenderCurrent();}
 }
@@ -10502,6 +10799,7 @@ function b2Scan(){
   }
   function advance(){
     _batchStepIdx++;
+    _batchSaveDraft(); // v02.100
     if(_batchStepIdx>=_batchItems.length){fscanClose();_batchStartStep3();}
     else{updateOverlayText();}
   }
@@ -10523,7 +10821,7 @@ function b2Scan(){
     resultToast:function(v){return '已帶入條碼：'+v;},
     secondary:[
       {label:'⏮ 上一件',fn:goToPrev},
-      {label:'⏭ 跳過此件',fn:function(){
+      {label:'⏭ 跳過',fn:function(){
         var item=_batchItems[_batchStepIdx];if(item)item.barcode='';
         advance();
       }}
@@ -10549,6 +10847,7 @@ function b2SkipAll(){
   var remain=_batchItems.length-_batchStepIdx;
   if(!confirm('確定要跳過條碼輸入嗎？\n\n將只影響「第'+(_batchStepIdx+1)+'件起」剩下 '+remain+' 件（已確認過的前面幾件不受影響），這些條碼欄位會留空。'))return;
   for(var i=_batchStepIdx;i<_batchItems.length;i++)_batchItems[i].barcode='';
+  _batchSaveDraft(); // v02.100
   _batchStartStep3();
 }
 
@@ -10570,6 +10869,7 @@ function b3Ocr(){
   }
   function advance(){
     _batchStepIdx++;
+    _batchSaveDraft(); // v02.100
     if(_batchStepIdx>=_batchItems.length){fscanClose();_batchStartStep4();}
     else{updateOverlayText();}
   }
@@ -10586,9 +10886,10 @@ function b3Ocr(){
     title:'拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
     subtitle:item0.title_guess||'對準編碼後拍攝',
     frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
+    shotLabel:'📷 拍照', // v02.101：這裡是4顆按鈕並排的畫面（上一件/跳過/取消/拍照），縮短文字避免換行
     secondary:[
       {label:'⏮ 上一件',fn:goToPrev},
-      {label:'⏭ 跳過此件',fn:function(){
+      {label:'⏭ 跳過',fn:function(){
         var item=_batchItems[_batchStepIdx];if(item)item.code='';
         advance();
       }}
@@ -10623,6 +10924,7 @@ function b3SkipAll(){
   var remain=_batchItems.length-_batchStepIdx;
   if(!confirm('確定要跳過商品編碼輸入嗎？\n\n將只影響「第'+(_batchStepIdx+1)+'件起」剩下 '+remain+' 件（已確認過的前面幾件不受影響），這些編碼欄位會留空。'))return;
   for(var i=_batchStepIdx;i<_batchItems.length;i++)_batchItems[i].code='';
+  _batchSaveDraft(); // v02.100
   _batchStartStep4();
 }
 
@@ -10651,7 +10953,8 @@ function b4PhotoPick(input){
   var f=input.files&&input.files[0];
   if(!f)return;
   var item=_batchItems[_batchStepIdx];if(!item)return;
-  cropImageFile(f).then(function(blob){
+  var cropLabel='第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件：'+(item.title_guess||'（未辨識到品名）');
+  cropImageFile(f,cropLabel).then(function(blob){
     var r=new FileReader();
     r.onload=function(){
       item.entry=item.entry||{};
@@ -10659,12 +10962,14 @@ function b4PhotoPick(input){
       var pv=$('b4-preview');if(pv)pv.style.display='block';
       var pvImg=$('b4-preview-img');if(pvImg)pvImg.src=r.result;
       var cb=$('b4-confirm-btn');if(cb)cb.disabled=false;
+      _batchSaveDraft(); // v02.100：照片是最花時間拍的，拍完立刻存，中斷也不用重拍
     };
     r.readAsDataURL(blob);
   }).catch(function(){}); // 使用者取消裁切，什麼都不做，留在原本畫面讓使用者重選
 }
 function b4Confirm(){
   _batchStepIdx++;
+  _batchSaveDraft(); // v02.100
   if(_batchStepIdx>=_batchItems.length){_batchFinishSteps();return;}
   _b4RenderCurrent();
   // v02.81：確認後自動觸發下一件的相機——這個click()是在使用者按下「確認，下一件」
@@ -10676,6 +10981,7 @@ function b4Confirm(){
 }
 function b4Skip(){
   _batchStepIdx++;
+  _batchSaveDraft(); // v02.100
   if(_batchStepIdx>=_batchItems.length){_batchFinishSteps();return;}
   _b4RenderCurrent();
   var camInput=$('b4-cam');
@@ -10685,6 +10991,7 @@ function b4SkipAll(){
   var remain=_batchItems.length-_batchStepIdx;
   if(!confirm('確定要跳過拍攝封面嗎？\n\n將只影響「第'+(_batchStepIdx+1)+'件起」剩下 '+remain+' 件（已拍攝過的前面幾件不受影響），這些項目之後可以在確認清單點縮圖再補拍。'))return;
   _batchStepIdx=_batchItems.length;
+  _batchSaveDraft(); // v02.100
   _batchFinishSteps();
 }
 
@@ -10696,6 +11003,8 @@ function _batchFinishSteps(){
   $('batch-final-actions').style.display='flex'; // v02.80：確認清單階段才顯示這組取消/儲存按鈕列
   _batchRenderList();
   _batchResolving=true;
+  _batchPhase='resolve'; // v02.100：草稿續傳靠這個判斷要回到確認清單還是逐件收集畫面
+  _batchSaveDraft();
   // v02.90：整段逐件查詢＋AI補全（可能長達數十秒到數分鐘）原本只有aiCompleteMissing內部
   // 真的要呼叫AI時才透過loading()間接拿到螢幕喚醒鎖，中間查資料庫的空檔沒有鎖，螢幕仍可能
   // 自動熄滅、中斷處理。改成整個Step5處理期間都持有喚醒鎖，直到全部項目解析完成才釋放。
@@ -10705,6 +11014,7 @@ function _batchFinishSteps(){
     releaseAwake(); // v02.90：Step5全程持有的螢幕喚醒鎖，整批處理完成後才釋放
     $('batch-progress').style.display='none';
     _batchRenderList();
+    _batchSaveDraft(); // v02.100：確認清單階段的最終狀態也存一份，這時中斷還是能接續
     toast('批次辨識完成，請確認後儲存','ok',3000);
   });
 }
@@ -10820,6 +11130,13 @@ function _batchResolveAll(){
     function startNext(){
       if(next>=total)return; // 沒有待處理的了，這條工作線收工（由最後完成的那條負責 resolve）
       var item=_batchItems[next++];
+      if(item.status==='ok'){
+        // v02.100：草稿續傳時可能有些項目上次已經解析完成——略過，讓_batchResolveAll
+        // 可以安全地對同一批資料重複呼叫，不會浪費API額度重跑已經成功的項目。
+        doneCount++;updateProgress();
+        if(doneCount>=total){resolve();return;}
+        startNext();return;
+      }
       item.status='resolving';
       _batchRenderList();
       _batchResolveOne(item,type).then(function(failed){
@@ -10828,6 +11145,7 @@ function _batchResolveAll(){
         doneCount++;
         updateProgress();
         _batchRenderList();
+        _batchSaveDraft(); // v02.100：逐件解析完成就存一份進度，中斷也能接續剩下的
         if(doneCount>=total){resolve();return;}
         startNext();
       });
@@ -10976,6 +11294,7 @@ function batchSaveAll(){
     if(i>=toSave.length){
       _saving=false;entry=_backupEntry;
       localforage.setItem('gv_col',col).catch(function(){});updateStats();
+      _batchClearDraft(); // v02.100：整批已經存進收藏，草稿不再需要，避免下次進批次模式又問「要不要接續」
       noLoad();
       toast('批次儲存完成：成功 '+savedCount+' 件'+(failCount?'，失敗 '+failCount+' 件':''),'ok',4500);
       var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
@@ -17536,6 +17855,64 @@ function _imgToB64(src){
     <button class="btn bo bs" style="flex:1" onclick="cmCloseEditor()" type="button">取消</button>
     <button class="btn bp bs" style="flex:1" onclick="cmSaveEditor()" type="button">儲存</button>
   </div>
+</div>
+<!-- 批次編輯 Modal（v02.100）：收藏頁多選後，一次改多筆的存放位置／收藏狀態／系列。
+     只有勾選的欄位才會套用到所有選取項目，其餘欄位維持原樣不動。 -->
+<div id="bulk-edit-overlay" onclick="if(event.target===this)bulkEditClose()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="bulk-edit-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
+  <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
+    <div style="font-size:14px;font-weight:700;color:#e8eaf6">批次編輯（<span id="bulk-edit-count">0</span> 筆）</div>
+    <button onclick="bulkEditClose()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
+  </div>
+  <div style="padding:16px;padding-bottom:24px;overflow-y:auto;flex:1">
+    <div style="font-size:11px;color:#7986cb;margin-bottom:14px;line-height:1.5">只有勾選左邊核取方塊的欄位才會套用到全部選取項目，沒勾的欄位維持每筆原本的值不變。</div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-loc-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">存放位置</span>
+      </label>
+      <input class="fi" id="bulk-edit-loc" placeholder="例如：A架-2層">
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-status-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">收藏狀態</span>
+      </label>
+      <div style="position:relative;display:block">
+        <select class="fsel" id="bulk-edit-status" style="pointer-events:none" tabindex="-1">
+          <option value="收藏中">收藏中</option>
+          <option value="借出中">借出中</option>
+          <option value="已出售">已出售</option>
+          <option value="遺失或損毀">遺失或損毀</option>
+          <option value="預購中">預購中</option>
+          <option value="願望清單">願望清單</option>
+        </select>
+        <div onclick="openSelectSheet('bulk-edit-status','收藏狀態')" style="position:absolute;inset:0;cursor:pointer"></div>
+      </div>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-series-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">系列</span>
+      </label>
+      <input class="fi" id="bulk-edit-series" placeholder="例如：Summer Lesson">
+    </div>
+  </div>
+  <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">
+    <button class="btn bo bs" style="flex:1" onclick="bulkEditClose()" type="button">取消</button>
+    <button class="btn bp bs" style="flex:1" onclick="bulkEditSave()" type="button">套用</button>
+  </div>
+</div>
+<!-- 依系列瀏覽 Modal（v02.100）：把有填「系列」欄位的收藏分組顯示，一眼看出某系列收了幾件；
+     同時比對「尋寶」清單裡品名含有該系列名稱的項目，標示可能還缺哪幾款（比對方式：品名
+     包含系列名稱的簡單字串比對，非精確比對，僅供參考）。 -->
+<div id="series-ov" onclick="if(event.target===this)closeSeriesBrowse()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="series-panel" style="display:none;position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
+  <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
+    <div style="font-size:14px;font-weight:700;color:#e8eaf6">📚 依系列瀏覽</div>
+    <button onclick="closeSeriesBrowse()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
+  </div>
+  <div id="series-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
 </div>
 </body>
 </html>
