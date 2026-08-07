@@ -310,7 +310,8 @@ body{
 /* 最近入手列表 */
 .dv2-ri{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #141b30;cursor:pointer}
 .dv2-ri:last-child{border-bottom:none}
-.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.dv2-ri-ic img{width:100%;height:100%;object-fit:cover}
 .dv2-ri-name{font-size:12px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv2-ri-sub{font-size:10px;color:#7986cb;margin-top:1px}
 .dv2-ri-date{font-size:10px;color:#7986cb;flex-shrink:0}
@@ -1333,6 +1334,10 @@ body{
                 <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 這一步只需要拍到大致的品名，條碼／商品編碼下一步會逐件掃描，不用在這張照片裡看清楚</div>
               </div>
               <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+              <label style="display:flex;align-items:flex-start;gap:8px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:10px;padding:10px 12px;margin-bottom:10px;cursor:pointer">
+                <input type="checkbox" id="batch-dual-spine" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ce93d8">
+                <span style="font-size:12px;color:#9fa8c8;line-height:1.5">這排是「一件商品兩條書背」的多片裝（例如多片裝 SEGA SATURN／PS 遊戲，每片光碟各自的書背都會露出來）——勾選後只取單數第 1、3、5…件，跳過每組的第 2 片書背，避免同一件被重複辨識成兩件。</span>
+              </label>
               <div style="display:flex;gap:8px;margin-bottom:10px">
                 <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                   📷 拍照
@@ -2627,7 +2632,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.90';
+const APP_VERSION='v02.95';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6460,6 +6465,13 @@ function _cropLayout(){
   if(!box){
     var ins=Math.round(Math.min(w,h)*0.06);
     box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  }else{
+    // v02.91：使用者實測回報，偵測到的商品邊界常常直接貼齊照片最外緣，導致四角的拖曳
+    // 把手緊貼畫面邊界，手指很難精準抓到、也很難再往外拉調整。偵測到的框額外往內收一點
+    // 安全間距，讓把手離邊界有空間可操作；「貼緊商品邊緣」的原意不變，只是留一點緩衝，
+    // 使用者原本就可以自行拖曳微調。fallback 的保守框本來就已內縮 6%，不需要再加。
+    var pad=Math.round(Math.min(w,h)*0.025);
+    box={x:box.x+pad,y:box.y+pad,w:Math.max(20,box.w-pad*2),h:Math.max(20,box.h-pad*2)};
   }
   _crop.box=box;
   _crop._autoDetected=true; // 標記已完成首次偵測，往後 resize 不再重置
@@ -10201,6 +10213,7 @@ function initBatchSpineMode(){
     $('batch-final-actions').style.display='none'; // v02.80：重新進入時重置確認清單階段的按鈕列
     $('batch-save-btn').style.display='none';
     $('batch-progress').style.display='none';
+    var bds=$('batch-dual-spine');if(bds)bds.checked=false; // v02.94：每次重新進入預設不勾選雙書背模式
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
@@ -10211,14 +10224,19 @@ function initBatchSpineMode(){
 function batchPhotoPick(input){
   var f=input.files&&input.files[0];
   if(!f)return;
-  _batchImgFile=f;
-  var r=new FileReader();
-  r.onload=function(){
-    $('batch-preview-img').src=r.result;
-    $('batch-preview').style.display='block';
-    $('batch-start-btn').disabled=false;
-  };
-  r.readAsDataURL(f);
+  // v02.95：使用者建議——送進AI辨識前先讓使用者裁掉不相關背景（例如書背照片上方的書架），
+  // 沿用全站共用的裁切工具（cropImageFile），跟批次Step4補封面照同一套，不用另外設計；
+  // 裁掉背景雜訊能提高AI辨識書背文字的準確率，使用者也能順便確認拍到的範圍正確再送出。
+  cropImageFile(f).then(function(blob){
+    _batchImgFile=blob;
+    var r=new FileReader();
+    r.onload=function(){
+      $('batch-preview-img').src=r.result;
+      $('batch-preview').style.display='block';
+      $('batch-start-btn').disabled=false;
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){}); // 使用者取消裁切，維持原狀不變，讓使用者重新選擇照片
 }
 
 function batchDetectStart(){
@@ -10240,7 +10258,7 @@ function batchDetectStart(){
           items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
-          _batchItems=items.map(function(it,i){
+          var builtItems=items.map(function(it,i){
             return {
               order:it.order||(i+1),
               title_guess:(''+(it.title_guess||'')).trim(),
@@ -10251,6 +10269,19 @@ function batchDetectStart(){
               dup:null
             };
           });
+          // v02.94：使用者實測回報——多片裝（如多光碟版 SEGA SATURN）同一件商品的每片光碟
+          // 都各自有一條書背，AI 由左到右逐條書背辨識時會把同一件商品的第1、2片各自認成
+          // 一件，造成重複。與其讓AI去猜「哪幾條書背屬於同一件」（不可靠），改成由使用者
+          // 明確勾選「這排是雙書背」，程式直接照拍照順序取單數（1、3、5…），忽略每組的第2片，
+          // 比依賴AI判斷準確、也好理解。
+          var dualSpine=$('batch-dual-spine')&&$('batch-dual-spine').checked;
+          if(dualSpine){
+            var beforeCount=builtItems.length;
+            builtItems=builtItems.filter(function(_,i){return i%2===0;});
+            builtItems.forEach(function(it,i){it.order=i+1;});
+            toast('雙書背模式：偵測到 '+beforeCount+' 條書背，取單數後保留 '+builtItems.length+' 件','ok',3500);
+          }
+          _batchItems=builtItems;
           _batchStartStep2(); // 轉入Step2：逐件輸入條碼
         }).catch(function(e){
           noLoad();
@@ -12516,8 +12547,10 @@ function renderDash(){
     // v54.03\uff1a\u526f\u6a19\u984c\u6539\u7528\u8ddf\u6536\u85cf\u5361\u7247\u4e00\u81f4\u7684 _catMeta().sub()\uff0c\u6578\u4f4d\u4e0b\u8f09\u7248/\u539f\u8072\u5e36/\u52d5\u6f2b\u7f8e\u8853/\u516c\u4ed4\u624d\u6709\u6b63\u78ba\u8cc7\u8a0a\u53ef\u986f\u793a
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
+    // v02.92\uff1a\u4f7f\u7528\u8005\u5be6\u6e2c\u56de\u5831\u5e0c\u671b\u300c\u6700\u8fd1\u5165\u624b\u300d\u4e5f\u80fd\u770b\u5230\u5c01\u9762\u7e2e\u5716\uff0c\u4e0d\u53ea\u662f\u5206\u985e emoji\u3002\u6cbf\u7528\u8207\u6536\u85cf\u5217\u8868\uff08renderColList\uff09\u76f8\u540c\u7684 hasImgVal/imgUrl \u5224\u65b7\uff0c有封面照就顯示縮圖，沒有才退回原本的分類 icon。
+    var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':ico;
     return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
-      '<div class="dv2-ri-ic">'+ico+'</div>'+
+      '<div class="dv2-ri-ic">'+thumb+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div class="dv2-ri-name">'+esc(name)+'</div>'+
         '<div class="dv2-ri-sub">'+esc(sub)+'</div>'+

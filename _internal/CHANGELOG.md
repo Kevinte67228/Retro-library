@@ -1,3 +1,24 @@
+## v02.96 (2026-08-07)
+
+### 變更內容
+使用者回報：收藏頁「畫廊」檢視模式（2欄封面圖網格）裡的封面圖看起來沒有置中。
+
+原本 `.gv-thumb img` 用 `object-fit:cover` 讓圖片填滿整個縮圖框、多餘部分裁掉；但使用者上傳的封面照片本身不一定是剛好貼齊封面邊緣的乾淨裁切（可能含多餘空白或角度稍偏），用 cover 從圖片正中央裁切時，裁掉的範圍不見得跟封面美術實際置中的位置一致，看起來就像圖沒有置中、被裁歪。改成 `object-fit:contain`＋`object-position:center`，完整顯示整張圖片、不裁切，置中對齊，多餘空間用縮圖框既有的深色背景（`#141b30`）填滿，跟畫廊整體深色風格一致。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_96_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-95 → retrovault-v02-96
+
+### 對應備份
+- _internal/old/v02_95/
+
+
 ## v02.95 (2026-08-07)
 
 ### 變更內容
@@ -21,6 +42,8 @@
 - _internal/old/v02_94/
 
 
+
+
 ## v02.94 (2026-08-07)
 
 ### 變更內容
@@ -42,6 +65,8 @@
 
 ### 對應備份
 - _internal/old/v02_93/
+
+
 
 
 
@@ -71,31 +96,6 @@
 
 ### 對應備份
 - _internal/old/v02_92/
-
-
-
-
-
-
-## v02.92 (2026-08-06)
-
-### 變更內容
-使用者要求：儀表板（統計頁）「最近入手」清單，原本每一列只顯示分類 emoji 圖示（例如遊戲全部都是 🎮），改成有封面照片就顯示封面縮圖，沒有才退回原本的分類圖示。
-
-沿用收藏列表（`renderColList`）既有的 `hasImgVal(d.cover_img)` 判斷＋`imgUrl(d.cover_img,80)` 縮圖網址邏輯，沒有另外寫一套判斷。`.dv2-ri-ic` 容器加上 `overflow:hidden`，圖片用 `object-fit:cover` 填滿正方形圖示位置，維持原本 36×36px、9px 圓角的外觀。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_92_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-91 → retrovault-v02-92
-
-### 對應備份
-- _internal/old/v02_91/
 
 
 

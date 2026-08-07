@@ -419,7 +419,7 @@ body{
 .gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden}
 .gv-card.sel{outline:2px solid #ff6e9c}
 .gv-thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:#7986cb}
-.gv-thumb img{width:100%;height:100%;object-fit:cover}
+.gv-thumb img{width:100%;height:100%;object-fit:contain;object-position:center}
 .gv-info{padding:10px}
 .gv-name{font-size:12.5px;font-weight:700;color:#e8eaf6;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
 .gv-meta{font-size:10.5px;color:#7986cb;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2632,7 +2632,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.95';
+const APP_VERSION='v02.96';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
