@@ -1441,22 +1441,20 @@ body{
                 <button type="button" onclick="b4SkipAll()" style="background:none;border:none;color:#7986cb;font-size:11px;text-decoration:underline;padding:0">全部跳過此步驟</button>
               </div>
               <div id="b4-title" style="font-size:15px;font-weight:700;color:#e8eaf6;margin-bottom:12px;padding:10px;background:#0f1525;border-radius:10px;border:1px solid #1e2a45"></div>
-              <!-- v02.71：改用跟「圖片辨識」模式(img-sec)一樣的拍照/相簿按鈕＋既有的cropImageFile()
-                   裁切器，不再另外搞一套相機/裁切UI -->
-              <div style="display:flex;gap:8px;margin-bottom:10px">
-                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
+              <!-- v02.103：排版統一改成跟Step2/3一樣的「左邊拍照/掃描、右邊確認」單排結構，
+                   移除相簿選項——批次逐件流程的Step2/3本來就只有相機一種輸入方式，Step4
+                   多一個相簿選項顯得不一致。沿用既有的cropImageFile()裁切器，只是觸發
+                   方式從獨立兩顆按鈕改成跟b2Scan()/b3Ocr()同樣的左側按鈕位置。 -->
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <label class="btn bo" style="flex:1;color:#ce93d8;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
                   📷 拍照
                   <input type="file" accept="image/*" capture="environment" style="display:none" id="b4-cam" onchange="b4PhotoPick(this)">
                 </label>
-                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
-                  🖼 相簿
-                  <input type="file" accept="image/*" style="display:none" id="b4-gal" onchange="b4PhotoPick(this)">
-                </label>
+                <button type="button" class="btn bp" id="b4-confirm-btn" disabled onclick="b4Confirm()" style="flex:1">確認，下一件</button>
               </div>
               <div id="b4-preview" style="display:none;text-align:center;margin-bottom:12px">
                 <img id="b4-preview-img" style="max-width:100%;max-height:240px;border-radius:10px;border:1px solid #1e2a45">
               </div>
-              <button type="button" class="btn bp bw" id="b4-confirm-btn" disabled onclick="b4Confirm()" style="margin-bottom:8px">確認，下一件</button>
               <button type="button" class="btn bo" onclick="b4Skip()" style="width:100%;color:#7986cb">⏭ 跳過此件（之後在編輯頁再補）</button>
             </div>
 
@@ -2680,7 +2678,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.102';
+const APP_VERSION='v02.104';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10698,16 +10696,35 @@ function batchDetectStart(){
 function _batchCountConfirmRender(){
   var wrap=$('batch-count-confirm-list');if(!wrap)return;
   var note=$('batch-count-confirm-note');
-  if(note)note.textContent='偵測到 '+_batchItems.length+' 件。品名可以直接修改；不是這件的可以刪除；AI 漏算的用下面「補一件」新增空白項目即可，之後逐件掃描一樣正常進行。';
+  if(note)note.textContent='偵測到 '+_batchItems.length+' 件。品名可以直接修改或點📷拍照重新辨識；不是這件的可以刪除；AI 漏算的用下面「補一件」新增空白項目即可，之後逐件掃描一樣正常進行。';
   wrap.innerHTML=_batchItems.map(function(item,i){
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e2a45">'+
       '<div style="font-size:11px;color:#7986cb;flex-shrink:0;width:20px;text-align:right">'+(i+1)+'.</div>'+
       '<input type="text" value="'+esc(item.title_guess)+'" placeholder="（未辨識到品名）" '+
       'oninput="_batchCountConfirmUpdateName('+i+',this.value)" '+
       'style="flex:1;min-width:0;background:#0f1525;border:1px solid #2a3a5a;border-radius:6px;color:#e8eaf6;font-size:13px;padding:6px 8px;font-family:inherit;box-sizing:border-box">'+
+      '<button type="button" onclick="_batchCountConfirmOcr('+i+')" title="拍照辨識品名" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#00e5ff;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer">📷</button>'+
       (_batchItems.length>1?'<button type="button" onclick="_batchCountConfirmRemove('+i+')" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#ff8a65;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer">✕</button>':'')+
     '</div>';
   }).join('');
+}
+// v02.104：使用者要求——「補一件」新增的空白品名，原本只能手動打字，加一個跟全站其他
+// 拍照辨識編碼一樣的OCR拍照辨識方式。沿用既有的openFieldScanner(mode:'ocr')管線，只是
+// prompt改成抓標題文字，不是編碼。逐字照抄、禁止翻譯的要求比照batchDetectStart（Step1
+// 整排書背辨識）v02.89修正過的同一套原則，兩處提示詞精神一致，都是「只抄印在上面的字」。
+function _batchCountConfirmOcr(i){
+  openFieldScanner({mode:'ocr',
+    title:'拍照辨識品名（第'+(i+1)+'件）',
+    subtitle:'對準書背／封面上的標題文字後拍攝',
+    shotLabel:'📷 拍照辨識',
+    prompt:'請從圖片中找出商品書背或封面上印刷的商品標題文字。逐字照抄書背上實際印刷的文字，保留原本印出來的語言與文字（日文就是日文、英文就是英文），禁止翻譯、禁止用你自己知道的官方名稱或譯名取代、禁止自行判斷猜測。只回傳標題文字本身，看不清楚或找不到就回傳空字串，不要回傳任何說明文字。',
+    resultToast:function(v){return '已帶入品名：'+v;},
+    onResult:function(val){
+      var item=_batchItems[i];if(!item)return;
+      item.title_guess=val;
+      _batchCountConfirmRender();
+    }
+  });
 }
 function _batchCountConfirmUpdateName(i,val){
   var item=_batchItems[i];if(!item)return;
@@ -10959,7 +10976,6 @@ function _b4RenderCurrent(){
   var pvImg=$('b4-preview-img');if(pvImg&&item.entry&&item.entry.cover_img)pvImg.src=item.entry.cover_img;
   var cb=$('b4-confirm-btn');if(cb)cb.disabled=!(item.entry&&item.entry.cover_img);
   var bc=$('b4-cam');if(bc)bc.value='';
-  var bg=$('b4-gal');if(bg)bg.value='';
   $('b4-back-btn').disabled=(_batchStepIdx<=0);
 }
 function b4PhotoPick(input){
