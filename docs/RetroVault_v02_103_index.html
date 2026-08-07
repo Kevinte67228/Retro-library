@@ -714,6 +714,13 @@ body{
 #crop-head{flex:0 0 auto;padding:14px 16px;text-align:center;color:#fff;font-size:14px;font-weight:700;letter-spacing:1px;background:#0b0f1a}
 #crop-head small{display:block;font-size:11px;font-weight:400;color:#7986cb;margin-top:3px;letter-spacing:0}
 #crop-stage{flex:1 1 auto;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
+/* v02.102：使用者實測回報，裁切畫面上方擠在標題列裡的品名太小、不明顯，
+   跟批次相機取景框（#fscan-framelbl）的處理方式不一致。改成一樣疊在畫面（裁切區）
+   內部上緣、字級放大，跟#fscan-framelbl使用完全相同的字級/顏色/字重，兩處視覺一致。 */
+#crop-framelbl{position:absolute;left:0;right:0;top:0;padding:8px 12px 14px;text-align:center;pointer-events:none;z-index:5;display:none;background:linear-gradient(180deg,rgba(4,8,18,.92),rgba(4,8,18,.6) 65%,rgba(4,8,18,0))}
+#crop-framelbl.on{display:block}
+#crop-framelbl-idx{display:block;font-size:12px;font-weight:700;color:#00e5ff;letter-spacing:1.5px}
+#crop-framelbl-name{display:block;font-size:17px;font-weight:800;color:#fff;line-height:1.25;margin-top:2px;word-break:break-word;text-shadow:0 1px 4px rgba(0,0,0,.85)}
 #crop-canvas{position:absolute;left:0;top:0;touch-action:none}
 #crop-bar{flex:0 0 auto;display:flex;gap:10px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b0f1a;min-height:18vh;align-items:center}
 #crop-bar button{flex:1;padding:18px 8px;border-radius:12px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:15px;font-weight:700;cursor:pointer}
@@ -1434,22 +1441,20 @@ body{
                 <button type="button" onclick="b4SkipAll()" style="background:none;border:none;color:#7986cb;font-size:11px;text-decoration:underline;padding:0">全部跳過此步驟</button>
               </div>
               <div id="b4-title" style="font-size:15px;font-weight:700;color:#e8eaf6;margin-bottom:12px;padding:10px;background:#0f1525;border-radius:10px;border:1px solid #1e2a45"></div>
-              <!-- v02.71：改用跟「圖片辨識」模式(img-sec)一樣的拍照/相簿按鈕＋既有的cropImageFile()
-                   裁切器，不再另外搞一套相機/裁切UI -->
-              <div style="display:flex;gap:8px;margin-bottom:10px">
-                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
+              <!-- v02.103：排版統一改成跟Step2/3一樣的「左邊拍照/掃描、右邊確認」單排結構，
+                   移除相簿選項——批次逐件流程的Step2/3本來就只有相機一種輸入方式，Step4
+                   多一個相簿選項顯得不一致。沿用既有的cropImageFile()裁切器，只是觸發
+                   方式從獨立兩顆按鈕改成跟b2Scan()/b3Ocr()同樣的左側按鈕位置。 -->
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <label class="btn bo" style="flex:1;color:#ce93d8;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
                   📷 拍照
                   <input type="file" accept="image/*" capture="environment" style="display:none" id="b4-cam" onchange="b4PhotoPick(this)">
                 </label>
-                <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#0f1525;border:1.5px dashed #1e2a45;border-radius:10px;padding:12px;cursor:pointer;color:#7986cb;font-size:13px">
-                  🖼 相簿
-                  <input type="file" accept="image/*" style="display:none" id="b4-gal" onchange="b4PhotoPick(this)">
-                </label>
+                <button type="button" class="btn bp" id="b4-confirm-btn" disabled onclick="b4Confirm()" style="flex:1">確認，下一件</button>
               </div>
               <div id="b4-preview" style="display:none;text-align:center;margin-bottom:12px">
                 <img id="b4-preview-img" style="max-width:100%;max-height:240px;border-radius:10px;border:1px solid #1e2a45">
               </div>
-              <button type="button" class="btn bp bw" id="b4-confirm-btn" disabled onclick="b4Confirm()" style="margin-bottom:8px">確認，下一件</button>
               <button type="button" class="btn bo" onclick="b4Skip()" style="width:100%;color:#7986cb">⏭ 跳過此件（之後在編輯頁再補）</button>
             </div>
 
@@ -2673,7 +2678,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.101';
+const APP_VERSION='v02.103';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6601,22 +6606,28 @@ function initGameCodeComboMode(){
 // 任何「辨識」用途的圖片（拍照或相簿）皆先進入裁切步驟，再進入後續流程。
 var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null,_autoDetected:false};
 // 讀檔→開啟裁切器，回傳裁切後的 Blob（image/jpeg）。取消則 reject。
-// v02.101：新增選用的第2個參數label——批次書背Step4裁切封面照時，使用者連續處理很多件，
-// 裁切畫面原本只有通用提示文字，看不出「現在裁的是哪一件」，容易跟手上實物對不起來。
-// 不傳label（既有所有呼叫端）行為完全不變，沿用原本固定的提示文字。
-function cropImageFile(file,label){
+// v02.102：改用跟批次相機取景框（openFieldScanner/_fscanFrameLabel）完全一致的
+// idx/total/name三參數模式與視覺樣式，兩處「目前處理到第幾件」的呈現方式統一。
+// 不傳這三個參數（既有其餘10幾處呼叫端）時_cropFrameLabel會因為total為0自動隱藏，
+// 標題列沿用原本固定的提示文字，行為完全不變。
+function cropImageFile(file,frameIdx,frameTotal,frameName){
   var head=$('crop-head');
-  if(head){
-    head.innerHTML=label
-      ? '裁切圖片<small>'+esc(label)+'</small><small style="margin-top:2px">拖曳調整框線範圍，可拖角縮放</small>'
-      : '裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small>';
-  }
+  if(head)head.innerHTML='裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small>';
+  _cropFrameLabel(frameIdx,frameTotal,frameName);
   return new Promise(function(resolve,reject){
     var r=new FileReader();
     r.onload=function(){ _cropOpen(r.result,resolve,reject); };
     r.onerror=function(){ reject(new Error('讀取圖片失敗')); };
     r.readAsDataURL(file);
   });
+}
+// 與_fscanFrameLabel同一套邏輯：total為0/未傳時隱藏（單品裁切沒有「第幾件」的概念）
+function _cropFrameLabel(idx,total,name){
+  var box=$('crop-framelbl');if(!box)return;
+  if(!total){box.classList.remove('on');return;}
+  var i=$('crop-framelbl-idx');if(i)i.textContent='第 '+idx+'／'+total+' 件';
+  var n=$('crop-framelbl-name');if(n)n.textContent=name||'（未辨識到品名）';
+  box.classList.add('on');
 }
 function _dataUrlToBlob(durl){
   var parts=durl.split(','),mime=(parts[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
@@ -10946,15 +10957,13 @@ function _b4RenderCurrent(){
   var pvImg=$('b4-preview-img');if(pvImg&&item.entry&&item.entry.cover_img)pvImg.src=item.entry.cover_img;
   var cb=$('b4-confirm-btn');if(cb)cb.disabled=!(item.entry&&item.entry.cover_img);
   var bc=$('b4-cam');if(bc)bc.value='';
-  var bg=$('b4-gal');if(bg)bg.value='';
   $('b4-back-btn').disabled=(_batchStepIdx<=0);
 }
 function b4PhotoPick(input){
   var f=input.files&&input.files[0];
   if(!f)return;
   var item=_batchItems[_batchStepIdx];if(!item)return;
-  var cropLabel='第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件：'+(item.title_guess||'（未辨識到品名）');
-  cropImageFile(f,cropLabel).then(function(blob){
+  cropImageFile(f,_batchStepIdx+1,_batchItems.length,item.title_guess).then(function(blob){
     var r=new FileReader();
     r.onload=function(){
       item.entry=item.entry||{};
@@ -17755,7 +17764,7 @@ function _imgToB64(src){
 
 <div id="crop-ov">
   <div id="crop-head">裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small></div>
-  <div id="crop-stage"><canvas id="crop-canvas"></canvas></div>
+  <div id="crop-stage"><canvas id="crop-canvas"></canvas><div id="crop-framelbl"><span id="crop-framelbl-idx"></span><span id="crop-framelbl-name"></span></div></div>
   <div id="crop-bar">
     <button onclick="cropCancel()" type="button">取消</button>
     <button onclick="cropUseFull()" type="button">使用原圖</button>
