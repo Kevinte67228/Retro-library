@@ -945,16 +945,6 @@ body{
       </div>
       <div style="padding-bottom:80px">
         <div id="method-sel" style="padding:14px 16px 0">
-          <!-- v02.100：快速查詢入口——逛店/翻箱時最常見的需求是「掃一下馬上知道有沒有」，
-               不需要走完整個選分類→建檔的流程。獨立放在最上面，不用先選分類就能用。 -->
-          <button type="button" onclick="quickCheckStart()" style="width:100%;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(0,229,255,.12),rgba(0,229,255,.04));border:1.5px solid rgba(0,229,255,.4);border-radius:14px;padding:14px 16px;margin-bottom:16px;cursor:pointer;text-align:left;font-family:inherit">
-            <div style="font-size:26px;flex-shrink:0">🔍</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:14px;font-weight:800;color:#00e5ff">快速查詢：掃碼看是否已收藏</div>
-              <div style="font-size:11px;color:#7986cb;margin-top:2px">逛店/翻箱時用，不用選分類、不進建檔表單</div>
-            </div>
-            <div style="color:#00e5ff;font-size:18px;flex-shrink:0">›</div>
-          </button>
           <!-- 標題 -->
           <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 4px 14px;margin-bottom:14px;border-bottom:2px solid #7986cb">
             <div style="display:flex;align-items:center;gap:7px">
@@ -1636,6 +1626,9 @@ body{
         </div>
         <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="掃條碼比對收藏" onclick="initColScan()" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/></svg>
+        </button>
+        <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="拍照OCR比對收藏（編碼／書背文字）" onclick="initColOcrSearch()" type="button">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h6"/></svg>
         </button>
         <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="圖片辨識比對收藏" onclick="toggleImgSearchMenu()" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
@@ -2678,7 +2671,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.103';
+const APP_VERSION='v02.105';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8258,7 +8251,8 @@ function cdApplyCandidate(gameId){
 // entry 可以套用，點選候選直接開該遊戲的 consoledictionary.com 詳情頁（外部連結）。
 function openCdWebSearch(){
   var ov=$('cd-web-ov');if(ov)ov.style.display='flex';
-  var inp=$('cd-web-input');if(inp){inp.value='';inp.focus();}
+  // v02.105：同平台選擇器的修正，開啟就自動彈鍵盤蓋住畫面，改成不自動focus
+  var inp=$('cd-web-input');if(inp)inp.value='';
   var res=$('cd-web-results');if(res)res.innerHTML='';
 }
 function closeCdWebSearch(){
@@ -8725,7 +8719,10 @@ function openPlatPicker(opt){
   var title=$('plat-pick-title');if(title)title.textContent=opt.title||'選擇平台';
   var srchEl=$('plat-pick-search');if(srchEl)srchEl.placeholder=opt.searchPlaceholder||'搜尋平台名稱…';
   _buildPlatRows(list,cur,allowEmpty,'',digitalOnly,customSrc);
-  var srch=$('plat-pick-search');if(srch){srch.value='';setTimeout(function(){srch.focus();},120);}
+  // v02.105：使用者實測回報，開啟選單就自動把游標放進搜尋框、彈出鍵盤，導致畫面被鍵盤
+  // 蓋住將近一半，一打開什麼都看不到。改成不自動focus，使用者想搜尋再自己點下去就好，
+  // 搜尋框（含清單本身）本來就已經在畫面上可以直接滑動找。
+  var srch=$('plat-pick-search');if(srch)srch.value='';
   var ov=$('plat-pick-ov');ov.classList.add('on');ov.setAttribute('aria-hidden','false');
   setTimeout(function(){var el=list.querySelector('.plat-row.on');if(el&&el.scrollIntoView)el.scrollIntoView({block:'center'});},30); // 開啟時捲到已選列
 }
@@ -9901,38 +9898,6 @@ function fscanCancel(){
   }
   var cb=_fscanOpt&&_fscanOpt.onCancel;fscanClose();if(typeof cb==='function')cb();
 }
-// v02.100：逛店/翻箱時的「快速查詢」——不用選分類、不進建檔表單，掃條碼直接告訴使用者
-// 有沒有收藏過。沿用共用的fscan掃描overlay跟findDuplicate()既有的比對邏輯，不另外寫一套。
-// 連續模式，可以一直掃下去，取消才會退出。
-function quickCheckStart(){
-  function restart(){
-    // v02.88修正過的同一個問題：偵測到後底層掃描器會自行停止串流，續掃前要重新啟動。
-    _fscanDetect(true);_fscanSetScanning('正在偵測條碼，可連續掃描');
-    if(_fscanInst)_fscanInst.start();
-  }
-  openFieldScanner({mode:'barcode',continuous:true,
-    title:'快速查詢',
-    subtitle:'掃條碼看是否已收藏，不會進入建檔流程',
-    detectText:'正在偵測條碼，可連續掃描',
-    flashHtml:true,flashLabel:'',flashMs:2400,
-    flashText:function(bc){
-      var dup=findDuplicate({barcode:bc});
-      if(dup){
-        var d=dup.data||{};
-        var dateTxt=(d.buy_date||'').slice(0,10);
-        return '<div style="color:#69f0ae;font-size:15px;font-weight:800">✅ 已收藏過</div>'+
-          '<div style="font-size:15px;margin-top:6px;color:#fff;font-weight:700">'+esc(d.primary_name||'（無名稱）')+'</div>'+
-          (dateTxt?'<div style="font-size:12px;margin-top:4px;color:#9fa8c8">購入日期：'+esc(dateTxt)+'</div>':'');
-      }
-      return '<div style="color:#ff8a65;font-size:17px;font-weight:800">❌ 尚未收藏</div>'+
-        '<div style="font-size:12px;margin-top:6px;color:#9fa8c8">條碼：'+esc(bc)+'</div>';
-    },
-    resultToast:function(){return '';}, // 結果已經用大字banner顯示，不需要另外跳toast
-    onResult:function(){},
-    onContinue:restart,
-    onCancel:function(){}
-  });
-}
 // 🤖 [AI辨識進入點] 拍照OCR掃描條碼模式：擷取畫面送Gemini辨識條碼數字
 function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
   if(_fscanBusy)return;
@@ -10696,16 +10661,35 @@ function batchDetectStart(){
 function _batchCountConfirmRender(){
   var wrap=$('batch-count-confirm-list');if(!wrap)return;
   var note=$('batch-count-confirm-note');
-  if(note)note.textContent='偵測到 '+_batchItems.length+' 件。品名可以直接修改；不是這件的可以刪除；AI 漏算的用下面「補一件」新增空白項目即可，之後逐件掃描一樣正常進行。';
+  if(note)note.textContent='偵測到 '+_batchItems.length+' 件。品名可以直接修改或點📷拍照重新辨識；不是這件的可以刪除；AI 漏算的用下面「補一件」新增空白項目即可，之後逐件掃描一樣正常進行。';
   wrap.innerHTML=_batchItems.map(function(item,i){
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e2a45">'+
       '<div style="font-size:11px;color:#7986cb;flex-shrink:0;width:20px;text-align:right">'+(i+1)+'.</div>'+
       '<input type="text" value="'+esc(item.title_guess)+'" placeholder="（未辨識到品名）" '+
       'oninput="_batchCountConfirmUpdateName('+i+',this.value)" '+
       'style="flex:1;min-width:0;background:#0f1525;border:1px solid #2a3a5a;border-radius:6px;color:#e8eaf6;font-size:13px;padding:6px 8px;font-family:inherit;box-sizing:border-box">'+
+      '<button type="button" onclick="_batchCountConfirmOcr('+i+')" title="拍照辨識品名" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#00e5ff;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer">📷</button>'+
       (_batchItems.length>1?'<button type="button" onclick="_batchCountConfirmRemove('+i+')" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#ff8a65;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer">✕</button>':'')+
     '</div>';
   }).join('');
+}
+// v02.104：使用者要求——「補一件」新增的空白品名，原本只能手動打字，加一個跟全站其他
+// 拍照辨識編碼一樣的OCR拍照辨識方式。沿用既有的openFieldScanner(mode:'ocr')管線，只是
+// prompt改成抓標題文字，不是編碼。逐字照抄、禁止翻譯的要求比照batchDetectStart（Step1
+// 整排書背辨識）v02.89修正過的同一套原則，兩處提示詞精神一致，都是「只抄印在上面的字」。
+function _batchCountConfirmOcr(i){
+  openFieldScanner({mode:'ocr',
+    title:'拍照辨識品名（第'+(i+1)+'件）',
+    subtitle:'對準書背／封面上的標題文字後拍攝',
+    shotLabel:'📷 拍照辨識',
+    prompt:'請從圖片中找出商品書背或封面上印刷的商品標題文字。逐字照抄書背上實際印刷的文字，保留原本印出來的語言與文字（日文就是日文、英文就是英文），禁止翻譯、禁止用你自己知道的官方名稱或譯名取代、禁止自行判斷猜測。只回傳標題文字本身，看不清楚或找不到就回傳空字串，不要回傳任何說明文字。',
+    resultToast:function(v){return '已帶入品名：'+v;},
+    onResult:function(val){
+      var item=_batchItems[i];if(!item)return;
+      item.title_guess=val;
+      _batchCountConfirmRender();
+    }
+  });
 }
 function _batchCountConfirmUpdateName(i,val){
   var item=_batchItems[i];if(!item)return;
@@ -13264,6 +13248,36 @@ function searchColByBarcode(bc){
   }else{
     $('col-search').value='';filterCol();
     toast('收藏中找不到條碼：'+bc,'er',4000);
+  }
+}
+
+// v02.105：收藏頁搜尋整合OCR——原本建檔頁獨立的「快速查詢」（v02.100）拿掉，改整合進
+// 收藏頁本來就有的搜尋工具列（原本已有條碼掃描／圖片辨識比對，這裡補上OCR文字/編碼
+// 辨識），三種輸入方式收斂成同一個搜尋框的入口，不用另外跑一個獨立頁面。OCR結果不用
+// exact match（跟searchColByBarcode的條碼比對不同）——OCR抓到的可能是編碼也可能是標題
+// 文字，直接帶進搜尋框走既有的filterCol()模糊搜尋（_quickPass已涵蓋name/code/barcode
+// 等欄位），比對失敗時保留文字在框裡方便使用者手動微調，不像條碼比對失敗直接清空。
+function initColOcrSearch(){
+  var menu=$('img-search-menu');if(menu)menu.style.display='none';
+  stopColScan();
+  openFieldScanner({mode:'ocr',
+    title:'拍照OCR比對收藏',
+    subtitle:'對準商品編碼或書背／封面標題文字後拍攝',
+    shotLabel:'📷 拍照辨識',
+    prompt:'請讀出圖片中最清楚、最主要的一段文字——可能是商品編碼（如 T-15008G、SLPS-12345）或商品名稱／書背標題文字。逐字照抄，不要翻譯、不要自行判斷或補充，只回傳這段文字本身，看不清楚就回傳空字串，不要輸出任何說明文字。',
+    onResult:function(val){searchColByOcrText(val);}
+  });
+}
+function searchColByOcrText(text){
+  text=(text||'').trim();
+  if(!text){toast('沒有辨識到文字','er');return;}
+  $('col-search').value=text;filterCol();
+  var n=filtered.length;
+  if(n){
+    toast('找到 '+n+' 筆'+(n===1?'：'+filtered[0].data.primary_name:''),'ok',4000);
+    if(n===1)setTimeout(function(){showDetail(filtered[0].uid||filtered[0].rowNum);},500);
+  }else{
+    toast('收藏中找不到符合「'+text+'」的項目，可手動修改搜尋文字','er',4500);
   }
 }
 
