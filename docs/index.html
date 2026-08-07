@@ -2632,7 +2632,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.94';
+const APP_VERSION='v02.95';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10224,14 +10224,19 @@ function initBatchSpineMode(){
 function batchPhotoPick(input){
   var f=input.files&&input.files[0];
   if(!f)return;
-  _batchImgFile=f;
-  var r=new FileReader();
-  r.onload=function(){
-    $('batch-preview-img').src=r.result;
-    $('batch-preview').style.display='block';
-    $('batch-start-btn').disabled=false;
-  };
-  r.readAsDataURL(f);
+  // v02.95：使用者建議——送進AI辨識前先讓使用者裁掉不相關背景（例如書背照片上方的書架），
+  // 沿用全站共用的裁切工具（cropImageFile），跟批次Step4補封面照同一套，不用另外設計；
+  // 裁掉背景雜訊能提高AI辨識書背文字的準確率，使用者也能順便確認拍到的範圍正確再送出。
+  cropImageFile(f).then(function(blob){
+    _batchImgFile=blob;
+    var r=new FileReader();
+    r.onload=function(){
+      $('batch-preview-img').src=r.result;
+      $('batch-preview').style.display='block';
+      $('batch-start-btn').disabled=false;
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){}); // 使用者取消裁切，維持原狀不變，讓使用者重新選擇照片
 }
 
 function batchDetectStart(){
