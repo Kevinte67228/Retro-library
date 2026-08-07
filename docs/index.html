@@ -741,6 +741,14 @@ body{
 /* v02.88：辨識成功時鏡頭畫面內的大字確認banner——原本只靠toast()提示，
    但toast的z-index(999)低於全螢幕相機overlay(#fscan-ov,99999)，掃描/OCR進行中
    toast其實被蓋住看不到；改在鏡頭畫面正中央疊一個大字banner，確保使用者看得到辨識結果。 */
+/* v02.98：取景框內的「目前處理到第幾件＋品名」標籤。原本這兩項只顯示在相機畫面下方的
+   資訊區，但使用者舉著手機對焦時視線都在畫面上，不會去看下方文字；批次是連續逐件進行的，
+   一旦順序跟手上實物對不起來，後面每件都會跟著錯位，所以「現在拍的是哪一件」必須在視線
+   範圍內隨時看得到。z-index 低於 #fscan-flash(6)，辨識成功的大字仍會蓋在最上層。 */
+#fscan-framelbl{position:absolute;left:0;right:0;top:0;padding:8px 12px 14px;text-align:center;pointer-events:none;z-index:5;display:none;background:linear-gradient(180deg,rgba(4,8,18,.92),rgba(4,8,18,.6) 65%,rgba(4,8,18,0))}
+#fscan-framelbl.on{display:block}
+#fscan-framelbl-idx{display:block;font-size:12px;font-weight:700;color:#00e5ff;letter-spacing:1.5px}
+#fscan-framelbl-name{display:block;font-size:17px;font-weight:800;color:#fff;line-height:1.25;margin-top:2px;word-break:break-word;text-shadow:0 1px 4px rgba(0,0,0,.85)}
 #fscan-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:6;opacity:0;transition:opacity .18s ease}
 #fscan-flash.on{opacity:1}
 #fscan-flash-box{background:rgba(0,20,12,.92);border:2px solid #00e676;border-radius:16px;padding:16px 22px;max-width:86%;text-align:center;transform:scale(.92);transition:transform .18s ease;box-shadow:0 0 24px rgba(0,230,118,.35)}
@@ -2632,7 +2640,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.97';
+const APP_VERSION='v02.98';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9579,6 +9587,15 @@ function _fscanBuildCaptureBar(isBar){
   });
   var cb=$('fscan-cancel-btn');if(cb)cb.onclick=fscanCancel;
 }
+// v02.98：設定取景框內的「第N／M件＋品名」標籤。傳入 total 為 0／未傳時隱藏標籤
+// （單品建檔的掃描沒有「第幾件」的概念，不該顯示）。
+function _fscanFrameLabel(idx,total,name){
+  var box=$('fscan-framelbl');if(!box)return;
+  if(!total){box.classList.remove('on');return;}
+  var i=$('fscan-framelbl-idx');if(i)i.textContent='第 '+idx+'／'+total+' 件';
+  var n=$('fscan-framelbl-name');if(n)n.textContent=name||'（未辨識到品名）';
+  box.classList.add('on');
+}
 function openFieldScanner(opt){
   _fscanClearBusy();
   _fscanOpt=opt||{};_fscanBusy=false;
@@ -9586,6 +9603,8 @@ function openFieldScanner(opt){
   var isBar=_fscanOpt.mode==='barcode';
   var ttl=$('fscan-title');if(ttl)ttl.textContent=_fscanOpt.title||(isBar?'掃描條碼':'掃描編碼');
   var sub=$('fscan-sub');if(sub)sub.textContent=_fscanOpt.subtitle||(isBar?'對準條碼，自動偵測中…':'對準編碼後按下拍攝');
+  // 沒帶 frameTotal 的呼叫端（單品建檔各處）會走到隱藏分支，不受影響
+  _fscanFrameLabel(_fscanOpt.frameIdx,_fscanOpt.frameTotal,_fscanOpt.frameName);
   _fscanBuildCaptureBar(isBar);
   var st=$('fscan-status');if(st){st.classList.remove('busy');st.textContent=_fscanOpt.openingText||(isBar?'正在啟動相機，對準條碼即可自動偵測':'正在啟動相機...');}
   ov.classList.add('on');
@@ -10369,6 +10388,7 @@ function b2Scan(){
     var item=_batchItems[_batchStepIdx];
     var ttl=$('fscan-title');if(ttl)ttl.textContent='掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
     var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準包裝上的條碼';
+    _fscanFrameLabel(_batchStepIdx+1,_batchItems.length,item&&item.title_guess);
     // v02.88修正：條碼偵測到之後 createScanner 內部會自行停止串流（鏡頭畫面變黑），
     // 原本這裡只更新文字、沒有重新啟動掃描器，導致連續批次掃描第2件起完全偵測不到條碼。
     _fscanDetect(true);
@@ -10384,6 +10404,7 @@ function b2Scan(){
   openFieldScanner({mode:'barcode',continuous:true,
     title:'掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
     subtitle:item0.title_guess||'對準包裝上的條碼',
+    frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
     detectText:'正在偵測條碼',
     resultToast:function(v){return '已帶入條碼：'+v;},
     secondary:[{label:'⏭ 跳過此件',fn:function(){
@@ -10428,6 +10449,7 @@ function b3Ocr(){
     var item=_batchItems[_batchStepIdx];
     var ttl=$('fscan-title');if(ttl)ttl.textContent='拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
     var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準編碼後拍攝';
+    _fscanFrameLabel(_batchStepIdx+1,_batchItems.length,item&&item.title_guess);
   }
   function advance(){
     _batchStepIdx++;
@@ -10440,6 +10462,7 @@ function b3Ocr(){
   openFieldScanner({mode:'ocr',ocrClean:true,normalize:true,continuous:true,
     title:'拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
     subtitle:item0.title_guess||'對準編碼後拍攝',
+    frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
     secondary:[{label:'⏭ 跳過此件',fn:function(){
       var item=_batchItems[_batchStepIdx];if(item)item.code='';
       advance();
@@ -17288,6 +17311,7 @@ function _imgToB64(src){
     <div id="fscan-stage">
       <video id="fscan-video" autoplay playsinline muted></video>
       <div id="fscan-overlay"><div class="scan-box"></div><div class="scan-line"></div></div>
+      <div id="fscan-framelbl"><span id="fscan-framelbl-idx"></span><span id="fscan-framelbl-name"></span></div>
       <div id="fscan-flash"><div id="fscan-flash-box"><div id="fscan-flash-lbl">✓ 辨識成功</div><div id="fscan-flash-val"></div></div></div>
     </div>
     <div id="fscan-info">
