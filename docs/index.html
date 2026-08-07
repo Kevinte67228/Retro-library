@@ -191,7 +191,11 @@ body{
 #pg-col #col-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding:14px 16px 2px}
 #pg-col #col-sticky .hd>div:first-child{gap:14px;flex-wrap:wrap;row-gap:10px}
 #pg-col #col-sticky .hd>div:first-child>div:last-child{gap:10px;flex-wrap:wrap;justify-content:flex-end}
-#pg-col .col-tools{margin:14px 16px 10px;display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 44px;gap:10px;align-items:center}
+/* v02.106：欄數必須跟工具列實際按鈕數一致。v02.105 新增了第4顆（OCR）按鈕，但這裡的
+   grid 仍只定義 3 個按鈕欄，第5個項目（篩選鈕）因此溢位到隱含的第二列、並套用到第一欄的
+   1fr 寬度，變成一顆超寬的按鈕卡在下面——就是使用者回報的排版不對齊。日後再增減這排按鈕，
+   這裡的欄數要一起改。 */
+#pg-col .col-tools{margin:14px 16px 10px;display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 44px 44px;gap:10px;align-items:center}
 #pg-col .col-tools .sw{min-width:0}
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
@@ -225,10 +229,10 @@ body{
 .filter-pill .x{color:#7986cb;font-size:13px;line-height:1}
 @media(max-width:430px){
   #pg-col #col-sticky .hd{padding-left:12px;padding-right:12px}
-  #pg-col .col-tools{margin:12px 12px 10px;grid-template-columns:minmax(0,1fr) 42px 42px 42px;gap:8px}
+  #pg-col .col-tools{margin:12px 12px 10px;grid-template-columns:minmax(0,1fr) 40px 40px 40px 40px;gap:7px}
   #pg-col .col-sel-row{margin:12px 12px 10px}
   #pg-col .col-sel-row .btn{min-height:42px;font-size:12px}
-  #pg-col .col-tools .btn.bo{height:42px}
+  #pg-col .col-tools .btn.bo{height:40px}
   #stats{padding:10px 10px 9px;gap:5px}
   .sv2{font-size:19px}
   .sl2{font-size:9px}
@@ -2671,7 +2675,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.105';
+const APP_VERSION='v02.106';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13262,7 +13266,7 @@ function initColOcrSearch(){
   stopColScan();
   openFieldScanner({mode:'ocr',
     title:'拍照OCR比對收藏',
-    subtitle:'對準商品編碼或書背／封面標題文字後拍攝',
+    subtitle:'對準編碼或標題文字',
     shotLabel:'📷 拍照辨識',
     prompt:'請讀出圖片中最清楚、最主要的一段文字——可能是商品編碼（如 T-15008G、SLPS-12345）或商品名稱／書背標題文字。逐字照抄，不要翻譯、不要自行判斷或補充，只回傳這段文字本身，看不清楚就回傳空字串，不要輸出任何說明文字。',
     onResult:function(val){searchColByOcrText(val);}
