@@ -310,7 +310,8 @@ body{
 /* 最近入手列表 */
 .dv2-ri{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #141b30;cursor:pointer}
 .dv2-ri:last-child{border-bottom:none}
-.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.dv2-ri-ic img{width:100%;height:100%;object-fit:cover}
 .dv2-ri-name{font-size:12px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv2-ri-sub{font-size:10px;color:#7986cb;margin-top:1px}
 .dv2-ri-date{font-size:10px;color:#7986cb;flex-shrink:0}
@@ -2627,7 +2628,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.91';
+const APP_VERSION='v02.92';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -12523,8 +12524,9 @@ function renderDash(){
     // v54.03\uff1a\u526f\u6a19\u984c\u6539\u7528\u8ddf\u6536\u85cf\u5361\u7247\u4e00\u81f4\u7684 _catMeta().sub()\uff0c\u6578\u4f4d\u4e0b\u8f09\u7248/\u539f\u8072\u5e36/\u52d5\u6f2b\u7f8e\u8853/\u516c\u4ed4\u624d\u6709\u6b63\u78ba\u8cc7\u8a0a\u53ef\u986f\u793a
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
+    // v02.92\uff1a\u4f7f\u7528\u8005\u5be6\u6e2c\u56de\u5831\u5e0c\u671b\u300c\u6700\u8fd1\u5165\u624b\u300d\u4e5f\u80fd\u770b\u5230\u5c01\u9762\u7e2e\u5716\uff0c\u4e0d\u53ea\u662f\u5206\u985e emoji\u3002\u6cbf\u7528\u8207\u6536\u85cf\u5217\u8868\uff08renderColList\uff09\u76f8\u540c\u7684 hasImgVal/imgUrl \u5224\u65b7\uff0c\u6709\u5c01\u9762\u7167\u5c31\u986f\u793a\u7e2e\u5716\uff0c\u6c92\u6709\u624d\u9000\u56de\u539f\u672c\u7684\u5206\u985e icon\u3002\n    var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':ico;
     return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
-      '<div class="dv2-ri-ic">'+ico+'</div>'+
+      '<div class="dv2-ri-ic">'+thumb+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div class="dv2-ri-name">'+esc(name)+'</div>'+
         '<div class="dv2-ri-sub">'+esc(sub)+'</div>'+
