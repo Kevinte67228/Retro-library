@@ -310,7 +310,8 @@ body{
 /* 最近入手列表 */
 .dv2-ri{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #141b30;cursor:pointer}
 .dv2-ri:last-child{border-bottom:none}
-.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.dv2-ri-ic img{width:100%;height:100%;object-fit:cover}
 .dv2-ri-name{font-size:12px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv2-ri-sub{font-size:10px;color:#7986cb;margin-top:1px}
 .dv2-ri-date{font-size:10px;color:#7986cb;flex-shrink:0}
@@ -418,7 +419,7 @@ body{
 .gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden}
 .gv-card.sel{outline:2px solid #ff6e9c}
 .gv-thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:#7986cb}
-.gv-thumb img{width:100%;height:100%;object-fit:cover}
+.gv-thumb img{width:100%;height:100%;object-fit:contain;object-position:center}
 .gv-info{padding:10px}
 .gv-name{font-size:12.5px;font-weight:700;color:#e8eaf6;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
 .gv-meta{font-size:10.5px;color:#7986cb;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1333,6 +1334,10 @@ body{
                 <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 這一步只需要拍到大致的品名，條碼／商品編碼下一步會逐件掃描，不用在這張照片裡看清楚</div>
               </div>
               <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+              <label style="display:flex;align-items:flex-start;gap:8px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:10px;padding:10px 12px;margin-bottom:10px;cursor:pointer">
+                <input type="checkbox" id="batch-dual-spine" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ce93d8">
+                <span style="font-size:12px;color:#9fa8c8;line-height:1.5">這排是「一件商品兩條書背」的多片裝（例如多片裝 SEGA SATURN／PS 遊戲，每片光碟各自的書背都會露出來）——勾選後只取單數第 1、3、5…件，跳過每組的第 2 片書背，避免同一件被重複辨識成兩件。</span>
+              </label>
               <div style="display:flex;gap:8px;margin-bottom:10px">
                 <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                   📷 拍照
@@ -2627,7 +2632,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.91';
+const APP_VERSION='v02.97';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6021,39 +6026,47 @@ function _mergeDbIntoEntry(db){
   return filled;
 }
 
-function aiCompleteMissing(cb){
-  var done=function(n){if(typeof cb==='function')cb(n||0);};
-  var type=entry.category||_selectedType||'遊戲';
-  if((!cfg.gkey&&!cfg.okey)||!entry||!entry.primary_name){done(0);return;}
-  var checkFields=_checkFieldsFor(type);
-  var missing=checkFields.filter(function(k){
-    var v=(''+(entry[k]||'')).trim();
+// v02.97：以下兩個 helper 是從 aiCompleteMissing 內部原封不動抽出來的，目的是讓「單品建檔流程」
+// 與「批次並行解析流程」共用同一份邏輯，避免兩邊各寫一套之後慢慢分岔。兩者都是純同步、
+// 只操作傳入的 entry 物件，不碰全域 entry、不碰畫面，因此可以安全地在並行流程裡使用。
+function _missingFieldsFor(e,type){
+  return _checkFieldsFor(type).filter(function(k){
+    var v=(''+((e&&e[k])||'')).trim();
     if(!v)return true;
     if(k==='summary'&&!/[\u4e00-\u9fff]/.test(v))return true; // 簡介無中文→補
     return false;
   });
+}
+function _applyAiFill(e,ai,missing){
+  var n=0;
+  if(ai&&typeof ai==='object'){
+    normalizeLanguageFields(ai);
+    missing.forEach(function(k){
+      var val=_aiStr(ai[k]);
+      if(val&&val!=='無'&&val!=='未知'){
+        if(k==='genre')val=matchGenreMulti(val);
+        e[k]=val;e._src=e._src||{};e._src[k]='ai';n++;
+      }
+    });
+  }
+  if(!e.zh_name){
+    var _zf2=e.jp_name||e.primary_name||'';
+    if(_zf2){e.zh_name=_zf2;e._src=e._src||{};e._src.zh_name='fallback';}
+  }
+  if(e.primary_name){e.ref_link=googleRefLink(e.primary_name,e.platform);e._src=e._src||{};e._src.ref_link='ai';}
+  return n;
+}
+function aiCompleteMissing(cb){
+  var done=function(n){if(typeof cb==='function')cb(n||0);};
+  var type=entry.category||_selectedType||'遊戲';
+  if((!cfg.gkey&&!cfg.okey)||!entry||!entry.primary_name){done(0);return;}
+  var missing=_missingFieldsFor(entry,type);
   if(!missing.length){done(0);return;}
   loading('AI 補全其餘 '+missing.length+' 個欄位...');
   var _to=new Promise(function(res){setTimeout(function(){res({});},15000);}); // 逾時保護
   Promise.race([aiKnowledgeFill(entry.primary_name,entry.platform,missing,type,_region),_to]).then(function(ai){
     noLoad();
-    var n=0;
-    if(ai&&typeof ai==='object'){
-      normalizeLanguageFields(ai);
-      missing.forEach(function(k){
-        var v=ai[k];
-        var val=_aiStr(v);
-        if(val&&val!=='無'&&val!=='未知'){
-          if(k==='genre')val=matchGenreMulti(val);
-          entry[k]=val;entry._src=entry._src||{};entry._src[k]='ai';n++;
-        }
-      });
-    }
-    if(!entry.zh_name){
-      var _zf2=entry.jp_name||entry.primary_name||'';
-      if(_zf2){entry.zh_name=_zf2;entry._src=entry._src||{};entry._src.zh_name='fallback';}
-    }
-    if(entry.primary_name){entry.ref_link=googleRefLink(entry.primary_name,entry.platform);entry._src=entry._src||{};entry._src.ref_link='ai';}
+    var n=_applyAiFill(entry,ai,missing);
     if(typeof _applyBuyDateFromRelease==='function')_applyBuyDateFromRelease();
     if(typeof renderForm==='function')renderForm();
     done(n);
@@ -7115,10 +7128,16 @@ function showDbSrcSheet(){
 }
 // 競態條件防護計數器
 var _reqIdCounter=0;
-function crossRefLookupPromise(codeOrName,hint){
-  var myReqId=++_reqIdCounter; // 競態防護：這次查詢的 ID
-  var _sb=$('save-btn');if(_sb){_sb.disabled=true;_sb.textContent='資料庫比對中...';}
-  function _unlock(){var b=$('save-btn');if(b){b.disabled=false;b.textContent='儲存至收藏';}}
+function crossRefLookupPromise(codeOrName,hint,opts){
+  // v02.97：opts.noRace ── 批次並行解析專用。原本的競態防護是「每次查詢遞增一個流水號，回來時
+  // 若流水號已被後來的查詢蓋過就丟棄結果」，這在單品流程正確（使用者改了輸入，舊查詢就該作廢），
+  // 但批次同時查多件時，後發出的查詢會把先發出的流水號蓋掉，導致先回來的結果全部被誤判成過期而
+  // 丟棄——每件都是獨立商品、彼此沒有覆蓋關係，所以批次模式關掉這個防護。順帶也不要去動
+  // save-btn（那是單品表單的按鈕，批次流程不該碰）。
+  var noRace=!!(opts&&opts.noRace);
+  var myReqId=noRace?0:(++_reqIdCounter); // 競態防護：這次查詢的 ID
+  var _sb=noRace?null:$('save-btn');if(_sb){_sb.disabled=true;_sb.textContent='資料庫比對中...';}
+  function _unlock(){if(noRace)return;var b=$('save-btn');if(b){b.disabled=false;b.textContent='儲存至收藏';}}
   var p;
   if(_dbOverride){
     // 強制指定模式（B.2）：指定庫查無結果 → 提示使用者並自動退回分流補查
@@ -7135,7 +7154,7 @@ function crossRefLookupPromise(codeOrName,hint){
   }
   return p.then(function(r){
     _unlock();
-    if(myReqId!==_reqIdCounter)return {}; // 競態條件：捨棄舊結果但仍解鎖
+    if(!noRace&&myReqId!==_reqIdCounter)return {}; // 競態條件：捨棄舊結果但仍解鎖
     return r||{};
   }).catch(function(){_unlock();return {};});
 }
@@ -10208,6 +10227,7 @@ function initBatchSpineMode(){
     $('batch-final-actions').style.display='none'; // v02.80：重新進入時重置確認清單階段的按鈕列
     $('batch-save-btn').style.display='none';
     $('batch-progress').style.display='none';
+    var bds=$('batch-dual-spine');if(bds)bds.checked=false; // v02.94：每次重新進入預設不勾選雙書背模式
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
@@ -10218,14 +10238,19 @@ function initBatchSpineMode(){
 function batchPhotoPick(input){
   var f=input.files&&input.files[0];
   if(!f)return;
-  _batchImgFile=f;
-  var r=new FileReader();
-  r.onload=function(){
-    $('batch-preview-img').src=r.result;
-    $('batch-preview').style.display='block';
-    $('batch-start-btn').disabled=false;
-  };
-  r.readAsDataURL(f);
+  // v02.95：使用者建議——送進AI辨識前先讓使用者裁掉不相關背景（例如書背照片上方的書架），
+  // 沿用全站共用的裁切工具（cropImageFile），跟批次Step4補封面照同一套，不用另外設計；
+  // 裁掉背景雜訊能提高AI辨識書背文字的準確率，使用者也能順便確認拍到的範圍正確再送出。
+  cropImageFile(f).then(function(blob){
+    _batchImgFile=blob;
+    var r=new FileReader();
+    r.onload=function(){
+      $('batch-preview-img').src=r.result;
+      $('batch-preview').style.display='block';
+      $('batch-start-btn').disabled=false;
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){}); // 使用者取消裁切，維持原狀不變，讓使用者重新選擇照片
 }
 
 function batchDetectStart(){
@@ -10247,7 +10272,7 @@ function batchDetectStart(){
           items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
-          _batchItems=items.map(function(it,i){
+          var builtItems=items.map(function(it,i){
             return {
               order:it.order||(i+1),
               title_guess:(''+(it.title_guess||'')).trim(),
@@ -10258,6 +10283,19 @@ function batchDetectStart(){
               dup:null
             };
           });
+          // v02.94：使用者實測回報——多片裝（如多光碟版 SEGA SATURN）同一件商品的每片光碟
+          // 都各自有一條書背，AI 由左到右逐條書背辨識時會把同一件商品的第1、2片各自認成
+          // 一件，造成重複。與其讓AI去猜「哪幾條書背屬於同一件」（不可靠），改成由使用者
+          // 明確勾選「這排是雙書背」，程式直接照拍照順序取單數（1、3、5…），忽略每組的第2片，
+          // 比依賴AI判斷準確、也好理解。
+          var dualSpine=$('batch-dual-spine')&&$('batch-dual-spine').checked;
+          if(dualSpine){
+            var beforeCount=builtItems.length;
+            builtItems=builtItems.filter(function(_,i){return i%2===0;});
+            builtItems.forEach(function(it,i){it.order=i+1;});
+            toast('雙書背模式：偵測到 '+beforeCount+' 條書背，取單數後保留 '+builtItems.length+' 件','ok',3500);
+          }
+          _batchItems=builtItems;
           _batchStartStep2(); // 轉入Step2：逐件輸入條碼
         }).catch(function(e){
           noLoad();
@@ -10492,7 +10530,7 @@ function b4SkipAll(){
   _batchFinishSteps();
 }
 
-// ── 4步驟收集完成：進入既有的DB查詢＋AI補全其餘欄位管線（沿用_batchResolveNext等既有基礎設施） ──
+// ── 4步驟收集完成：進入DB查詢＋AI補全其餘欄位管線 ──
 function _batchFinishSteps(){
   _batchGotoStep(1); // 逐件步驟畫面收起，改顯示進度＋確認清單
   $('batch-step1-sec').style.display='none';
@@ -10504,34 +10542,25 @@ function _batchFinishSteps(){
   // 真的要呼叫AI時才透過loading()間接拿到螢幕喚醒鎖，中間查資料庫的空檔沒有鎖，螢幕仍可能
   // 自動熄滅、中斷處理。改成整個Step5處理期間都持有喚醒鎖，直到全部項目解析完成才釋放。
   keepAwake();
-  _batchResolveNext(0);
-}
-
-// 逐件循序解析：查資料庫→AI補全其他欄位，完全比照 doAnalyze 單品邏輯，
-// 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
-// v02.57：移除自動抓封面圖的機制（資料庫/維基百科/Google搜尋圖片一律不再自動採用），
-// 命中率始終不理想，改成解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上。
-function _batchResolveNext(idx){
-  if(idx>=_batchItems.length){
+  _batchResolveAll().then(function(){
     _batchResolving=false; // 整批解析完成，解除編輯鎖
     releaseAwake(); // v02.90：Step5全程持有的螢幕喚醒鎖，整批處理完成後才釋放
     $('batch-progress').style.display='none';
     _batchRenderList();
     toast('批次辨識完成，請確認後儲存','ok',3000);
-    return;
-  }
-  var item=_batchItems[idx];
-  item.status='resolving';
-  $('batch-progress').style.display='block';
-  // v02.90：手機瀏覽器把App切到背景（切去別的App）時，網頁本身會被系統暫停/降速執行，
-  // 這是瀏覽器/作業系統層級的省電機制，PWA程式碼無法強制繞過、也沒有可靠的網頁API能讓
-  // 一般的循序AI查詢流程在背景持續執行——螢幕喚醒鎖只能防止「螢幕自動熄滅」，防不了「切去
-  // 別的App」。加一行提醒，讓使用者知道處理期間留在本頁面才能持續跑，不是沒喚醒鎖造成的。
-  $('batch-progress').innerHTML='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）'+
-    '<br><span style="color:#ffb74d">⚠️ 請保持本頁面在前景，切去其他 App 會暫停處理</span>';
-  _batchRenderList();
-  var type=_selectedType||'遊戲';
-  var _backupEntry=entry;
+  });
+}
+
+// v02.97：並行度上限。Gemini 免費額度有「每分鐘請求數」限制，開太大會撞 429 導致補全靜默失敗
+// （aiKnowledgeFill 失敗時回傳空物件，該件就只剩資料庫查到的欄位），所以保守設 3。
+var _BATCH_CONCURRENCY=3;
+
+// 建立單件專屬的 entry 物件。這裡會「暫時借用」全域 entry 來重用既有的 _carrySelPlat/
+// _carrySelRegion/_carrySelSubtype（它們都直接操作全域 entry）——關鍵是整段中間沒有任何
+// 非同步等待，JavaScript 單執行緒下這是不可被中斷的原子操作，因此即使多件並行也不會互相污染。
+// 全域 entry 只要不「跨越 await/then 邊界」持有，就是安全的。
+function _batchBuildEntry(item,type){
+  var _bak=entry;
   // v02.67：保留item.entry既有的cover_img（Step4逐件拍照時已經把封面圖設進item.entry.cover_img，
   // 這裡如果直接用Object.assign蓋掉一個全新entry會把封面圖弄丟）；沒有Step4補圖的項目
   // item.entry還是null，(item.entry&&item.entry.cover_img)這種情況安全回傳undefined，不影響行為。
@@ -10543,43 +10572,107 @@ function _batchResolveNext(idx){
   });
   if(_preCover){entry._src=entry._src||{};entry._src.cover_img='img';}
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
-  function finishItem(failed){
-    item.entry=Object.assign({},entry);
-    item.dup=findDuplicate(item.entry);
-    item.status=failed?'failed':'ok';
-    entry=_backupEntry; // 還原全域 entry，避免汙染其他畫面狀態
-    _batchRenderList();
-    _batchResolveNext(idx+1);
+  var built=entry;
+  entry=_bak; // 立刻還原，全域 entry 不跨越任何非同步邊界
+  return built;
+}
+
+// 單件解析：查資料庫→AI補全其他欄位。回傳 Promise<failed:boolean>。
+// v02.97：改寫成完全以「明確傳入的 entry 物件」運作（不再整段佔用全域 entry），這是能夠並行的
+// 前提。也因此不再呼叫 aiCompleteMissing——那支是單品表單專用的包裝，會跳全螢幕 loading() 遮罩
+// 並呼叫 renderForm()，在批次模式下本來就是多餘甚至干擾（批次解析時畫面會閃「AI 補全…」遮罩）；
+// 改為直接呼叫底層的 aiKnowledgeFill，合併邏輯共用抽出來的 _missingFieldsFor/_applyAiFill。
+// v02.57：解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上（不自動採用DB圖片）。
+function _batchResolveOne(item,type){
+  var e=_batchBuildEntry(item,type);
+  if(!item.code&&!item.title_guess){item.entry=e;return Promise.resolve(true);}
+  function completeAi(){
+    if((!cfg.gkey&&!cfg.okey)||!e.primary_name)return Promise.resolve();
+    var missing=_missingFieldsFor(e,type);
+    if(!missing.length)return Promise.resolve();
+    var _to=new Promise(function(res){setTimeout(function(){res({});},15000);}); // 逾時保護
+    return Promise.race([aiKnowledgeFill(e.primary_name,e.platform,missing,type,_region),_to])
+      .then(function(ai){
+        _applyAiFill(e,ai,missing);
+        var _bak=entry;entry=e;_applyBuyDateFromRelease();entry=_bak; // 同步區塊，見上方說明
+      }).catch(function(){});
   }
-  function completeThenFinish(){aiCompleteMissing(function(){finishItem(false);});}
-  if(!item.code&&!item.title_guess){finishItem(true);return;}
+  var dbP;
   if(catInternal(type)==='攻略'){
-    var isISBN=item.code.indexOf('978')===0||item.code.indexOf('979')===0;
-    if(!isISBN){completeThenFinish();return;}
-    bookLookupPromise(item.code).then(function(bk){
+    var _code=item.code||'';
+    var isISBN=_code.indexOf('978')===0||_code.indexOf('979')===0;
+    dbP=isISBN?bookLookupPromise(_code).then(function(bk){
       if(bk){
-        entry._src=entry._src||{};
-        // 書籍資料庫只補空欄（含 cover_img 等圖片欄位）；img 來源不覆蓋，與單品 doAnalyze 同精神。
+        e._src=e._src||{};
+        // 書籍資料庫只補空欄；img 來源不覆蓋，與單品 doAnalyze 同精神。
         // v02.57：批次模式不再自動採用圖片欄位，跳過cover_img/back_img/spine_img，只補文字欄位。
         Object.keys(bk).forEach(function(k){
           if(k==='cover_img'||k==='back_img'||k==='spine_img')return;
-          if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';}
+          if(bk[k]&&!(''+(e[k]||'')).trim()){e[k]=bk[k];e._src[k]='db';}
         });
       }
-      completeThenFinish();
-    }).catch(completeThenFinish);
+    }).catch(function(){}):Promise.resolve();
   }else{
     // v02.48：查詢字串維持「品名＋平台」給 Giant Bomb/IGDB/RAWG/楽天用；ScreenScraper 這條
     // 走獨立路徑（見 crossRefLookupPromise 內部），從 entry.code 讀序號＋ssSearch()內建的
     // _selectedPlatform 系統ID，兩邊分工不衝突：ScreenScraper用序號查最準，其餘用品名查。
     var _platQ=_selectedPlatform||'';
     var _nameQ=(item.title_guess||'')+(_platQ?' '+_platQ:'');
-    crossRefLookupPromise(_nameQ,item.title_guess).then(function(db){
-      // v02.57：批次模式不再自動採用資料庫回傳的封面圖，_mergeDbIntoEntry 本身也不處理圖片欄位
-      _mergeDbIntoEntry(db);
-      completeThenFinish();
-    }).catch(completeThenFinish);
+    dbP=crossRefLookupPromise(_nameQ,item.title_guess,{noRace:true}).then(function(db){
+      var _bak=entry;entry=e;_mergeDbIntoEntry(db);entry=_bak; // 同步區塊，見上方說明
+    }).catch(function(){});
   }
+  return dbP.then(completeAi).then(function(){item.entry=e;return false;})
+    .catch(function(){item.entry=e;return false;});
+}
+
+// 整批解析：以固定並行度的工作池同時處理多件，取代原本「第2件要等第1件完全跑完」的逐件排隊。
+// 每件都要等資料庫查詢（最多兩輪）＋一次AI補全，逐件排隊時總時間是件數的倍數，這是批次流程
+// 最主要的等待來源。回傳 Promise，全部處理完才 resolve。
+function _batchResolveAll(){
+  var type=_selectedType||'遊戲';
+  var total=_batchItems.length,next=0,doneCount=0;
+  var prog=$('batch-progress');
+  function updateProgress(){
+    if(!prog)return;
+    // v02.90：手機瀏覽器把App切到背景（切去別的App）時，網頁本身會被系統暫停/降速執行，
+    // 這是瀏覽器/作業系統層級的省電機制，PWA程式碼無法強制繞過、也沒有可靠的網頁API能讓
+    // 一般的循序AI查詢流程在背景持續執行——螢幕喚醒鎖只能防止「螢幕自動熄滅」，防不了「切去
+    // 別的App」。加一行提醒，讓使用者知道處理期間留在本頁面才能持續跑，不是沒喚醒鎖造成的。
+    prog.innerHTML='AI 解析中… 已完成 '+doneCount+'／'+total+' 件（整批完成前，項目暫不能點擊編輯）'+
+      '<br><span style="color:#ffb74d">⚠️ 請保持本頁面在前景，切去其他 App 會暫停處理</span>';
+  }
+  if(prog)prog.style.display='block';
+  updateProgress();
+  // v02.97：並行階段把全域 entry 設成「本批共用的分類＋平台」情境物件，全部跑完再還原。
+  // 原因：_crossRefQuery 內部會讀全域 entry.platform 去組楽天的查詢字串（同系列跨平台作品
+  // 沒帶平台字樣容易搜到別平台的商品）。舊的逐件流程會把全域 entry 換成「當件」的 entry，所以
+  // 讀得到正確平台；改成並行後每件都用自己的物件、不再整段佔用全域 entry，若不處理就會讀到
+  // 上一次單品建檔殘留的舊平台，害楽天查詢帶錯平台。本批所有商品共用同一分類/平台，設成共用
+  // 情境物件即可，且整個並行期間都一致，不會有跨件污染。
+  var _entryBak=entry;
+  entry=Object.assign({},_defaultsFor(type),{category:type,platform:_selectedPlatform||''});
+  function _restoreEntry(){entry=_entryBak;}
+  return new Promise(function(resolve){
+    if(!total){resolve();return;}
+    function startNext(){
+      if(next>=total)return; // 沒有待處理的了，這條工作線收工（由最後完成的那條負責 resolve）
+      var item=_batchItems[next++];
+      item.status='resolving';
+      _batchRenderList();
+      _batchResolveOne(item,type).then(function(failed){
+        item.dup=findDuplicate(item.entry);
+        item.status=failed?'failed':'ok';
+        doneCount++;
+        updateProgress();
+        _batchRenderList();
+        if(doneCount>=total){resolve();return;}
+        startNext();
+      });
+    }
+    var lanes=Math.min(_BATCH_CONCURRENCY,total);
+    for(var i=0;i<lanes;i++)startNext();
+  }).then(_restoreEntry,function(err){_restoreEntry();throw err;});
 }
 
 function _batchStatusBadge(item){
@@ -12523,8 +12616,10 @@ function renderDash(){
     // v54.03\uff1a\u526f\u6a19\u984c\u6539\u7528\u8ddf\u6536\u85cf\u5361\u7247\u4e00\u81f4\u7684 _catMeta().sub()\uff0c\u6578\u4f4d\u4e0b\u8f09\u7248/\u539f\u8072\u5e36/\u52d5\u6f2b\u7f8e\u8853/\u516c\u4ed4\u624d\u6709\u6b63\u78ba\u8cc7\u8a0a\u53ef\u986f\u793a
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
+    // v02.92\uff1a\u4f7f\u7528\u8005\u5be6\u6e2c\u56de\u5831\u5e0c\u671b\u300c\u6700\u8fd1\u5165\u624b\u300d\u4e5f\u80fd\u770b\u5230\u5c01\u9762\u7e2e\u5716\uff0c\u4e0d\u53ea\u662f\u5206\u985e emoji\u3002\u6cbf\u7528\u8207\u6536\u85cf\u5217\u8868\uff08renderColList\uff09\u76f8\u540c\u7684 hasImgVal/imgUrl \u5224\u65b7\uff0c有封面照就顯示縮圖，沒有才退回原本的分類 icon。
+    var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':ico;
     return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
-      '<div class="dv2-ri-ic">'+ico+'</div>'+
+      '<div class="dv2-ri-ic">'+thumb+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div class="dv2-ri-name">'+esc(name)+'</div>'+
         '<div class="dv2-ri-sub">'+esc(sub)+'</div>'+
