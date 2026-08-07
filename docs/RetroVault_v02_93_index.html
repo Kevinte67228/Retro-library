@@ -310,7 +310,8 @@ body{
 /* 最近入手列表 */
 .dv2-ri{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #141b30;cursor:pointer}
 .dv2-ri:last-child{border-bottom:none}
-.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.dv2-ri-ic{width:36px;height:36px;border-radius:9px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;overflow:hidden}
+.dv2-ri-ic img{width:100%;height:100%;object-fit:cover}
 .dv2-ri-name{font-size:12px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dv2-ri-sub{font-size:10px;color:#7986cb;margin-top:1px}
 .dv2-ri-date{font-size:10px;color:#7986cb;flex-shrink:0}
@@ -737,6 +738,15 @@ body{
 #fscan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
 #fscan-status{flex:0 0 auto;padding:4px 16px 8px;text-align:center;font-size:13px;color:#7986cb;min-height:18px;background:#0b0f1a}
 #fscan-status.busy{color:#00e5ff}
+/* v02.88：辨識成功時鏡頭畫面內的大字確認banner——原本只靠toast()提示，
+   但toast的z-index(999)低於全螢幕相機overlay(#fscan-ov,99999)，掃描/OCR進行中
+   toast其實被蓋住看不到；改在鏡頭畫面正中央疊一個大字banner，確保使用者看得到辨識結果。 */
+#fscan-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:6;opacity:0;transition:opacity .18s ease}
+#fscan-flash.on{opacity:1}
+#fscan-flash-box{background:rgba(0,20,12,.92);border:2px solid #00e676;border-radius:16px;padding:16px 22px;max-width:86%;text-align:center;transform:scale(.92);transition:transform .18s ease;box-shadow:0 0 24px rgba(0,230,118,.35)}
+#fscan-flash.on #fscan-flash-box{transform:scale(1)}
+#fscan-flash-lbl{font-size:13px;color:#69f0ae;letter-spacing:1px;margin-bottom:6px;font-weight:700}
+#fscan-flash-val{font-size:26px;font-weight:900;color:#fff;letter-spacing:.5px;word-break:break-all;line-height:1.3}
 #fscan-bar{flex:0 0 auto;display:flex;gap:10px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0b0f1a;min-height:18vh;align-items:center}
 #fscan-bar button{flex:1;padding:18px 8px;border-radius:12px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:15px;font-weight:700;cursor:pointer}
 #fscan-bar button.cp{background:linear-gradient(135deg,#00e5ff,#2979ff);border-color:transparent;color:#001018}
@@ -2618,7 +2628,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.87';
+const APP_VERSION='v02.93';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6451,6 +6461,13 @@ function _cropLayout(){
   if(!box){
     var ins=Math.round(Math.min(w,h)*0.06);
     box={x:x+ins,y:y+ins,w:w-ins*2,h:h-ins*2};
+  }else{
+    // v02.91：使用者實測回報，偵測到的商品邊界常常直接貼齊照片最外緣，導致四角的拖曳
+    // 把手緊貼畫面邊界，手指很難精準抓到、也很難再往外拉調整。偵測到的框額外往內收一點
+    // 安全間距，讓把手離邊界有空間可操作；「貼緊商品邊緣」的原意不變，只是留一點緩衝，
+    // 使用者原本就可以自行拖曳微調。fallback 的保守框本來就已內縮 6%，不需要再加。
+    var pad=Math.round(Math.min(w,h)*0.025);
+    box={x:box.x+pad,y:box.y+pad,w:Math.max(20,box.w-pad*2),h:Math.max(20,box.h-pad*2)};
   }
   _crop.box=box;
   _crop._autoDetected=true; // 標記已完成首次偵測，往後 resize 不再重置
@@ -9699,20 +9716,32 @@ function fscanCapture(){ // 僅 OCR 模式使用：擷取畫格 → Gemini
 // 透過既有的compressImg（內部會自動呼叫autoCropCanvas依背景色差異裁掉多餘邊緣）處理，
 // 拍完呼叫onCapture回呼但不自動關閉overlay，讓呼叫端決定要不要留在同一個相機畫面連續拍下一件。
 
+var _fscanFlashTimer=null;
+function _fscanShowFlash(val){
+  // v02.88：辨識成功的大字確認——顯示在鏡頭畫面正中央，蓋過toast被全螢幕overlay擋住看不到的問題
+  var el=$('fscan-flash'),v=$('fscan-flash-val');
+  if(!el||!v)return;
+  v.textContent=val;
+  el.classList.add('on');
+  if(_fscanFlashTimer){clearTimeout(_fscanFlashTimer);_fscanFlashTimer=null;}
+  _fscanFlashTimer=setTimeout(function(){el.classList.remove('on');_fscanFlashTimer=null;},1100);
+}
 function fscanFill(val){ // 共用：帶入欄位 → 回呼 → 自動關閉（連續模式除外）
   if(!val)return;
   try{if(typeof navigator.vibrate==='function')navigator.vibrate(60);}catch(e){}
   var inp=$(_fscanOpt.inputId);if(inp)inp.value=val;
   if(_fscanOpt.onResult)_fscanOpt.onResult(val);
   var okMsg=(typeof _fscanOpt.resultToast==='function')?_fscanOpt.resultToast(val):('✓ '+val);
+  _fscanShowFlash(val);
   toast(okMsg,'ok',2500);
   // v02.81：連續模式（批次逐件掃描用）——不自動關閉overlay，相機/偵測繼續運作，
   // 交給呼叫端的onContinue決定要不要更新畫面文字、或是全部處理完才真正關閉。
+  // v02.88：延後約900ms才進入下一件，讓使用者先看清楚上面的大字確認banner再切換畫面文字。
   if(_fscanOpt.continuous){
     _fscanClearBusy(); // OCR模式下清除「AI辨識中」忙碌狀態，讓使用者能立刻拍下一件
-    if(typeof _fscanOpt.onContinue==='function')_fscanOpt.onContinue();
+    if(typeof _fscanOpt.onContinue==='function')setTimeout(_fscanOpt.onContinue,900);
   }else{
-    fscanClose();
+    setTimeout(fscanClose,700); // v02.88：非連續模式也延後關閉，讓大字確認banner有時間被看到
   }
 }
 // 商品編碼建檔模式：開 OCR 取景框帶入目標欄位（失敗回退原生相機）
@@ -10152,8 +10181,16 @@ var BATCH_DETECT_SCHEMA={
 function _batchDetectPrompt(){
   var cat=catLabel(_selectedType)||'遊戲';
   var platTxt=_selectedPlatform?('，平台為「'+_selectedPlatform+'」'):'';
+  // v02.89：使用者實測回報，日文封面/書背常被辨識成英文名稱——查證後發現title_guess目前
+  // 會被直接當成entry.primary_name使用（_batchResolveNext裡的AI補全只填「空白」欄位，
+  // 不會覆蓋掉已有值），所以Step1這裡讓AI「認出遊戲後憑自己知道的官方英文/國際譯名回答」，
+  // 而不是「照抄書背上實際印的文字」，就會直接污染最終存檔的名稱。加強提示詞明確禁止
+  // 用AI自己知道的譯名/國際標題取代，要求逐字照抄書背上印出來的文字、保留原始語言文字
+  // （日文就是日文、英文就是英文），不要翻譯或替換成其他語言版本的標題。
   return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 10 件（超過 10 件只取最左邊 10 件；忽略書背以外的背景物件）。'+
-    'title_guess 填書背上看到的標題文字（僅供人工比對確認用，看到什麼填什麼，不需要完整或保證正確，看不清楚可以留空）；'+
+    'title_guess 必須逐字照抄書背上實際印刷的文字，保留原本印出來的語言與文字（書背印的是日文假名/漢字就原樣填日文，是英文就填英文），'+
+    '禁止翻譯、禁止音譯、禁止用你自己知道的官方譯名或其他地區/語言版本的標題取代——即使你認出這是哪款遊戲，也只能填書背上真正看得到的文字，不要憑記憶回答；'+
+    '看不清楚或看不到文字就留空，不需要完整或保證正確；'+
     'order 為由左到右的順序（1 起算）。不需要辨識商品編碼／條碼，這些之後會逐件實際掃描取得，比從照片猜測準確。只輸出 JSON，不要其他文字。';
 }
 
@@ -10295,6 +10332,11 @@ function b2Scan(){
     var item=_batchItems[_batchStepIdx];
     var ttl=$('fscan-title');if(ttl)ttl.textContent='掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
     var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準包裝上的條碼';
+    // v02.88修正：條碼偵測到之後 createScanner 內部會自行停止串流（鏡頭畫面變黑），
+    // 原本這裡只更新文字、沒有重新啟動掃描器，導致連續批次掃描第2件起完全偵測不到條碼。
+    _fscanDetect(true);
+    _fscanSetScanning('正在偵測條碼');
+    if(_fscanInst)_fscanInst.start();
   }
   function advance(){
     _batchStepIdx++;
@@ -10459,6 +10501,10 @@ function _batchFinishSteps(){
   $('batch-final-actions').style.display='flex'; // v02.80：確認清單階段才顯示這組取消/儲存按鈕列
   _batchRenderList();
   _batchResolving=true;
+  // v02.90：整段逐件查詢＋AI補全（可能長達數十秒到數分鐘）原本只有aiCompleteMissing內部
+  // 真的要呼叫AI時才透過loading()間接拿到螢幕喚醒鎖，中間查資料庫的空檔沒有鎖，螢幕仍可能
+  // 自動熄滅、中斷處理。改成整個Step5處理期間都持有喚醒鎖，直到全部項目解析完成才釋放。
+  keepAwake();
   _batchResolveNext(0);
 }
 
@@ -10469,6 +10515,7 @@ function _batchFinishSteps(){
 function _batchResolveNext(idx){
   if(idx>=_batchItems.length){
     _batchResolving=false; // 整批解析完成，解除編輯鎖
+    releaseAwake(); // v02.90：Step5全程持有的螢幕喚醒鎖，整批處理完成後才釋放
     $('batch-progress').style.display='none';
     _batchRenderList();
     toast('批次辨識完成，請確認後儲存','ok',3000);
@@ -10477,7 +10524,12 @@ function _batchResolveNext(idx){
   var item=_batchItems[idx];
   item.status='resolving';
   $('batch-progress').style.display='block';
-  $('batch-progress').textContent='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）';
+  // v02.90：手機瀏覽器把App切到背景（切去別的App）時，網頁本身會被系統暫停/降速執行，
+  // 這是瀏覽器/作業系統層級的省電機制，PWA程式碼無法強制繞過、也沒有可靠的網頁API能讓
+  // 一般的循序AI查詢流程在背景持續執行——螢幕喚醒鎖只能防止「螢幕自動熄滅」，防不了「切去
+  // 別的App」。加一行提醒，讓使用者知道處理期間留在本頁面才能持續跑，不是沒喚醒鎖造成的。
+  $('batch-progress').innerHTML='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）'+
+    '<br><span style="color:#ffb74d">⚠️ 請保持本頁面在前景，切去其他 App 會暫停處理</span>';
   _batchRenderList();
   var type=_selectedType||'遊戲';
   var _backupEntry=entry;
@@ -10562,14 +10614,23 @@ function _batchRenderList(){
       : '<div'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;'+(editable?'cursor:pointer;':'')+'color:#7986cb;text-align:center;line-height:1.2" title="'+(editable?'點擊拍照補上圖片':'')+'">📷</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
+    // v02.88：名稱辨識常出錯，但這一步之前完全不能改名稱，錯了只能等轉入收藏後再編輯，
+    // 容易忘記修正。改成直接在勾選清單這一步就能改名稱（input直接改，不用另外開完整表單），
+    // 其餘欄位仍點「✎」開完整表單編輯（沿用既有batchEditItem，不重造一套）。
+    var nameField=editable
+      ? '<div style="font-size:10px;color:#7986cb;margin-bottom:3px">第'+(item.order||(i+1))+'件名稱</div>'+
+        '<input type="text" value="'+esc(name)+'" placeholder="商品名稱" oninput="_batchUpdateName('+i+',this.value)" onblur="_batchNameBlur('+i+')" '+
+        'style="width:100%;background:#0f1525;border:1px solid #2a3a5a;border-radius:6px;color:#e8eaf6;font-size:13px;font-weight:600;padding:6px 8px;font-family:inherit;box-sizing:border-box">'
+      : '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2a45">'+
       '<input type="checkbox" '+checked+' '+disabled+' onchange="batchToggleInclude('+i+',this.checked)" style="width:18px;height:18px;flex-shrink:0;accent-color:#ce93d8">'+
       imgTag+
-      '<div style="flex:1;min-width:0"'+(editable?' onclick="batchEditItem('+i+')" style="cursor:pointer"':'')+'>'+
-        '<div style="font-size:13px;font-weight:600;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(item.order||(i+1))+'. '+esc(name)+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        nameField+
         '<div style="font-size:11px;color:#7986cb;margin-top:3px">'+esc(item.code||'（無編碼）')+'</div>'+
         '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+'</div>'+
       '</div>'+
+      (editable?'<button type="button" onclick="batchEditItem('+i+')" title="編輯其他欄位" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#9fa8c8;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer">✎</button>':'')+
     '</div>';
   }).join('');
   var doneCount=_batchItems.filter(function(it){return it.status==='ok'||it.status==='failed';}).length;
@@ -10585,6 +10646,19 @@ function _batchRenderList(){
 function batchToggleInclude(i,checked){
   if(!_batchItems[i])return;
   _batchItems[i].include=checked;
+  _batchRenderList();
+}
+// v02.88：確認清單直接改名稱——只更新資料，不呼叫_batchRenderList()（會整批重繪innerHTML，
+// 打字打到一半輸入框會被重建、游標位置跑掉），存檔時直接讀取_batchItems[i].entry.primary_name。
+function _batchUpdateName(i,val){
+  var item=_batchItems[i];if(!item||!item.entry)return;
+  item.entry.primary_name=val;
+}
+// v02.90：改名離開輸入框時（onblur，這時候重繪不會打斷打字）重新檢查是否仍是重複收藏，
+// 讓「⚠️ 已收藏過」徽章能跟著改名後的結果更新，不會停在改名前算出來的舊警示。
+function _batchNameBlur(i){
+  var item=_batchItems[i];if(!item||!item.entry)return;
+  item.dup=findDuplicate(item.entry);
   _batchRenderList();
 }
 
@@ -10620,7 +10694,13 @@ function _batchExitEditMode(){
 function batchApplyItemEdit(){
   if(_batchEditIndex===null)return;
   var _savedIdx=_batchEditIndex;
-  _batchItems[_savedIdx].entry=Object.assign({},entry); // 存回這一筆批次項目（含使用者拍的照片）
+  var item=_batchItems[_savedIdx];
+  item.entry=Object.assign({},entry); // 存回這一筆批次項目（含使用者拍的照片）
+  // v02.90：確認清單的狀態徽章（未輸入編碼／已收藏過）原本只依賴Step2-4收集當下的item.code
+  // 跟_batchResolveNext算出來的item.dup，編輯完整表單補上編碼或改了名稱之後這兩個沒有跟著
+  // 重算，徽章會一直停在舊的警示狀態——即使使用者已經在表單裡修正好了。編輯存回時同步重算。
+  item.code=item.entry.code||'';
+  item.dup=findDuplicate(item.entry);
   _batchExitEditMode();
   toast('已更新第'+(_savedIdx+1)+'筆，記得確認後再儲存整批','ok',2500);
 }
@@ -12444,8 +12524,10 @@ function renderDash(){
     // v54.03\uff1a\u526f\u6a19\u984c\u6539\u7528\u8ddf\u6536\u85cf\u5361\u7247\u4e00\u81f4\u7684 _catMeta().sub()\uff0c\u6578\u4f4d\u4e0b\u8f09\u7248/\u539f\u8072\u5e36/\u52d5\u6f2b\u7f8e\u8853/\u516c\u4ed4\u624d\u6709\u6b63\u78ba\u8cc7\u8a0a\u53ef\u986f\u793a
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
+    // v02.92\uff1a\u4f7f\u7528\u8005\u5be6\u6e2c\u56de\u5831\u5e0c\u671b\u300c\u6700\u8fd1\u5165\u624b\u300d\u4e5f\u80fd\u770b\u5230\u5c01\u9762\u7e2e\u5716\uff0c\u4e0d\u53ea\u662f\u5206\u985e emoji\u3002\u6cbf\u7528\u8207\u6536\u85cf\u5217\u8868\uff08renderColList\uff09\u76f8\u540c\u7684 hasImgVal/imgUrl \u5224\u65b7\uff0c有封面照就顯示縮圖，沒有才退回原本的分類 icon。
+    var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':ico;
     return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
-      '<div class="dv2-ri-ic">'+ico+'</div>'+
+      '<div class="dv2-ri-ic">'+thumb+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div class="dv2-ri-name">'+esc(name)+'</div>'+
         '<div class="dv2-ri-sub">'+esc(sub)+'</div>'+
@@ -15091,6 +15173,7 @@ function resetAll(){
   // 如果在批次項目編輯模式下被意外觸發（例如取消鈕的 onclick 被其他背景流程重置回預設），
   // 會造成「整個跳出批次書背建檔」的症狀。改成優先轉向捨棄這次編輯、安全返回批次清單。
   if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchCancelItemEdit();return;}
+  releaseAwake(); // v02.90：若在批次Step5解析期間取消，確保釋放整段流程持有的螢幕喚醒鎖
   stopScanner();if(typeof stopComboScanner==='function')stopComboScanner();
   entry={};edited.clear();
   _scanBC=''; // 清除上一筆條碼暫存，避免帶入下一筆（無條碼裸卡誤判重複的根因）
@@ -17113,6 +17196,7 @@ function _imgToB64(src){
     <div id="fscan-stage">
       <video id="fscan-video" autoplay playsinline muted></video>
       <div id="fscan-overlay"><div class="scan-box"></div><div class="scan-line"></div></div>
+      <div id="fscan-flash"><div id="fscan-flash-box"><div id="fscan-flash-lbl">✓ 辨識成功</div><div id="fscan-flash-val"></div></div></div>
     </div>
     <div id="fscan-info">
       <span id="fscan-title">掃描編碼</span>
