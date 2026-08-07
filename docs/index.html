@@ -1334,6 +1334,10 @@ body{
                 <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 這一步只需要拍到大致的品名，條碼／商品編碼下一步會逐件掃描，不用在這張照片裡看清楚</div>
               </div>
               <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+              <label style="display:flex;align-items:flex-start;gap:8px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:10px;padding:10px 12px;margin-bottom:10px;cursor:pointer">
+                <input type="checkbox" id="batch-dual-spine" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ce93d8">
+                <span style="font-size:12px;color:#9fa8c8;line-height:1.5">這排是「一件商品兩條書背」的多片裝（例如多片裝 SEGA SATURN／PS 遊戲，每片光碟各自的書背都會露出來）——勾選後只取單數第 1、3、5…件，跳過每組的第 2 片書背，避免同一件被重複辨識成兩件。</span>
+              </label>
               <div style="display:flex;gap:8px;margin-bottom:10px">
                 <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                   📷 拍照
@@ -2628,7 +2632,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.93';
+const APP_VERSION='v02.94';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10209,6 +10213,7 @@ function initBatchSpineMode(){
     $('batch-final-actions').style.display='none'; // v02.80：重新進入時重置確認清單階段的按鈕列
     $('batch-save-btn').style.display='none';
     $('batch-progress').style.display='none';
+    var bds=$('batch-dual-spine');if(bds)bds.checked=false; // v02.94：每次重新進入預設不勾選雙書背模式
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
@@ -10248,7 +10253,7 @@ function batchDetectStart(){
           items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
-          _batchItems=items.map(function(it,i){
+          var builtItems=items.map(function(it,i){
             return {
               order:it.order||(i+1),
               title_guess:(''+(it.title_guess||'')).trim(),
@@ -10259,6 +10264,19 @@ function batchDetectStart(){
               dup:null
             };
           });
+          // v02.94：使用者實測回報——多片裝（如多光碟版 SEGA SATURN）同一件商品的每片光碟
+          // 都各自有一條書背，AI 由左到右逐條書背辨識時會把同一件商品的第1、2片各自認成
+          // 一件，造成重複。與其讓AI去猜「哪幾條書背屬於同一件」（不可靠），改成由使用者
+          // 明確勾選「這排是雙書背」，程式直接照拍照順序取單數（1、3、5…），忽略每組的第2片，
+          // 比依賴AI判斷準確、也好理解。
+          var dualSpine=$('batch-dual-spine')&&$('batch-dual-spine').checked;
+          if(dualSpine){
+            var beforeCount=builtItems.length;
+            builtItems=builtItems.filter(function(_,i){return i%2===0;});
+            builtItems.forEach(function(it,i){it.order=i+1;});
+            toast('雙書背模式：偵測到 '+beforeCount+' 條書背，取單數後保留 '+builtItems.length+' 件','ok',3500);
+          }
+          _batchItems=builtItems;
           _batchStartStep2(); // 轉入Step2：逐件輸入條碼
         }).catch(function(e){
           noLoad();
