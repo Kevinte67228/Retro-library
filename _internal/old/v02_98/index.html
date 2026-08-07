@@ -419,7 +419,7 @@ body{
 .gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden}
 .gv-card.sel{outline:2px solid #ff6e9c}
 .gv-thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:#7986cb}
-.gv-thumb img{width:100%;height:100%;object-fit:cover}
+.gv-thumb img{width:100%;height:100%;object-fit:contain;object-position:center}
 .gv-info{padding:10px}
 .gv-name{font-size:12.5px;font-weight:700;color:#e8eaf6;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
 .gv-meta{font-size:10.5px;color:#7986cb;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -741,6 +741,14 @@ body{
 /* v02.88：辨識成功時鏡頭畫面內的大字確認banner——原本只靠toast()提示，
    但toast的z-index(999)低於全螢幕相機overlay(#fscan-ov,99999)，掃描/OCR進行中
    toast其實被蓋住看不到；改在鏡頭畫面正中央疊一個大字banner，確保使用者看得到辨識結果。 */
+/* v02.98：取景框內的「目前處理到第幾件＋品名」標籤。原本這兩項只顯示在相機畫面下方的
+   資訊區，但使用者舉著手機對焦時視線都在畫面上，不會去看下方文字；批次是連續逐件進行的，
+   一旦順序跟手上實物對不起來，後面每件都會跟著錯位，所以「現在拍的是哪一件」必須在視線
+   範圍內隨時看得到。z-index 低於 #fscan-flash(6)，辨識成功的大字仍會蓋在最上層。 */
+#fscan-framelbl{position:absolute;left:0;right:0;top:0;padding:8px 12px 14px;text-align:center;pointer-events:none;z-index:5;display:none;background:linear-gradient(180deg,rgba(4,8,18,.92),rgba(4,8,18,.6) 65%,rgba(4,8,18,0))}
+#fscan-framelbl.on{display:block}
+#fscan-framelbl-idx{display:block;font-size:12px;font-weight:700;color:#00e5ff;letter-spacing:1.5px}
+#fscan-framelbl-name{display:block;font-size:17px;font-weight:800;color:#fff;line-height:1.25;margin-top:2px;word-break:break-word;text-shadow:0 1px 4px rgba(0,0,0,.85)}
 #fscan-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:6;opacity:0;transition:opacity .18s ease}
 #fscan-flash.on{opacity:1}
 #fscan-flash-box{background:rgba(0,20,12,.92);border:2px solid #00e676;border-radius:16px;padding:16px 22px;max-width:86%;text-align:center;transform:scale(.92);transition:transform .18s ease;box-shadow:0 0 24px rgba(0,230,118,.35)}
@@ -1334,6 +1342,10 @@ body{
                 <div style="font-size:10px;color:#ffb74d;text-align:center;margin-top:2px">⚠️ 這一步只需要拍到大致的品名，條碼／商品編碼下一步會逐件掃描，不用在這張照片裡看清楚</div>
               </div>
               <div id="batch-lock-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+              <label style="display:flex;align-items:flex-start;gap:8px;background:#0f1525;border:1.5px solid #1e2a45;border-radius:10px;padding:10px 12px;margin-bottom:10px;cursor:pointer">
+                <input type="checkbox" id="batch-dual-spine" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ce93d8">
+                <span style="font-size:12px;color:#9fa8c8;line-height:1.5">這排是「一件商品兩條書背」的多片裝（例如多片裝 SEGA SATURN／PS 遊戲，每片光碟各自的書背都會露出來）——勾選後只取單數第 1、3、5…件，跳過每組的第 2 片書背，避免同一件被重複辨識成兩件。</span>
+              </label>
               <div style="display:flex;gap:8px;margin-bottom:10px">
                 <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                   📷 拍照
@@ -2628,7 +2640,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.93';
+const APP_VERSION='v02.98';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6022,39 +6034,47 @@ function _mergeDbIntoEntry(db){
   return filled;
 }
 
-function aiCompleteMissing(cb){
-  var done=function(n){if(typeof cb==='function')cb(n||0);};
-  var type=entry.category||_selectedType||'遊戲';
-  if((!cfg.gkey&&!cfg.okey)||!entry||!entry.primary_name){done(0);return;}
-  var checkFields=_checkFieldsFor(type);
-  var missing=checkFields.filter(function(k){
-    var v=(''+(entry[k]||'')).trim();
+// v02.97：以下兩個 helper 是從 aiCompleteMissing 內部原封不動抽出來的，目的是讓「單品建檔流程」
+// 與「批次並行解析流程」共用同一份邏輯，避免兩邊各寫一套之後慢慢分岔。兩者都是純同步、
+// 只操作傳入的 entry 物件，不碰全域 entry、不碰畫面，因此可以安全地在並行流程裡使用。
+function _missingFieldsFor(e,type){
+  return _checkFieldsFor(type).filter(function(k){
+    var v=(''+((e&&e[k])||'')).trim();
     if(!v)return true;
     if(k==='summary'&&!/[\u4e00-\u9fff]/.test(v))return true; // 簡介無中文→補
     return false;
   });
+}
+function _applyAiFill(e,ai,missing){
+  var n=0;
+  if(ai&&typeof ai==='object'){
+    normalizeLanguageFields(ai);
+    missing.forEach(function(k){
+      var val=_aiStr(ai[k]);
+      if(val&&val!=='無'&&val!=='未知'){
+        if(k==='genre')val=matchGenreMulti(val);
+        e[k]=val;e._src=e._src||{};e._src[k]='ai';n++;
+      }
+    });
+  }
+  if(!e.zh_name){
+    var _zf2=e.jp_name||e.primary_name||'';
+    if(_zf2){e.zh_name=_zf2;e._src=e._src||{};e._src.zh_name='fallback';}
+  }
+  if(e.primary_name){e.ref_link=googleRefLink(e.primary_name,e.platform);e._src=e._src||{};e._src.ref_link='ai';}
+  return n;
+}
+function aiCompleteMissing(cb){
+  var done=function(n){if(typeof cb==='function')cb(n||0);};
+  var type=entry.category||_selectedType||'遊戲';
+  if((!cfg.gkey&&!cfg.okey)||!entry||!entry.primary_name){done(0);return;}
+  var missing=_missingFieldsFor(entry,type);
   if(!missing.length){done(0);return;}
   loading('AI 補全其餘 '+missing.length+' 個欄位...');
   var _to=new Promise(function(res){setTimeout(function(){res({});},15000);}); // 逾時保護
   Promise.race([aiKnowledgeFill(entry.primary_name,entry.platform,missing,type,_region),_to]).then(function(ai){
     noLoad();
-    var n=0;
-    if(ai&&typeof ai==='object'){
-      normalizeLanguageFields(ai);
-      missing.forEach(function(k){
-        var v=ai[k];
-        var val=_aiStr(v);
-        if(val&&val!=='無'&&val!=='未知'){
-          if(k==='genre')val=matchGenreMulti(val);
-          entry[k]=val;entry._src=entry._src||{};entry._src[k]='ai';n++;
-        }
-      });
-    }
-    if(!entry.zh_name){
-      var _zf2=entry.jp_name||entry.primary_name||'';
-      if(_zf2){entry.zh_name=_zf2;entry._src=entry._src||{};entry._src.zh_name='fallback';}
-    }
-    if(entry.primary_name){entry.ref_link=googleRefLink(entry.primary_name,entry.platform);entry._src=entry._src||{};entry._src.ref_link='ai';}
+    var n=_applyAiFill(entry,ai,missing);
     if(typeof _applyBuyDateFromRelease==='function')_applyBuyDateFromRelease();
     if(typeof renderForm==='function')renderForm();
     done(n);
@@ -7116,10 +7136,16 @@ function showDbSrcSheet(){
 }
 // 競態條件防護計數器
 var _reqIdCounter=0;
-function crossRefLookupPromise(codeOrName,hint){
-  var myReqId=++_reqIdCounter; // 競態防護：這次查詢的 ID
-  var _sb=$('save-btn');if(_sb){_sb.disabled=true;_sb.textContent='資料庫比對中...';}
-  function _unlock(){var b=$('save-btn');if(b){b.disabled=false;b.textContent='儲存至收藏';}}
+function crossRefLookupPromise(codeOrName,hint,opts){
+  // v02.97：opts.noRace ── 批次並行解析專用。原本的競態防護是「每次查詢遞增一個流水號，回來時
+  // 若流水號已被後來的查詢蓋過就丟棄結果」，這在單品流程正確（使用者改了輸入，舊查詢就該作廢），
+  // 但批次同時查多件時，後發出的查詢會把先發出的流水號蓋掉，導致先回來的結果全部被誤判成過期而
+  // 丟棄——每件都是獨立商品、彼此沒有覆蓋關係，所以批次模式關掉這個防護。順帶也不要去動
+  // save-btn（那是單品表單的按鈕，批次流程不該碰）。
+  var noRace=!!(opts&&opts.noRace);
+  var myReqId=noRace?0:(++_reqIdCounter); // 競態防護：這次查詢的 ID
+  var _sb=noRace?null:$('save-btn');if(_sb){_sb.disabled=true;_sb.textContent='資料庫比對中...';}
+  function _unlock(){if(noRace)return;var b=$('save-btn');if(b){b.disabled=false;b.textContent='儲存至收藏';}}
   var p;
   if(_dbOverride){
     // 強制指定模式（B.2）：指定庫查無結果 → 提示使用者並自動退回分流補查
@@ -7136,7 +7162,7 @@ function crossRefLookupPromise(codeOrName,hint){
   }
   return p.then(function(r){
     _unlock();
-    if(myReqId!==_reqIdCounter)return {}; // 競態條件：捨棄舊結果但仍解鎖
+    if(!noRace&&myReqId!==_reqIdCounter)return {}; // 競態條件：捨棄舊結果但仍解鎖
     return r||{};
   }).catch(function(){_unlock();return {};});
 }
@@ -9561,6 +9587,15 @@ function _fscanBuildCaptureBar(isBar){
   });
   var cb=$('fscan-cancel-btn');if(cb)cb.onclick=fscanCancel;
 }
+// v02.98：設定取景框內的「第N／M件＋品名」標籤。傳入 total 為 0／未傳時隱藏標籤
+// （單品建檔的掃描沒有「第幾件」的概念，不該顯示）。
+function _fscanFrameLabel(idx,total,name){
+  var box=$('fscan-framelbl');if(!box)return;
+  if(!total){box.classList.remove('on');return;}
+  var i=$('fscan-framelbl-idx');if(i)i.textContent='第 '+idx+'／'+total+' 件';
+  var n=$('fscan-framelbl-name');if(n)n.textContent=name||'（未辨識到品名）';
+  box.classList.add('on');
+}
 function openFieldScanner(opt){
   _fscanClearBusy();
   _fscanOpt=opt||{};_fscanBusy=false;
@@ -9568,6 +9603,8 @@ function openFieldScanner(opt){
   var isBar=_fscanOpt.mode==='barcode';
   var ttl=$('fscan-title');if(ttl)ttl.textContent=_fscanOpt.title||(isBar?'掃描條碼':'掃描編碼');
   var sub=$('fscan-sub');if(sub)sub.textContent=_fscanOpt.subtitle||(isBar?'對準條碼，自動偵測中…':'對準編碼後按下拍攝');
+  // 沒帶 frameTotal 的呼叫端（單品建檔各處）會走到隱藏分支，不受影響
+  _fscanFrameLabel(_fscanOpt.frameIdx,_fscanOpt.frameTotal,_fscanOpt.frameName);
   _fscanBuildCaptureBar(isBar);
   var st=$('fscan-status');if(st){st.classList.remove('busy');st.textContent=_fscanOpt.openingText||(isBar?'正在啟動相機，對準條碼即可自動偵測':'正在啟動相機...');}
   ov.classList.add('on');
@@ -10209,6 +10246,7 @@ function initBatchSpineMode(){
     $('batch-final-actions').style.display='none'; // v02.80：重新進入時重置確認清單階段的按鈕列
     $('batch-save-btn').style.display='none';
     $('batch-progress').style.display='none';
+    var bds=$('batch-dual-spine');if(bds)bds.checked=false; // v02.94：每次重新進入預設不勾選雙書背模式
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
@@ -10219,14 +10257,19 @@ function initBatchSpineMode(){
 function batchPhotoPick(input){
   var f=input.files&&input.files[0];
   if(!f)return;
-  _batchImgFile=f;
-  var r=new FileReader();
-  r.onload=function(){
-    $('batch-preview-img').src=r.result;
-    $('batch-preview').style.display='block';
-    $('batch-start-btn').disabled=false;
-  };
-  r.readAsDataURL(f);
+  // v02.95：使用者建議——送進AI辨識前先讓使用者裁掉不相關背景（例如書背照片上方的書架），
+  // 沿用全站共用的裁切工具（cropImageFile），跟批次Step4補封面照同一套，不用另外設計；
+  // 裁掉背景雜訊能提高AI辨識書背文字的準確率，使用者也能順便確認拍到的範圍正確再送出。
+  cropImageFile(f).then(function(blob){
+    _batchImgFile=blob;
+    var r=new FileReader();
+    r.onload=function(){
+      $('batch-preview-img').src=r.result;
+      $('batch-preview').style.display='block';
+      $('batch-start-btn').disabled=false;
+    };
+    r.readAsDataURL(blob);
+  }).catch(function(){}); // 使用者取消裁切，維持原狀不變，讓使用者重新選擇照片
 }
 
 function batchDetectStart(){
@@ -10248,7 +10291,7 @@ function batchDetectStart(){
           items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
-          _batchItems=items.map(function(it,i){
+          var builtItems=items.map(function(it,i){
             return {
               order:it.order||(i+1),
               title_guess:(''+(it.title_guess||'')).trim(),
@@ -10259,6 +10302,19 @@ function batchDetectStart(){
               dup:null
             };
           });
+          // v02.94：使用者實測回報——多片裝（如多光碟版 SEGA SATURN）同一件商品的每片光碟
+          // 都各自有一條書背，AI 由左到右逐條書背辨識時會把同一件商品的第1、2片各自認成
+          // 一件，造成重複。與其讓AI去猜「哪幾條書背屬於同一件」（不可靠），改成由使用者
+          // 明確勾選「這排是雙書背」，程式直接照拍照順序取單數（1、3、5…），忽略每組的第2片，
+          // 比依賴AI判斷準確、也好理解。
+          var dualSpine=$('batch-dual-spine')&&$('batch-dual-spine').checked;
+          if(dualSpine){
+            var beforeCount=builtItems.length;
+            builtItems=builtItems.filter(function(_,i){return i%2===0;});
+            builtItems.forEach(function(it,i){it.order=i+1;});
+            toast('雙書背模式：偵測到 '+beforeCount+' 條書背，取單數後保留 '+builtItems.length+' 件','ok',3500);
+          }
+          _batchItems=builtItems;
           _batchStartStep2(); // 轉入Step2：逐件輸入條碼
         }).catch(function(e){
           noLoad();
@@ -10332,6 +10388,7 @@ function b2Scan(){
     var item=_batchItems[_batchStepIdx];
     var ttl=$('fscan-title');if(ttl)ttl.textContent='掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
     var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準包裝上的條碼';
+    _fscanFrameLabel(_batchStepIdx+1,_batchItems.length,item&&item.title_guess);
     // v02.88修正：條碼偵測到之後 createScanner 內部會自行停止串流（鏡頭畫面變黑），
     // 原本這裡只更新文字、沒有重新啟動掃描器，導致連續批次掃描第2件起完全偵測不到條碼。
     _fscanDetect(true);
@@ -10347,6 +10404,7 @@ function b2Scan(){
   openFieldScanner({mode:'barcode',continuous:true,
     title:'掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
     subtitle:item0.title_guess||'對準包裝上的條碼',
+    frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
     detectText:'正在偵測條碼',
     resultToast:function(v){return '已帶入條碼：'+v;},
     secondary:[{label:'⏭ 跳過此件',fn:function(){
@@ -10391,6 +10449,7 @@ function b3Ocr(){
     var item=_batchItems[_batchStepIdx];
     var ttl=$('fscan-title');if(ttl)ttl.textContent='拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）';
     var sub=$('fscan-sub');if(sub)sub.textContent=(item&&item.title_guess)||'對準編碼後拍攝';
+    _fscanFrameLabel(_batchStepIdx+1,_batchItems.length,item&&item.title_guess);
   }
   function advance(){
     _batchStepIdx++;
@@ -10403,6 +10462,7 @@ function b3Ocr(){
   openFieldScanner({mode:'ocr',ocrClean:true,normalize:true,continuous:true,
     title:'拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
     subtitle:item0.title_guess||'對準編碼後拍攝',
+    frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
     secondary:[{label:'⏭ 跳過此件',fn:function(){
       var item=_batchItems[_batchStepIdx];if(item)item.code='';
       advance();
@@ -10493,7 +10553,7 @@ function b4SkipAll(){
   _batchFinishSteps();
 }
 
-// ── 4步驟收集完成：進入既有的DB查詢＋AI補全其餘欄位管線（沿用_batchResolveNext等既有基礎設施） ──
+// ── 4步驟收集完成：進入DB查詢＋AI補全其餘欄位管線 ──
 function _batchFinishSteps(){
   _batchGotoStep(1); // 逐件步驟畫面收起，改顯示進度＋確認清單
   $('batch-step1-sec').style.display='none';
@@ -10505,34 +10565,25 @@ function _batchFinishSteps(){
   // 真的要呼叫AI時才透過loading()間接拿到螢幕喚醒鎖，中間查資料庫的空檔沒有鎖，螢幕仍可能
   // 自動熄滅、中斷處理。改成整個Step5處理期間都持有喚醒鎖，直到全部項目解析完成才釋放。
   keepAwake();
-  _batchResolveNext(0);
-}
-
-// 逐件循序解析：查資料庫→AI補全其他欄位，完全比照 doAnalyze 單品邏輯，
-// 透過暫時替換全域 entry 重用既有管線（與全站「單一可變 entry」慣例一致）。
-// v02.57：移除自動抓封面圖的機制（資料庫/維基百科/Google搜尋圖片一律不再自動採用），
-// 命中率始終不理想，改成解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上。
-function _batchResolveNext(idx){
-  if(idx>=_batchItems.length){
+  _batchResolveAll().then(function(){
     _batchResolving=false; // 整批解析完成，解除編輯鎖
     releaseAwake(); // v02.90：Step5全程持有的螢幕喚醒鎖，整批處理完成後才釋放
     $('batch-progress').style.display='none';
     _batchRenderList();
     toast('批次辨識完成，請確認後儲存','ok',3000);
-    return;
-  }
-  var item=_batchItems[idx];
-  item.status='resolving';
-  $('batch-progress').style.display='block';
-  // v02.90：手機瀏覽器把App切到背景（切去別的App）時，網頁本身會被系統暫停/降速執行，
-  // 這是瀏覽器/作業系統層級的省電機制，PWA程式碼無法強制繞過、也沒有可靠的網頁API能讓
-  // 一般的循序AI查詢流程在背景持續執行——螢幕喚醒鎖只能防止「螢幕自動熄滅」，防不了「切去
-  // 別的App」。加一行提醒，讓使用者知道處理期間留在本頁面才能持續跑，不是沒喚醒鎖造成的。
-  $('batch-progress').innerHTML='正在解析第 '+(idx+1)+'／'+_batchItems.length+' 件...（整批解析完成前，項目暫不能點擊編輯）'+
-    '<br><span style="color:#ffb74d">⚠️ 請保持本頁面在前景，切去其他 App 會暫停處理</span>';
-  _batchRenderList();
-  var type=_selectedType||'遊戲';
-  var _backupEntry=entry;
+  });
+}
+
+// v02.97：並行度上限。Gemini 免費額度有「每分鐘請求數」限制，開太大會撞 429 導致補全靜默失敗
+// （aiKnowledgeFill 失敗時回傳空物件，該件就只剩資料庫查到的欄位），所以保守設 3。
+var _BATCH_CONCURRENCY=3;
+
+// 建立單件專屬的 entry 物件。這裡會「暫時借用」全域 entry 來重用既有的 _carrySelPlat/
+// _carrySelRegion/_carrySelSubtype（它們都直接操作全域 entry）——關鍵是整段中間沒有任何
+// 非同步等待，JavaScript 單執行緒下這是不可被中斷的原子操作，因此即使多件並行也不會互相污染。
+// 全域 entry 只要不「跨越 await/then 邊界」持有，就是安全的。
+function _batchBuildEntry(item,type){
+  var _bak=entry;
   // v02.67：保留item.entry既有的cover_img（Step4逐件拍照時已經把封面圖設進item.entry.cover_img，
   // 這裡如果直接用Object.assign蓋掉一個全新entry會把封面圖弄丟）；沒有Step4補圖的項目
   // item.entry還是null，(item.entry&&item.entry.cover_img)這種情況安全回傳undefined，不影響行為。
@@ -10544,43 +10595,107 @@ function _batchResolveNext(idx){
   });
   if(_preCover){entry._src=entry._src||{};entry._src.cover_img='img';}
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
-  function finishItem(failed){
-    item.entry=Object.assign({},entry);
-    item.dup=findDuplicate(item.entry);
-    item.status=failed?'failed':'ok';
-    entry=_backupEntry; // 還原全域 entry，避免汙染其他畫面狀態
-    _batchRenderList();
-    _batchResolveNext(idx+1);
+  var built=entry;
+  entry=_bak; // 立刻還原，全域 entry 不跨越任何非同步邊界
+  return built;
+}
+
+// 單件解析：查資料庫→AI補全其他欄位。回傳 Promise<failed:boolean>。
+// v02.97：改寫成完全以「明確傳入的 entry 物件」運作（不再整段佔用全域 entry），這是能夠並行的
+// 前提。也因此不再呼叫 aiCompleteMissing——那支是單品表單專用的包裝，會跳全螢幕 loading() 遮罩
+// 並呼叫 renderForm()，在批次模式下本來就是多餘甚至干擾（批次解析時畫面會閃「AI 補全…」遮罩）；
+// 改為直接呼叫底層的 aiKnowledgeFill，合併邏輯共用抽出來的 _missingFieldsFor/_applyAiFill。
+// v02.57：解析完只補文字欄位，封面圖交給使用者點縮圖進表單手動拍照補上（不自動採用DB圖片）。
+function _batchResolveOne(item,type){
+  var e=_batchBuildEntry(item,type);
+  if(!item.code&&!item.title_guess){item.entry=e;return Promise.resolve(true);}
+  function completeAi(){
+    if((!cfg.gkey&&!cfg.okey)||!e.primary_name)return Promise.resolve();
+    var missing=_missingFieldsFor(e,type);
+    if(!missing.length)return Promise.resolve();
+    var _to=new Promise(function(res){setTimeout(function(){res({});},15000);}); // 逾時保護
+    return Promise.race([aiKnowledgeFill(e.primary_name,e.platform,missing,type,_region),_to])
+      .then(function(ai){
+        _applyAiFill(e,ai,missing);
+        var _bak=entry;entry=e;_applyBuyDateFromRelease();entry=_bak; // 同步區塊，見上方說明
+      }).catch(function(){});
   }
-  function completeThenFinish(){aiCompleteMissing(function(){finishItem(false);});}
-  if(!item.code&&!item.title_guess){finishItem(true);return;}
+  var dbP;
   if(catInternal(type)==='攻略'){
-    var isISBN=item.code.indexOf('978')===0||item.code.indexOf('979')===0;
-    if(!isISBN){completeThenFinish();return;}
-    bookLookupPromise(item.code).then(function(bk){
+    var _code=item.code||'';
+    var isISBN=_code.indexOf('978')===0||_code.indexOf('979')===0;
+    dbP=isISBN?bookLookupPromise(_code).then(function(bk){
       if(bk){
-        entry._src=entry._src||{};
-        // 書籍資料庫只補空欄（含 cover_img 等圖片欄位）；img 來源不覆蓋，與單品 doAnalyze 同精神。
+        e._src=e._src||{};
+        // 書籍資料庫只補空欄；img 來源不覆蓋，與單品 doAnalyze 同精神。
         // v02.57：批次模式不再自動採用圖片欄位，跳過cover_img/back_img/spine_img，只補文字欄位。
         Object.keys(bk).forEach(function(k){
           if(k==='cover_img'||k==='back_img'||k==='spine_img')return;
-          if(bk[k]&&!(''+(entry[k]||'')).trim()){entry[k]=bk[k];entry._src[k]='db';}
+          if(bk[k]&&!(''+(e[k]||'')).trim()){e[k]=bk[k];e._src[k]='db';}
         });
       }
-      completeThenFinish();
-    }).catch(completeThenFinish);
+    }).catch(function(){}):Promise.resolve();
   }else{
     // v02.48：查詢字串維持「品名＋平台」給 Giant Bomb/IGDB/RAWG/楽天用；ScreenScraper 這條
     // 走獨立路徑（見 crossRefLookupPromise 內部），從 entry.code 讀序號＋ssSearch()內建的
     // _selectedPlatform 系統ID，兩邊分工不衝突：ScreenScraper用序號查最準，其餘用品名查。
     var _platQ=_selectedPlatform||'';
     var _nameQ=(item.title_guess||'')+(_platQ?' '+_platQ:'');
-    crossRefLookupPromise(_nameQ,item.title_guess).then(function(db){
-      // v02.57：批次模式不再自動採用資料庫回傳的封面圖，_mergeDbIntoEntry 本身也不處理圖片欄位
-      _mergeDbIntoEntry(db);
-      completeThenFinish();
-    }).catch(completeThenFinish);
+    dbP=crossRefLookupPromise(_nameQ,item.title_guess,{noRace:true}).then(function(db){
+      var _bak=entry;entry=e;_mergeDbIntoEntry(db);entry=_bak; // 同步區塊，見上方說明
+    }).catch(function(){});
   }
+  return dbP.then(completeAi).then(function(){item.entry=e;return false;})
+    .catch(function(){item.entry=e;return false;});
+}
+
+// 整批解析：以固定並行度的工作池同時處理多件，取代原本「第2件要等第1件完全跑完」的逐件排隊。
+// 每件都要等資料庫查詢（最多兩輪）＋一次AI補全，逐件排隊時總時間是件數的倍數，這是批次流程
+// 最主要的等待來源。回傳 Promise，全部處理完才 resolve。
+function _batchResolveAll(){
+  var type=_selectedType||'遊戲';
+  var total=_batchItems.length,next=0,doneCount=0;
+  var prog=$('batch-progress');
+  function updateProgress(){
+    if(!prog)return;
+    // v02.90：手機瀏覽器把App切到背景（切去別的App）時，網頁本身會被系統暫停/降速執行，
+    // 這是瀏覽器/作業系統層級的省電機制，PWA程式碼無法強制繞過、也沒有可靠的網頁API能讓
+    // 一般的循序AI查詢流程在背景持續執行——螢幕喚醒鎖只能防止「螢幕自動熄滅」，防不了「切去
+    // 別的App」。加一行提醒，讓使用者知道處理期間留在本頁面才能持續跑，不是沒喚醒鎖造成的。
+    prog.innerHTML='AI 解析中… 已完成 '+doneCount+'／'+total+' 件（整批完成前，項目暫不能點擊編輯）'+
+      '<br><span style="color:#ffb74d">⚠️ 請保持本頁面在前景，切去其他 App 會暫停處理</span>';
+  }
+  if(prog)prog.style.display='block';
+  updateProgress();
+  // v02.97：並行階段把全域 entry 設成「本批共用的分類＋平台」情境物件，全部跑完再還原。
+  // 原因：_crossRefQuery 內部會讀全域 entry.platform 去組楽天的查詢字串（同系列跨平台作品
+  // 沒帶平台字樣容易搜到別平台的商品）。舊的逐件流程會把全域 entry 換成「當件」的 entry，所以
+  // 讀得到正確平台；改成並行後每件都用自己的物件、不再整段佔用全域 entry，若不處理就會讀到
+  // 上一次單品建檔殘留的舊平台，害楽天查詢帶錯平台。本批所有商品共用同一分類/平台，設成共用
+  // 情境物件即可，且整個並行期間都一致，不會有跨件污染。
+  var _entryBak=entry;
+  entry=Object.assign({},_defaultsFor(type),{category:type,platform:_selectedPlatform||''});
+  function _restoreEntry(){entry=_entryBak;}
+  return new Promise(function(resolve){
+    if(!total){resolve();return;}
+    function startNext(){
+      if(next>=total)return; // 沒有待處理的了，這條工作線收工（由最後完成的那條負責 resolve）
+      var item=_batchItems[next++];
+      item.status='resolving';
+      _batchRenderList();
+      _batchResolveOne(item,type).then(function(failed){
+        item.dup=findDuplicate(item.entry);
+        item.status=failed?'failed':'ok';
+        doneCount++;
+        updateProgress();
+        _batchRenderList();
+        if(doneCount>=total){resolve();return;}
+        startNext();
+      });
+    }
+    var lanes=Math.min(_BATCH_CONCURRENCY,total);
+    for(var i=0;i<lanes;i++)startNext();
+  }).then(_restoreEntry,function(err){_restoreEntry();throw err;});
 }
 
 function _batchStatusBadge(item){
@@ -17196,6 +17311,7 @@ function _imgToB64(src){
     <div id="fscan-stage">
       <video id="fscan-video" autoplay playsinline muted></video>
       <div id="fscan-overlay"><div class="scan-box"></div><div class="scan-line"></div></div>
+      <div id="fscan-framelbl"><span id="fscan-framelbl-idx"></span><span id="fscan-framelbl-name"></span></div>
       <div id="fscan-flash"><div id="fscan-flash-box"><div id="fscan-flash-lbl">✓ 辨識成功</div><div id="fscan-flash-val"></div></div></div>
     </div>
     <div id="fscan-info">

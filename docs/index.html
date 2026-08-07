@@ -1365,6 +1365,21 @@ body{
               </div>
             </div>
 
+            <!-- v02.99：Step1辨識完成後、進入逐件流程前的件數確認畫面——使用者實測回報AI數錯
+                 件數（漏數/多數書背）時，錯位從第一件就開始，事後在確認清單才發現已經太晚。
+                 讓使用者在正式逐件掃描前先確認「偵測到幾件」、品名對不對，可以刪除多算的、
+                 補上少算的（新增空白項目，後續步驟一樣可以正常逐件填寫），比事後補救有效。 -->
+            <div id="batch-count-confirm-sec" style="display:none">
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">⚠️ 確認偵測到的件數（開始逐件掃描前）</div>
+              <div id="batch-count-confirm-note" style="font-size:11px;color:#7986cb;margin-bottom:10px;line-height:1.5"></div>
+              <div id="batch-count-confirm-list" style="max-height:50vh;overflow-y:auto;margin-bottom:10px"></div>
+              <button class="btn bo" style="width:100%;font-size:13px;margin-bottom:10px" onclick="_batchCountConfirmAdd()" type="button">＋ 補一件（少算了）</button>
+              <div style="display:flex;gap:10px">
+                <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="_batchCountConfirmRetake()" type="button">重新拍照</button>
+                <button class="btn bp bw" style="flex:1;font-size:14px" onclick="_batchCountConfirmProceed()" type="button">✓ 確認無誤，開始逐件建檔</button>
+              </div>
+            </div>
+
             <!-- Step 2：逐件掃描/輸入條碼 -->
             <div id="batch-step2-sec" style="display:none">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
@@ -2640,7 +2655,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.98';
+const APP_VERSION='v02.99';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6080,7 +6095,10 @@ function aiCompleteMissing(cb){
     done(n);
   }).catch(function(){noLoad();done(0);});
 }
-function aiKnowledgeFill(gameName,platform,missingFields,category,region){
+// v02.99：新增選用的第6個參數 imageDataUrl——批次書背建檔 Step4 已經拍到封面照時，把這張
+// 照片一起送進AI補全，讓AI能參考封面上實際印的版本標示／發行商標章／CERO分級等資訊，
+// 不用完全只靠純文字記憶回答。沒有傳這個參數（既有所有呼叫端）行為完全不變、不受影響。
+function aiKnowledgeFill(gameName,platform,missingFields,category,region,imageDataUrl){
   if(!gameName||!missingFields||!missingFields.length)return Promise.resolve({});
   var cat=catInternal(category||_selectedType)||'遊戲';
   var spec=_aiSpecFor(cat)||AI_CAT_SPEC['遊戲'];
@@ -6115,11 +6133,21 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region){
   if(missingFields.indexOf('genre')>=0){
     genreTip='\n【遊戲類型】genre 務必只從下列代碼清單擇一或多個（多個用、分隔），只輸出代碼本身（如 ACT、RPG），不要輸出日文、中文全名或自行創造的分類：AADV ACT ADV ARPG AVG CARD EDU FAM FMV FPS FTG H&S HOR LVG MOBA MUS PARTY PLT PZL RAC RAI RPG RTS SAND SHT SLG SPT SRPG STG STH SVL TBL TD TPS VN VR OTHER。真的沒有符合的分類才用 OTHER，不要留空。';
   }
+  // v02.99：有封面照時的提示詞附加——明確說明圖片只是輔助佐證（版本標示/發行商標章/分級印刷
+  // 等實際印刷資訊），不要讓AI誤以為要「只看圖片回答」而放棄原本更準確的知識庫比對能力；
+  // 兩者衝突時以封面上實際印刷的文字為準（那是這件實體商品的第一手證據）。
+  var imgB64='',imgMime='image/jpeg',imgTip='';
+  if(imageDataUrl&&imageDataUrl.indexOf('base64,')>=0){
+    var _mm=imageDataUrl.match(/^data:([^;]+);base64,/);
+    imgMime=(_mm&&_mm[1])||'image/jpeg';
+    imgB64=imageDataUrl.split('base64,')[1]||'';
+    if(imgB64)imgTip='\n【封面照片參考】另外附上這件商品實拍的封面照片，可以對照圖片上實際印刷的文字（版本標示、發行商標章、分級標示等）來輔助判斷、提高準確度，尤其是限定版／通常版／Best版這類版本資訊；但基本作品資訊仍以你原本掌握的正確知識為主，圖片是輔助佐證，不是唯一依據。';
+  }
   var prompt='你是'+spec.role+'。請提供以下【'+cat+'】的準確資訊：\n'+
     rgCtx+spec.itemLabel+'：'+gameName+(platform?'\n平台：'+platform:'')+'\n\n'+
     '請僅輸出 JSON 物件，包含這些欄位（用繁體中文，不知道的欄位留空字串）：\n'+
     JSON.stringify(missingFields)+'\n欄位說明：'+ask.join('、')+'\n'+
-    '嚴格要求：'+spec.constraint+suggestPriceTip+nameTip+zhTip+genreTip+'\n只輸出 JSON，不要說明文字。';
+    '嚴格要求：'+spec.constraint+suggestPriceTip+nameTip+zhTip+genreTip+imgTip+'\n只輸出 JSON，不要說明文字。';
 
   // 用純文字呼叫（優先 Gemini 免費，無圖片）
   function geminiText(){
@@ -6127,11 +6155,15 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region){
     var mdl=cfg.gmdl||'gemini-2.5-flash';
     var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
     function run(useGround){
+      // v02.99：有帶圖片時一律走JSON強制輸出、不使用grounding搜尋工具——grounding跟JSON
+      // 強制輸出本來就不相容（見下方原有註解），為了保持簡單，有圖片時優先確保JSON輸出格式。
+      var withImg=!!imgB64;
       var genCfg={temperature:0.1,maxOutputTokens:2048};
-      if(!useGround)genCfg.responseMimeType='application/json'; // grounding 與 JSON 強制輸出不相容
+      if(!useGround||withImg)genCfg.responseMimeType='application/json'; // grounding 與 JSON 強制輸出不相容
       if(mdl.indexOf('2.5')>=0)genCfg.thinkingConfig={thinkingBudget:0};
-      var _body={contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:genCfg};
-      if(useGround)_body.tools=[mdl.indexOf('1.5')>=0?{google_search_retrieval:{}}:{google_search:{}}];
+      var msgParts=withImg?[{inlineData:{mimeType:imgMime,data:imgB64}},{text:prompt}]:[{text:prompt}];
+      var _body={contents:[{role:'user',parts:msgParts}],generationConfig:genCfg};
+      if(useGround&&!withImg)_body.tools=[mdl.indexOf('1.5')>=0?{google_search_retrieval:{}}:{google_search:{}}];
       return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify(_body)})
       .then(function(r){
@@ -6156,10 +6188,14 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region){
   }
   function gptText(){
     if(!cfg.okey)return Promise.reject(new Error('無 OpenAI key'));
+    var content=imgB64?[
+      {type:'image_url',image_url:{url:'data:'+imgMime+';base64,'+imgB64}},
+      {type:'text',text:prompt}
+    ]:prompt;
     return fetch('https://api.openai.com/v1/chat/completions',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.okey},
       body:JSON.stringify({model:cfg.omdl||'gpt-4o-mini',max_tokens:1500,temperature:0,
-        messages:[{role:'user',content:prompt}],response_format:{type:'json_object'}})})
+        messages:[{role:'user',content:content}],response_format:{type:'json_object'}})})
       .then(function(r){return r.json();})
       .then(function(d){
         var txt=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'';
@@ -7293,6 +7329,27 @@ function _defaultsFor(type,subtype){
 
 // ── 遊戲編碼正規化＋驗證（OCR/手打進來先過這關）──
 // 主修 Sony 系列「4 字母 + 5 數字」(SLUS/SLES/CUSA/PPSA…) 的 OCR 誤判
+// v02.99：批次Step3逐件掃編碼時的「格式對不對」提醒——使用者實測回報連續拍攝容易拍到
+// 隔壁那件，錯位後面全錯。這裡刻意只收錄幾個格式明確、使用者實際收藏的日系主機常見編碼
+// 前綴，不追求覆蓋所有平台；查不到對應平台就直接放行不檢查，避免因為表格不完整而誤擋
+// 正常但我們沒收錄的格式。只是非阻擋式的軟提醒，不影響繼續操作，使用者永遠可以強行帶入。
+var _PLATFORM_CODE_FMT={
+  'Sega Saturn':/^(T-\d{4,6}[A-Z]?|MK-\d{4,5}|GS-\d{4,5}|610-\d{4}(-\d{1,2})?)$/,
+  'Sega Dreamcast':/^(T-\d{4,6}[A-Z]?|MK-\d{5}|HDR-\d{4,5})$/,
+  'Sega Mega Drive':/^(T-\d{4,6}|G-\d{4,6}|MK-\d{4,5})$/,
+  'PlayStation':/^(SLPS|SLPM|SCPS|SLUS|SCUS)-\d{5}$/,
+  'PlayStation 2':/^(SLPS|SLPM|SCPS)-\d{5}$/,
+  'PlayStation 3':/^(BLJM|BCJS|BLUS)-\d{5}$/,
+  'PlayStation 4':/^(PCJS|PCJB|CUSA)-\d{5}$/,
+  'PlayStation 5':/^PPSA-\d{5}$/,
+  'PlayStation VR':/^(PCJS|PCJB|CUSA)-\d{5}$/,
+  'Nintendo Switch':/^HAC-P-[A-Z0-9]{4}$/
+};
+function _batchCodeFormatOk(code,platform){
+  var re=platform&&_PLATFORM_CODE_FMT[platform];
+  if(!re||!code)return true; // 查不到對應平台的格式表 → 不檢查、直接放行
+  return re.test((''+code).toUpperCase().trim());
+}
 function normalizeGameCode(raw){
   if(!raw)return '';
   var s=(''+raw).toUpperCase().replace(/[^A-Z0-9]/g,'');
@@ -10247,6 +10304,7 @@ function initBatchSpineMode(){
     $('batch-save-btn').style.display='none';
     $('batch-progress').style.display='none';
     var bds=$('batch-dual-spine');if(bds)bds.checked=false; // v02.94：每次重新進入預設不勾選雙書背模式
+    var bccs=$('batch-count-confirm-sec');if(bccs)bccs.style.display='none'; // v02.99：確保重新進入時不會卡在件數確認畫面
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
@@ -10315,7 +10373,7 @@ function batchDetectStart(){
             toast('雙書背模式：偵測到 '+beforeCount+' 條書背，取單數後保留 '+builtItems.length+' 件','ok',3500);
           }
           _batchItems=builtItems;
-          _batchStartStep2(); // 轉入Step2：逐件輸入條碼
+          _batchCountConfirmShow(); // v02.99：先讓使用者確認件數/品名，再進入逐件掃描
         }).catch(function(e){
           noLoad();
           toast('AI 辨識失敗：'+_friendlyError(e.message),'er',6000);
@@ -10324,6 +10382,53 @@ function batchDetectStart(){
   };
   r.onerror=function(){noLoad();toast('圖片讀取失敗','er');};
   r.readAsDataURL(_batchImgFile);
+}
+
+// v02.99：Step1辨識完成後的件數確認畫面——讓使用者在正式逐件掃描前先確認AI數對了幾件、
+// 品名有沒有明顯錯誤，可以刪除多算的、新增AI漏算的（新增的空白項目後續步驟照樣能正常
+// 逐件掃描/輸入，跟AI辨識失敗品名留空的情況一致，不需要特殊處理）。
+function _batchCountConfirmRender(){
+  var wrap=$('batch-count-confirm-list');if(!wrap)return;
+  var note=$('batch-count-confirm-note');
+  if(note)note.textContent='偵測到 '+_batchItems.length+' 件。品名可以直接修改；不是這件的可以刪除；AI 漏算的用下面「補一件」新增空白項目即可，之後逐件掃描一樣正常進行。';
+  wrap.innerHTML=_batchItems.map(function(item,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #1e2a45">'+
+      '<div style="font-size:11px;color:#7986cb;flex-shrink:0;width:20px;text-align:right">'+(i+1)+'.</div>'+
+      '<input type="text" value="'+esc(item.title_guess)+'" placeholder="（未辨識到品名）" '+
+      'oninput="_batchCountConfirmUpdateName('+i+',this.value)" '+
+      'style="flex:1;min-width:0;background:#0f1525;border:1px solid #2a3a5a;border-radius:6px;color:#e8eaf6;font-size:13px;padding:6px 8px;font-family:inherit;box-sizing:border-box">'+
+      (_batchItems.length>1?'<button type="button" onclick="_batchCountConfirmRemove('+i+')" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#ff8a65;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer">✕</button>':'')+
+    '</div>';
+  }).join('');
+}
+function _batchCountConfirmUpdateName(i,val){
+  var item=_batchItems[i];if(!item)return;
+  item.title_guess=val;
+}
+function _batchCountConfirmRemove(i){
+  if(_batchItems.length<=1)return; // 至少留1件，不允許清空整批
+  _batchItems.splice(i,1);
+  _batchItems.forEach(function(it,j){it.order=j+1;}); // 重新編號，維持連續
+  _batchCountConfirmRender();
+}
+function _batchCountConfirmAdd(){
+  if(_batchItems.length>=10){toast('單批最多 10 件，請分批處理','er',3000);return;}
+  _batchItems.push({order:_batchItems.length+1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null});
+  _batchCountConfirmRender();
+}
+function _batchCountConfirmShow(){
+  $('batch-step1-sec').style.display='none';
+  $('batch-count-confirm-sec').style.display='block';
+  _batchCountConfirmRender();
+}
+function _batchCountConfirmRetake(){
+  // 回到Step1重新拍照/換照片；照片預覽跟「開始批次辨識」按鈕都還在，不用整個重新進入批次模式
+  $('batch-count-confirm-sec').style.display='none';
+  $('batch-step1-sec').style.display='block';
+}
+function _batchCountConfirmProceed(){
+  $('batch-count-confirm-sec').style.display='none';
+  _batchStartStep2();
 }
 
 // ══════════ v02.67：批次書背4步驟精靈 —— Step切換與逐件流程 ══════════
@@ -10400,6 +10505,15 @@ function b2Scan(){
     if(_batchStepIdx>=_batchItems.length){fscanClose();_batchStartStep3();}
     else{updateOverlayText();}
   }
+  // v02.99：使用者實測回報——連續掃描時很難確認「目前這件」跟手上實物是否吻合，一旦
+  // 順序跑掉，後面每一件都會跟著錯位，發現時只能取消整個相機視窗重來。加一個「上一件」
+  // 直接退回重掃，不用中斷流程。跟advance()共用同一份updateOverlayText()，重新啟動掃描器
+  // 的邏輯（v02.88修正的那個）自然也一併套用，不用另外處理。
+  function goToPrev(){
+    if(_batchStepIdx<=0){toast('已經是第一件了','',2000);return;}
+    _batchStepIdx--;
+    updateOverlayText();
+  }
   var item0=_batchItems[_batchStepIdx];if(!item0)return;
   openFieldScanner({mode:'barcode',continuous:true,
     title:'掃描條碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
@@ -10407,10 +10521,13 @@ function b2Scan(){
     frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
     detectText:'正在偵測條碼',
     resultToast:function(v){return '已帶入條碼：'+v;},
-    secondary:[{label:'⏭ 跳過此件',fn:function(){
-      var item=_batchItems[_batchStepIdx];if(item)item.barcode='';
-      advance();
-    }}],
+    secondary:[
+      {label:'⏮ 上一件',fn:goToPrev},
+      {label:'⏭ 跳過此件',fn:function(){
+        var item=_batchItems[_batchStepIdx];if(item)item.barcode='';
+        advance();
+      }}
+    ],
     onResult:function(bc){
       var item=_batchItems[_batchStepIdx];if(item)item.barcode=bc;
     },
@@ -10456,6 +10573,12 @@ function b3Ocr(){
     if(_batchStepIdx>=_batchItems.length){fscanClose();_batchStartStep4();}
     else{updateOverlayText();}
   }
+  // v02.99：同Step2「上一件」，見b2Scan內的說明。
+  function goToPrev(){
+    if(_batchStepIdx<=0){toast('已經是第一件了','',2000);return;}
+    _batchStepIdx--;
+    updateOverlayText();
+  }
   var item0=_batchItems[_batchStepIdx];if(!item0)return;
   // v02.67：直接重用既有的fscanCapture OCR管線(mode:'ocr')，內建依_selectedType自動選擇
   // 對應分類的編碼格式提示詞＋清理正規化，不用另外重寫辨識邏輯
@@ -10463,12 +10586,19 @@ function b3Ocr(){
     title:'拍照辨識商品編碼（第'+(_batchStepIdx+1)+'／'+_batchItems.length+'件）',
     subtitle:item0.title_guess||'對準編碼後拍攝',
     frameIdx:_batchStepIdx+1,frameTotal:_batchItems.length,frameName:item0.title_guess,
-    secondary:[{label:'⏭ 跳過此件',fn:function(){
-      var item=_batchItems[_batchStepIdx];if(item)item.code='';
-      advance();
-    }}],
+    secondary:[
+      {label:'⏮ 上一件',fn:goToPrev},
+      {label:'⏭ 跳過此件',fn:function(){
+        var item=_batchItems[_batchStepIdx];if(item)item.code='';
+        advance();
+      }}
+    ],
     onResult:function(code){
       var item=_batchItems[_batchStepIdx];if(item)item.code=code;
+      // v02.99：非阻擋式格式提醒——格式明顯跟目前平台常見編碼對不上，可能拍到隔壁那件了
+      if(code&&!_batchCodeFormatOk(code,_selectedPlatform)){
+        toast('⚠️ 編碼格式跟「'+_selectedPlatform+'」常見格式不太一樣，可能拍到別件了，請確認','',4500);
+      }
     },
     onContinue:advance,
     onCancel:function(){_bRenderCurrent();}
@@ -10476,7 +10606,12 @@ function b3Ocr(){
 }
 function b3Confirm(){
   var item=_batchItems[_batchStepIdx];if(!item)return;
-  item.code=($('b3-inp').value||'').trim().toUpperCase();
+  var code=($('b3-inp').value||'').trim().toUpperCase();
+  item.code=code;
+  // v02.99：手動輸入也套用同一個非阻擋式格式提醒，跟拍照OCR那邊一致
+  if(code&&!_batchCodeFormatOk(code,_selectedPlatform)){
+    toast('⚠️ 編碼格式跟「'+_selectedPlatform+'」常見格式不太一樣，請確認沒打錯或拍錯件','',4500);
+  }
   _batchStepAdvance(_batchStartStep4);
 }
 function b3Skip(){
@@ -10613,8 +10748,12 @@ function _batchResolveOne(item,type){
     if((!cfg.gkey&&!cfg.okey)||!e.primary_name)return Promise.resolve();
     var missing=_missingFieldsFor(e,type);
     if(!missing.length)return Promise.resolve();
-    var _to=new Promise(function(res){setTimeout(function(){res({});},15000);}); // 逾時保護
-    return Promise.race([aiKnowledgeFill(e.primary_name,e.platform,missing,type,_region),_to])
+    // v02.99：Step4已經拍到封面照時（本機剛拍的dataURL，還沒上傳成Drive ID）一起送進AI，
+    // 讓AI能參考封面上實際印的版本標示/發行商標章/分級等資訊；沒拍封面照（Step4跳過）的
+    // 項目維持原本純文字補全，不受影響。圖片辨識比純文字慢，逾時保護放寬到20秒。
+    var img=(e.cover_img&&e.cover_img.indexOf('data:')===0)?e.cover_img:'';
+    var _to=new Promise(function(res){setTimeout(function(){res({});},img?20000:15000);}); // 逾時保護
+    return Promise.race([aiKnowledgeFill(e.primary_name,e.platform,missing,type,_region,img),_to])
       .then(function(ai){
         _applyAiFill(e,ai,missing);
         var _bak=entry;entry=e;_applyBuyDateFromRelease();entry=_bak; // 同步區塊，見上方說明
