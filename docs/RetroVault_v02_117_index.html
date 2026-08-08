@@ -200,6 +200,9 @@ body{
 #pg-col .col-tools .btn.bo{width:100%;height:44px;padding:0}
 #pg-col .col-sel-row{margin:14px 16px 10px;display:flex;gap:6px;align-items:center}
 #pg-col .col-sel-row .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
+/* v02.117：多選狀態列原本「批次編輯（N）」「刪除（N）」兩顆按鈕重複顯示同一個數字，
+   使用者反應多餘。改成筆數只在這一行顯示一次，按鈕本身不再帶數字。 */
+#pg-col .col-sel-count{margin:14px 16px 0;font-size:12px;color:#7986cb}
 #stats-row{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
@@ -231,6 +234,7 @@ body{
   #pg-col #col-sticky .hd{padding-left:12px;padding-right:12px}
   #pg-col .col-tools{margin:12px 12px 10px;grid-template-columns:minmax(0,1fr) 40px 40px 40px 40px;gap:7px}
   #pg-col .col-sel-row{margin:12px 12px 10px}
+  #pg-col .col-sel-count{margin:12px 12px 0}
   #pg-col .col-sel-row .btn{min-height:42px;font-size:12px}
   #pg-col .col-tools .btn.bo{height:40px}
   #stats{padding:10px 10px 9px;gap:5px}
@@ -1500,6 +1504,10 @@ body{
             <div id="batch-list-wrap" style="display:none;margin-top:16px">
               <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">⑤ 確認結果（取消勾選可剔除該筆）</div>
               <div id="batch-list"></div>
+              <!-- v02.117：使用者要求——這批常常整排都是同一種收藏狀態（例如整批裸卡收購），
+                   一筆筆點進去改品相太累，加一個一鍵套用到全部已勾選項目的按鈕，套用前用
+                   confirm()明確警告會覆蓋掉個別調整過的品相、且無法復原。 -->
+              <button type="button" onclick="batchSetAllBare()" style="width:100%;color:#64b5f6;border-color:#64b5f6;margin-top:10px" class="btn bo">📀 全部設為「裸卡」品相</button>
             </div>
 
             <div id="batch-final-actions" style="display:none;gap:10px;margin-top:16px">
@@ -1623,8 +1631,12 @@ body{
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
                  「大量刪除」，容易讓人誤以為多選只能刪除，不知道還能批次編輯。 -->
+            <!-- v02.116：使用者實測回報，這顆入口按鈕的圖示是垃圾桶造型，即使 title 文字
+                 已經在 v02.115 改成「批次編輯／刪除」，圖示本身還是強烈暗示「只能刪除」，
+                 從垃圾桶點進去找批次編輯很奇怪。換成通用的「多選清單」圖示（兩排打勾方塊
+                 ＋線條），不特別偏向刪除或編輯任一種操作。 -->
             <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="多選（批次編輯／刪除）" style="width:40px;height:40px" type="button">
-              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="4.5" height="4.5" rx="1"/><path d="M10.5 7.25h10.5"/><rect x="3" y="14.5" width="4.5" height="4.5" rx="1"/><path d="M10.5 16.75h10.5"/></svg>
             </button>
             <!-- ⋯⋯ 更多選單 -->
             <div style="position:relative">
@@ -2719,7 +2731,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.115';
+const APP_VERSION='v02.117';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5731,8 +5743,10 @@ function colSelectAllVisible(){
 function colSelBar(){
   var tools=document.querySelector('#pg-col .col-tools');
   var bar=$('col-sel-bar');
+  var countLine=$('col-sel-count');
   if(!_colSel){
     if(bar)bar.style.display='none';
+    if(countLine)countLine.style.display='none';
     if(tools)tools.style.display='';
     return;
   }
@@ -5741,11 +5755,17 @@ function colSelBar(){
     if(tools&&tools.parentNode)tools.parentNode.insertBefore(bar,tools);
     else document.body.appendChild(bar);
   }
+  if(!countLine){
+    countLine=document.createElement('div');countLine.id='col-sel-count';countLine.className='col-sel-count';
+    if(bar.parentNode)bar.parentNode.insertBefore(countLine,bar);
+  }
   if(tools)tools.style.display='none';
   bar.style.display='flex';
+  countLine.style.display='block';
+  countLine.textContent='已選取 '+_colSelSet.size+' 筆';
   bar.innerHTML='<button class="btn bo" onclick="colSelectAllVisible()" type="button">全選</button>'+
-    '<button class="btn bo" onclick="bulkEditOpen()" type="button">批次編輯（'+_colSelSet.size+'）</button>'+
-    '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="colDeleteSelected()" type="button">刪除（'+_colSelSet.size+'）</button>'+
+    '<button class="btn bo" onclick="bulkEditOpen()" type="button">批次編輯</button>'+
+    '<button class="btn bw" style="background:#ff5252;color:#fff" onclick="colDeleteSelected()" type="button">刪除</button>'+
     '<button class="btn bo" onclick="colToggleSelect()" type="button">取消</button>';
 }
 function colDeleteSelected(){
@@ -5848,6 +5868,10 @@ function _seriesRelatedHunt(seriesName){
     return (n&&n.indexOf(s)>=0)||(jn&&jn.indexOf(s)>=0);
   });
 }
+// v02.116：使用者實測回報原本的清單式呈現太醜，要求比照收藏頁本來就有的「畫廊」卡片
+// 網格瀏覽方式，只是多加系列標題分組——直接沿用既有的.gv-card/.gv-thumb/.gv-info等
+// 畫廊卡片CSS class（見renderGalleryView），系列這裡只負責分組跟標題列，卡片本身完全
+// 是同一套樣式，不再另外設計一套清單UI。
 function renderSeriesBrowse(){
   var wrap=$('series-list');if(!wrap)return;
   var groups=_seriesGroupsBuild();
@@ -5859,28 +5883,33 @@ function renderSeriesBrowse(){
   wrap.innerHTML=names.map(function(s){
     var items=groups[s];
     var related=_seriesRelatedHunt(s);
-    var itemsHtml=items.map(function(c){
+    var cardsHtml=items.map(function(c){
       var d=c.data;
-      var name=d.primary_name||d.zh_name||'—';
-      var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':'📦';
-      return '<div class="dv2-ri" onclick="closeSeriesBrowse();filterCol();showDetail(\''+_escAttr(c.uid||c.rowNum)+'\')">'+
-        '<div class="dv2-ri-ic">'+thumb+'</div>'+
-        '<div style="flex:1;min-width:0"><div class="dv2-ri-name">'+esc(name)+'</div>'+
-        '<div class="dv2-ri-sub">'+esc(platShort(d.platform||'')||'')+'</div></div>'+
+      var cat=catInternal(d.category)||'遊戲';
+      var _icon=_catMeta(cat,d.subtype).icon;
+      var uid=c.uid||c.rowNum;
+      var thumb=hasImgVal(d.cover_img)?
+        '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+        '<div>'+_icon+'</div>';
+      var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
+      return '<div class="gv-card" onclick="closeSeriesBrowse();filterCol();showDetail(\''+_escAttr(uid)+'\')">'+
+        '<div class="gv-thumb">'+thumb+'</div>'+
+        '<div class="gv-info">'+
+          '<div class="gv-name">'+esc(name)+'</div>'+
+          '<div class="gv-meta">'+esc(platShort(d.platform||'')||catLabel(cat))+'</div>'+
+        '</div>'+
       '</div>';
     }).join('');
-    var missingHtml=related.length?('<div style="margin-top:6px;padding-top:8px;border-top:1px dashed #2a3a5a">'+
-      related.map(function(h){
-        var d=h.data||{};
-        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:#ffb74d">'+
-          '<span style="flex-shrink:0">🔍 缺：</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(d.primary_name||'')+'</span>'+
-        '</div>';
-      }).join('')+'</div>') : '';
-    return '<div style="background:#141b30;border:1px solid #1e2a45;border-radius:12px;padding:12px;margin-bottom:12px">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px">'+
-        '<div style="font-size:14px;font-weight:800;color:#ce93d8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s)+'</div>'+
-        '<div style="font-size:11px;color:#7986cb;flex-shrink:0">已收藏 '+items.length+' 件'+(related.length?'・尋寶中 '+related.length+' 件':'')+'</div>'+
-      '</div>'+itemsHtml+missingHtml+
+    var missingHtml=related.length?('<div style="margin:8px 2px 0;font-size:11.5px;color:#ffb74d;line-height:1.7">'+
+      related.map(function(h){return '🔍 缺：'+esc((h.data||{}).primary_name||'');}).join('<br>')+
+    '</div>') : '';
+    return '<div style="margin-bottom:20px">'+
+      '<div class="dv2-card-hd" style="margin-bottom:10px">'+
+        '<div class="dv2-card-title" style="font-size:18px"><span class="dv2-dot" style="background:#ce93d8;height:20px"></span>'+esc(s)+'</div>'+
+        '<div style="font-size:11px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(related.length?'・尋寶中 '+related.length:'')+'</div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
+      missingHtml+
     '</div>';
   }).join('');
 }
@@ -10533,6 +10562,25 @@ function batchCancelAll(){
   _batchClearDraft();
   resetAll();
 }
+// v02.117：一鍵把這批已勾選、已解析完成的項目全部設成「裸卡」品相（本體=裸卡、其餘欄位=
+// 缺少），沿用v02.110新增的裸卡機制（COMP_COMPONENTS/compBodyKey/serializeComp），
+// 不另外寫一套品相邏輯。批次全程鎖定同一分類/平台，所以整批只需要算一次序列化字串重複套用。
+function batchSetAllBare(){
+  var targets=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok';});
+  if(!targets.length){toast('沒有可套用的項目（需已勾選且解析完成）','er');return;}
+  var cat=catInternal(_selectedType)||'遊戲';
+  var comps=COMP_COMPONENTS[cat]||[];
+  if(!comps.length){toast('「'+catLabel(cat)+'」沒有品相完整度欄位，不適用','er');return;}
+  if(!confirm('確定要把已勾選的 '+targets.length+' 筆全部設成「裸卡」品相嗎？\n\n本體會設為裸卡、'+comps.filter(function(c){return c!==compBodyKey(cat);}).map(function(c){return compLabel(c,cat);}).join('／')+'等其餘欄位設為缺少。\n\n如果已經個別調整過某幾筆的品相，會被這個操作覆蓋，且無法復原。'))return;
+  var body=compBodyKey(cat);
+  var map={};
+  comps.forEach(function(c){map[c]=(c===body)?'裸卡':'缺少';});
+  var str=serializeComp(cat,map,'');
+  targets.forEach(function(it){it.entry.completeness=str;});
+  _batchRenderList();
+  _batchSaveDraft();
+  toast('已將 '+targets.length+' 筆設為裸卡','ok',3000);
+}
 
 var BATCH_DETECT_SCHEMA={
   type:'OBJECT',
@@ -14698,11 +14746,27 @@ function colActionSheet(uid){
   var item=col.find(function(c){return (c.uid&&c.uid===uid)||c.rowNum===uid;});
   var nm=(item&&item.data&&(item.data.primary_name||item.data.zh_name||item.data.jp_name||item.data.en_name))||'這筆收藏';
   var u=_escAttr(uid);
+  // v02.117：使用者要求長按選單補上「批次編輯」「批次刪除」——不是直接對這一筆做批次操作
+  // （批次的意義本來就是要選很多筆），而是以這一筆為起點直接進入多選模式並預先勾選它，
+  // 使用者接著再勾選其他想一起處理的項目，最後點工具列上的「批次編輯」或「刪除」；
+  // 兩個入口都走同一個_colStartMultiWith()，差別只在給的提示文字，引導下一步該按哪顆。
   _showActionSheet({ovId:'col-action-ov',closeName:'_colSheetClose',name:nm,buttons:[
     {color:'#e8eaf6',label:'🔍 查看詳情',onclick:"_colSheetClose();showDetail('"+u+"')"},
     {color:'#00e5ff',label:'✏️ 編輯',onclick:"_colSheetClose();detailRow='"+u+"';editDetail()"},
-    {color:'#ff5252',label:'🗑 刪除',onclick:"_colSheetClose();doDelete('"+u+"')"}
+    {color:'#ff5252',label:'🗑 刪除',onclick:"_colSheetClose();doDelete('"+u+"')"},
+    {color:'#ce93d8',label:'☑️ 批次編輯（從這筆開始多選）',onclick:"_colSheetClose();_colStartMultiWith('"+u+"','已勾選這筆，繼續勾選其他項目後點上方「批次編輯」')"},
+    {color:'#ff8a65',label:'☑️ 批次刪除（從這筆開始多選）',onclick:"_colSheetClose();_colStartMultiWith('"+u+"','已勾選這筆，繼續勾選其他項目後點上方「刪除」')"}
   ]});
+}
+// 進入多選模式並預先勾選指定項目（長按選單「批次編輯／批次刪除」共用）；
+// hintMsg 選填，用來提示使用者下一步該做什麼。
+function _colStartMultiWith(uid,hintMsg){
+  _colSel=true;_colSelSet.clear();
+  _colSelSet.add(String(uid));
+  var sb=$('col-sel-btn');if(sb)sb.classList.add('on');
+  if(currentView!=='card')setView('card');
+  renderGlist();colSelBar();
+  if(hintMsg)toast(hintMsg,'',3500);
 }
 function _detailValHtml(k,v,isBook2,cat){
   try{
