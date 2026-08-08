@@ -454,6 +454,10 @@ body{
 .bk-new{color:#00e676;border-color:#00e676;background:rgba(0,230,118,.08)}
 .bk-partial{color:#ffb300;border-color:#ffb300;background:rgba(255,179,0,.08)}
 .bk-muted{color:#7986cb;border-color:#2a3a5a;background:rgba(42,58,90,.12)}
+/* v02.110：「裸卡」快速預設專用的徽章樣式——沿用COND_COLORS原本就定義好、但一直沒接上任何
+   UI的#64b5f6藍色，跟一般「缺件」的紅色（.bk-missing）區隔開，因為裸卡是收藏圈常見、
+   刻意的收藏型態，不是真的「東西不見了」的警示狀態，視覺上不該用跟缺件一樣的警示色。 */
+.bk-bare{color:#64b5f6;border-color:#64b5f6;background:rgba(100,181,246,.08)}
 
 /* === Detail sheet === */
 #dsheet{position:fixed;inset:0;z-index:200;pointer-events:none}
@@ -687,6 +691,7 @@ body{
 .comp-summary-state.complete{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .comp-summary-state.missing{color:#ff5252;border-color:#ff5252;background:rgba(255,82,82,.08)}
 .comp-summary-state.new{color:#00e676;border-color:#00e676;background:rgba(0,230,118,.08)}
+.comp-summary-state.bare{color:#64b5f6;border-color:#64b5f6;background:rgba(100,181,246,.08)}
 .comp-summary-state.unrated{color:#7986cb;border-color:#2a3a5a;background:#0f1525}
 .comp-summary-line{font-size:11px;color:#9fa8c8;line-height:1.55;margin-bottom:8px}
 .comp-quick{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -1307,7 +1312,7 @@ body{
                  每步驟都可針對單一件跳過(不是每件都有條碼/序號)，最後合併進AI補全其餘欄位流程。
                  v02.67取消「攤平多件」模式(裁切準確度一直無法達到可用水準，使用者確認放棄)。 -->
             <div id="batch-step1-sec">
-              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 10 件）</div>
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 <span id="batch-step1-cap-txt">10</span> 件）</div>
               <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
                 <svg viewBox="0 0 320 170" style="width:100%;height:auto;display:block">
                 <!-- 觀景窗取景框（四角括號，示意「把商品都拍進這個框裡」） -->
@@ -1361,6 +1366,39 @@ body{
                 <input type="checkbox" id="batch-dual-spine" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ce93d8">
                 <span style="font-size:12px;color:#9fa8c8;line-height:1.5">這排是「一件商品兩條書背」的多片裝（例如多片裝 SEGA SATURN／PS 遊戲，每片光碟各自的書背都會露出來）——勾選後只取單數第 1、3、5…件，跳過每組的第 2 片書背，避免同一件被重複辨識成兩件。</span>
               </label>
+              <!-- v02.109：使用者實測回報批次流程速度可接受，想加快/加量，但問了風險後決定做成
+                   可調整的設定，直接掛在這裡（不放進全站設定頁——這兩個值只跟批次書背建檔
+                   有關，放在使用的當下、旁邊就有完整說明比較合理）。預設值維持v02.97/v02.67
+                   訂的3並行／10件上限，使用者自己決定要不要為了速度/單批件數多寡承擔對應風險，
+                   說明文字寫清楚兩個數字各自實際會撞到的瓶頸是什麼，不是憑感覺調的。 -->
+              <div id="batch-adv-settings" style="background:#0f1525;border:1px solid #1e2a45;border-radius:10px;padding:12px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="_batchToggleAdvSettings()">
+                  <div style="font-size:12px;color:#9fa8c8;font-weight:700">⚙️ 進階設定：處理速度與單批上限</div>
+                  <div id="batch-adv-arrow" style="color:#7986cb;font-size:12px;flex-shrink:0">▾</div>
+                </div>
+                <div id="batch-adv-body" style="display:none;margin-top:12px">
+                  <div style="margin-bottom:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                      <label style="font-size:12px;color:#e8eaf6;font-weight:700">確認清單階段同時處理幾件</label>
+                      <input type="number" id="batch-cfg-concurrency" min="1" max="5" step="1" onchange="_batchSaveAdvSettings()" style="width:56px;background:#141b30;border:1px solid #2a3a5a;border-radius:6px;color:#00e5ff;text-align:center;padding:5px;font-family:inherit;font-size:14px;font-weight:700">
+                    </div>
+                    <div style="font-size:11px;color:#7986cb;line-height:1.6">
+                      確認清單那一步（查資料庫＋AI補全）會同時處理這麼多件。預設 3，是抓 Gemini 免費額度（約每分鐘 10 次請求）的安全值。<br>
+                      <span style="color:#ffb74d">開更大不會壞掉，但撞到額度時 AI 補全會靜默失敗</span>——那一件只剩資料庫查到的欄位，畫面上不會特別警示，容易沒發現。用 GPT，或 Gemini 已經是付費層，可以放心調到 4-5；純 Gemini 免費額度建議維持 3。
+                    </div>
+                  </div>
+                  <div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                      <label style="font-size:12px;color:#e8eaf6;font-weight:700">單批最多辨識幾件</label>
+                      <input type="number" id="batch-cfg-cap" min="5" max="20" step="1" onchange="_batchSaveAdvSettings()" style="width:56px;background:#141b30;border:1px solid #2a3a5a;border-radius:6px;color:#00e5ff;text-align:center;padding:5px;font-family:inherit;font-size:14px;font-weight:700">
+                    </div>
+                    <div style="font-size:11px;color:#7986cb;line-height:1.6">
+                      Step1 一張書背合照最多辨識幾件，跟上面「雙書背」共用同一個數字——勾選雙書背時，這裡填 20 代表最多偵測 20 條書背、篩選後留下 10 件商品；不勾選就是直接 10 件商品上限。預設 10。<br>
+                      <span style="color:#ffb74d">數字越大不代表拍得下越多</span>——AI 一次要辨識/數清的物件越多，漏數或看錯書背的機率也越高，而且照片解析度往往比這個數字更早撐不住（每一件的文字都要清楚可讀）。建議先用預設值試試，真的覺得不夠再逐步調高。
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div style="display:flex;gap:8px;margin-bottom:10px">
                 <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                   📷 拍照
@@ -2675,7 +2713,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.108';
+const APP_VERSION='v02.110';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3536,9 +3574,11 @@ function parseComp(cat,str){
   return {map:map,customName:customName};
 }
 // 詳細頁可讀顯示：本體：全新，外盒：良好…
-function compReadable(str){
+// v02.110：新增選用的cat參數——「配件」欄位在遊戲分類要顯示成「回函卡」（見compLabel），
+// 沒傳cat（既有呼叫端）維持原本直接用儲存鍵名顯示的行為，不受影響。
+function compReadable(str,cat){
   return (''+(str||'')).split('|').map(function(s){return s.trim();}).filter(Boolean)
-    .map(function(s){var i=s.indexOf(':');return i<0?s:(s.slice(0,i)+'：'+s.slice(i+1));}).join('，');
+    .map(function(s){var i=s.indexOf(':');if(i<0)return s;var k=s.slice(0,i);return (cat?compLabel(k,cat):k)+'：'+s.slice(i+1);}).join('，');
 }
 // 取本體品相（卡片徽章／儀表板用）；無或缺則回 ''
 function overallCond(cat,str){
@@ -3547,7 +3587,14 @@ function overallCond(cat,str){
   if(g==='裸卡')return '裸卡';
   return (g&&g!=='無')?g:'';
 }
-function compLabel(comp){return COMP_LABEL[comp]||comp;}
+// v02.110：新增選用的cat參數——「配件」欄位在遊戲分類（COMP_COMPONENTS['遊戲']裡的「配件」
+// 實際上多半是日系實體遊戲常附的登錄回函明信片）顯示成「回函卡」比較貼切；主機/週邊/公仔
+// 分類的「配件」是真的實體零件/配件，語意不同，不套用這個改名。儲存鍵維持"配件"不變，
+// 只是顯示文字依分類覆寫，跟COMP_LABEL既有的「顯示用標籤覆寫，儲存鍵不變」原則一致。
+function compLabel(comp,cat){
+  if(comp==='配件'&&catInternal(cat)==='遊戲')return '回函卡';
+  return COMP_LABEL[comp]||comp;
+}
 function compStatus(cat,str){
   cat=catInternal(cat)||'遊戲';
   var comps=COMP_COMPONENTS[cat]||[];
@@ -3558,9 +3605,9 @@ function compStatus(cat,str){
     if(g==='裸品')g='無';
     if(g&&g!=='無'){
       graded++;
-      rows.push({name:comp,label:compLabel(comp),grade:g});
-      if(g==='缺少')missing.push(compLabel(comp));
-      if(g==='損傷')damaged.push(compLabel(comp));
+      rows.push({name:comp,label:compLabel(comp,cat),grade:g});
+      if(g==='缺少')missing.push(compLabel(comp,cat));
+      if(g==='損傷')damaged.push(compLabel(comp,cat));
     }
   });
   if(parsed.customName&&parsed.map['__custom']&&parsed.map['__custom']!=='無'){
@@ -3576,12 +3623,18 @@ function compStatus(cat,str){
   var state='未評級',cls='unrated';
   if(graded>0){
     var allNew=comps.length&&comps.every(function(comp){return parsed.map[comp]==='全新';});
+    // v02.110：本體品相選了「裸卡」時（本體下拉本來就有這個選項，見表單render），優先用
+    // 專屬的「裸卡」標籤，不要落進下面的「缺：...」條列——裸卡是收藏圈常見、刻意的收藏
+    // 型態，跟真的東西不見了的「缺件」在語意上不一樣，判斷順序放在allNew之後、missing之前。
     if(allNew){state='全新';cls='new';}
+    else if(body==='裸卡'){state='裸卡';cls='bare';}
     else if(missing.length){state='缺：'+missing.slice(0,3).join('、')+(missing.length>3?'…':'');cls='missing';}
     else{state='完整';cls='complete';}
   }
   var bodyLabel=body?('本體 '+body):'本體未評級';
-  var line=cls==='missing'
+  var line=cls==='bare'
+    ? ('裸卡（僅本體，'+(missing.length?'缺 '+missing.slice(0,3).join('、')+(missing.length>3?' 等 '+missing.length+' 項':''):'其餘未登錄')+'）')
+    : cls==='missing'
     ? ('缺：'+missing.slice(0,3).join('、')+(missing.length>3?' 等 '+missing.length+' 項':''))
     : (state==='未評級'?'尚未記錄品相 / 完整度':'已登錄 '+graded+'/'+comps.length+' 項，'+bodyLabel);
   return {
@@ -3601,12 +3654,13 @@ function compChipClass(st){
   if(!st||st.state==='未評級')return 'bk-muted';
   if(st.state==='全新')return 'bk-new';
   if(st.state==='完整')return 'bk-complete';
+  if(st.cls==='bare')return 'bk-bare';
   if(st.cls==='missing')return 'bk-missing';
   return 'bk-partial';
 }
 function compStateShort(st){
   if(!st)return '';
-  if(st.cls==='missing')return st.state;
+  if(st.cls==='missing'||st.cls==='bare')return st.state;
   if(st.state==='全新')return '全新';
   if(st.state==='完整')return '完整';
   if(st.state==='部分登錄')return '部分登錄';
@@ -4390,6 +4444,7 @@ function toggleSetupGuide(){
 
 function loadCfg(){
   try{cfg=JSON.parse(localStorage.getItem('gv_cfg')||'{}')}catch(e){cfg={}}
+  if(typeof _batchApplyCfgDefaults==='function')_batchApplyCfgDefaults(); // v02.109：批次並行數/單批上限偏好也在這裡一起載入
   if($('c-url')&&cfg.url)$('c-url').value=cfg.url;
   if($('c-apptoken')&&cfg.app_token)$('c-apptoken').value=cfg.app_token;
   // 顯示設定狀態指示
@@ -10493,7 +10548,7 @@ function _batchDetectPrompt(){
   // 而不是「照抄書背上實際印的文字」，就會直接污染最終存檔的名稱。加強提示詞明確禁止
   // 用AI自己知道的譯名/國際標題取代，要求逐字照抄書背上印出來的文字、保留原始語言文字
   // （日文就是日文、英文就是英文），不要翻譯或替換成其他語言版本的標題。
-  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 10 件（超過 10 件只取最左邊 10 件；忽略書背以外的背景物件）。'+
+  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 '+_BATCH_CAP+' 件（超過 '+_BATCH_CAP+' 件只取最左邊 '+_BATCH_CAP+' 件；忽略書背以外的背景物件）。'+
     'title_guess 必須逐字照抄書背上實際印刷的文字，保留原本印出來的語言與文字（書背印的是日文假名/漢字就原樣填日文，是英文就填英文），'+
     '禁止翻譯、禁止音譯、禁止用你自己知道的官方譯名或其他地區/語言版本的標題取代——即使你認出這是哪款遊戲，也只能填書背上真正看得到的文字，不要憑記憶回答；'+
     '看不清楚或看不到文字就留空，不需要完整或保證正確；'+
@@ -10536,6 +10591,7 @@ function _batchFreshInit(){
     var bccs=$('batch-count-confirm-sec');if(bccs)bccs.style.display='none'; // v02.99：確保重新進入時不會卡在件數確認畫面
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
+    _batchSyncAdvSettingsUI(); // v02.109：把進階設定面板同步成使用者上次儲存的偏好
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
     $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
   });
@@ -10621,7 +10677,7 @@ function batchDetectStart(){
           noLoad();
           var items=(res&&Array.isArray(res.items))?res.items:[];
           if(!items.length){toast('沒有辨識到任何商品，請確認照片有清楚拍到書背','er',4000);return;}
-          items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
+          items=items.slice(0,_BATCH_CAP); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
           var builtItems=items.map(function(it,i){
@@ -10706,7 +10762,7 @@ function _batchCountConfirmRemove(i){
   _batchCountConfirmRender();
 }
 function _batchCountConfirmAdd(){
-  if(_batchItems.length>=10){toast('單批最多 10 件，請分批處理','er',3000);return;}
+  if(_batchItems.length>=_BATCH_CAP){toast('單批最多 '+_BATCH_CAP+' 件，請分批處理','er',3000);return;}
   _batchItems.push({order:_batchItems.length+1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null});
   _batchCountConfirmRender();
 }
@@ -11018,7 +11074,42 @@ function _batchFinishSteps(){
 
 // v02.97：並行度上限。Gemini 免費額度有「每分鐘請求數」限制，開太大會撞 429 導致補全靜默失敗
 // （aiKnowledgeFill 失敗時回傳空物件，該件就只剩資料庫查到的欄位），所以保守設 3。
+// v02.109：改成可由使用者在批次書背Step1的「進階設定」面板調整（1-5），這裡的3只是初始
+// 預設值，實際值由 _batchApplyCfgDefaults() 依使用者上次儲存的偏好覆蓋。
 var _BATCH_CONCURRENCY=3;
+// v02.109：Step1單批最多辨識件數，原本寫死10（AI一次要辨識/數清的物件越多，準確率越低，
+// 拍攝解析度也會先撐不住），改成可調整（5-20），預設仍是10。
+var _BATCH_CAP=10;
+function _batchApplyCfgDefaults(){
+  _BATCH_CONCURRENCY=Math.max(1,Math.min(5,parseInt(cfg&&cfg.batchConcurrency,10)||3));
+  _BATCH_CAP=Math.max(5,Math.min(20,parseInt(cfg&&cfg.batchCap,10)||10));
+}
+function _batchToggleAdvSettings(){
+  var body=$('batch-adv-body'),arrow=$('batch-adv-arrow');
+  if(!body)return;
+  var open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  if(arrow)arrow.textContent=open?'▾':'▴';
+}
+// 進入Step1時，把面板的輸入框跟標題文字同步成目前生效的值（可能是使用者上次存的偏好）
+function _batchSyncAdvSettingsUI(){
+  _batchApplyCfgDefaults();
+  var c=$('batch-cfg-concurrency');if(c)c.value=_BATCH_CONCURRENCY;
+  var k=$('batch-cfg-cap');if(k)k.value=_BATCH_CAP;
+  var t=$('batch-step1-cap-txt');if(t)t.textContent=_BATCH_CAP;
+}
+function _batchSaveAdvSettings(){
+  var c=$('batch-cfg-concurrency'),k=$('batch-cfg-cap');
+  var cv=Math.max(1,Math.min(5,parseInt(c&&c.value,10)||3));
+  var kv=Math.max(5,Math.min(20,parseInt(k&&k.value,10)||10));
+  if(c)c.value=cv;
+  if(k)k.value=kv;
+  _BATCH_CONCURRENCY=cv;_BATCH_CAP=kv;
+  cfg=cfg||{};cfg.batchConcurrency=cv;cfg.batchCap=kv;
+  _persistCfgKeys({batchConcurrency:cv,batchCap:kv}); // 沿用saveFxFromInputs()同一套「只存這幾個欄位、不動其他cfg」的模式
+  var t=$('batch-step1-cap-txt');if(t)t.textContent=kv;
+  toast('已儲存：同時處理 '+cv+' 件、單批上限 '+kv+' 件','ok',2500);
+}
 
 // 建立單件專屬的 entry 物件。這裡會「暫時借用」全域 entry 來重用既有的 _carrySelPlat/
 // _carrySelRegion/_carrySelSubtype（它們都直接操作全域 entry）——關鍵是整段中間沒有任何
@@ -12062,8 +12153,8 @@ function renderFld(f){
     };
     var rows='';
     (COMP_COMPONENTS[cat]||[]).forEach(function(comp){
-      rows+='<div class="comp-row"><span class="comp-lbl">'+esc(COMP_LABEL[comp]||comp)+'</span>'+
-        fselPickerize('<select class="comp-sel fsel" id="comp-sel-'+esc(comp)+'" data-comp="'+esc(comp)+'" onchange="onCompChange()">'+grades(parsed.map[comp],comp)+'</select>',COMP_LABEL[comp]||comp)+'</div>';
+      rows+='<div class="comp-row"><span class="comp-lbl">'+esc(compLabel(comp,cat))+'</span>'+
+        fselPickerize('<select class="comp-sel fsel" id="comp-sel-'+esc(comp)+'" data-comp="'+esc(comp)+'" onchange="onCompChange()">'+grades(parsed.map[comp],comp)+'</select>',compLabel(comp,cat))+'</div>';
     });
     rows+='<div class="comp-row comp-custom">'+
       '<input class="fi comp-name" id="comp-custom-name" placeholder="自定義項目…" value="'+esc(parsed.customName)+'" oninput="onCompChange()">'+
@@ -12075,6 +12166,7 @@ function renderFld(f){
         '<div class="comp-quick">'+
           '<button type="button" onclick="quickCompPreset(\'new\')">全新</button>'+
           '<button type="button" onclick="quickCompPreset(\'complete\')">盒書完整</button>'+
+          '<button type="button" onclick="quickCompPreset(\'bare\')">裸卡</button>'+
           '<button type="button" onclick="quickCompPreset(\'missing\')">缺件</button>'+
           '<button type="button" onclick="quickCompPreset(\'clear\')">清空</button>'+
         '</div>'+
@@ -12353,6 +12445,9 @@ function quickCompPreset(preset){
     var comp=sel.dataset.comp;
     if(preset==='new')sel.value='全新';
     else if(preset==='complete')sel.value='良好';
+    // v02.110：「裸卡」——本體選裸卡（下拉本來就有這個選項，見grades()）、其餘缺少；
+    // compStatus()看到本體=裸卡時會優先顯示「裸卡」徽章，不會落進下面的「缺：...」條列。
+    else if(preset==='bare')sel.value=(comp===body)?'裸卡':'缺少';
     else if(preset==='missing')sel.value=(comp===body)?'良好':'缺少';
     else sel.value='無';
   });
@@ -13961,7 +14056,7 @@ function exportCsvByType(){
       var d=c.data||{};
       lines.push(cols.map(function(f){
         var v=(f[0]==='uuid')?((c.uid&&c.uid.length>=30&&c.uid.indexOf('-')>0)?c.uid:(d.uuid||'')):d[f[0]];
-        if(f[2]==='comp')v=compReadable(v);
+        if(f[2]==='comp')v=compReadable(v,d.category);
         else if((f[0]==='buy_date'||f[0]==='resale_date')&&v==='2099/01/01')v='';
         return cell(v);
       }).join(','));
@@ -14567,7 +14662,7 @@ function colActionSheet(uid){
     {color:'#ff5252',label:'🗑 刪除',onclick:"_colSheetClose();doDelete('"+u+"')"}
   ]});
 }
-function _detailValHtml(k,v,isBook2){
+function _detailValHtml(k,v,isBook2,cat){
   try{
     var valHtml='';
     // v54.19：ref_link 欄位若因資料異常不是字串型態，直接呼叫 .startsWith 會拋出例外，
@@ -14609,7 +14704,7 @@ function _detailValHtml(k,v,isBook2){
       // 攻略本的 related_game：顯示關聯遊戲名稱
       valHtml=esc(v);
     }else if(k==='completeness'&&v){
-      valHtml=esc(compReadable(v));
+      valHtml=esc(compReadable(v,cat));
     }else if(k==='media'&&v){
       valHtml=esc(mapMedia(v));
     }else if(k==='region'&&v){
@@ -15507,7 +15602,7 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     if((k==='buy_date'||k==='release_date'||k==='resale_date'||k==='test_date'||k==='market_value_updated_at')&&!displayDate(v))return;
     if(skipDef[k]&&skipDef[k]===v)return;
     var full=k==='summary'||k==='notes'||k==='ref_link'||type==='area'||k==='related_code'||k==='applicable_platform'||k==='completeness'||k==='features';
-    var valHtml=_detailValHtml(k,v,isBook2);
+    var valHtml=_detailValHtml(k,v,isBook2,d.category);
     // 來源徽章：ai=AI辨識 db=資料庫 user=手動
     var srcMap=d._src||{};
     var srcBadge='';
