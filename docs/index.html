@@ -2675,7 +2675,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.107';
+const APP_VERSION='v02.108';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -15638,7 +15638,7 @@ function editDetail(){
   // v02.107：比照上面 save-btn 的做法，取消鈕在編輯模式下也改綁專用處理；
   // resetAll() 內會把兩顆按鈕都還原成建檔模式的預設行為，不會殘留到下一次建檔。
   var cbtn=$('form-cancel-btn');
-  if(cbtn)cbtn.onclick=function(){cancelEditBackToCol(_backScrollY);};
+  if(cbtn)cbtn.onclick=function(){cancelFormBackTo('col','pg-col',_backScrollY);};
   // v02.56：條碼/品名查詢等FAB群組從詳情頁搬到編輯表單頁，只在編輯既有記錄時顯示
   var fw=$('det-fab-wrap');if(fw)fw.classList.add('show');
   setTimeout(_positionDetFabWrap,0); // 等這一輪渲染完成、save-bar確實有正確尺寸後再量測
@@ -15646,14 +15646,17 @@ function editDetail(){
 }
 $('dov').addEventListener('click',closeDetail);
 
-// v02.107：編輯既有收藏記錄時按「取消」——捨棄這次編輯、切回收藏頁，並還原進入編輯前的
-// 捲動位置。先 resetAll() 把建檔頁重設乾淨（同時會還原兩顆按鈕的預設行為），再切頁；
+// v02.107：編輯既有收藏記錄時按「取消」——捨棄這次編輯、切回原本的頁面，並還原進入編輯前
+// 的捲動位置。先 resetAll() 把建檔頁重設乾淨（同時會還原取消/儲存鈕的預設行為），再切頁；
 // 捲動位置要等切頁後、該頁真的顯示出來才設得進去，所以放在 setTimeout 裡。
-function cancelEditBackToCol(scrollY){
+// v02.108：抽成通用版本（原本叫 cancelEditBackToCol，寫死只能回收藏頁）——尋寶頁「已買到，
+// 轉入收藏」（huntBuyConfirm）也會切到建檔頁共用同一份表單，取消時同樣會卡在建檔頁回不去
+// 尋寶頁，是一模一樣的成因，改成通用版本讓兩處共用同一套邏輯，不要各自維護一份。
+function cancelFormBackTo(pageName,scrollContainerId,scrollY){
   resetAll();
-  showPg('col');
+  showPg(pageName);
   setTimeout(function(){
-    var pg=$('pg-col');
+    var pg=$(scrollContainerId);
     if(pg&&scrollY)pg.scrollTop=scrollY;
   },0);
 }
@@ -17552,6 +17555,10 @@ function huntBuyConfirm(uid,idx){
   });
   ce.uuid=_genUuid();ce.created_at=tpeDateTime();
   huntSheetClose();
+  // v02.108：跟編輯收藏記錄（editDetail）同一個成因——這裡也會切到建檔頁共用同一份表單，
+  // 取消時原本只會 resetAll() 把建檔頁重設乾淨，不會切回尋寶頁，使用者會卡在建檔頁。
+  // 記住尋寶頁目前的捲動位置，取消鈕改綁回尋寶頁並還原位置。
+  var _backScrollY=$('pg-hunt')?$('pg-hunt').scrollTop:0;
   // 不直接寫入：載入到對應分類的建檔表單暫存，使用者可跑 AI 補全、確認後再按「儲存至收藏」
   _huntConvertUid=uid;                 // 記住來源尋寶目標；doSave 成功後標記為已入手
   entry=ce;edited.clear();
@@ -17559,6 +17566,8 @@ function huntBuyConfirm(uid,idx){
   showPg('scan');
   if($('method-sel'))$('method-sel').style.display='none';
   showForm('尋寶轉入（請確認/補齊後儲存）');
+  var cbtn=$('form-cancel-btn');
+  if(cbtn)cbtn.onclick=function(){cancelFormBackTo('hunt','pg-hunt',_backScrollY);};
   toast('已帶入資料，可按「✨ AI」補齊，確認後再儲存','ok',4500,'center');
 }
 // doSave 成功後由掛勾呼叫：把來源尋寶目標標記為已入手並寫回
