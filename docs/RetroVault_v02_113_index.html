@@ -1416,6 +1416,11 @@ body{
                 <button class="btn bo bs" style="flex:0 0 auto;padding:10px 16px;color:#7986cb" onclick="resetAll()" type="button">取消</button>
                 <button id="batch-start-btn" class="btn bp bw" disabled onclick="batchDetectStart()" type="button" style="flex:1;font-size:14px">✨ 開始批次辨識</button>
               </div>
+              <!-- v02.112：使用者實測回報——有些商品類型（例如PCE HuCard）疊拍AI辨識不出來，
+                   乾脆直接手動打品名清單、逐件的📷按鈕個別拍照OCR就好，不需要Step1的AI
+                   合照辨識這一段。加一個直接跳過辨識、進到件數確認畫面（本來就有品名輸入
+                   ＋逐件OCR＋新增/刪除）的入口，不用另外做一套UI。 -->
+              <button type="button" onclick="_batchManualStart()" style="width:100%;background:none;border:none;color:#7986cb;font-size:12px;text-decoration:underline;padding:10px 0 2px;cursor:pointer;text-align:center">或跳過辨識，直接手動輸入品名清單 →</button>
             </div>
 
             <!-- v02.99：Step1辨識完成後、進入逐件流程前的件數確認畫面——使用者實測回報AI數錯
@@ -2713,7 +2718,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.111';
+const APP_VERSION='v02.113';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10771,6 +10776,13 @@ function _batchCountConfirmShow(){
   $('batch-count-confirm-sec').style.display='block';
   _batchCountConfirmRender();
 }
+// v02.112：跳過Step1的AI合照辨識，直接進件數確認畫面，從1件空白項目開始，讓使用者靠
+// 「＋補一件」逐一新增、每列自己打品名或點📷單獨拍照OCR。給疊拍辨識率不好的商品類型
+// （例如PCE HuCard疊在一起只看得到最上面那張）一個不用勉強湊合AI合照辨識的路徑。
+function _batchManualStart(){
+  _batchItems=[{order:1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null}];
+  _batchCountConfirmShow();
+}
 function _batchCountConfirmRetake(){
   // 回到Step1重新拍照/換照片；照片預覽跟「開始批次辨識」按鈕都還在，不用整個重新進入批次模式
   $('batch-count-confirm-sec').style.display='none';
@@ -11329,6 +11341,7 @@ function _batchNameBlur(i){
 // 「單一可變 entry」慣例一致），save-btn／取消鈕的 onclick 動態切換，離開時記得換回預設行為。
 var _batchEditIndex=null;
 var _batchEditBackupEntry=null;
+var _batchEditBackScrollY=0; // v02.113：進入單筆編輯前記住確認清單的捲動位置，編輯完返回時還原
 function batchEditItem(i){
   // v02.54：整批解析進行中一律鎖住編輯，不只看這一筆自己的狀態——其他項目還在背景解析時，
   // 編輯已完成的項目會跟解析中的項目搶用同一個全域entry變數，造成資料互相污染（已實測確認）。
@@ -11336,6 +11349,10 @@ function batchEditItem(i){
   if(!_batchItems[i]||_batchItems[i].status!=='ok')return;
   _batchEditIndex=i;
   _batchEditBackupEntry=entry;
+  // v02.113：編輯表單通常比確認清單長很多——同一個頁面容器（#pg-scan）捲動位置在編輯表單
+  // 拉到很下面時，返回清單後（內容變短）沒有還原捲動位置的話，殘留的捲動值會落在清單內容
+  // 範圍之外，看起來就像「跳到最底」。記住進入編輯前的位置，退出編輯模式時還原。
+  _batchEditBackScrollY=$('pg-scan')?$('pg-scan').scrollTop:0;
   entry=Object.assign({},_batchItems[i].entry); // 複製一份，取消時不影響原本已解析的資料
   showForm('批次項目編輯（第'+(i+1)+'件）');
   renderForm();
@@ -11350,6 +11367,10 @@ function _batchExitEditMode(){
   var sb=$('save-btn');if(sb){sb.textContent='儲存至收藏';sb.onclick=doSave;}
   var cb=$('form-cancel-btn');if(cb)cb.onclick=resetAll;
   _batchRenderList();
+  // v02.113：等清單重繪、畫面實際切回batch-sec之後才還原捲動位置，不然元素高度還沒
+  // 定案，設scrollTop會不準。
+  var _scrollY=_batchEditBackScrollY;_batchEditBackScrollY=0;
+  setTimeout(function(){var pg=$('pg-scan');if(pg)pg.scrollTop=_scrollY;},0);
 }
 function batchApplyItemEdit(){
   if(_batchEditIndex===null)return;

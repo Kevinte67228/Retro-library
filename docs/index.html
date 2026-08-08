@@ -2718,7 +2718,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.112';
+const APP_VERSION='v02.113';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11341,6 +11341,7 @@ function _batchNameBlur(i){
 // 「單一可變 entry」慣例一致），save-btn／取消鈕的 onclick 動態切換，離開時記得換回預設行為。
 var _batchEditIndex=null;
 var _batchEditBackupEntry=null;
+var _batchEditBackScrollY=0; // v02.113：進入單筆編輯前記住確認清單的捲動位置，編輯完返回時還原
 function batchEditItem(i){
   // v02.54：整批解析進行中一律鎖住編輯，不只看這一筆自己的狀態——其他項目還在背景解析時，
   // 編輯已完成的項目會跟解析中的項目搶用同一個全域entry變數，造成資料互相污染（已實測確認）。
@@ -11348,6 +11349,10 @@ function batchEditItem(i){
   if(!_batchItems[i]||_batchItems[i].status!=='ok')return;
   _batchEditIndex=i;
   _batchEditBackupEntry=entry;
+  // v02.113：編輯表單通常比確認清單長很多——同一個頁面容器（#pg-scan）捲動位置在編輯表單
+  // 拉到很下面時，返回清單後（內容變短）沒有還原捲動位置的話，殘留的捲動值會落在清單內容
+  // 範圍之外，看起來就像「跳到最底」。記住進入編輯前的位置，退出編輯模式時還原。
+  _batchEditBackScrollY=$('pg-scan')?$('pg-scan').scrollTop:0;
   entry=Object.assign({},_batchItems[i].entry); // 複製一份，取消時不影響原本已解析的資料
   showForm('批次項目編輯（第'+(i+1)+'件）');
   renderForm();
@@ -11362,6 +11367,10 @@ function _batchExitEditMode(){
   var sb=$('save-btn');if(sb){sb.textContent='儲存至收藏';sb.onclick=doSave;}
   var cb=$('form-cancel-btn');if(cb)cb.onclick=resetAll;
   _batchRenderList();
+  // v02.113：等清單重繪、畫面實際切回batch-sec之後才還原捲動位置，不然元素高度還沒
+  // 定案，設scrollTop會不準。
+  var _scrollY=_batchEditBackScrollY;_batchEditBackScrollY=0;
+  setTimeout(function(){var pg=$('pg-scan');if(pg)pg.scrollTop=_scrollY;},0);
 }
 function batchApplyItemEdit(){
   if(_batchEditIndex===null)return;
