@@ -1621,8 +1621,9 @@ body{
                 畫廊
               </button>
             </div>
-            <!-- 大量刪除 -->
-            <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="大量刪除" style="width:40px;height:40px" type="button">
+            <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
+                 「大量刪除」，容易讓人誤以為多選只能刪除，不知道還能批次編輯。 -->
+            <button class="tbtn" id="col-sel-btn" onclick="colToggleSelect()" title="多選（批次編輯／刪除）" style="width:40px;height:40px" type="button">
               <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
             </button>
             <!-- ⋯⋯ 更多選單 -->
@@ -2718,7 +2719,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.114';
+const APP_VERSION='v02.115';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
