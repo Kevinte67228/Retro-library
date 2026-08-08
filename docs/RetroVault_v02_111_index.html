@@ -454,6 +454,10 @@ body{
 .bk-new{color:#00e676;border-color:#00e676;background:rgba(0,230,118,.08)}
 .bk-partial{color:#ffb300;border-color:#ffb300;background:rgba(255,179,0,.08)}
 .bk-muted{color:#7986cb;border-color:#2a3a5a;background:rgba(42,58,90,.12)}
+/* v02.110：「裸卡」快速預設專用的徽章樣式——沿用COND_COLORS原本就定義好、但一直沒接上任何
+   UI的#64b5f6藍色，跟一般「缺件」的紅色（.bk-missing）區隔開，因為裸卡是收藏圈常見、
+   刻意的收藏型態，不是真的「東西不見了」的警示狀態，視覺上不該用跟缺件一樣的警示色。 */
+.bk-bare{color:#64b5f6;border-color:#64b5f6;background:rgba(100,181,246,.08)}
 
 /* === Detail sheet === */
 #dsheet{position:fixed;inset:0;z-index:200;pointer-events:none}
@@ -687,6 +691,7 @@ body{
 .comp-summary-state.complete{color:#69f0ae;border-color:#69f0ae;background:rgba(105,240,174,.08)}
 .comp-summary-state.missing{color:#ff5252;border-color:#ff5252;background:rgba(255,82,82,.08)}
 .comp-summary-state.new{color:#00e676;border-color:#00e676;background:rgba(0,230,118,.08)}
+.comp-summary-state.bare{color:#64b5f6;border-color:#64b5f6;background:rgba(100,181,246,.08)}
 .comp-summary-state.unrated{color:#7986cb;border-color:#2a3a5a;background:#0f1525}
 .comp-summary-line{font-size:11px;color:#9fa8c8;line-height:1.55;margin-bottom:8px}
 .comp-quick{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
@@ -2708,7 +2713,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.109';
+const APP_VERSION='v02.111';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3569,9 +3574,11 @@ function parseComp(cat,str){
   return {map:map,customName:customName};
 }
 // 詳細頁可讀顯示：本體：全新，外盒：良好…
-function compReadable(str){
+// v02.110：新增選用的cat參數——「配件」欄位在遊戲分類要顯示成「回函卡」（見compLabel），
+// 沒傳cat（既有呼叫端）維持原本直接用儲存鍵名顯示的行為，不受影響。
+function compReadable(str,cat){
   return (''+(str||'')).split('|').map(function(s){return s.trim();}).filter(Boolean)
-    .map(function(s){var i=s.indexOf(':');return i<0?s:(s.slice(0,i)+'：'+s.slice(i+1));}).join('，');
+    .map(function(s){var i=s.indexOf(':');if(i<0)return s;var k=s.slice(0,i);return (cat?compLabel(k,cat):k)+'：'+s.slice(i+1);}).join('，');
 }
 // 取本體品相（卡片徽章／儀表板用）；無或缺則回 ''
 function overallCond(cat,str){
@@ -3580,7 +3587,14 @@ function overallCond(cat,str){
   if(g==='裸卡')return '裸卡';
   return (g&&g!=='無')?g:'';
 }
-function compLabel(comp){return COMP_LABEL[comp]||comp;}
+// v02.110：新增選用的cat參數——「配件」欄位在遊戲分類（COMP_COMPONENTS['遊戲']裡的「配件」
+// 實際上多半是日系實體遊戲常附的登錄回函明信片）顯示成「回函卡」比較貼切；主機/週邊/公仔
+// 分類的「配件」是真的實體零件/配件，語意不同，不套用這個改名。儲存鍵維持"配件"不變，
+// 只是顯示文字依分類覆寫，跟COMP_LABEL既有的「顯示用標籤覆寫，儲存鍵不變」原則一致。
+function compLabel(comp,cat){
+  if(comp==='配件'&&catInternal(cat)==='遊戲')return '回函卡';
+  return COMP_LABEL[comp]||comp;
+}
 function compStatus(cat,str){
   cat=catInternal(cat)||'遊戲';
   var comps=COMP_COMPONENTS[cat]||[];
@@ -3591,9 +3605,9 @@ function compStatus(cat,str){
     if(g==='裸品')g='無';
     if(g&&g!=='無'){
       graded++;
-      rows.push({name:comp,label:compLabel(comp),grade:g});
-      if(g==='缺少')missing.push(compLabel(comp));
-      if(g==='損傷')damaged.push(compLabel(comp));
+      rows.push({name:comp,label:compLabel(comp,cat),grade:g});
+      if(g==='缺少')missing.push(compLabel(comp,cat));
+      if(g==='損傷')damaged.push(compLabel(comp,cat));
     }
   });
   if(parsed.customName&&parsed.map['__custom']&&parsed.map['__custom']!=='無'){
@@ -3609,12 +3623,18 @@ function compStatus(cat,str){
   var state='未評級',cls='unrated';
   if(graded>0){
     var allNew=comps.length&&comps.every(function(comp){return parsed.map[comp]==='全新';});
+    // v02.110：本體品相選了「裸卡」時（本體下拉本來就有這個選項，見表單render），優先用
+    // 專屬的「裸卡」標籤，不要落進下面的「缺：...」條列——裸卡是收藏圈常見、刻意的收藏
+    // 型態，跟真的東西不見了的「缺件」在語意上不一樣，判斷順序放在allNew之後、missing之前。
     if(allNew){state='全新';cls='new';}
+    else if(body==='裸卡'){state='裸卡';cls='bare';}
     else if(missing.length){state='缺：'+missing.slice(0,3).join('、')+(missing.length>3?'…':'');cls='missing';}
     else{state='完整';cls='complete';}
   }
   var bodyLabel=body?('本體 '+body):'本體未評級';
-  var line=cls==='missing'
+  var line=cls==='bare'
+    ? ('裸卡（僅本體，'+(missing.length?'缺 '+missing.slice(0,3).join('、')+(missing.length>3?' 等 '+missing.length+' 項':''):'其餘未登錄')+'）')
+    : cls==='missing'
     ? ('缺：'+missing.slice(0,3).join('、')+(missing.length>3?' 等 '+missing.length+' 項':''))
     : (state==='未評級'?'尚未記錄品相 / 完整度':'已登錄 '+graded+'/'+comps.length+' 項，'+bodyLabel);
   return {
@@ -3634,12 +3654,13 @@ function compChipClass(st){
   if(!st||st.state==='未評級')return 'bk-muted';
   if(st.state==='全新')return 'bk-new';
   if(st.state==='完整')return 'bk-complete';
+  if(st.cls==='bare')return 'bk-bare';
   if(st.cls==='missing')return 'bk-missing';
   return 'bk-partial';
 }
 function compStateShort(st){
   if(!st)return '';
-  if(st.cls==='missing')return st.state;
+  if(st.cls==='missing'||st.cls==='bare')return st.state;
   if(st.state==='全新')return '全新';
   if(st.state==='完整')return '完整';
   if(st.state==='部分登錄')return '部分登錄';
@@ -12132,8 +12153,8 @@ function renderFld(f){
     };
     var rows='';
     (COMP_COMPONENTS[cat]||[]).forEach(function(comp){
-      rows+='<div class="comp-row"><span class="comp-lbl">'+esc(COMP_LABEL[comp]||comp)+'</span>'+
-        fselPickerize('<select class="comp-sel fsel" id="comp-sel-'+esc(comp)+'" data-comp="'+esc(comp)+'" onchange="onCompChange()">'+grades(parsed.map[comp],comp)+'</select>',COMP_LABEL[comp]||comp)+'</div>';
+      rows+='<div class="comp-row"><span class="comp-lbl">'+esc(compLabel(comp,cat))+'</span>'+
+        fselPickerize('<select class="comp-sel fsel" id="comp-sel-'+esc(comp)+'" data-comp="'+esc(comp)+'" onchange="onCompChange()">'+grades(parsed.map[comp],comp)+'</select>',compLabel(comp,cat))+'</div>';
     });
     rows+='<div class="comp-row comp-custom">'+
       '<input class="fi comp-name" id="comp-custom-name" placeholder="自定義項目…" value="'+esc(parsed.customName)+'" oninput="onCompChange()">'+
@@ -12145,6 +12166,7 @@ function renderFld(f){
         '<div class="comp-quick">'+
           '<button type="button" onclick="quickCompPreset(\'new\')">全新</button>'+
           '<button type="button" onclick="quickCompPreset(\'complete\')">盒書完整</button>'+
+          '<button type="button" onclick="quickCompPreset(\'bare\')">裸卡</button>'+
           '<button type="button" onclick="quickCompPreset(\'missing\')">缺件</button>'+
           '<button type="button" onclick="quickCompPreset(\'clear\')">清空</button>'+
         '</div>'+
@@ -12423,6 +12445,9 @@ function quickCompPreset(preset){
     var comp=sel.dataset.comp;
     if(preset==='new')sel.value='全新';
     else if(preset==='complete')sel.value='良好';
+    // v02.110：「裸卡」——本體選裸卡（下拉本來就有這個選項，見grades()）、其餘缺少；
+    // compStatus()看到本體=裸卡時會優先顯示「裸卡」徽章，不會落進下面的「缺：...」條列。
+    else if(preset==='bare')sel.value=(comp===body)?'裸卡':'缺少';
     else if(preset==='missing')sel.value=(comp===body)?'良好':'缺少';
     else sel.value='無';
   });
@@ -14031,7 +14056,7 @@ function exportCsvByType(){
       var d=c.data||{};
       lines.push(cols.map(function(f){
         var v=(f[0]==='uuid')?((c.uid&&c.uid.length>=30&&c.uid.indexOf('-')>0)?c.uid:(d.uuid||'')):d[f[0]];
-        if(f[2]==='comp')v=compReadable(v);
+        if(f[2]==='comp')v=compReadable(v,d.category);
         else if((f[0]==='buy_date'||f[0]==='resale_date')&&v==='2099/01/01')v='';
         return cell(v);
       }).join(','));
@@ -14303,7 +14328,12 @@ function _cardBadges(d,cond,bcCount,midParts){
   var st=compStatus(cat,d.completeness);
   _addCardChip(out,seen,d.storage_location?('保管 '+d.storage_location):'','bk-state');
   if(cond&&cond!==st.state)_addCardChip(out,seen,cond,'bk-cond','color:'+(COND_COLORS[cond]||'#7986cb')+';border-color:'+(COND_COLORS[cond]||'#7986cb'));
-  _addCardChip(out,seen,compStateShort(st),compChipClass(st),'',st.line);
+  var stShort=compStateShort(st);
+  // v02.111：使用者要求——收藏卡片列表這排標籤，完整度未評級時整個標籤不要顯示，
+  // 不要顯示「未評級」佔位文字。_addCardChip 本來就會自動跳過空字串，直接傳空字串即可，
+  // 不用另外改 _addCardChip 本身（其他呼叫端仍會用它顯示各自的「未評級」相關文字，例如
+  // 上面d.working_status/d.warranty_status那些不是同一個欄位，不受影響）。
+  _addCardChip(out,seen,stShort==='未評級'?'':stShort,compChipClass(st),'',st.line);
   var bc=(''+(d.barcode||'')).trim();
   if(bc&&bcCount[bc]>1)_addCardChip(out,seen,'🔢 複數','bk-warn','', '此條碼有複數筆記錄');
   return out.join('');
@@ -14637,7 +14667,7 @@ function colActionSheet(uid){
     {color:'#ff5252',label:'🗑 刪除',onclick:"_colSheetClose();doDelete('"+u+"')"}
   ]});
 }
-function _detailValHtml(k,v,isBook2){
+function _detailValHtml(k,v,isBook2,cat){
   try{
     var valHtml='';
     // v54.19：ref_link 欄位若因資料異常不是字串型態，直接呼叫 .startsWith 會拋出例外，
@@ -14679,7 +14709,7 @@ function _detailValHtml(k,v,isBook2){
       // 攻略本的 related_game：顯示關聯遊戲名稱
       valHtml=esc(v);
     }else if(k==='completeness'&&v){
-      valHtml=esc(compReadable(v));
+      valHtml=esc(compReadable(v,cat));
     }else if(k==='media'&&v){
       valHtml=esc(mapMedia(v));
     }else if(k==='region'&&v){
@@ -15577,7 +15607,7 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     if((k==='buy_date'||k==='release_date'||k==='resale_date'||k==='test_date'||k==='market_value_updated_at')&&!displayDate(v))return;
     if(skipDef[k]&&skipDef[k]===v)return;
     var full=k==='summary'||k==='notes'||k==='ref_link'||type==='area'||k==='related_code'||k==='applicable_platform'||k==='completeness'||k==='features';
-    var valHtml=_detailValHtml(k,v,isBook2);
+    var valHtml=_detailValHtml(k,v,isBook2,d.category);
     // 來源徽章：ai=AI辨識 db=資料庫 user=手動
     var srcMap=d._src||{};
     var srcBadge='';
