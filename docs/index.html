@@ -1307,7 +1307,7 @@ body{
                  每步驟都可針對單一件跳過(不是每件都有條碼/序號)，最後合併進AI補全其餘欄位流程。
                  v02.67取消「攤平多件」模式(裁切準確度一直無法達到可用水準，使用者確認放棄)。 -->
             <div id="batch-step1-sec">
-              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 10 件）</div>
+              <div style="font-size:12px;color:#ce93d8;font-weight:700;margin-bottom:8px">① 拍攝多件商品書背（最多 <span id="batch-step1-cap-txt">10</span> 件）</div>
               <div style="background:#0f1525;border:1px solid #1e2a45;border-radius:12px;padding:10px;margin-bottom:10px">
                 <svg viewBox="0 0 320 170" style="width:100%;height:auto;display:block">
                 <!-- 觀景窗取景框（四角括號，示意「把商品都拍進這個框裡」） -->
@@ -1361,6 +1361,39 @@ body{
                 <input type="checkbox" id="batch-dual-spine" style="width:18px;height:18px;flex-shrink:0;margin-top:1px;accent-color:#ce93d8">
                 <span style="font-size:12px;color:#9fa8c8;line-height:1.5">這排是「一件商品兩條書背」的多片裝（例如多片裝 SEGA SATURN／PS 遊戲，每片光碟各自的書背都會露出來）——勾選後只取單數第 1、3、5…件，跳過每組的第 2 片書背，避免同一件被重複辨識成兩件。</span>
               </label>
+              <!-- v02.109：使用者實測回報批次流程速度可接受，想加快/加量，但問了風險後決定做成
+                   可調整的設定，直接掛在這裡（不放進全站設定頁——這兩個值只跟批次書背建檔
+                   有關，放在使用的當下、旁邊就有完整說明比較合理）。預設值維持v02.97/v02.67
+                   訂的3並行／10件上限，使用者自己決定要不要為了速度/單批件數多寡承擔對應風險，
+                   說明文字寫清楚兩個數字各自實際會撞到的瓶頸是什麼，不是憑感覺調的。 -->
+              <div id="batch-adv-settings" style="background:#0f1525;border:1px solid #1e2a45;border-radius:10px;padding:12px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="_batchToggleAdvSettings()">
+                  <div style="font-size:12px;color:#9fa8c8;font-weight:700">⚙️ 進階設定：處理速度與單批上限</div>
+                  <div id="batch-adv-arrow" style="color:#7986cb;font-size:12px;flex-shrink:0">▾</div>
+                </div>
+                <div id="batch-adv-body" style="display:none;margin-top:12px">
+                  <div style="margin-bottom:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                      <label style="font-size:12px;color:#e8eaf6;font-weight:700">確認清單階段同時處理幾件</label>
+                      <input type="number" id="batch-cfg-concurrency" min="1" max="5" step="1" onchange="_batchSaveAdvSettings()" style="width:56px;background:#141b30;border:1px solid #2a3a5a;border-radius:6px;color:#00e5ff;text-align:center;padding:5px;font-family:inherit;font-size:14px;font-weight:700">
+                    </div>
+                    <div style="font-size:11px;color:#7986cb;line-height:1.6">
+                      確認清單那一步（查資料庫＋AI補全）會同時處理這麼多件。預設 3，是抓 Gemini 免費額度（約每分鐘 10 次請求）的安全值。<br>
+                      <span style="color:#ffb74d">開更大不會壞掉，但撞到額度時 AI 補全會靜默失敗</span>——那一件只剩資料庫查到的欄位，畫面上不會特別警示，容易沒發現。用 GPT，或 Gemini 已經是付費層，可以放心調到 4-5；純 Gemini 免費額度建議維持 3。
+                    </div>
+                  </div>
+                  <div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                      <label style="font-size:12px;color:#e8eaf6;font-weight:700">單批最多辨識幾件</label>
+                      <input type="number" id="batch-cfg-cap" min="5" max="20" step="1" onchange="_batchSaveAdvSettings()" style="width:56px;background:#141b30;border:1px solid #2a3a5a;border-radius:6px;color:#00e5ff;text-align:center;padding:5px;font-family:inherit;font-size:14px;font-weight:700">
+                    </div>
+                    <div style="font-size:11px;color:#7986cb;line-height:1.6">
+                      Step1 一張書背合照最多辨識幾件，跟上面「雙書背」共用同一個數字——勾選雙書背時，這裡填 20 代表最多偵測 20 條書背、篩選後留下 10 件商品；不勾選就是直接 10 件商品上限。預設 10。<br>
+                      <span style="color:#ffb74d">數字越大不代表拍得下越多</span>——AI 一次要辨識/數清的物件越多，漏數或看錯書背的機率也越高，而且照片解析度往往比這個數字更早撐不住（每一件的文字都要清楚可讀）。建議先用預設值試試，真的覺得不夠再逐步調高。
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div style="display:flex;gap:8px;margin-bottom:10px">
                 <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(206,147,216,.1);border:1.5px solid rgba(206,147,216,.5);border-radius:10px;padding:12px;cursor:pointer;color:#ce93d8;font-size:13px;font-weight:700">
                   📷 拍照
@@ -2675,7 +2708,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.108';
+const APP_VERSION='v02.109';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4390,6 +4423,7 @@ function toggleSetupGuide(){
 
 function loadCfg(){
   try{cfg=JSON.parse(localStorage.getItem('gv_cfg')||'{}')}catch(e){cfg={}}
+  if(typeof _batchApplyCfgDefaults==='function')_batchApplyCfgDefaults(); // v02.109：批次並行數/單批上限偏好也在這裡一起載入
   if($('c-url')&&cfg.url)$('c-url').value=cfg.url;
   if($('c-apptoken')&&cfg.app_token)$('c-apptoken').value=cfg.app_token;
   // 顯示設定狀態指示
@@ -10493,7 +10527,7 @@ function _batchDetectPrompt(){
   // 而不是「照抄書背上實際印的文字」，就會直接污染最終存檔的名稱。加強提示詞明確禁止
   // 用AI自己知道的譯名/國際標題取代，要求逐字照抄書背上印出來的文字、保留原始語言文字
   // （日文就是日文、英文就是英文），不要翻譯或替換成其他語言版本的標題。
-  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 10 件（超過 10 件只取最左邊 10 件；忽略書背以外的背景物件）。'+
+  return '這張照片裡排著多件「'+cat+'」商品的書背'+platTxt+'。請由左到右辨識每一件獨立商品，最多回傳 '+_BATCH_CAP+' 件（超過 '+_BATCH_CAP+' 件只取最左邊 '+_BATCH_CAP+' 件；忽略書背以外的背景物件）。'+
     'title_guess 必須逐字照抄書背上實際印刷的文字，保留原本印出來的語言與文字（書背印的是日文假名/漢字就原樣填日文，是英文就填英文），'+
     '禁止翻譯、禁止音譯、禁止用你自己知道的官方譯名或其他地區/語言版本的標題取代——即使你認出這是哪款遊戲，也只能填書背上真正看得到的文字，不要憑記憶回答；'+
     '看不清楚或看不到文字就留空，不需要完整或保證正確；'+
@@ -10536,6 +10570,7 @@ function _batchFreshInit(){
     var bccs=$('batch-count-confirm-sec');if(bccs)bccs.style.display='none'; // v02.99：確保重新進入時不會卡在件數確認畫面
     var bc=$('batch-cam');if(bc)bc.value='';
     var bg=$('batch-gal');if(bg)bg.value='';
+    _batchSyncAdvSettingsUI(); // v02.109：把進階設定面板同步成使用者上次儲存的偏好
     var lockTxt=catLabel(type)+(platform?'・'+platform:'')+((_REGION_LABELS&&_REGION_LABELS[_region])?'・'+_REGION_LABELS[_region]:'');
     $('batch-lock-note').innerHTML='⚠️ 本次批次全部套用：'+esc(lockTxt)+'。請確認照片內商品都屬於這個分類/平台，混合不同平台會導致建檔錯誤。';
   });
@@ -10621,7 +10656,7 @@ function batchDetectStart(){
           noLoad();
           var items=(res&&Array.isArray(res.items))?res.items:[];
           if(!items.length){toast('沒有辨識到任何商品，請確認照片有清楚拍到書背','er',4000);return;}
-          items=items.slice(0,10); // 防禦：即使 AI 超量回傳也裁切
+          items=items.slice(0,_BATCH_CAP); // 防禦：即使 AI 超量回傳也裁切
           // v02.67：不再需要code/code_clear，這兩項改由Step2(條碼)/Step3(商品編碼)實際
           // 掃描或拍照OCR取得，比AI從書背合照猜測準確很多；entry.cover_img留給Step4逐件補上
           var builtItems=items.map(function(it,i){
@@ -10706,7 +10741,7 @@ function _batchCountConfirmRemove(i){
   _batchCountConfirmRender();
 }
 function _batchCountConfirmAdd(){
-  if(_batchItems.length>=10){toast('單批最多 10 件，請分批處理','er',3000);return;}
+  if(_batchItems.length>=_BATCH_CAP){toast('單批最多 '+_BATCH_CAP+' 件，請分批處理','er',3000);return;}
   _batchItems.push({order:_batchItems.length+1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null});
   _batchCountConfirmRender();
 }
@@ -11018,7 +11053,42 @@ function _batchFinishSteps(){
 
 // v02.97：並行度上限。Gemini 免費額度有「每分鐘請求數」限制，開太大會撞 429 導致補全靜默失敗
 // （aiKnowledgeFill 失敗時回傳空物件，該件就只剩資料庫查到的欄位），所以保守設 3。
+// v02.109：改成可由使用者在批次書背Step1的「進階設定」面板調整（1-5），這裡的3只是初始
+// 預設值，實際值由 _batchApplyCfgDefaults() 依使用者上次儲存的偏好覆蓋。
 var _BATCH_CONCURRENCY=3;
+// v02.109：Step1單批最多辨識件數，原本寫死10（AI一次要辨識/數清的物件越多，準確率越低，
+// 拍攝解析度也會先撐不住），改成可調整（5-20），預設仍是10。
+var _BATCH_CAP=10;
+function _batchApplyCfgDefaults(){
+  _BATCH_CONCURRENCY=Math.max(1,Math.min(5,parseInt(cfg&&cfg.batchConcurrency,10)||3));
+  _BATCH_CAP=Math.max(5,Math.min(20,parseInt(cfg&&cfg.batchCap,10)||10));
+}
+function _batchToggleAdvSettings(){
+  var body=$('batch-adv-body'),arrow=$('batch-adv-arrow');
+  if(!body)return;
+  var open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  if(arrow)arrow.textContent=open?'▾':'▴';
+}
+// 進入Step1時，把面板的輸入框跟標題文字同步成目前生效的值（可能是使用者上次存的偏好）
+function _batchSyncAdvSettingsUI(){
+  _batchApplyCfgDefaults();
+  var c=$('batch-cfg-concurrency');if(c)c.value=_BATCH_CONCURRENCY;
+  var k=$('batch-cfg-cap');if(k)k.value=_BATCH_CAP;
+  var t=$('batch-step1-cap-txt');if(t)t.textContent=_BATCH_CAP;
+}
+function _batchSaveAdvSettings(){
+  var c=$('batch-cfg-concurrency'),k=$('batch-cfg-cap');
+  var cv=Math.max(1,Math.min(5,parseInt(c&&c.value,10)||3));
+  var kv=Math.max(5,Math.min(20,parseInt(k&&k.value,10)||10));
+  if(c)c.value=cv;
+  if(k)k.value=kv;
+  _BATCH_CONCURRENCY=cv;_BATCH_CAP=kv;
+  cfg=cfg||{};cfg.batchConcurrency=cv;cfg.batchCap=kv;
+  _persistCfgKeys({batchConcurrency:cv,batchCap:kv}); // 沿用saveFxFromInputs()同一套「只存這幾個欄位、不動其他cfg」的模式
+  var t=$('batch-step1-cap-txt');if(t)t.textContent=kv;
+  toast('已儲存：同時處理 '+cv+' 件、單批上限 '+kv+' 件','ok',2500);
+}
 
 // 建立單件專屬的 entry 物件。這裡會「暫時借用」全域 entry 來重用既有的 _carrySelPlat/
 // _carrySelRegion/_carrySelSubtype（它們都直接操作全域 entry）——關鍵是整段中間沒有任何
