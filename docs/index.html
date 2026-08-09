@@ -493,7 +493,16 @@ body{
    搭配 .on 切換，JS 只要加減 class，不用再管 display 切換的時機。 */
 .sheet-ov{display:flex;opacity:0;transition:opacity .25s;pointer-events:none}
 .sheet-ov.on{opacity:1;pointer-events:all}
-.sheet-panel{display:flex;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+/* v02.123：使用者實測回報「新增報價」表單排版整個壞掉——欄位擠成一排排極窄的直排文字。
+   根本原因：這個class原本連display:flex都一起管，但不是每個用到.sheet-panel的面板都要
+   flex排版。像這種表單面板本來就是靠瀏覽器預設的block排列（label在上、input在下逐行
+   往下疊），.sheet-panel硬加上display:flex（預設flex-direction:row）之後，所有欄位
+   被擠成同一橫排、每欄配到的寬度极窄，文字被迫逐字換行——就是使用者看到的畫面。
+   改成.sheet-panel只管滑入/滑出動畫本身（transform/transition），不管display。真正
+   需要flex直排（長按選單、DB來源選單、批次編輯、依系列瀏覽、自訂市場編輯這5個按鈕/
+   清單類面板）的地方，改成在各自的inline style自己補上display:flex，不再依賴這個
+   共用class幫忙加，兩種排版需求（有些要flex直排、有些要一般block）都能各自正確運作。 */
+.sheet-panel{transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
 .sheet-panel.on{transform:translateY(0)}
 /* v02.122：全螢幕精靈流程（如尋寶新增流程 hunt-add-ov）用的是「不透明整頁內容」而不是
    「背板+底部抽屜面板」的結構，套.sheet-ov/.sheet-panel那套滑入語彙不合適（沒有面板要
@@ -2759,7 +2768,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.122';
+const APP_VERSION='v02.123';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7457,7 +7466,7 @@ function showDbSrcSheet(){
     rows+=_dbSrcRowHTML({icon:d.icon,name:d.name,badges:_dbCatBadge(d)+_dbInputBadges(d),
       desc:d.desc,sel:sel,off:off,note:note,onclick:onclick});
   });
-  ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:84vh;flex-direction:column">'+
+  ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:84vh;display:flex;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6">查詢資料來源</div></div>'+
     '<div style="font-size:10px;color:#555;line-height:1.6;margin:0 2px 10px;flex-shrink:0">💡 純條碼／編碼流程中，「名稱」型資料庫需 AI 先辨識出名稱才會被調用；書籍類查詢只會調用書籍類（📖）資料庫。</div>'+
@@ -14796,7 +14805,7 @@ function _showActionSheet(o){
     document.body.appendChild(ov);
   }
   var btns=o.buttons.map(function(b){return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';}).join('');
-  ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;flex-direction:column">'+
+  ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;display:flex;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.name)+'</div></div>'+
     '<div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+btns+'</div>'+
@@ -18210,7 +18219,7 @@ function _imgToB64(src){
 </div>
 <!-- 自訂市場編輯 Modal（v40.31）-->
 <div id="cm-overlay" class="sheet-ov" onclick="if(event.target===this)cmCloseEditor()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1001"></div>
-<div id="cm-panel" class="sheet-panel" style="position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:1002;-webkit-overflow-scrolling:touch;flex-direction:column">
+<div id="cm-panel" class="sheet-panel" style="position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:1002;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6" id="cm-editor-title">新增自訂市場</div>
     <button onclick="cmCloseEditor()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
@@ -18271,7 +18280,7 @@ function _imgToB64(src){
 <!-- 批次編輯 Modal（v02.100）：收藏頁多選後，一次改多筆的存放位置／收藏狀態／系列。
      只有勾選的欄位才會套用到所有選取項目，其餘欄位維持原樣不動。 -->
 <div id="bulk-edit-overlay" class="sheet-ov" onclick="if(event.target===this)bulkEditClose()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
-<div id="bulk-edit-panel" class="sheet-panel" style="position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
+<div id="bulk-edit-panel" class="sheet-panel" style="position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:301;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6">批次編輯（<span id="bulk-edit-count">0</span> 筆）</div>
     <button onclick="bulkEditClose()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
@@ -18349,7 +18358,7 @@ function _imgToB64(src){
      同時比對「尋寶」清單裡品名含有該系列名稱的項目，標示可能還缺哪幾款（比對方式：品名
      包含系列名稱的簡單字串比對，非精確比對，僅供參考）。 -->
 <div id="series-ov" class="sheet-ov" onclick="if(event.target===this)closeSeriesBrowse()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
-<div id="series-panel" class="sheet-panel" style="position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
+<div id="series-panel" class="sheet-panel" style="position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6">📚 依系列瀏覽</div>
     <button onclick="closeSeriesBrowse()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>

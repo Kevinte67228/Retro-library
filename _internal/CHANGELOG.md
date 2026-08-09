@@ -1,3 +1,29 @@
+## v02.123 (2026-08-09)
+
+### 變更內容
+使用者回報「新增報價」表單排版整個壞掉——每個欄位（地點/店名/平台、網址、通路類型、Google價格、品況、備註、看到日期）都被擠成一排排極窄的直排文字，儲存按鈕變成佔滿右側的大長條。這是 v02.122 接上 `hunt-sheet-ov` 抽屜動畫時引入的真實回歸。
+
+根本原因：`.sheet-panel` 這個共用 class 原本連 `display:flex` 都一併管，但不是每個用到這個 class 的面板都要 flex 排版。像「新增報價」這種表單面板，設計上是靠瀏覽器預設的 block 排列（label 在上、input 在下逐行往下疊），v02.122 把 `.sheet-panel` 加到這個面板上時，`display:flex`（預設 `flex-direction:row`）把所有欄位擠成同一橫排、每欄配到的寬度極窄，文字被迫逐字換行——就是使用者看到的畫面。真正需要 flex 直排的地方（長按選單、DB 來源選單、批次編輯、依系列瀏覽、自訂市場編輯這 5 個按鈕/清單類面板）當初都額外自己標了 `flex-direction:column`，只是沒有自己補 `display:flex`、指望共用 class 幫忙加，這次抽換時沒有意識到這個隱性依賴，才會在幫「新增報價」這種不需要 flex 的面板套用同一個 class 時連帶出事。
+
+修正：`.sheet-panel` 改成只管滑入/滑出動畫本身（`transform`／`transition`），不再管 `display`。真正需要 flex 直排的 5 個面板（`_showActionSheet` 動態面板、`showDbSrcSheet` 動態面板、`bulk-edit-panel`、`series-panel`、`cm-panel`），改成在各自的 inline style 自己明確補上 `display:flex`，不再依賴共用 class 幫忙加。這樣兩種排版需求（有些要 flex 直排、有些要一般 block）都能各自正確運作，互不干擾。
+
+### 自我檢查
+`node --check` 通過；無 U+FFFD。用 jsdom 建立實際會執行的測試環境，這次直接檢查每個受影響面板「實際拿到的 `style.display` 值」而不是只看 class 名稱有沒有掛上：確認 `hunt-sheet-ov`／`type-picker-overlay`／`cd-ov` 這三類面板（原本被錯誤強制 flex 的）現在都正確維持 `display` 為空（沿用瀏覽器預設 block）；同時確認真正需要 flex 直排的 5 個面板（長按選單、DB 來源選單、批次編輯、依系列瀏覽、自訂市場編輯）都正確拿到 `display:flex` 加 `flex-direction:column`，沒有被這次修正誤傷；另外確認 `game-picker-overlay`（本來就自帶 `display:flex;flex-direction:column`，不依賴共用 class）完全不受影響。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_123_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-122 → retrovault-v02-123
+
+### 對應備份
+- _internal/old/v02_122/
+
+
 ## v02.122 (2026-08-09)
 
 ### 變更內容
@@ -26,6 +52,8 @@
 
 ### 對應備份
 - _internal/old/v02_121/
+
+
 
 
 ## v02.121 (2026-08-09)
@@ -58,6 +86,8 @@ v02.120 修的長按選單「卡住」問題，使用者確認在 v02.120 上仍
 
 
 
+
+
 ## v02.120 (2026-08-08)
 
 ### 變更內容
@@ -82,44 +112,6 @@ v02.120 修的長按選單「卡住」問題，使用者確認在 v02.120 上仍
 
 ### 對應備份
 - _internal/old/v02_119/
-
-
-
-
-
-
-## v02.119 (2026-08-08)
-
-### 變更內容
-延續稍早的動畫機會盤點報告，把 Part 1 列出的 5 項建議全部實作：
-
-**1.（槓桿最高）統一底部彈出 modal 的進出場動畫**：長按選單／DB 資料來源選單（共用 `_showActionSheet()`／`showDbSrcSheet()`）、批次編輯、依系列瀏覽、自訂市場編輯這幾個 modal，原本都是 `style.display='none'/'flex'` 硬切換，跟旁邊已經做好抽屜滑入動畫的篩選面板（`#filter-sheet`）觀感不一致。新增共用的 `.sheet-ov`／`.sheet-panel` class（背板 `opacity .25s`、面板 `translateY(100%)→0，.3s cubic-bezier(.32,.72,0,1)`），完全沿用 `#filter-sheet` 既有數值，不是另外發明一套。動態建立內容的兩個入口（長按選單、DB 來源選單）額外用 `requestAnimationFrame` 確保「關閉」狀態有先畫過一次，動畫才播得出來。**額外發現**：排查時發現同樣 `display:none/flex` 硬切換的地方還有 `hunt-add-ov`／`hunt-sheet-ov`／`type-picker-overlay`／`game-picker-overlay`／`cd-ov` 這幾處，範圍比原本報告列出的大，這次先不動，維持在報告已審視過的範圍內。
-
-**2. 畫廊卡片補上按壓回饋**：`.gv-card` 原本完全沒有 `:active` 狀態，補上 `transform:scale(.97)`／`.15s ease-out`，數值直接沿用 `.ec-card:active` 既有的。
-
-**3. 收藏卡片／尋寶卡片按壓回饋補齊**：`.gc`／`.hc` 原本只有 `border-color` 變化，跟 `.ec-card`／`.plat-card` 不一致，在既有的 border-color 過渡旁邊疊加 `transform:scale(.98)`，不取代原本的。
-
-**4. 設定頁分組／批次進階設定的展開收合改成平滑過渡**：`.sgroup-body`／`#batch-adv-body` 原本 `display:none/block` 硬切換，箭頭有轉但內容瞬間彈出。改成 `max-height`＋`opacity` 過渡技巧（這個技術棧選這個手法，相容性比 `grid-template-rows` 那套穩）。批次進階設定的箭頭符號（▾/▴）判斷邏輯也一併改成讀 class 而不是 `display` 值。
-
-**5. 空狀態圖示加上進場動畫**：`.dv2-empty-ic`（搜尋/篩選無結果、收藏是空的）原本零動作，加上 `opacity:0,scale(.9)→1` 的 `.3s ease-out` 進場動畫，用 `@keyframes`（不是 transition，因為這是元素首次出現，不是狀態變化）。
-
-**通用**：全部只動 `transform`／`opacity`／`max-height`，新增一個 `@media(prefers-reduced-motion:reduce)` 區塊，把這次新加的過渡時長統一縮短（不是變成 0，符合「gentler, not zero」的原則）——這是整份檔案第一次加入這個媒體查詢。
-
-### 自我檢查
-`node --check` 通過；無 U+FFFD；CSS 大括號數量核對平衡（652 開／652 關）。用 jsdom 建立實際會執行的測試環境完整驗證：三個具名 modal（批次編輯、依系列瀏覽、自訂市場編輯）的開關函式確認正確加減 `.on` class、不再殘留 `display:none` inline style；長按選單與 DB 來源選單確認動態建立時正確帶上 `.sheet-ov`／`.sheet-panel` class，且**同步執行當下還沒有 `.on`**（證實真的有排到下一個 rAF 才加，不是巧合能動）、等 rAF 觸發後才正確出現 `.on`；設定頁分組與批次進階設定的展開/收合都用 class 而非 `display` 值正確判斷開關狀態、箭頭文字同步正確切換。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_119_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-118 → retrovault-v02-119
-
-### 對應備份
-- _internal/old/v02_118/
 
 
 
