@@ -1,8 +1,8 @@
-const CACHE_NAME = 'retrovault-v02-123';
+const CACHE_NAME = 'retrovault-v02-124';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './RetroVault_v02_123_index.html',
+  './RetroVault_v02_124_index.html',
   './manifest.json',
   './manual.html',
   './bg.webp'
@@ -10,6 +10,28 @@ const STATIC_ASSETS = [
 // 註：v54.71 起 bg.webp 改回本地相對路徑，納入預先快取——原本從 GitHub(raw) 跨網域載入，
 // 該請求不受此處快取保護，若比開機畫面淡出的固定延遲還慢，會出現淡出後背景圖尚未就緒的短暫黑屏空窗。
 // icon（含 mkt-*）維持外部連結不變，這些不在 App 開啟當下的關鍵路徑上，不受影響。
+
+// v02.124：使用者實測回報圖片載入變慢很多。查證後發現收藏封面（Google Drive縮圖，
+// drive.google.com/thumbnail?id=...）是跨網域請求，原本 fetch 監聽器一開頭
+// 「url.origin !== location.origin 就直接 return」，等於完全略過這類請求、Service
+// Worker 從來沒快取過任何一張收藏圖——每次瀏覽同一張圖（例如捲動離開又捲回來、切換
+// 卡片/畫廊檢視、開依系列瀏覽）都要重新打一次 Drive，收藏量一大、來回瀏覽次數一多，
+// 感受上就是「圖片載入越來越慢」。這裡在跨網域判斷之前，額外攔截 Drive 縮圖請求，
+// 走獨立的快取優先策略，不受版號 CACHE_NAME 影響（換版本不會被清空，圖片不需要跟著
+// 應用程式版本一起失效）。
+const IMG_CACHE_NAME = 'retrovault-img-v1';
+const IMG_CACHE_MAX = 240; // 上限筆數，避免快取無止盡成長佔用裝置容量；用簡單FIFO汰換
+// 舊的（Cache API本身沒有內建LRU，真要做需要額外記錄每筆的存取時間，對縮圖快取這種
+// 時效性不高的用途不成比例，FIFO已經夠用）。
+
+function trimImgCache(cache) {
+  cache.keys().then(function(keys) {
+    if (keys.length > IMG_CACHE_MAX) {
+      var toDelete = keys.slice(0, keys.length - IMG_CACHE_MAX);
+      toDelete.forEach(function(k) { cache.delete(k); });
+    }
+  });
+}
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -36,6 +58,9 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
       return Promise.all(keys.map(function(key) {
+        // v02.124：IMG_CACHE_NAME('retrovault-img-v1')不是gamevault-開頭、也不等於
+        // CACHE_NAME，本來就不會被下面這行誤刪；圖片快取刻意跟應用程式版本脫鉤，換版本
+        // 不需要重新下載已經快取過的圖。
         if (key !== CACHE_NAME && key.indexOf('gamevault-') === 0) return caches.delete(key);
       }));
     }).then(function() {
@@ -47,6 +72,28 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+
+  // v02.124：Google Drive 縮圖，快取優先＋數量上限，見上方常數定義處的說明。
+  if (url.hostname === 'drive.google.com' && url.pathname === '/thumbnail') {
+    event.respondWith(
+      caches.open(IMG_CACHE_NAME).then(function(cache) {
+        return cache.match(event.request).then(function(cached) {
+          if (cached) return cached;
+          return fetch(event.request).then(function(response) {
+            if (response.ok) {
+              const copy = response.clone();
+              cache.put(event.request, copy).then(function() {
+                trimImgCache(cache);
+              }).catch(function() {});
+            }
+            return response;
+          });
+        });
+      })
+    );
+    return;
+  }
+
   if (url.origin !== location.origin) return;
 
   // v40.28：HTML 導航請求 → 網路優先（Network First）。
