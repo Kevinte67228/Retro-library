@@ -2768,7 +2768,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.123';
+const APP_VERSION='v02.125';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5290,7 +5290,7 @@ function _compressAndSave(afterFn){
       compressImg(src,lv[0],lv[1],function(out){
         if(out.length<=LIMIT||i>=levels.length){done(out);}
         else{src=out;tryNext();} // 還太大，降級再壓
-      },label);
+      },label,true); // v02.125：這裡處理的已經是使用者裁切/確認過的最終圖，只需要再壓縮，不能再自動裁切
     }
     tryNext();
   }
@@ -7069,7 +7069,7 @@ function _gcodeOCRShared(input,o){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-      compressImg(prepped,600,0.75,function(comp){
+      compressImgNoRecrop(prepped,600,0.75,function(comp){
         callGeminiOCR([
           {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
           {text:o.prompt}
@@ -10498,7 +10498,7 @@ function doAnalyze(){
         var hint=s.hint||s.slot;
         var maxPx=hint==='spine'?250:9999; // cover 不壓縮直接用原圖
         var maxQ=hint==='spine'?0.6:1.0;
-        compressImg(r.result,maxPx,maxQ,function(compressed){
+        compressImgNoRecrop(r.result,maxPx,maxQ,function(compressed){
           // cover 暫存原圖供 AI 辨識，doSave 時才壓縮
           if(hint==='cover'){
             entry._raw_cover=compressed; // 原圖備存
@@ -10797,7 +10797,7 @@ function batchDetectStart(){
   if(!cfg.gkey){toast('請先在設定頁填入 Gemini 金鑰','er');showPg('cfg');return;}
   var r=new FileReader();
   r.onload=function(){
-    compressImg(r.result,1600,0.85,function(compressed){
+    compressImgNoRecrop(r.result,1600,0.85,function(compressed){
       loading('AI 辨識畫面中商品... 約需 10~30 秒');
       var parts=[
         {inlineData:{mimeType:'image/jpeg',data:compressed.split(',')[1]}},
@@ -11967,12 +11967,25 @@ function autoCropCanvas(img,maxPx,quality,hint){
   return cv2.toDataURL('image/jpeg',quality);
 }
 var IMG_MAX_B64=48000; // base64 上限（≈36KB JPEG），留 12000 緩衝
-function compressImg(dataUrl,maxPx,quality,cb,hint){
+// v02.125：使用者實測回報「已經選好裁切範圍，但最後結果不是剛剛選定的範圍」。追查發現
+// cropImageFile()（互動式裁切工具，使用者手動拖曳選定範圍）後，很多呼叫端會把裁切結果
+// 再丟進 compressImg() 做壓縮，但 compressImg() 內部一律呼叫 autoCropCanvas()（依背景
+// 色差異自動抓商品邊界），會把使用者剛剛手動選定的範圍再次自動裁切一次、覆蓋掉使用者的
+// 選擇——這才是「結果跟選的不一樣」的真正原因。
+// 只單純做「壓縮/縮小」不再裁切。
+function _resizeOnlyCanvas(img,maxPx,quality){
+  var w=img.width,h=img.height;
+  if(w>maxPx||h>maxPx){var s=Math.min(maxPx/w,maxPx/h);w=Math.round(w*s);h=Math.round(h*s);}
+  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  cv.getContext('2d').drawImage(img,0,0,w,h);
+  return cv.toDataURL('image/jpeg',quality);
+}
+function compressImg(dataUrl,maxPx,quality,cb,hint,skipAutoCrop){
   var img=new Image();
   img.onload=function(){
     function tryCompress(px,q){
       var result;
-      try{result=autoCropCanvas(img,px,q,hint);}
+      try{result=skipAutoCrop?_resizeOnlyCanvas(img,px,q):autoCropCanvas(img,px,q,hint);}
       catch(e){
         var w=img.width,h=img.height;
         if(w>px||h>px){var s=Math.min(px/w,px/h);w=Math.round(w*s);h=Math.round(h*s);}
@@ -11989,6 +12002,13 @@ function compressImg(dataUrl,maxPx,quality,cb,hint){
     cb(tryCompress(maxPx,quality));
   };
   img.src=dataUrl;
+}
+// v02.125：薄包裝，等同compressImg(...,undefined,true)——純壓縮不重新裁切。用在下游呼叫端
+// 改用這個函式名稱即可修好「使用者手動裁切後又被自動裁切覆蓋」的問題，不用去改動每個呼叫
+// 端內部那些巢狀很深的callback、冒著算錯右括號位置的風險。呼叫端如果原本有多傳一個hint
+// 參數，多傳的參數會被忽略（JS允許呼叫時傳超過函式宣告的參數數量），不需要額外刪除。
+function compressImgNoRecrop(dataUrl,maxPx,quality,cb){
+  compressImg(dataUrl,maxPx,quality,cb,undefined,true);
 }
 // ── 關聯商品（跨類別、一對多；後端以 UUID 為鍵，使用者只選項目，不需在意背後識別碼）──
 // related_code 欄改存「逗號分隔的識別碼清單」（新資料存 UUID；舊資料可能是 code/barcode，解析時皆相容）
@@ -12152,7 +12172,7 @@ function onImgUpload(k,input){
     if(lbl2)lbl2.textContent='處理中...';
     var r=new FileReader();
     r.onload=function(){
-      compressImg(r.result,maxPx,0.85,function(compressed){
+      compressImgNoRecrop(r.result,maxPx,0.85,function(compressed){
         onFld(k,compressed);
         var prev=document.getElementById('prev-'+k);if(prev){prev.src=compressed;prev.style.display='block';}
         var kb=Math.round(compressed.length*0.75/1024);
@@ -12197,7 +12217,7 @@ function addExtraImg(input){
     cropImageFile(files[0]).then(function(blob){
       var r=new FileReader();
       r.onload=function(){
-        compressImg(r.result,1000,0.85,function(compressed){
+        compressImgNoRecrop(r.result,1000,0.85,function(compressed){
           arr.push({label:'',img:compressed});
           onFld('extra_images',JSON.stringify(arr));
           renderForm();_bindFormFocusScroll();
@@ -17008,7 +17028,7 @@ function huntPhotoPick(input){
   input.value='';
   cropImageFile(f).then(function(blob){
     var r=new FileReader();
-    r.onload=function(){compressImg(r.result,1000,0.8,function(out){
+    r.onload=function(){compressImgNoRecrop(r.result,1000,0.8,function(out){
       _huntPhoto=out;var p=$('hunt-photo-prev');
       if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:280px;object-fit:contain">';}
       _huntStartAIFill(); // v02.85：拍照確認後背景觸發AI辨識，不阻塞使用者操作
@@ -17137,7 +17157,7 @@ function huntLensPick(input){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
   cropImageFile(f).then(function(blob){
     var r=new FileReader();
-    r.onload=function(){compressImg(r.result,1000,0.8,function(out){
+    r.onload=function(){compressImgNoRecrop(r.result,1000,0.8,function(out){
       _huntPhoto=out;
       var p=$('hunt-lens-prev');
       if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:260px;object-fit:contain">';}
@@ -17241,7 +17261,7 @@ function _nameFieldOCR(input,targetId,lang,onSuccess){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-        compressImg(prepped,600,0.6,function(comp){
+        compressImgNoRecrop(prepped,600,0.6,function(comp){
           callGemini([
             {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
             {text:prompt}
@@ -17277,7 +17297,7 @@ function _textFieldOCR(input,targetId,fieldKey){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-        compressImg(prepped,600,0.6,function(comp){
+        compressImgNoRecrop(prepped,600,0.6,function(comp){
           callGemini([
             {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
             {text:prompt}
@@ -17774,7 +17794,7 @@ function huntCoverUpload(uid,input){
   cropImageFile(f).then(function(blob){
     var r=new FileReader();
     r.onload=function(){
-      compressImg(r.result,1000,0.85,function(compressed){
+      compressImgNoRecrop(r.result,1000,0.85,function(compressed){
         d.cover_img=compressed;
         var prev=$('he-cover-prev');if(prev){prev.src=compressed;prev.style.display='block';}
         var lbl=$('he-cover-lbl');if(lbl){lbl.style.display='block';lbl.textContent='已上傳';}
@@ -17820,7 +17840,7 @@ function huntAddExtraImg(input,uid){
     cropImageFile(files[0]).then(function(blob){
       var r=new FileReader();
       r.onload=function(){
-        compressImg(r.result,1000,0.85,function(compressed){
+        compressImgNoRecrop(r.result,1000,0.85,function(compressed){
           arr.push({label:'',img:compressed});
           d.extra_images=JSON.stringify(arr);
           huntEditTarget(uid);
