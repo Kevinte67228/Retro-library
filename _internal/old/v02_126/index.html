@@ -569,14 +569,8 @@ body{
 .df.full{grid-column:1/-1}
 .vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
 .vault-cover{width:172px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
-/* v02.127：使用者實測回報長條形封面（例如橫向裁切的書背貼紙照）在詳情頁主圖框顯示很怪——
-   原本object-fit:cover會把超出正方形框的部分直接裁掉，長條圖左右兩側（甚至角色主體）會被
-   切掉看不到，不是「置中好看」而是「內容被裁掉」。改成背景用模糊放大鋪滿（不裁切原圖，
-   只是拿來當視覺填充，裁掉沒關係）、前景用object-fit:contain完整顯示原圖不裁切內容，
-   常見於Spotify/Apple Music處理非正方形專輯封面的做法。 */
-.vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px;position:relative}
-.vault-cover-main img.cover-bg{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;filter:blur(18px) brightness(.5);z-index:0}
-.vault-cover-main img.cover-fg{position:relative;z-index:1;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+.vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px}
+.vault-cover-main img{width:100%;height:100%;object-fit:cover;display:block}
 .vault-cover-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .vault-cover-thumb{aspect-ratio:1/1;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45}
 .vault-cover-thumb.on{border-color:#00e5ff}
@@ -2774,7 +2768,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.127';
+const APP_VERSION='v02.126';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -14761,11 +14755,7 @@ function switchHeroCoverImg(el){
   var gallery=$('hero-cover-gallery');if(!gallery)return;
   var idx=el.getAttribute('data-idx'),url=el.getAttribute('data-url');
   gallery.setAttribute('data-active-idx',idx);
-  // v02.127：主圖現在是背景模糊+前景完整顯示兩張img疊在一起，切換縮圖時兩張都要跟著換，
-  // 不然背景模糊圖會停在舊圖、前景卻已經換成新圖，兩者對不上。
   var mainImg=$('hero-cover-main-img');if(mainImg&&url)mainImg.src=url;
-  var bgImg=mainImg&&mainImg.previousElementSibling;
-  if(bgImg&&bgImg.classList.contains('cover-bg')&&url)bgImg.src=url;
   var thumbs=gallery.querySelectorAll('.vault-cover-thumb');
   for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('on',thumbs[i]===el);}
 }
@@ -15757,7 +15747,7 @@ function detailHeroHtml(d,rowNum){
   window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
   var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
     '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()"':'')+' style="'+(_mainDef?'cursor:pointer':'')+'">'+
-    (_mainDef?('<img class="cover-bg" src="'+_mainDef.url+'" alt="" aria-hidden="true"><img id="hero-cover-main-img" class="cover-fg" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
+    (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
       return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
@@ -17515,7 +17505,7 @@ function huntDetail(uid){
   window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
   var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
     '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()" style="cursor:pointer"':'')+'>'+
-    (_mainDef?('<img class="cover-bg" src="'+_mainDef.url+'" alt="" aria-hidden="true"><img id="hero-cover-main-img" class="cover-fg" src="'+_mainDef.url+'" alt="">'):'🎮')+'</div>';
+    (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="" style="width:100%;height:100%;object-fit:cover">'):'🎮')+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
       return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
