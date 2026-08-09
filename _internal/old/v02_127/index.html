@@ -396,12 +396,9 @@ body{
 .shelf-cover{
   position:relative;width:104px;height:104px;flex-shrink:0;border-radius:10px;overflow:hidden;
   background:#141b30;border:1px solid #1e2a45;cursor:pointer;
-  display:flex;align-items:center;justify-content:center; /* v02.128：cover-fg改用contain後需要flex置中，不然圖片會貼左上角 */
 }
 .shelf-cover:active{border-color:#00e5ff}
-/* v02.128：舊的 .shelf-cover img{...} 全稱規則已移除——裡面的img現在一律帶cover-bg／
-   cover-fg class，用上面新增的通用規則控制，不再需要這條規則（留著的話因為.shelf-cover img
-   選擇器優先權比單一class規則高，會蓋掉新規則，讓修正失效）。 */
+.shelf-cover img{width:100%;height:100%;object-fit:cover;display:block}
 .shelf-cover-default{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:600;color:rgba(255,255,255,.9);text-align:center;
@@ -417,10 +414,6 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
-/* v02.128：卡片檢視（.gc）的縮圖原本是inline style的裸<img>，直接object-fit:cover填滿，
-   同樣有長條圖裁切內容的問題。改成跟.vault-cover-main／.shelf-cover同一套容器+cover-bg/
-   cover-fg雙層做法。 */
-.gc-thumb{position:relative;width:104px;height:104px;border-radius:10px;border:1px solid #1e2a45;flex-shrink:0;overflow:hidden;background:#0f1525;display:flex;align-items:center;justify-content:center}
 .gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s,transform .15s ease-out}
 .gc:active{border-color:#00e5ff;transform:scale(.98)}
 /* v02.18 Phase1：尋寶卡片外框比照收藏卡片同一套視覺語言（色值本來就相同，這裡改成共用 class 取代原本的 inline style，順便補上 :active 按壓回饋） */
@@ -576,18 +569,14 @@ body{
 .df.full{grid-column:1/-1}
 .vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
 .vault-cover{width:172px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
-/* v02.127：使用者實測回報長條形封面（例如橫向裁切的書背貼紙照）在固定方框顯示很怪——
-   原本object-fit:cover會把超出方框的部分直接裁掉，長條圖左右兩側（甚至角色主體）會被
+/* v02.127：使用者實測回報長條形封面（例如橫向裁切的書背貼紙照）在詳情頁主圖框顯示很怪——
+   原本object-fit:cover會把超出正方形框的部分直接裁掉，長條圖左右兩側（甚至角色主體）會被
    切掉看不到，不是「置中好看」而是「內容被裁掉」。改成背景用模糊放大鋪滿（不裁切原圖，
    只是拿來當視覺填充，裁掉沒關係）、前景用object-fit:contain完整顯示原圖不裁切內容，
-   常見於Spotify/Apple Music處理非正方形專輯封面的做法。
-   v02.128：這兩個class原本只套用在詳情頁主圖（.vault-cover-main），使用者接著回報卡片
-   （.gc）跟分類（.shelf-cover）兩種檢視模式的縮圖沒有一起改到，同樣的裁切問題還在。
-   改成不綁定特定容器的通用class，讓.vault-cover-main／.shelf-cover／.gc-thumb三處
-   共用同一套規則，容器本身只需要有position:relative+overflow:hidden即可套用。 */
-.cover-bg{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;filter:blur(18px) brightness(.5);z-index:0}
-.cover-fg{position:relative;z-index:1;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+   常見於Spotify/Apple Music處理非正方形專輯封面的做法。 */
 .vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px;position:relative}
+.vault-cover-main img.cover-bg{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;filter:blur(18px) brightness(.5);z-index:0}
+.vault-cover-main img.cover-fg{position:relative;z-index:1;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
 .vault-cover-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .vault-cover-thumb{aspect-ratio:1/1;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45}
 .vault-cover-thumb.on{border-color:#00e5ff}
@@ -2785,7 +2774,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.128';
+const APP_VERSION='v02.127';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13870,7 +13859,7 @@ function renderShelf(){
       var shortTitle=title.length>10?title.slice(0,10)+'…':title;
       var sold=d.collect_status==='已出售'?'<div class="shelf-sold-tag">已出售</div>':'';
       var thumb=coverImg
-        ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
+        ?'<img src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
         :'<div class="shelf-cover-default" style="background:'+color+'">'+esc(shortTitle)+'</div>';
       return '<div style="flex-shrink:0">'+
         '<div class="shelf-cover" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
@@ -14718,7 +14707,7 @@ function renderGlist(){
     var _icon=_catMeta(cat,d.subtype).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt=""></div>':
+      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:104px;height:104px;border-radius:10px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
