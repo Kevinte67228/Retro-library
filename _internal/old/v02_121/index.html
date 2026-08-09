@@ -2753,7 +2753,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.120';
+const APP_VERSION='v02.121';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -7392,7 +7392,7 @@ function _dbCatBadge(d){
     return '<span style="font-size:9px;border:1px solid '+clr+';border-radius:6px;padding:1px 5px;margin-left:4px;color:'+clr+';vertical-align:1px">'+(labels[c]||c)+'</span>';
   }).join('');
 }
-function _dbSrcClose(){var ov=$('db-src-ov');if(ov)ov.classList.remove('on');}
+function _dbSrcClose(){_closeSheetOv('db-src-ov');}
 function setDbOverride(id){
   _dbOverride=id;
   _updateDbSrcChip();
@@ -7460,7 +7460,14 @@ function showDbSrcSheet(){
   ov._openedAt=Date.now();
   // v02.119：跟_showActionSheet同一個理由——新建立的內容要先讓瀏覽器畫過關閉狀態，
   // 再加.on觸發transition，不然動畫播不出來。
-  requestAnimationFrame(function(){ov.classList.add('on');});
+  // v02.121：跟_showActionSheet同一個bug、同一個修法——.on要同時加在外層背板跟內層
+  // .sheet-panel兩個元素上，只加背板的話面板本身永遠停在畫面外看不到（見該函式內的
+  // 詳細說明）。
+  requestAnimationFrame(function(){
+    ov.classList.add('on');
+    var panel=ov.querySelector('.sheet-panel');
+    if(panel)panel.classList.add('on');
+  });
 }
 // 競態條件防護計數器
 var _reqIdCounter=0;
@@ -14732,6 +14739,17 @@ function createPressGesture(cfg){
 }
 // 共用底部動作選單外殼（外觀相同，動作鈕各自帶入）
 // o: { ovId, closeName, name, buttons:[{color,label,onclick}] }
+// v02.121：關閉時比照開啟，同時把外層背板跟內層 .sheet-panel 的 .on 都拿掉——不拿掉的話
+// 背板淡出時面板還停在「已展開」位置，視覺上會變成背板先消失、面板才跟著消失，兩個動畫
+// 沒有同步；而且面板反正下次開啟會被整個 innerHTML 覆蓋掉，這裡拿掉純粹是讓關閉動畫本身
+// 正確（面板跟著往下滑出，不是憑空消失）。4 個呼叫端（長按選單／下拉選單／DB來源選單）
+// 共用同一個小函式，不用各自重複同樣 3 行。
+function _closeSheetOv(id){
+  var ov=$(id);if(!ov)return;
+  ov.classList.remove('on');
+  var panel=ov.querySelector('.sheet-panel');
+  if(panel)panel.classList.remove('on');
+}
 function _showActionSheet(o){
   var ov=$(o.ovId);
   if(!ov){
@@ -14759,7 +14777,18 @@ function _showActionSheet(o){
   // v02.119：新建立的 .sheet-ov/.sheet-panel 要先讓瀏覽器畫過一次「關閉」狀態，才能讓接下來
   // 加上的 .on 觸發 transition；同步接連設定 innerHTML 跟加 class，瀏覽器可能會直接合併成
   // 一次繪製，動畫就播不出來。用 rAF 延一格，確保關閉狀態確實先畫過一次。
-  requestAnimationFrame(function(){ov.classList.add('on');});
+  // v02.121：使用者實測回報選單「按了卡住、螢幕變暗但選單按鈕完全不會出現」——用像素比對
+  // 截圖找到真正原因：CSS 規則是 .sheet-panel.on{transform:translateY(0)}，要求 .on
+  // 要加在 .sheet-panel 這個元素本身上；但這裡（跟showDbSrcSheet一樣）panel是動態塞進
+  // ov.innerHTML的子元素，之前只對外層的ov加了.on，內層.sheet-panel從來沒被加過.on，
+  // 永遠停在預設的translateY(100%)、卡在畫面下緣看不見——背板(ov)的opacity正確變成1、
+  // 畫面確實變暗，但選單本體其實一直在畫面外，這才是「卡住、螢幕暗但什麼都沒有」的真正
+  // 成因，跟v02.120修的「背板點擊誤關閉」是兩個不同的bug（各自獨立存在，都要修）。
+  requestAnimationFrame(function(){
+    ov.classList.add('on');
+    var panel=ov.querySelector('.sheet-panel');
+    if(panel)panel.classList.add('on');
+  });
 }
 // v02.23：原生 <select> 的下拉彈出清單在 Android 上是系統白底、CSS 完全套不到，跟深色主題衝突。
 // 這幾個統計頁的 select 改成「select 本身用 pointer-events:none 隱藏互動、疊一層透明覆蓋層攔截點擊」，
@@ -14774,7 +14803,7 @@ function _showActionSheet(o){
 // wrapperStyle：預設 display:inline-block（依內容縮寬）；若原本 select 身上有 flex/width 等
 // 「作為 flex 子項」用的排版樣式，因為 select 被包了一層外殼、不再是直接的 flex 子項，
 // 這類樣式要改傳進 wrapperStyle 讓外殼接手（見呼叫端範例：hs-cur／new-digital-acct-plat）。
-function closeSelectSheet(){var ov=$('select-sheet-ov');if(ov)ov.classList.remove('on');}
+function closeSelectSheet(){_closeSheetOv('select-sheet-ov');}
 function fselPickerize(selectHtml, title, wrapperStyle){
   var m = /<select\b[^>]*\sid="([^"]+)"/.exec(selectHtml);
   if(!m) return selectHtml;
@@ -14818,7 +14847,7 @@ function colPressStart(e,uid){_colPress.start(e,uid);}
 function colPressMove(e){_colPress.move(e);}
 function colPressEnd(){_colPress.end();}
 function colPressMenu(e,uid){return _colPress.menu(e,uid);}
-function _colSheetClose(){var ov=$('col-action-ov');if(ov)ov.classList.remove('on');}
+function _colSheetClose(){_closeSheetOv('col-action-ov');}
 function colActionSheet(uid){
   var item=col.find(function(c){return (c.uid&&c.uid===uid)||c.rowNum===uid;});
   var nm=(item&&item.data&&(item.data.primary_name||item.data.zh_name||item.data.jp_name||item.data.en_name))||'這筆收藏';
@@ -16349,7 +16378,7 @@ function huntPressStart(e,uid){_huntPress.start(e,uid);}
 function huntPressMove(e){_huntPress.move(e);}
 function huntPressEnd(){_huntPress.end();}
 function huntPressMenu(e,uid){return _huntPress.menu(e,uid);}
-function _huntActionClose(){var ov=$('hunt-action-ov');if(ov)ov.classList.remove('on');}
+function _huntActionClose(){_closeSheetOv('hunt-action-ov');}
 function huntActionSheet(uid){
   var item=hunt.find(function(x){return x.uid===uid;});
   var nm=(item&&item.data&&item.data.primary_name)||'這個目標';
