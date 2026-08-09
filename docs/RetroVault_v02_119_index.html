@@ -325,7 +325,9 @@ body{
 .dv2-ri-date{font-size:10px;color:#7986cb;flex-shrink:0}
 /* 空白狀態 */
 .dv2-empty{text-align:center;padding:40px 20px}
-.dv2-empty-ic{font-size:36px;margin-bottom:12px}
+@keyframes dv2EmptyIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.dv2-empty-ic{font-size:36px;margin-bottom:12px;animation:dv2EmptyIn .3s ease-out both}
+@media(prefers-reduced-motion:reduce){.dv2-empty-ic{animation-duration:.12s}}
 .dv2-empty-t{font-size:14px;color:#7986cb}
 .dv2-empty-s{font-size:12px;color:#555;margin-top:6px}
 
@@ -412,11 +414,11 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
-.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s}
-.gc:active{border-color:#00e5ff}
+.gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s,transform .15s ease-out}
+.gc:active{border-color:#00e5ff;transform:scale(.98)}
 /* v02.18 Phase1：尋寶卡片外框比照收藏卡片同一套視覺語言（色值本來就相同，這裡改成共用 class 取代原本的 inline style，順便補上 :active 按壓回饋） */
-.hc{background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.hc:active{border-color:#00e5ff}
+.hc{background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:10px;margin:0 16px 8px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s ease-out}
+.hc:active{border-color:#00e5ff;transform:scale(.98)}
 .hc.done{opacity:.55}
 /* v02.18 Phase1：卡片選中「點亮」效果統一（取代原本 .gc／尋寶卡片各自不同、幾乎看不見的內陰影），跟晶片同一套外發光語言，色沿用既有「選取＝玫瑰色」語意 */
 .gc.sel,.hc.sel{border-color:#ff6e9c;box-shadow:0 0 4px rgba(255,110,156,.85),0 0 14px rgba(255,110,156,.45)}
@@ -424,7 +426,8 @@ body{
 .gfav{position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(8,12,24,.72);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;z-index:2;transition:transform .15s}
 /* v02.72：畫廊視圖（收藏頁第三個展示模式，封面圖優先的2欄網格） */
 #gallery-view{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px}
-.gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden}
+.gv-card{position:relative;background:#0f1525;border:1px solid #1e2a45;border-radius:14px;overflow:hidden;transition:transform .15s ease-out}
+.gv-card:active{transform:scale(.97)}
 .gv-card.sel{outline:2px solid #ff6e9c}
 .gv-thumb{width:100%;aspect-ratio:3/4;background:#141b30;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:#7986cb}
 .gv-thumb img{width:100%;height:100%;object-fit:contain;object-position:center}
@@ -483,6 +486,21 @@ body{
 #filter-sheet.on{pointer-events:all}
 #filter-sheet.on #fov{opacity:1}
 #filter-sheet.on #fp{transform:translateY(0)}
+/* v02.119：統一底部彈出 modal 的進出場動畫，比照上面 #filter-sheet 既有語彙（#fov/#fp）。
+   這幾個 modal（批次編輯、依系列瀏覽、自訂市場編輯、長按選單）原本都是 inline
+   style.display='none'/'flex' 硬切換，跟旁邊已經做好抽屜滑入動畫的篩選面板觀感不一致
+   ——同樣是「從底部滑出的面板」，動作卻不一樣。改用這兩個共用 class，opacity/transform
+   搭配 .on 切換，JS 只要加減 class，不用再管 display 切換的時機。 */
+.sheet-ov{display:flex;opacity:0;transition:opacity .25s;pointer-events:none}
+.sheet-ov.on{opacity:1;pointer-events:all}
+.sheet-panel{display:flex;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.sheet-panel.on{transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){
+  .sheet-panel{transition-duration:.12s}
+  .sheet-ov{transition-duration:.12s}
+  .gv-card,.gc,.hc{transition-duration:.08s !important}
+  .sgroup-body,#batch-adv-body{transition-duration:.1s !important}
+}
 .fp-hdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:10px}
 /* ── 兩欄式篩選（Amazon 風格：左側類別／右側選項）── */
 .filter-2pane{flex:1;min-height:0;display:flex;overflow:hidden}
@@ -584,8 +602,12 @@ body{
 .sgroup-arr{flex:0 0 auto;color:#7986cb;font-size:14px;transition:transform .2s}
 .sgroup.open .sgroup-h{border-bottom-color:#1e2a45}
 .sgroup.open .sgroup-arr{transform:rotate(180deg)}
-.sgroup-body{display:none;padding:12px 12px 4px}
-.sgroup.open .sgroup-body{display:block}
+.sgroup-body{display:block;max-height:0;overflow:hidden;padding:0 12px;opacity:0;transition:max-height .25s ease-out,opacity .2s ease-out,padding .25s ease-out}
+.sgroup.open .sgroup-body{max-height:2400px;padding:12px 12px 4px;opacity:1;transition:max-height .25s ease-in,opacity .25s ease-in .05s,padding .25s ease-in}
+/* v02.119：批次書背Step1的進階設定面板（v02.109），同一種「箭頭轉了、內容瞬間彈出」
+   落差，套用跟上面.sgroup-body同一套max-height技巧。 */
+#batch-adv-body{max-height:0;overflow:hidden;opacity:0;transition:max-height .25s ease-out,opacity .2s ease-out}
+#batch-adv-body.open{max-height:600px;opacity:1;transition:max-height .25s ease-in,opacity .25s ease-in .05s}
 .sgroup-body>.stitle:first-child{padding-top:2px}
 .srow{background:#141b30;border:1px solid #1e2a45;border-radius:10px;padding:14px;margin-bottom:8px}
 .srl{font-size:13px;font-weight:500;margin-bottom:8px}
@@ -1380,7 +1402,7 @@ body{
                   <div style="font-size:12px;color:#9fa8c8;font-weight:700">⚙️ 進階設定：處理速度與單批上限</div>
                   <div id="batch-adv-arrow" style="color:#7986cb;font-size:12px;flex-shrink:0">▾</div>
                 </div>
-                <div id="batch-adv-body" style="display:none;margin-top:12px">
+                <div id="batch-adv-body" style="margin-top:12px">
                   <div style="margin-bottom:14px">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
                       <label style="font-size:12px;color:#e8eaf6;font-weight:700">確認清單階段同時處理幾件</label>
@@ -2731,7 +2753,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.117';
+const APP_VERSION='v02.119';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4817,13 +4839,13 @@ function cmOpenEditor(i){
   if($('cm-probe-msg')){$('cm-probe-msg').textContent='';$('cm-probe-msg').style.color='#7986cb';}
   cmPreview();
   var ov=$('cm-overlay'),p=$('cm-panel');
-  if(ov)ov.style.display='block';
-  if(p)p.style.display='flex';
+  if(ov)ov.classList.add('on');
+  if(p)p.classList.add('on');
 }
 function cmCloseEditor(){
   var ov=$('cm-overlay'),p=$('cm-panel');
-  if(ov)ov.style.display='none';
-  if(p)p.style.display='none';
+  if(ov)ov.classList.remove('on');
+  if(p)p.classList.remove('on');
   _cmEditIdx=-1;_cmIconData='';
 }
 // 即時預覽 icon / 首字
@@ -5794,18 +5816,25 @@ function colDeleteSelected(){
 function bulkEditOpen(){
   if(!_colSelSet.size){toast('尚未選取','er');return;}
   $('bulk-edit-count').textContent=_colSelSet.size;
-  ['loc','status','series'].forEach(function(k){var cb=$('bulk-edit-'+k+'-on');if(cb)cb.checked=false;});
+  ['loc','status','series','plat','region'].forEach(function(k){var cb=$('bulk-edit-'+k+'-on');if(cb)cb.checked=false;});
   $('bulk-edit-loc').value='';
   $('bulk-edit-series').value='';
   $('bulk-edit-status').value='收藏中';
+  // v02.118：平台選項數量多（60+），用JS動態產生，不在HTML裡手寫一長串<option>
+  var platSel=$('bulk-edit-plat');
+  if(platSel&&!platSel.options.length){
+    platSel.innerHTML=PLATFORMS.map(function(p){return '<option value="'+esc(p.v)+'">'+esc(p.v)+'</option>';}).join('');
+  }
+  if(platSel)platSel.value=PLATFORMS[0].v;
+  $('bulk-edit-region').value='日本';
   var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
-  if(ov)ov.style.display='block';
-  if(p)p.style.display='flex';
+  if(ov)ov.classList.add('on');
+  if(p)p.classList.add('on');
 }
 function bulkEditClose(){
   var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
-  if(ov)ov.style.display='none';
-  if(p)p.style.display='none';
+  if(ov)ov.classList.remove('on');
+  if(p)p.classList.remove('on');
 }
 function bulkEditSave(){
   if(!cfg.url){toast('請先設定試算表 URL','er');bulkEditClose();showPg('cfg');return;}
@@ -5813,10 +5842,12 @@ function bulkEditSave(){
   if($('bulk-edit-loc-on').checked)patch.storage_location=($('bulk-edit-loc').value||'').trim();
   if($('bulk-edit-status-on').checked)patch.collect_status=$('bulk-edit-status').value;
   if($('bulk-edit-series-on').checked)patch.series=($('bulk-edit-series').value||'').trim();
+  if($('bulk-edit-plat-on').checked)patch.platform=$('bulk-edit-plat').value;
+  if($('bulk-edit-region-on').checked)patch.region=$('bulk-edit-region').value;
   if(!Object.keys(patch).length){toast('請至少勾選一個要修改的欄位','er');return;}
   var keys=Array.from(_colSelSet);
   if(!keys.length){toast('尚未選取','er');return;}
-  var fieldLabels={storage_location:'存放位置',collect_status:'收藏狀態',series:'系列'};
+  var fieldLabels={storage_location:'存放位置',collect_status:'收藏狀態',series:'系列',platform:'平台',region:'地區'};
   var patchDesc=Object.keys(patch).map(function(k){return fieldLabels[k];}).join('、');
   bulkEditClose();
   if(!confirm('確定要把這 '+keys.length+' 筆的「'+patchDesc+'」都改成上面填的值嗎？'))return;
@@ -5916,13 +5947,13 @@ function renderSeriesBrowse(){
 function openSeriesBrowse(){
   renderSeriesBrowse();
   var ov=$('series-ov'),p=$('series-panel');
-  if(ov)ov.style.display='block';
-  if(p)p.style.display='flex';
+  if(ov)ov.classList.add('on');
+  if(p)p.classList.add('on');
 }
 function closeSeriesBrowse(){
   var ov=$('series-ov'),p=$('series-panel');
-  if(ov)ov.style.display='none';
-  if(p)p.style.display='none';
+  if(ov)ov.classList.remove('on');
+  if(p)p.classList.remove('on');
 }
 
 // ── Gemini ──
@@ -7361,7 +7392,7 @@ function _dbCatBadge(d){
     return '<span style="font-size:9px;border:1px solid '+clr+';border-radius:6px;padding:1px 5px;margin-left:4px;color:'+clr+';vertical-align:1px">'+(labels[c]||c)+'</span>';
   }).join('');
 }
-function _dbSrcClose(){var ov=$('db-src-ov');if(ov)ov.style.display='none';}
+function _dbSrcClose(){var ov=$('db-src-ov');if(ov)ov.classList.remove('on');}
 function setDbOverride(id){
   _dbOverride=id;
   _updateDbSrcChip();
@@ -7404,7 +7435,7 @@ function _dbSrcRowHTML(o){
 }
 function showDbSrcSheet(){
   var ov=$('db-src-ov');
-  if(!ov){ov=document.createElement('div');ov.id='db-src-ov';ov.style.cssText='position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center';ov.onclick=function(e){if(e.target===ov)_dbSrcClose();};document.body.appendChild(ov);}
+  if(!ov){ov=document.createElement('div');ov.id='db-src-ov';ov.className='sheet-ov';ov.style.cssText='position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center';ov.onclick=function(e){if(e.target===ov)_dbSrcClose();};document.body.appendChild(ov);}
   var rows=_dbSrcRowHTML({icon:'🔁',name:'自動分流（推薦）',
     desc:'依條碼／序號／名稱自動調用：日系資料庫優先，未命中再查歐美資料庫',
     sel:!_dbOverride,off:false,onclick:"_dbSrcClose();setDbOverride(null)"});
@@ -7417,13 +7448,15 @@ function showDbSrcSheet(){
     rows+=_dbSrcRowHTML({icon:d.icon,name:d.name,badges:_dbCatBadge(d)+_dbInputBadges(d),
       desc:d.desc,sel:sel,off:off,note:note,onclick:onclick});
   });
-  ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:84vh;display:flex;flex-direction:column">'+
+  ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:84vh;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6">查詢資料來源</div></div>'+
     '<div style="font-size:10px;color:#555;line-height:1.6;margin:0 2px 10px;flex-shrink:0">💡 純條碼／編碼流程中，「名稱」型資料庫需 AI 先辨識出名稱才會被調用；書籍類查詢只會調用書籍類（📖）資料庫。</div>'+
     '<div class="dbsrc-table" style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+rows+'</div>'+
     '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:10px" onclick="_dbSrcClose()" type="button">關閉</button></div></div>';
-  ov.style.display='flex';
+  // v02.119：跟_showActionSheet同一個理由——新建立的內容要先讓瀏覽器畫過關閉狀態，
+  // 再加.on觸發transition，不然動畫播不出來。
+  requestAnimationFrame(function(){ov.classList.add('on');});
 }
 // 競態條件防護計數器
 var _reqIdCounter=0;
@@ -11163,9 +11196,8 @@ function _batchApplyCfgDefaults(){
 function _batchToggleAdvSettings(){
   var body=$('batch-adv-body'),arrow=$('batch-adv-arrow');
   if(!body)return;
-  var open=body.style.display==='block';
-  body.style.display=open?'none':'block';
-  if(arrow)arrow.textContent=open?'▾':'▴';
+  var open=body.classList.toggle('open');
+  if(arrow)arrow.textContent=open?'▴':'▾';
 }
 // 進入Step1時，把面板的輸入框跟標題文字同步成目前生效的值（可能是使用者上次存的偏好）
 function _batchSyncAdvSettingsUI(){
@@ -13987,6 +14019,20 @@ function toggleFacet(k,val){
   if(!colFilters[k].length)delete colFilters[k];
   filterCol();renderFilterSheet();
 }
+// v02.118：「全選這個篩選類別的所有值／清除」捷徑，通用於任何多值篩選類別（系列、平台、
+// 發行商等），不是系列專屬。已全部選取時再按一次會清除，用同一顆按鈕切換。
+function toggleAllFacet(k){
+  var f=_facetByKey(k);if(!f)return;
+  var base=col.filter(function(it){return _quickPass(it)&&_facetPass(it,k);});
+  var counts={};
+  base.forEach(function(it){facetVals(f,it.data).forEach(function(v){counts[v]=(counts[v]||0)+1;});});
+  var vals=Object.keys(counts);
+  var sel=colFilters[k]||[];
+  var allSelected=vals.length>0&&vals.every(function(v){return sel.indexOf(v)>=0;});
+  colFilters[k]=allSelected?[]:vals.slice();
+  if(!colFilters[k].length)delete colFilters[k];
+  filterCol();renderFilterSheet();
+}
 function setPrice(kind,which,v){
   if(arguments.length===2){v=which;which=kind;kind='buy';}
   if(kind==='market'){if(which==='min')_mvmin=v;else _mvmax=v;}
@@ -14054,7 +14100,16 @@ function renderFilterSheet(){
       return counts[b]-counts[a];
     });
     var sel=colFilters[f.k]||[];
-    body.innerHTML='<div class="facet-opts-col">'+vals.map(function(v){
+    // v02.118：使用者實測回報想要「只顯示有填系列的項目」，查證後發現「系列／作品」其實
+    // 早就是完整可用的篩選類別（FACETS裡的'series'），卡片/分類/畫廊三種瀏覽方式本來就
+    // 共用同一份filtered清單，選了系列篩選條件三種檢視都會一起套用，不需要另外做。缺的
+    // 只是「一次選取全部系列值」這個捷徑——沒有這個的話，要達到「顯示所有已填系列的項目」
+    // 得把每個系列名稱都手動勾一遍。這個「全選/清除」捷徑做成通用款，不只系列，其他篩選
+    // 類別（如平台、發行商）同樣用得到，不用另外寫一套系列專用的邏輯。
+    var allSelected=vals.length>0&&vals.every(function(v){return sel.indexOf(v)>=0;});
+    body.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:8px">'+
+      '<button type="button" onclick="toggleAllFacet(\''+esc(f.k)+'\')" style="background:none;border:none;color:#00e5ff;font-size:12px;font-family:inherit;cursor:pointer;padding:4px 2px">'+(allSelected?'清除全部':'全選（顯示所有已填此項的項目）')+'</button>'+
+    '</div><div class="facet-opts-col">'+vals.map(function(v){
       var on=sel.indexOf(v)>=0;
       var disp=f.k==='category'?catLabel(v):(f.code?v.split(' ')[0]:v);
       return '<label class="facet-opt'+(on?' on':'')+'" data-fk="'+esc(f.k)+'" data-fv="'+esc(v)+'"><span>'+esc(disp)+'</span><b>'+counts[v]+'</b></label>';
@@ -14675,14 +14730,17 @@ function createPressGesture(cfg){
 // o: { ovId, closeName, name, buttons:[{color,label,onclick}] }
 function _showActionSheet(o){
   var ov=$(o.ovId);
-  if(!ov){ov=document.createElement('div');ov.id=o.ovId;ov.style.cssText='position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center';ov.onclick=function(e){if(e.target===ov)window[o.closeName]();};document.body.appendChild(ov);}
+  if(!ov){ov=document.createElement('div');ov.id=o.ovId;ov.className='sheet-ov';ov.style.cssText='position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.6);align-items:flex-end;justify-content:center';ov.onclick=function(e){if(e.target===ov)window[o.closeName]();};document.body.appendChild(ov);}
   var btns=o.buttons.map(function(b){return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';}).join('');
-  ov.innerHTML='<div style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;display:flex;flex-direction:column">'+
+  ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.name)+'</div></div>'+
     '<div style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+btns+'</div>'+
     '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:4px" onclick="'+o.closeName+'()" type="button">取消</button></div></div>';
-  ov.style.display='flex';
+  // v02.119：新建立的 .sheet-ov/.sheet-panel 要先讓瀏覽器畫過一次「關閉」狀態，才能讓接下來
+  // 加上的 .on 觸發 transition；同步接連設定 innerHTML 跟加 class，瀏覽器可能會直接合併成
+  // 一次繪製，動畫就播不出來。用 rAF 延一格，確保關閉狀態確實先畫過一次。
+  requestAnimationFrame(function(){ov.classList.add('on');});
 }
 // v02.23：原生 <select> 的下拉彈出清單在 Android 上是系統白底、CSS 完全套不到，跟深色主題衝突。
 // 這幾個統計頁的 select 改成「select 本身用 pointer-events:none 隱藏互動、疊一層透明覆蓋層攔截點擊」，
@@ -14697,7 +14755,7 @@ function _showActionSheet(o){
 // wrapperStyle：預設 display:inline-block（依內容縮寬）；若原本 select 身上有 flex/width 等
 // 「作為 flex 子項」用的排版樣式，因為 select 被包了一層外殼、不再是直接的 flex 子項，
 // 這類樣式要改傳進 wrapperStyle 讓外殼接手（見呼叫端範例：hs-cur／new-digital-acct-plat）。
-function closeSelectSheet(){var ov=$('select-sheet-ov');if(ov)ov.style.display='none';}
+function closeSelectSheet(){var ov=$('select-sheet-ov');if(ov)ov.classList.remove('on');}
 function fselPickerize(selectHtml, title, wrapperStyle){
   var m = /<select\b[^>]*\sid="([^"]+)"/.exec(selectHtml);
   if(!m) return selectHtml;
@@ -14741,7 +14799,7 @@ function colPressStart(e,uid){_colPress.start(e,uid);}
 function colPressMove(e){_colPress.move(e);}
 function colPressEnd(){_colPress.end();}
 function colPressMenu(e,uid){return _colPress.menu(e,uid);}
-function _colSheetClose(){var ov=$('col-action-ov');if(ov)ov.style.display='none';}
+function _colSheetClose(){var ov=$('col-action-ov');if(ov)ov.classList.remove('on');}
 function colActionSheet(uid){
   var item=col.find(function(c){return (c.uid&&c.uid===uid)||c.rowNum===uid;});
   var nm=(item&&item.data&&(item.data.primary_name||item.data.zh_name||item.data.jp_name||item.data.en_name))||'這筆收藏';
@@ -16272,7 +16330,7 @@ function huntPressStart(e,uid){_huntPress.start(e,uid);}
 function huntPressMove(e){_huntPress.move(e);}
 function huntPressEnd(){_huntPress.end();}
 function huntPressMenu(e,uid){return _huntPress.menu(e,uid);}
-function _huntActionClose(){var ov=$('hunt-action-ov');if(ov)ov.style.display='none';}
+function _huntActionClose(){var ov=$('hunt-action-ov');if(ov)ov.classList.remove('on');}
 function huntActionSheet(uid){
   var item=hunt.find(function(x){return x.uid===uid;});
   var nm=(item&&item.data&&item.data.primary_name)||'這個目標';
@@ -18058,8 +18116,8 @@ function _imgToB64(src){
   </div>
 </div>
 <!-- 自訂市場編輯 Modal（v40.31）-->
-<div id="cm-overlay" onclick="if(event.target===this)cmCloseEditor()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1001"></div>
-<div id="cm-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:1002;-webkit-overflow-scrolling:touch;flex-direction:column">
+<div id="cm-overlay" class="sheet-ov" onclick="if(event.target===this)cmCloseEditor()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:1001"></div>
+<div id="cm-panel" class="sheet-panel" style="position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:1002;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6" id="cm-editor-title">新增自訂市場</div>
     <button onclick="cmCloseEditor()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
@@ -18119,8 +18177,8 @@ function _imgToB64(src){
 </div>
 <!-- 批次編輯 Modal（v02.100）：收藏頁多選後，一次改多筆的存放位置／收藏狀態／系列。
      只有勾選的欄位才會套用到所有選取項目，其餘欄位維持原樣不動。 -->
-<div id="bulk-edit-overlay" onclick="if(event.target===this)bulkEditClose()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
-<div id="bulk-edit-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
+<div id="bulk-edit-overlay" class="sheet-ov" onclick="if(event.target===this)bulkEditClose()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="bulk-edit-panel" class="sheet-panel" style="position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;max-height:85vh;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6">批次編輯（<span id="bulk-edit-count">0</span> 筆）</div>
     <button onclick="bulkEditClose()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
@@ -18158,6 +18216,36 @@ function _imgToB64(src){
       </label>
       <input class="fi" id="bulk-edit-series" placeholder="例如：Summer Lesson">
     </div>
+    <!-- v02.118：使用者提出——批次書背建檔一開始選錯平台/地區時，整批都會是錯的，事後
+         逐筆改很累，補上這兩個欄位讓錯誤可以一次修正。刻意不加「分類」「子類型」——那兩個
+         決定資料實際存在哪張工作表，改掉需要搬移整筆資料到別的分頁，跟這裡「只更新既有
+         這一列裡的欄位值」的簡單更新模式不是同一回事，風險與複雜度都高出很多，不在這次
+         範圍內。 -->
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-plat-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">平台</span>
+      </label>
+      <div style="position:relative;display:block">
+        <select class="fsel" id="bulk-edit-plat" style="pointer-events:none" tabindex="-1"></select>
+        <div onclick="openSelectSheet('bulk-edit-plat','平台')" style="position:absolute;inset:0;cursor:pointer"></div>
+      </div>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-region-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">地區</span>
+      </label>
+      <div style="position:relative;display:block">
+        <select class="fsel" id="bulk-edit-region" style="pointer-events:none" tabindex="-1">
+          <option value="日本">日本</option>
+          <option value="亞洲">亞洲</option>
+          <option value="美國">美國</option>
+          <option value="其他">其他</option>
+        </select>
+        <div onclick="openSelectSheet('bulk-edit-region','地區')" style="position:absolute;inset:0;cursor:pointer"></div>
+      </div>
+    </div>
   </div>
   <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">
     <button class="btn bo bs" style="flex:1" onclick="bulkEditClose()" type="button">取消</button>
@@ -18167,8 +18255,8 @@ function _imgToB64(src){
 <!-- 依系列瀏覽 Modal（v02.100）：把有填「系列」欄位的收藏分組顯示，一眼看出某系列收了幾件；
      同時比對「尋寶」清單裡品名含有該系列名稱的項目，標示可能還缺哪幾款（比對方式：品名
      包含系列名稱的簡單字串比對，非精確比對，僅供參考）。 -->
-<div id="series-ov" onclick="if(event.target===this)closeSeriesBrowse()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
-<div id="series-panel" style="display:none;position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
+<div id="series-ov" class="sheet-ov" onclick="if(event.target===this)closeSeriesBrowse()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="series-panel" class="sheet-panel" style="position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;flex-direction:column">
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6">📚 依系列瀏覽</div>
     <button onclick="closeSeriesBrowse()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>

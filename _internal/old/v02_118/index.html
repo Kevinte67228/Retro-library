@@ -2731,7 +2731,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.117';
+const APP_VERSION='v02.118';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5794,10 +5794,17 @@ function colDeleteSelected(){
 function bulkEditOpen(){
   if(!_colSelSet.size){toast('尚未選取','er');return;}
   $('bulk-edit-count').textContent=_colSelSet.size;
-  ['loc','status','series'].forEach(function(k){var cb=$('bulk-edit-'+k+'-on');if(cb)cb.checked=false;});
+  ['loc','status','series','plat','region'].forEach(function(k){var cb=$('bulk-edit-'+k+'-on');if(cb)cb.checked=false;});
   $('bulk-edit-loc').value='';
   $('bulk-edit-series').value='';
   $('bulk-edit-status').value='收藏中';
+  // v02.118：平台選項數量多（60+），用JS動態產生，不在HTML裡手寫一長串<option>
+  var platSel=$('bulk-edit-plat');
+  if(platSel&&!platSel.options.length){
+    platSel.innerHTML=PLATFORMS.map(function(p){return '<option value="'+esc(p.v)+'">'+esc(p.v)+'</option>';}).join('');
+  }
+  if(platSel)platSel.value=PLATFORMS[0].v;
+  $('bulk-edit-region').value='日本';
   var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
   if(ov)ov.style.display='block';
   if(p)p.style.display='flex';
@@ -5813,10 +5820,12 @@ function bulkEditSave(){
   if($('bulk-edit-loc-on').checked)patch.storage_location=($('bulk-edit-loc').value||'').trim();
   if($('bulk-edit-status-on').checked)patch.collect_status=$('bulk-edit-status').value;
   if($('bulk-edit-series-on').checked)patch.series=($('bulk-edit-series').value||'').trim();
+  if($('bulk-edit-plat-on').checked)patch.platform=$('bulk-edit-plat').value;
+  if($('bulk-edit-region-on').checked)patch.region=$('bulk-edit-region').value;
   if(!Object.keys(patch).length){toast('請至少勾選一個要修改的欄位','er');return;}
   var keys=Array.from(_colSelSet);
   if(!keys.length){toast('尚未選取','er');return;}
-  var fieldLabels={storage_location:'存放位置',collect_status:'收藏狀態',series:'系列'};
+  var fieldLabels={storage_location:'存放位置',collect_status:'收藏狀態',series:'系列',platform:'平台',region:'地區'};
   var patchDesc=Object.keys(patch).map(function(k){return fieldLabels[k];}).join('、');
   bulkEditClose();
   if(!confirm('確定要把這 '+keys.length+' 筆的「'+patchDesc+'」都改成上面填的值嗎？'))return;
@@ -13987,6 +13996,20 @@ function toggleFacet(k,val){
   if(!colFilters[k].length)delete colFilters[k];
   filterCol();renderFilterSheet();
 }
+// v02.118：「全選這個篩選類別的所有值／清除」捷徑，通用於任何多值篩選類別（系列、平台、
+// 發行商等），不是系列專屬。已全部選取時再按一次會清除，用同一顆按鈕切換。
+function toggleAllFacet(k){
+  var f=_facetByKey(k);if(!f)return;
+  var base=col.filter(function(it){return _quickPass(it)&&_facetPass(it,k);});
+  var counts={};
+  base.forEach(function(it){facetVals(f,it.data).forEach(function(v){counts[v]=(counts[v]||0)+1;});});
+  var vals=Object.keys(counts);
+  var sel=colFilters[k]||[];
+  var allSelected=vals.length>0&&vals.every(function(v){return sel.indexOf(v)>=0;});
+  colFilters[k]=allSelected?[]:vals.slice();
+  if(!colFilters[k].length)delete colFilters[k];
+  filterCol();renderFilterSheet();
+}
 function setPrice(kind,which,v){
   if(arguments.length===2){v=which;which=kind;kind='buy';}
   if(kind==='market'){if(which==='min')_mvmin=v;else _mvmax=v;}
@@ -14054,7 +14077,16 @@ function renderFilterSheet(){
       return counts[b]-counts[a];
     });
     var sel=colFilters[f.k]||[];
-    body.innerHTML='<div class="facet-opts-col">'+vals.map(function(v){
+    // v02.118：使用者實測回報想要「只顯示有填系列的項目」，查證後發現「系列／作品」其實
+    // 早就是完整可用的篩選類別（FACETS裡的'series'），卡片/分類/畫廊三種瀏覽方式本來就
+    // 共用同一份filtered清單，選了系列篩選條件三種檢視都會一起套用，不需要另外做。缺的
+    // 只是「一次選取全部系列值」這個捷徑——沒有這個的話，要達到「顯示所有已填系列的項目」
+    // 得把每個系列名稱都手動勾一遍。這個「全選/清除」捷徑做成通用款，不只系列，其他篩選
+    // 類別（如平台、發行商）同樣用得到，不用另外寫一套系列專用的邏輯。
+    var allSelected=vals.length>0&&vals.every(function(v){return sel.indexOf(v)>=0;});
+    body.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:8px">'+
+      '<button type="button" onclick="toggleAllFacet(\''+esc(f.k)+'\')" style="background:none;border:none;color:#00e5ff;font-size:12px;font-family:inherit;cursor:pointer;padding:4px 2px">'+(allSelected?'清除全部':'全選（顯示所有已填此項的項目）')+'</button>'+
+    '</div><div class="facet-opts-col">'+vals.map(function(v){
       var on=sel.indexOf(v)>=0;
       var disp=f.k==='category'?catLabel(v):(f.code?v.split(' ')[0]:v);
       return '<label class="facet-opt'+(on?' on':'')+'" data-fk="'+esc(f.k)+'" data-fv="'+esc(v)+'"><span>'+esc(disp)+'</span><b>'+counts[v]+'</b></label>';
@@ -18157,6 +18189,36 @@ function _imgToB64(src){
         <span class="fl" style="margin:0">系列</span>
       </label>
       <input class="fi" id="bulk-edit-series" placeholder="例如：Summer Lesson">
+    </div>
+    <!-- v02.118：使用者提出——批次書背建檔一開始選錯平台/地區時，整批都會是錯的，事後
+         逐筆改很累，補上這兩個欄位讓錯誤可以一次修正。刻意不加「分類」「子類型」——那兩個
+         決定資料實際存在哪張工作表，改掉需要搬移整筆資料到別的分頁，跟這裡「只更新既有
+         這一列裡的欄位值」的簡單更新模式不是同一回事，風險與複雜度都高出很多，不在這次
+         範圍內。 -->
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-plat-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">平台</span>
+      </label>
+      <div style="position:relative;display:block">
+        <select class="fsel" id="bulk-edit-plat" style="pointer-events:none" tabindex="-1"></select>
+        <div onclick="openSelectSheet('bulk-edit-plat','平台')" style="position:absolute;inset:0;cursor:pointer"></div>
+      </div>
+    </div>
+    <div class="fg">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" id="bulk-edit-region-on" style="width:16px;height:16px;accent-color:#ce93d8">
+        <span class="fl" style="margin:0">地區</span>
+      </label>
+      <div style="position:relative;display:block">
+        <select class="fsel" id="bulk-edit-region" style="pointer-events:none" tabindex="-1">
+          <option value="日本">日本</option>
+          <option value="亞洲">亞洲</option>
+          <option value="美國">美國</option>
+          <option value="其他">其他</option>
+        </select>
+        <div onclick="openSelectSheet('bulk-edit-region','地區')" style="position:absolute;inset:0;cursor:pointer"></div>
+      </div>
     </div>
   </div>
   <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">

@@ -1,3 +1,37 @@
+## v02.119 (2026-08-08)
+
+### 變更內容
+延續稍早的動畫機會盤點報告，把 Part 1 列出的 5 項建議全部實作：
+
+**1.（槓桿最高）統一底部彈出 modal 的進出場動畫**：長按選單／DB 資料來源選單（共用 `_showActionSheet()`／`showDbSrcSheet()`）、批次編輯、依系列瀏覽、自訂市場編輯這幾個 modal，原本都是 `style.display='none'/'flex'` 硬切換，跟旁邊已經做好抽屜滑入動畫的篩選面板（`#filter-sheet`）觀感不一致。新增共用的 `.sheet-ov`／`.sheet-panel` class（背板 `opacity .25s`、面板 `translateY(100%)→0，.3s cubic-bezier(.32,.72,0,1)`），完全沿用 `#filter-sheet` 既有數值，不是另外發明一套。動態建立內容的兩個入口（長按選單、DB 來源選單）額外用 `requestAnimationFrame` 確保「關閉」狀態有先畫過一次，動畫才播得出來。**額外發現**：排查時發現同樣 `display:none/flex` 硬切換的地方還有 `hunt-add-ov`／`hunt-sheet-ov`／`type-picker-overlay`／`game-picker-overlay`／`cd-ov` 這幾處，範圍比原本報告列出的大，這次先不動，維持在報告已審視過的範圍內。
+
+**2. 畫廊卡片補上按壓回饋**：`.gv-card` 原本完全沒有 `:active` 狀態，補上 `transform:scale(.97)`／`.15s ease-out`，數值直接沿用 `.ec-card:active` 既有的。
+
+**3. 收藏卡片／尋寶卡片按壓回饋補齊**：`.gc`／`.hc` 原本只有 `border-color` 變化，跟 `.ec-card`／`.plat-card` 不一致，在既有的 border-color 過渡旁邊疊加 `transform:scale(.98)`，不取代原本的。
+
+**4. 設定頁分組／批次進階設定的展開收合改成平滑過渡**：`.sgroup-body`／`#batch-adv-body` 原本 `display:none/block` 硬切換，箭頭有轉但內容瞬間彈出。改成 `max-height`＋`opacity` 過渡技巧（這個技術棧選這個手法，相容性比 `grid-template-rows` 那套穩）。批次進階設定的箭頭符號（▾/▴）判斷邏輯也一併改成讀 class 而不是 `display` 值。
+
+**5. 空狀態圖示加上進場動畫**：`.dv2-empty-ic`（搜尋/篩選無結果、收藏是空的）原本零動作，加上 `opacity:0,scale(.9)→1` 的 `.3s ease-out` 進場動畫，用 `@keyframes`（不是 transition，因為這是元素首次出現，不是狀態變化）。
+
+**通用**：全部只動 `transform`／`opacity`／`max-height`，新增一個 `@media(prefers-reduced-motion:reduce)` 區塊，把這次新加的過渡時長統一縮短（不是變成 0，符合「gentler, not zero」的原則）——這是整份檔案第一次加入這個媒體查詢。
+
+### 自我檢查
+`node --check` 通過；無 U+FFFD；CSS 大括號數量核對平衡（652 開／652 關）。用 jsdom 建立實際會執行的測試環境完整驗證：三個具名 modal（批次編輯、依系列瀏覽、自訂市場編輯）的開關函式確認正確加減 `.on` class、不再殘留 `display:none` inline style；長按選單與 DB 來源選單確認動態建立時正確帶上 `.sheet-ov`／`.sheet-panel` class，且**同步執行當下還沒有 `.on`**（證實真的有排到下一個 rAF 才加，不是巧合能動）、等 rAF 觸發後才正確出現 `.on`；設定頁分組與批次進階設定的展開/收合都用 class 而非 `display` 值正確判斷開關狀態、箭頭文字同步正確切換。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v02_119_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v02-118 → retrovault-v02-119
+
+### 對應備份
+- _internal/old/v02_118/
+
+
 ## v02.118 (2026-08-08)
 
 ### 變更內容
@@ -22,6 +56,8 @@
 
 ### 對應備份
 - _internal/old/v02_117/
+
+
 
 
 ## v02.117 (2026-08-08)
@@ -56,6 +92,8 @@
 
 
 
+
+
 ## v02.116 (2026-08-08)
 
 ### 變更內容
@@ -80,34 +118,6 @@
 
 ### 對應備份
 - _internal/old/v02_115/
-
-
-
-
-
-
-## v02.115 (2026-08-08)
-
-### 變更內容
-使用者詢問怎麼用批次編輯時，發現收藏頁進入多選模式的那顆按鈕，長按顯示的提示文字還停在「大量刪除」——這是 v02.100 加入批次編輯功能之前的舊說法，同一個入口現在其實兼管批次編輯跟刪除兩件事，但提示文字沒跟著更新，容易讓人以為多選只能用來刪除，不知道還能批次編輯。
-
-修正：提示文字改成「多選（批次編輯／刪除）」，如實反映這顆按鈕現在的兩種用途；連同旁邊那行早就過時的 HTML 註解（同樣寫著「大量刪除」）一併更新說明。按鈕本身的功能（`colToggleSelect()`）沒有變動，純粹是文字修正。順便排查了尋寶頁同名的「大量刪除」提示——那邊目前確實只有刪除功能、沒有批次編輯，文字本來就正確，不需要跟著改。
-
-### 自我檢查
-`node --check` 通過；無 U+FFFD。用 jsdom 建立實際會執行的測試環境驗證：按鈕的 `title` 屬性確實顯示新文字、`onclick` 綁定完全沒被動到。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v02_115_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v02-114 → retrovault-v02-115
-
-### 對應備份
-- _internal/old/v02_114/
 
 
 
