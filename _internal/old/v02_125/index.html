@@ -2768,7 +2768,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.126';
+const APP_VERSION='v02.125';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10917,18 +10917,11 @@ function _batchCountConfirmShow(){
   $('batch-count-confirm-sec').style.display='block';
   _batchCountConfirmRender();
 }
-// v02.112：跳過Step1的AI合照辨識，直接進件數確認畫面，讓使用者靠自己打品名或點📷單獨
-// 拍照OCR。給疊拍辨識率不好的商品類型（例如PCE HuCard疊在一起只看得到最上面那張）一個
-// 不用勉強湊合AI合照辨識的路徑。
-// v02.126：使用者實測回報一列一列點「補一件」太慢，改成一次展開_BATCH_CAP列空白項目
-// （沿用使用者在批次Step1進階設定裡設定的上限，預設10、可調5~20，不寫死20，尊重使用者
-// 既有設定），讓使用者直接逐列打品名，不用的列留空即可；確認時只有真正有填品名的列會
-// 送進下一關開始逐件建檔（見_batchCountConfirmProceed），空白列自動略過，不用逐一刪除。
+// v02.112：跳過Step1的AI合照辨識，直接進件數確認畫面，從1件空白項目開始，讓使用者靠
+// 「＋補一件」逐一新增、每列自己打品名或點📷單獨拍照OCR。給疊拍辨識率不好的商品類型
+// （例如PCE HuCard疊在一起只看得到最上面那張）一個不用勉強湊合AI合照辨識的路徑。
 function _batchManualStart(){
-  _batchItems=[];
-  for(var i=0;i<_BATCH_CAP;i++){
-    _batchItems.push({order:i+1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null});
-  }
+  _batchItems=[{order:1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null}];
   _batchCountConfirmShow();
 }
 function _batchCountConfirmRetake(){
@@ -10937,15 +10930,6 @@ function _batchCountConfirmRetake(){
   $('batch-step1-sec').style.display='block';
 }
 function _batchCountConfirmProceed(){
-  // v02.126：手動輸入模式一次展開多列空白項目讓使用者填，確認時要把沒填品名的空白列
-  // 濾掉，只有真正有內容的列才送進Step2開始逐件建檔——不然20列裡使用者只填5列，
-  // 其餘15列空白項目會全部跟著進入逐件流程，使用者得一件一件手動跳過，違背「展開多列
-  // 圖方便」的本意。AI辨識流程（品名一定有內容）不受影響，這裡的過濾對已有品名的項目
-  // 是no-op。
-  var filled=_batchItems.filter(function(it){return (it.title_guess||'').trim();});
-  if(!filled.length){toast('請至少填寫一件的品名，或使用拍照辨識','er',3000);return;}
-  filled.forEach(function(it,i){it.order=i+1;});
-  _batchItems=filled;
   $('batch-count-confirm-sec').style.display='none';
   _batchSaveDraft(); // v02.100：離開件數確認畫面時是第一次能存出完整項目清單的時機點
   _batchStartStep2();
