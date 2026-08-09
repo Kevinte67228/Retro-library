@@ -35,7 +35,7 @@ GameVault GitHub 部署腳本 v2 ── 改用 gh_batch.py 的 Git Data API 單�
 6. 以上全部包在同一次 commit 內完成
 """
 
-import sys, os
+import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from gh_batch import _req, _retry, get_branch_head, build_path_index, batch_commit
 
@@ -65,6 +65,20 @@ DEPLOY_FILES = {
     'manifest.json':                    'docs/manifest.json',
     'RetroVault_AppsScript.gs':         'docs/RetroVault_AppsScript.gs',
 }
+
+
+def _ver_num_key(d):
+    """v02.126：把 vXX_YY 版號資料夾名稱轉成 (XX,YY) 數字 tuple 供排序用。
+    原本用 sorted(set(...)) 純字串排序，會把 'v02_96' 排在 'v02_124' 之後
+    （字元逐位比較 '9' > '1'），導致清理輪替邏輯把實際比較新的 vXX_1YY 版本
+    誤判成「還沒滿5個備份、不用清」，反而讓 vXX_96~99 這種舊版號因為字串排序
+    「看起來比較新」永遠卡在保留名單裡不會被清掉——這正是使用者截圖看到
+    _internal/old/ 裡同時有 v02_124 跟 v02_96~99、缺中間 v02_120~123 的成因。
+    格式異常（理論上不會發生）的一律排最前面（視為最舊，優先清理），不影響正常版號。"""
+    m = re.match(r'v(\d+)_(\d+)', d)
+    if m:
+        return (int(m.group(1)), int(m.group(2)))
+    return (-1, -1)
 
 
 def get_current_version(path_index):
@@ -117,7 +131,7 @@ def deploy(new_ver, local_dir, changelog_path=None):
         old_dirs = sorted(set(
             p.split('/')[2] for p in path_index
             if p.startswith('_internal/old/') and len(p.split('/')) > 2
-        ))
+        ), key=_ver_num_key)
         old_dirs = [d for d in old_dirs if d not in PERMANENT_EXCEPTIONS and d != current_ver]
         print(f'[2] 一般備份現有（不含永久例外）: {old_dirs}')
         while len(old_dirs) >= MAX_OLD:
