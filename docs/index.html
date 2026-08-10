@@ -2056,11 +2056,27 @@ body{
         </div>
         <div class="stitle">建檔查重</div>
         <div class="srow">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="c-fuzzydup" style="width:18px;height:18px;flex-shrink:0" checked>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px">
+            <input type="checkbox" id="c-fuzzydup" style="width:18px;height:18px;flex-shrink:0" checked onchange="_onFuzzyDupToggle()">
             <span style="font-size:13px;color:#e8eaf6">沒有條碼／編碼／序號時，用名稱模糊比對提示可能重複</span>
           </label>
-          <div class="shlp">v02.130：完全找不到條碼、遊戲編碼、機身序號可比對時，改用商品名稱相似度抓可能的重複收藏，只是提示、不會擋下儲存，可自行判斷是否為同一件。關閉後，這種情況一律視為沒有重複，不會再跳出「可能已收藏」的提示。</div>
+          <!-- v02.131：使用者要求相似度門檻改成自己可調，不要寫死——沿用收藏頁圖片搜尋
+               既有的「比對靈敏度」滑桿樣式（同一套視覺語言，寬鬆/精確兩端標籤＋即時%數字），
+               不是另外設計一套新元件。 -->
+          <div id="fuzzydup-threshold-wrap" style="background:#0f1525;border-radius:8px;padding:10px 12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:11px;color:#7986cb">相似度門檻</span>
+              <span id="fuzzydup-pct" style="font-size:13px;font-weight:700;color:#00e5ff;font-family:'Share Tech Mono',monospace">72%</span>
+            </div>
+            <input type="range" id="fuzzydup-slider" min="50" max="95" step="1" value="72"
+              style="width:100%;accent-color:#00e5ff;height:4px;cursor:pointer"
+              oninput="onFuzzyDupSlider(this.value)">
+            <div style="display:flex;justify-content:space-between;margin-top:4px">
+              <span style="font-size:10px;color:#7986cb">寬鬆（較多提示）</span>
+              <span style="font-size:10px;color:#7986cb">精確（較少提示）</span>
+            </div>
+          </div>
+          <div class="shlp">v02.131：完全找不到條碼、遊戲編碼、機身序號可比對時，改用商品名稱相似度抓可能的重複收藏，只是提示、不會擋下儲存，可自行判斷是否為同一件。門檻越低，越容易把用字略有不同的商品也提示出來（可能較多誤報）；門檻越高，只有名稱幾乎一樣才會提示（可能漏掉一些真的重複）。關閉核取方塊後，這種情況一律視為沒有重複，不會再跳出「可能已收藏」的提示。</div>
         </div>
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -2793,7 +2809,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.130';
+const APP_VERSION='v02.131';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4542,6 +4558,13 @@ function loadCfg(){
   // v02.130：預設開啟（沿用v02.129上線時的行為），只有明確存過false才關閉，
   // 避免既有使用者（cfg裡還沒有這個欄位）被誤判成關閉。
   if($('c-fuzzydup'))$('c-fuzzydup').checked=(cfg.fuzzyDupCheck!==false);
+  // v02.131：門檻百分比，沒存過就用預設72%（沿用v02.129/130上線時的固定門檻值）。
+  if($('fuzzydup-slider')){
+    var _fdT=(cfg.fuzzyDupThreshold>=50&&cfg.fuzzyDupThreshold<=95)?cfg.fuzzyDupThreshold:72;
+    $('fuzzydup-slider').value=_fdT;
+    onFuzzyDupSlider(_fdT);
+  }
+  _onFuzzyDupToggle();
   // 清除已失效的 model 值
   var validModels=['gemini-2.5-flash','gemini-2.5-pro-preview-06-05'];
   if(cfg.gmdl&&validModels.indexOf(cfg.gmdl)<0){
@@ -5197,6 +5220,7 @@ function saveCfg(){
     grounding:!!($('c-grounding')&&$('c-grounding').checked),
     ocrEnhance:!!($('c-ocr-enh')&&$('c-ocr-enh').checked),
     fuzzyDupCheck:!!($('c-fuzzydup')?$('c-fuzzydup').checked:true),
+    fuzzyDupThreshold:parseInt($('fuzzydup-slider')?$('fuzzydup-slider').value:72,10),
     gbkey:($('c-gbkey')&&$('c-gbkey').value||'').trim(),
     mbkey:($('c-mbkey')&&$('c-mbkey').value||'').trim(),
     tgdbkey:($('c-tgdbkey')&&$('c-tgdbkey').value||'').trim(),
@@ -13629,6 +13653,18 @@ function onSensitivity(val){
   var pct=$('sensitivity-pct');if(pct)pct.textContent=val+'%';
   var hint=$('sensitivity-hint');if(hint)hint.textContent='匹配度 ≥ '+val+'% 才顯示結果'+(val>=80?' (僅高度相似)':val<=30?' (可能含誤報)':'');
 }
+// v02.131：跟onSensitivity同一套UI語言——即時更新滑桿旁的%數字，實際存檔（cfg.fuzzyDupThreshold）
+// 要等使用者按「儲存所有設定」才會透過saveCfg()一併寫入，這裡只負責畫面即時回饋。
+function onFuzzyDupSlider(val){
+  var pct=$('fuzzydup-pct');if(pct)pct.textContent=val+'%';
+}
+// 勾選框開關時，滑桿視覺上跟著轉暗＋停用，避免使用者誤以為關閉查重的情況下滑桿還有作用。
+function _onFuzzyDupToggle(){
+  var cb=$('c-fuzzydup'),wrap=$('fuzzydup-threshold-wrap'),slider=$('fuzzydup-slider');
+  var on=!!(cb&&cb.checked);
+  if(wrap)wrap.style.opacity=on?'1':'.4';
+  if(slider)slider.disabled=!on;
+}
 
 function toggleImgSearchMenu(){
   var menu=$('img-search-menu');
@@ -16221,7 +16257,14 @@ function _nameSimilarity(a,b){
 // 找可能的重複項目，當作「提示」而非強制阻擋（呼叫端會用比較溫和的字眼呈現，見findDuplicate
 // 與_batchStatusBadge）。平台不同就不當作同一件商品的比對對象，避免不同平台版本互相誤判
 // （例如PS4版跟Switch版是兩件不同收藏，即使名稱一樣）。
-var FUZZY_DUP_THRESHOLD=0.72;
+var FUZZY_DUP_THRESHOLD_DEFAULT=72; // v02.131：改成可調整後，這個常數只當作沒存過設定時的預設值
+// 讀取使用者在設定頁調整的相似度門檻（百分比轉0~1小數）；沒設定過、或存到不合理範圍
+// （理論上不會發生，UI滑桿本身限制在50~95）時退回預設72%。
+function _fuzzyDupThreshold(){
+  var v=(typeof cfg!=='undefined'&&cfg&&cfg.fuzzyDupThreshold);
+  if(!(v>=50&&v<=95))v=FUZZY_DUP_THRESHOLD_DEFAULT;
+  return v/100;
+}
 function _findFuzzyDuplicate(name,plat,excludeUuid){
   var best=null,bestScore=0;
   col.forEach(function(c){
@@ -16234,7 +16277,7 @@ function _findFuzzyDuplicate(name,plat,excludeUuid){
     var score=_nameSimilarity(name,dn);
     if(score>bestScore){bestScore=score;best=c;}
   });
-  return (best&&bestScore>=FUZZY_DUP_THRESHOLD)?best:null;
+  return (best&&bestScore>=_fuzzyDupThreshold())?best:null;
 }
 // v02.129：新增機身序號（serial_no）比對——主機類專用，每台實體單位序號不同，序號相同
 // 幾乎必然是同一台實體機器重複建檔，比對可信度不輸條碼。原本只查條碼／商品編碼／
