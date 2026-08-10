@@ -396,9 +396,12 @@ body{
 .shelf-cover{
   position:relative;width:104px;height:104px;flex-shrink:0;border-radius:10px;overflow:hidden;
   background:#141b30;border:1px solid #1e2a45;cursor:pointer;
+  display:flex;align-items:center;justify-content:center; /* v02.128：cover-fg改用contain後需要flex置中，不然圖片會貼左上角 */
 }
 .shelf-cover:active{border-color:#00e5ff}
-.shelf-cover img{width:100%;height:100%;object-fit:cover;display:block}
+/* v02.128：舊的 .shelf-cover img{...} 全稱規則已移除——裡面的img現在一律帶cover-bg／
+   cover-fg class，用上面新增的通用規則控制，不再需要這條規則（留著的話因為.shelf-cover img
+   選擇器優先權比單一class規則高，會蓋掉新規則，讓修正失效）。 */
 .shelf-cover-default{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
   font-size:11px;font-weight:600;color:rgba(255,255,255,.9);text-align:center;
@@ -414,6 +417,10 @@ body{
   width:104px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;
 }
+/* v02.128：卡片檢視（.gc）的縮圖原本是inline style的裸<img>，直接object-fit:cover填滿，
+   同樣有長條圖裁切內容的問題。改成跟.vault-cover-main／.shelf-cover同一套容器+cover-bg/
+   cover-fg雙層做法。 */
+.gc-thumb{position:relative;width:104px;height:104px;border-radius:10px;border:1px solid #1e2a45;flex-shrink:0;overflow:hidden;background:#0f1525;display:flex;align-items:center;justify-content:center}
 .gc{display:flex;align-items:center;gap:12px;padding:12px;background:#141b30;border:1px solid #1e2a45;border-radius:10px;margin-bottom:8px;cursor:pointer;position:relative;transition:border-color .15s,box-shadow .15s,transform .15s ease-out}
 .gc:active{border-color:#00e5ff;transform:scale(.98)}
 /* v02.18 Phase1：尋寶卡片外框比照收藏卡片同一套視覺語言（色值本來就相同，這裡改成共用 class 取代原本的 inline style，順便補上 :active 按壓回饋） */
@@ -569,8 +576,18 @@ body{
 .df.full{grid-column:1/-1}
 .vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
 .vault-cover{width:172px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
-.vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px}
-.vault-cover-main img{width:100%;height:100%;object-fit:cover;display:block}
+/* v02.127：使用者實測回報長條形封面（例如橫向裁切的書背貼紙照）在固定方框顯示很怪——
+   原本object-fit:cover會把超出方框的部分直接裁掉，長條圖左右兩側（甚至角色主體）會被
+   切掉看不到，不是「置中好看」而是「內容被裁掉」。改成背景用模糊放大鋪滿（不裁切原圖，
+   只是拿來當視覺填充，裁掉沒關係）、前景用object-fit:contain完整顯示原圖不裁切內容，
+   常見於Spotify/Apple Music處理非正方形專輯封面的做法。
+   v02.128：這兩個class原本只套用在詳情頁主圖（.vault-cover-main），使用者接著回報卡片
+   （.gc）跟分類（.shelf-cover）兩種檢視模式的縮圖沒有一起改到，同樣的裁切問題還在。
+   改成不綁定特定容器的通用class，讓.vault-cover-main／.shelf-cover／.gc-thumb三處
+   共用同一套規則，容器本身只需要有position:relative+overflow:hidden即可套用。 */
+.cover-bg{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;filter:blur(18px) brightness(.5);z-index:0}
+.cover-fg{position:relative;z-index:1;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
+.vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px;position:relative}
 .vault-cover-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .vault-cover-thumb{aspect-ratio:1/1;border-radius:4px;overflow:hidden;cursor:pointer;border:1.5px solid #1e2a45}
 .vault-cover-thumb.on{border-color:#00e5ff}
@@ -2768,7 +2785,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.124';
+const APP_VERSION='v02.129';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5290,7 +5307,7 @@ function _compressAndSave(afterFn){
       compressImg(src,lv[0],lv[1],function(out){
         if(out.length<=LIMIT||i>=levels.length){done(out);}
         else{src=out;tryNext();} // 還太大，降級再壓
-      },label);
+      },label,true); // v02.125：這裡處理的已經是使用者裁切/確認過的最終圖，只需要再壓縮，不能再自動裁切
     }
     tryNext();
   }
@@ -5641,7 +5658,12 @@ function doSave(){
   try{
     var dup=findDuplicate(entry);
     if(dup){
-      if(!confirm('收藏中已有相同項目：\n「'+(dup.data.primary_name||'')+'」'+(dup.data.platform?'（'+dup.data.platform+'）':'')+'\n\n確定仍要重複建檔嗎？')){
+      var _dn=dup.item.data.primary_name||'';
+      var _dp=dup.item.data.platform?'（'+dup.item.data.platform+'）':'';
+      var _msg=dup.fuzzy
+        ?('收藏中有名稱相似的項目：\n「'+_dn+'」'+_dp+'\n\n這件沒有條碼／編碼／序號可比對，僅依名稱模糊判斷，請自行確認是否為同一件。\n\n確定仍要繼續儲存嗎？')
+        :('收藏中已有相同項目：\n「'+_dn+'」'+_dp+'\n\n確定仍要重複建檔嗎？');
+      if(!confirm(_msg)){
         return;
       }
     }
@@ -7069,7 +7091,7 @@ function _gcodeOCRShared(input,o){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-      compressImg(prepped,600,0.75,function(comp){
+      compressImgNoRecrop(prepped,600,0.75,function(comp){
         callGeminiOCR([
           {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
           {text:o.prompt}
@@ -10498,7 +10520,7 @@ function doAnalyze(){
         var hint=s.hint||s.slot;
         var maxPx=hint==='spine'?250:9999; // cover 不壓縮直接用原圖
         var maxQ=hint==='spine'?0.6:1.0;
-        compressImg(r.result,maxPx,maxQ,function(compressed){
+        compressImgNoRecrop(r.result,maxPx,maxQ,function(compressed){
           // cover 暫存原圖供 AI 辨識，doSave 時才壓縮
           if(hint==='cover'){
             entry._raw_cover=compressed; // 原圖備存
@@ -10797,7 +10819,7 @@ function batchDetectStart(){
   if(!cfg.gkey){toast('請先在設定頁填入 Gemini 金鑰','er');showPg('cfg');return;}
   var r=new FileReader();
   r.onload=function(){
-    compressImg(r.result,1600,0.85,function(compressed){
+    compressImgNoRecrop(r.result,1600,0.85,function(compressed){
       loading('AI 辨識畫面中商品... 約需 10~30 秒');
       var parts=[
         {inlineData:{mimeType:'image/jpeg',data:compressed.split(',')[1]}},
@@ -10917,11 +10939,18 @@ function _batchCountConfirmShow(){
   $('batch-count-confirm-sec').style.display='block';
   _batchCountConfirmRender();
 }
-// v02.112：跳過Step1的AI合照辨識，直接進件數確認畫面，從1件空白項目開始，讓使用者靠
-// 「＋補一件」逐一新增、每列自己打品名或點📷單獨拍照OCR。給疊拍辨識率不好的商品類型
-// （例如PCE HuCard疊在一起只看得到最上面那張）一個不用勉強湊合AI合照辨識的路徑。
+// v02.112：跳過Step1的AI合照辨識，直接進件數確認畫面，讓使用者靠自己打品名或點📷單獨
+// 拍照OCR。給疊拍辨識率不好的商品類型（例如PCE HuCard疊在一起只看得到最上面那張）一個
+// 不用勉強湊合AI合照辨識的路徑。
+// v02.126：使用者實測回報一列一列點「補一件」太慢，改成一次展開_BATCH_CAP列空白項目
+// （沿用使用者在批次Step1進階設定裡設定的上限，預設10、可調5~20，不寫死20，尊重使用者
+// 既有設定），讓使用者直接逐列打品名，不用的列留空即可；確認時只有真正有填品名的列會
+// 送進下一關開始逐件建檔（見_batchCountConfirmProceed），空白列自動略過，不用逐一刪除。
 function _batchManualStart(){
-  _batchItems=[{order:1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null}];
+  _batchItems=[];
+  for(var i=0;i<_BATCH_CAP;i++){
+    _batchItems.push({order:i+1,title_guess:'',barcode:'',code:'',status:'pending',include:true,entry:null,dup:null});
+  }
   _batchCountConfirmShow();
 }
 function _batchCountConfirmRetake(){
@@ -10930,6 +10959,15 @@ function _batchCountConfirmRetake(){
   $('batch-step1-sec').style.display='block';
 }
 function _batchCountConfirmProceed(){
+  // v02.126：手動輸入模式一次展開多列空白項目讓使用者填，確認時要把沒填品名的空白列
+  // 濾掉，只有真正有內容的列才送進Step2開始逐件建檔——不然20列裡使用者只填5列，
+  // 其餘15列空白項目會全部跟著進入逐件流程，使用者得一件一件手動跳過，違背「展開多列
+  // 圖方便」的本意。AI辨識流程（品名一定有內容）不受影響，這裡的過濾對已有品名的項目
+  // 是no-op。
+  var filled=_batchItems.filter(function(it){return (it.title_guess||'').trim();});
+  if(!filled.length){toast('請至少填寫一件的品名，或使用拍照辨識','er',3000);return;}
+  filled.forEach(function(it,i){it.order=i+1;});
+  _batchItems=filled;
   $('batch-count-confirm-sec').style.display='none';
   _batchSaveDraft(); // v02.100：離開件數確認畫面時是第一次能存出完整項目清單的時機點
   _batchStartStep2();
@@ -11407,7 +11445,13 @@ function _batchStatusBadge(item){
   // 也可手動輸入)，不需要再猜測「是否清晰」，沒輸入時用中性語氣而非警示色(可能是
   // 使用者刻意跳過，不是辨識失敗)。
   if(!item.code)parts.push('<span style="color:#7986cb">（未輸入編碼）</span>');
-  if(item.dup)parts.push('<span style="color:#ff8a65">⚠️ 已收藏過：'+esc(item.dup.data.primary_name||'')+'</span>');
+  // v02.129：item.dup改成{item,fuzzy}的包裝物件——fuzzy=true代表沒有條碼/編碼/序號可比對、
+  // 純靠名稱模糊相似度猜的，語氣要比「已收藏過」溫和，避免使用者誤以為是肯定的重複判斷。
+  if(item.dup){
+    parts.push(item.dup.fuzzy
+      ?'<span style="color:#ffb300">🔍 可能已收藏：'+esc(item.dup.item.data.primary_name||'')+'</span>'
+      :'<span style="color:#ff8a65">⚠️ 已收藏過：'+esc(item.dup.item.data.primary_name||'')+'</span>');
+  }
   if(!parts.length)parts.push('<span style="color:#69f0ae">✓ 辨識完成</span>');
   return parts.join('　');
 }
@@ -11967,12 +12011,25 @@ function autoCropCanvas(img,maxPx,quality,hint){
   return cv2.toDataURL('image/jpeg',quality);
 }
 var IMG_MAX_B64=48000; // base64 上限（≈36KB JPEG），留 12000 緩衝
-function compressImg(dataUrl,maxPx,quality,cb,hint){
+// v02.125：使用者實測回報「已經選好裁切範圍，但最後結果不是剛剛選定的範圍」。追查發現
+// cropImageFile()（互動式裁切工具，使用者手動拖曳選定範圍）後，很多呼叫端會把裁切結果
+// 再丟進 compressImg() 做壓縮，但 compressImg() 內部一律呼叫 autoCropCanvas()（依背景
+// 色差異自動抓商品邊界），會把使用者剛剛手動選定的範圍再次自動裁切一次、覆蓋掉使用者的
+// 選擇——這才是「結果跟選的不一樣」的真正原因。
+// 只單純做「壓縮/縮小」不再裁切。
+function _resizeOnlyCanvas(img,maxPx,quality){
+  var w=img.width,h=img.height;
+  if(w>maxPx||h>maxPx){var s=Math.min(maxPx/w,maxPx/h);w=Math.round(w*s);h=Math.round(h*s);}
+  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  cv.getContext('2d').drawImage(img,0,0,w,h);
+  return cv.toDataURL('image/jpeg',quality);
+}
+function compressImg(dataUrl,maxPx,quality,cb,hint,skipAutoCrop){
   var img=new Image();
   img.onload=function(){
     function tryCompress(px,q){
       var result;
-      try{result=autoCropCanvas(img,px,q,hint);}
+      try{result=skipAutoCrop?_resizeOnlyCanvas(img,px,q):autoCropCanvas(img,px,q,hint);}
       catch(e){
         var w=img.width,h=img.height;
         if(w>px||h>px){var s=Math.min(px/w,px/h);w=Math.round(w*s);h=Math.round(h*s);}
@@ -11989,6 +12046,13 @@ function compressImg(dataUrl,maxPx,quality,cb,hint){
     cb(tryCompress(maxPx,quality));
   };
   img.src=dataUrl;
+}
+// v02.125：薄包裝，等同compressImg(...,undefined,true)——純壓縮不重新裁切。用在下游呼叫端
+// 改用這個函式名稱即可修好「使用者手動裁切後又被自動裁切覆蓋」的問題，不用去改動每個呼叫
+// 端內部那些巢狀很深的callback、冒著算錯右括號位置的風險。呼叫端如果原本有多傳一個hint
+// 參數，多傳的參數會被忽略（JS允許呼叫時傳超過函式宣告的參數數量），不需要額外刪除。
+function compressImgNoRecrop(dataUrl,maxPx,quality,cb){
+  compressImg(dataUrl,maxPx,quality,cb,undefined,true);
 }
 // ── 關聯商品（跨類別、一對多；後端以 UUID 為鍵，使用者只選項目，不需在意背後識別碼）──
 // related_code 欄改存「逗號分隔的識別碼清單」（新資料存 UUID；舊資料可能是 code/barcode，解析時皆相容）
@@ -12152,7 +12216,7 @@ function onImgUpload(k,input){
     if(lbl2)lbl2.textContent='處理中...';
     var r=new FileReader();
     r.onload=function(){
-      compressImg(r.result,maxPx,0.85,function(compressed){
+      compressImgNoRecrop(r.result,maxPx,0.85,function(compressed){
         onFld(k,compressed);
         var prev=document.getElementById('prev-'+k);if(prev){prev.src=compressed;prev.style.display='block';}
         var kb=Math.round(compressed.length*0.75/1024);
@@ -12197,7 +12261,7 @@ function addExtraImg(input){
     cropImageFile(files[0]).then(function(blob){
       var r=new FileReader();
       r.onload=function(){
-        compressImg(r.result,1000,0.85,function(compressed){
+        compressImgNoRecrop(r.result,1000,0.85,function(compressed){
           arr.push({label:'',img:compressed});
           onFld('extra_images',JSON.stringify(arr));
           renderForm();_bindFormFocusScroll();
@@ -13817,7 +13881,7 @@ function renderShelf(){
       var shortTitle=title.length>10?title.slice(0,10)+'…':title;
       var sold=d.collect_status==='已出售'?'<div class="shelf-sold-tag">已出售</div>':'';
       var thumb=coverImg
-        ?'<img src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
+        ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
         :'<div class="shelf-cover-default" style="background:'+color+'">'+esc(shortTitle)+'</div>';
       return '<div style="flex-shrink:0">'+
         '<div class="shelf-cover" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
@@ -14665,7 +14729,7 @@ function renderGlist(){
     var _icon=_catMeta(cat,d.subtype).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<img src="'+imgUrl(d.cover_img,150)+'" alt="" style="width:104px;height:104px;border-radius:10px;object-fit:cover;border:1px solid #1e2a45;flex-shrink:0">':
+      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt=""></div>':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
@@ -14719,7 +14783,11 @@ function switchHeroCoverImg(el){
   var gallery=$('hero-cover-gallery');if(!gallery)return;
   var idx=el.getAttribute('data-idx'),url=el.getAttribute('data-url');
   gallery.setAttribute('data-active-idx',idx);
+  // v02.127：主圖現在是背景模糊+前景完整顯示兩張img疊在一起，切換縮圖時兩張都要跟著換，
+  // 不然背景模糊圖會停在舊圖、前景卻已經換成新圖，兩者對不上。
   var mainImg=$('hero-cover-main-img');if(mainImg&&url)mainImg.src=url;
+  var bgImg=mainImg&&mainImg.previousElementSibling;
+  if(bgImg&&bgImg.classList.contains('cover-bg')&&url)bgImg.src=url;
   var thumbs=gallery.querySelectorAll('.vault-cover-thumb');
   for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('on',thumbs[i]===el);}
 }
@@ -15711,7 +15779,7 @@ function detailHeroHtml(d,rowNum){
   window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
   var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
     '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()"':'')+' style="'+(_mainDef?'cursor:pointer':'')+'">'+
-    (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
+    (_mainDef?('<img class="cover-bg" src="'+_mainDef.url+'" alt="" aria-hidden="true"><img id="hero-cover-main-img" class="cover-fg" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
       return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
@@ -16111,14 +16179,66 @@ function confirmBarcodeDup(bc){
   return confirm('⚠️ 該條碼已存在於收藏庫中：\n'+names+more+'\n\n是否仍要新增寫入資料庫？');
 }
 
+// v02.129：字元層級Levenshtein編輯距離，供findDuplicate的模糊比對用。純JS實作，
+// 不需要額外套件；商品名稱通常不長（十幾~幾十字），O(n*m)的DP表現完全夠用。
+function _levenshtein(a,b){
+  var m=a.length,n=b.length;
+  if(!m)return n;if(!n)return m;
+  var dp=new Array(n+1);
+  for(var j=0;j<=n;j++)dp[j]=j;
+  for(var i=1;i<=m;i++){
+    var prev=dp[0];dp[0]=i;
+    for(var j=1;j<=n;j++){
+      var tmp=dp[j];
+      dp[j]=Math.min(dp[j]+1,dp[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));
+      prev=tmp;
+    }
+  }
+  return dp[n];
+}
+// 回傳0~1的相似度（1=完全相同）。子字串互相包含視為高相似度（0.9），常見於「XX 完全版」
+// 「XX(廉価版)」這類副標題差異，但明顯是同一款商品。
+function _nameSimilarity(a,b){
+  if(!a||!b)return 0;
+  if(a===b)return 1;
+  if(a.indexOf(b)>=0||b.indexOf(a)>=0)return 0.9;
+  var dist=_levenshtein(a,b),maxLen=Math.max(a.length,b.length);
+  return maxLen?1-dist/maxLen:0;
+}
+// v02.129：完全沒有條碼/編碼/序號可比對時的最後一道防線——用名稱模糊相似度在收藏庫裡
+// 找可能的重複項目，當作「提示」而非強制阻擋（呼叫端會用比較溫和的字眼呈現，見findDuplicate
+// 與_batchStatusBadge）。平台不同就不當作同一件商品的比對對象，避免不同平台版本互相誤判
+// （例如PS4版跟Switch版是兩件不同收藏，即使名稱一樣）。
+var FUZZY_DUP_THRESHOLD=0.72;
+function _findFuzzyDuplicate(name,plat,excludeUuid){
+  var best=null,bestScore=0;
+  col.forEach(function(c){
+    var d=c.data||{};
+    if(excludeUuid&&d.uuid&&excludeUuid===d.uuid)return;
+    var dn=(d.primary_name||'').trim().toLowerCase();
+    if(!dn)return;
+    var dp=(d.platform||'').trim().toLowerCase();
+    if(plat&&dp&&plat!==dp)return;
+    var score=_nameSimilarity(name,dn);
+    if(score>bestScore){bestScore=score;best=c;}
+  });
+  return (best&&bestScore>=FUZZY_DUP_THRESHOLD)?best:null;
+}
+// v02.129：新增機身序號（serial_no）比對——主機類專用，每台實體單位序號不同，序號相同
+// 幾乎必然是同一台實體機器重複建檔，比對可信度不輸條碼。原本只查條碼／商品編碼／
+// 名稱+平台完全相同，沒有涵蓋序號。
+// 回傳值改為 {item, fuzzy} 或 null（原本直接回傳收藏項目本身）：條碼/編碼/序號/名稱完全
+// 相符時 fuzzy=false（高確信度，原有的強力警示語氣）；完全沒有可比對的識別碼、退回模糊
+// 比對命中時 fuzzy=true（呼叫端改用比較溫和的「可能重複」語氣，不是「已收藏過」的肯定語氣）。
 function findDuplicate(e){
   if(!e||!col||!col.length)return null;
   var name=(e.primary_name||'').trim().toLowerCase();
   var plat=(e.platform||'').trim().toLowerCase();
   var bc=(''+(e.barcode||'')).trim();
   var cc=(''+(e.code||'')).trim().toLowerCase();
-  if(!name&&!bc&&!cc)return null;
-  return col.find(function(c){
+  var sn=(''+(e.serial_no||'')).trim().toLowerCase();
+  if(!name&&!bc&&!cc&&!sn)return null;
+  var exact=col.find(function(c){
     var d=c.data||{};
     // 排除自己（編輯模式）
     if(e.uuid&&d.uuid&&e.uuid===d.uuid)return false;
@@ -16126,14 +16246,23 @@ function findDuplicate(e){
     var dp=(d.platform||'').trim().toLowerCase();
     var db=(''+(d.barcode||'')).trim();
     var dc=(''+(d.code||'')).trim().toLowerCase();
+    var dsn=(''+(d.serial_no||'')).trim().toLowerCase();
     // 條碼相同 → 重複（最可靠）
     if(bc&&db&&bc===db)return true;
     // 遊戲編碼相同 → 重複
     if(cc&&dc&&cc===dc)return true;
+    // 機身序號相同 → 重複（同一台實體機器）
+    if(sn&&dsn&&sn===dsn)return true;
     // 名稱+平台都相同 → 重複
     if(name&&dn===name&&plat===dp)return true;
     return false;
-  })||null;
+  });
+  if(exact)return {item:exact,fuzzy:false};
+  if(!bc&&!cc&&!sn&&name){
+    var fz=_findFuzzyDuplicate(name,plat,e.uuid);
+    if(fz)return {item:fz,fuzzy:true};
+  }
+  return null;
 }
 
 function resetAll(){
@@ -17008,7 +17137,7 @@ function huntPhotoPick(input){
   input.value='';
   cropImageFile(f).then(function(blob){
     var r=new FileReader();
-    r.onload=function(){compressImg(r.result,1000,0.8,function(out){
+    r.onload=function(){compressImgNoRecrop(r.result,1000,0.8,function(out){
       _huntPhoto=out;var p=$('hunt-photo-prev');
       if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:280px;object-fit:contain">';}
       _huntStartAIFill(); // v02.85：拍照確認後背景觸發AI辨識，不阻塞使用者操作
@@ -17137,7 +17266,7 @@ function huntLensPick(input){
   var f=input.files&&input.files[0];if(!f)return;input.value='';
   cropImageFile(f).then(function(blob){
     var r=new FileReader();
-    r.onload=function(){compressImg(r.result,1000,0.8,function(out){
+    r.onload=function(){compressImgNoRecrop(r.result,1000,0.8,function(out){
       _huntPhoto=out;
       var p=$('hunt-lens-prev');
       if(p){p.style.border='1.5px solid #ff6e9c';p.innerHTML='<img src="'+out+'" alt="拍攝結果" style="width:100%;max-height:260px;object-fit:contain">';}
@@ -17241,7 +17370,7 @@ function _nameFieldOCR(input,targetId,lang,onSuccess){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-        compressImg(prepped,600,0.6,function(comp){
+        compressImgNoRecrop(prepped,600,0.6,function(comp){
           callGemini([
             {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
             {text:prompt}
@@ -17277,7 +17406,7 @@ function _textFieldOCR(input,targetId,fieldKey){
     var r=new FileReader();
     r.onload=function(){
       _ocrPrepDataUrl(r.result,function(prepped){
-        compressImg(prepped,600,0.6,function(comp){
+        compressImgNoRecrop(prepped,600,0.6,function(comp){
           callGemini([
             {inlineData:{mimeType:'image/jpeg',data:comp.split(',')[1]}},
             {text:prompt}
@@ -17469,7 +17598,7 @@ function huntDetail(uid){
   window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
   var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
     '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()" style="cursor:pointer"':'')+'>'+
-    (_mainDef?('<img id="hero-cover-main-img" src="'+_mainDef.url+'" alt="" style="width:100%;height:100%;object-fit:cover">'):'🎮')+'</div>';
+    (_mainDef?('<img class="cover-bg" src="'+_mainDef.url+'" alt="" aria-hidden="true"><img id="hero-cover-main-img" class="cover-fg" src="'+_mainDef.url+'" alt="">'):'🎮')+'</div>';
   if(_imgDefs.length>1){
     coverHtml+='<div class="vault-cover-thumbs">'+_imgDefs.map(function(im,i){
       return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
@@ -17774,7 +17903,7 @@ function huntCoverUpload(uid,input){
   cropImageFile(f).then(function(blob){
     var r=new FileReader();
     r.onload=function(){
-      compressImg(r.result,1000,0.85,function(compressed){
+      compressImgNoRecrop(r.result,1000,0.85,function(compressed){
         d.cover_img=compressed;
         var prev=$('he-cover-prev');if(prev){prev.src=compressed;prev.style.display='block';}
         var lbl=$('he-cover-lbl');if(lbl){lbl.style.display='block';lbl.textContent='已上傳';}
@@ -17820,7 +17949,7 @@ function huntAddExtraImg(input,uid){
     cropImageFile(files[0]).then(function(blob){
       var r=new FileReader();
       r.onload=function(){
-        compressImg(r.result,1000,0.85,function(compressed){
+        compressImgNoRecrop(r.result,1000,0.85,function(compressed){
           arr.push({label:'',img:compressed});
           d.extra_images=JSON.stringify(arr);
           huntEditTarget(uid);

@@ -2054,6 +2054,14 @@ body{
           </label>
           <div class="shlp">編碼/型號/ISBN 的相機 OCR 在送出前，先轉灰階並做線性對比拉伸，緩解反光與陰影。預設關閉；多數情況 Gemini 原圖辨識更佳，建議真機 A/B 比對後再決定是否常開。不做二值化。</div>
         </div>
+        <div class="stitle">建檔查重</div>
+        <div class="srow">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="c-fuzzydup" style="width:18px;height:18px;flex-shrink:0" checked>
+            <span style="font-size:13px;color:#e8eaf6">沒有條碼／編碼／序號時，用名稱模糊比對提示可能重複</span>
+          </label>
+          <div class="shlp">v02.130：完全找不到條碼、遊戲編碼、機身序號可比對時，改用商品名稱相似度抓可能的重複收藏，只是提示、不會擋下儲存，可自行判斷是否為同一件。關閉後，這種情況一律視為沒有重複，不會再跳出「可能已收藏」的提示。</div>
+        </div>
         <div class="srow" style="margin-top:8px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div class="srl" style="margin:0">🧠 DeepSeek API 金鑰（混合模式用）</div>
@@ -2785,7 +2793,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.129';
+const APP_VERSION='v02.130';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4531,6 +4539,9 @@ function loadCfg(){
   if($('c-aipref'))$('c-aipref').value=cfg.aipref||'gemini';
   if($('c-grounding'))$('c-grounding').checked=!!cfg.grounding;
   if($('c-ocr-enh'))$('c-ocr-enh').checked=!!cfg.ocrEnhance;
+  // v02.130：預設開啟（沿用v02.129上線時的行為），只有明確存過false才關閉，
+  // 避免既有使用者（cfg裡還沒有這個欄位）被誤判成關閉。
+  if($('c-fuzzydup'))$('c-fuzzydup').checked=(cfg.fuzzyDupCheck!==false);
   // 清除已失效的 model 值
   var validModels=['gemini-2.5-flash','gemini-2.5-pro-preview-06-05'];
   if(cfg.gmdl&&validModels.indexOf(cfg.gmdl)<0){
@@ -5185,6 +5196,7 @@ function saveCfg(){
     aipref:($('c-aipref')&&$('c-aipref').value)||'gemini',
     grounding:!!($('c-grounding')&&$('c-grounding').checked),
     ocrEnhance:!!($('c-ocr-enh')&&$('c-ocr-enh').checked),
+    fuzzyDupCheck:!!($('c-fuzzydup')?$('c-fuzzydup').checked:true),
     gbkey:($('c-gbkey')&&$('c-gbkey').value||'').trim(),
     mbkey:($('c-mbkey')&&$('c-mbkey').value||'').trim(),
     tgdbkey:($('c-tgdbkey')&&$('c-tgdbkey').value||'').trim(),
@@ -16258,7 +16270,10 @@ function findDuplicate(e){
     return false;
   });
   if(exact)return {item:exact,fuzzy:false};
-  if(!bc&&!cc&&!sn&&name){
+  // v02.130：使用者可在設定頁關閉這一層模糊比對（cfg.fuzzyDupCheck===false時跳過），
+  // 預設開啟（未設定過視為開啟，沿用v02.129上線時的行為）。
+  var fuzzyOn=(typeof cfg==='undefined')||cfg.fuzzyDupCheck!==false;
+  if(fuzzyOn&&!bc&&!cc&&!sn&&name){
     var fz=_findFuzzyDuplicate(name,plat,e.uuid);
     if(fz)return {item:fz,fuzzy:true};
   }
