@@ -8,15 +8,29 @@
 <meta name="apple-mobile-web-app-title" content="RetroVault">
 <meta name="application-name" content="RetroVault">
 <meta name="theme-color" content="#080c18">
-<link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-144.png">
+<!-- v02.136：圖示來源統一——原本這幾個連結指向 raw.githubusercontent.com（跨網域），
+     跟 manifest.json 裡用的相對路徑（./icons/...）來源不一致，多繞一層跨網域請求，
+     且依賴 GitHub raw 網域的存取規則不變。改成跟 manifest.json 一致的同源相對路徑，
+     反正這些圖示本來就跟 index.html 一起部署在 docs/ 底下。 -->
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="144x144" href="./icons/icon-144.png">
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>RetroVault</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- v02.136：CDN 資源加上 SRI 完整性驗證，防範 CDN 被植入惡意程式碼時波及本站。
+     雜湊值直接從 npm 官方套件（localforage@1.10.0、chart.js@4.4.0）下載後自行計算
+     （sha384，OpenSSL 與 Python hashlib 交叉驗證過一致），不是憑空抄來的。
+     chart.js 這裡刻意把網址從 chart.umd.min.js 改成 chart.umd.js（未壓縮版）——
+     查證後確認 chart.js@4.4.0 這個 npm 套件本身沒有內建 chart.umd.min.js 這個檔案，
+     jsDelivr 看到 .min.js 副檔名是「即時動態壓縮」出來的，不是固定不變的靜態檔案；
+     jsDelivr 官方文件本身就明講 SRI 只能用在「保證不會變動」的靜態單一檔案連結上，
+     動態壓縮的內容之後有可能因為 jsDelivr 壓縮器版本更新而悄悄變動，雜湊值就會跟著
+     兜不起來、讓瀏覽器直接拒絕載入整個圖表功能——寧可多傳一點檔案大小（未壓縮版），
+     換取 SRI 雜湊值長期穩定可靠。 -->
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js" integrity="sha384-MTDrIlFOzEqpmOxY6UIA/1Zkh0a64UlmJ6R0UrZXqXCPx99siPGi8EmtQjIeCcTH" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo" crossorigin="anonymous"></script>
 <style>
 /* === Reset === */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -39,7 +53,10 @@ body{
   background:rgba(8,12,24,.87);
   backdrop-filter:blur(1px);
   opacity:0;
-  animation:shellReveal .8s ease 1.2s both;
+  /* v02.137：使用者實測回報開機動畫過久。原本延遲1.2秒才開始淡入，加上0.8秒淡入本身，
+     介面要2秒才完全可見。改成延遲0.15秒，淡入時長不變，介面在約0.95秒時完全可見，
+     跟下面boot-splash的停留時間對齊（見#boot-splash相關的950ms設定）。 */
+  animation:shellReveal .8s ease .15s both;
 }
 @keyframes shellReveal{0%{opacity:0}100%{opacity:1}}
 #content{
@@ -142,10 +159,21 @@ body{
 #method-sel{padding:14px 16px 0}
 
 /* === Scanner === */
-.scan-box{width:200px;height:130px;border:2px solid #00e5ff;border-radius:4px;box-shadow:0 0 0 1000px rgba(0,0,0,.5);transition:border-color .3s,box-shadow .3s}
+.scan-box{width:200px;height:130px;border:2px solid #00e5ff;border-radius:4px;box-shadow:0 0 0 1000px rgba(0,0,0,.5);transition:border-color .3s;position:relative}
 /* F2：掃描／OCR 偵測期間，框線綠色呼吸燈（微閃）*/
-.scan-box.detecting{border-color:#00e676;animation:scanPulse 1.15s ease-in-out infinite}
-@keyframes scanPulse{0%,100%{border-color:#00e676;box-shadow:0 0 0 1000px rgba(0,0,0,.5),0 0 4px rgba(0,230,118,.45)}50%{border-color:#69ffa0;box-shadow:0 0 0 1000px rgba(0,0,0,.5),0 0 16px rgba(0,230,118,.95)}}
+/* v02.137：原本scanPulse動畫每個影格都要連同旁邊固定不變的1000px遮罩一起重繪，即使
+   遮罩本身完全沒有變化——因為兩者疊在同一個box-shadow屬性裡，瀏覽器沒辦法只重繪其中
+   一層。拆成獨立的::after偽元素只處理會變化的小光暈（走opacity，合成層成本低很多），
+   遮罩本身固定不參與任何動畫；邊框顏色變化維持在.scan-box本身，border-color只影響
+   細細一圈邊框，重繪成本也遠低於1000px的陰影。視覺效果不變，成本降低。 */
+.scan-box.detecting{animation:scanBorderPulse 1.15s ease-in-out infinite}
+.scan-box.detecting::after{
+  content:'';position:absolute;inset:0;border-radius:4px;pointer-events:none;
+  box-shadow:0 0 16px rgba(0,230,118,.95);
+  animation:scanGlowPulse 1.15s ease-in-out infinite;
+}
+@keyframes scanBorderPulse{0%,100%{border-color:#00e676}50%{border-color:#69ffa0}}
+@keyframes scanGlowPulse{0%,100%{opacity:.35}50%{opacity:1}}
 .scan-line{
   position:absolute;width:196px;height:2px;background:#00e5ff;opacity:.8;
   animation:sl 2s ease-in-out infinite;
@@ -167,7 +195,7 @@ body{
 .tslot.empty{border-style:dashed}
 .tslot.sel{border-color:#00e5ff;box-shadow:0 0 0 1px #00e5ff inset}
 .tslot-lbl{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);font-size:9px;color:#fff;text-align:center;padding:2px}
-.tslot.empty .tslot-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:10px}
+.tslot.empty .tslot-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#7a8499;font-size:10px}
 .tslot-check{position:absolute;top:4px;left:4px;width:18px;height:18px;border:1.5px solid #5c6b8a;border-radius:5px;background:rgba(8,12,24,.7);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:transparent;line-height:1;z-index:2}
 .tslot.sel .tslot-check{border-color:#00e5ff;background:#00e5ff;color:#001018}
 .tslot.sel .tslot-check::after{content:'\2713'}
@@ -329,7 +357,7 @@ body{
 .dv2-empty-ic{font-size:36px;margin-bottom:12px;animation:dv2EmptyIn .3s ease-out both}
 @media(prefers-reduced-motion:reduce){.dv2-empty-ic{animation-duration:.12s}}
 .dv2-empty-t{font-size:14px;color:#7986cb}
-.dv2-empty-s{font-size:12px;color:#555;margin-top:6px}
+.dv2-empty-s{font-size:12px;color:#7a8499;margin-top:6px}
 
 /* ══ DV2 頁面通用擴充（建檔／收藏／尋寶／設定）══ */
 /* Header accent 底線 */
@@ -522,6 +550,16 @@ body{
   .sheet-ov{transition-duration:.12s}
   .gv-card,.gc,.hc{transition-duration:.08s !important}
   .sgroup-body,#batch-adv-body{transition-duration:.1s !important}
+  /* v02.137：使用者實測報告指出開機／掃描／載入／shimmer／更新提示這幾個無限循環動畫
+     都沒有涵蓋prefers-reduced-motion，這裡一次補齊。掃描線（.scan-line）是左右來回
+     擺動的位移動畫，對動暈敏感的使用者比單純變速度/透明度更容易不舒服，這裡直接隱藏，
+     不只是縮短——邊框脈動已經足以表示「掃描中」，掃描線本身是額外的裝飾。其餘（脈動/
+     旋轉/shimmer）維持動作但大幅縮短時長，符合「放緩不是完全消失」的原則。 */
+  #boot-logo{animation-duration:.2s}
+  .scan-box.detecting,.scan-box.detecting::after{animation-duration:2.5s}
+  .scan-line{display:none}
+  .spin{animation-duration:1.4s}
+  .fg.ai-loading::after{animation-duration:2.4s}
 }
 .fp-hdr{padding:0 16px 12px;border-bottom:1px solid #1e2a45;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:10px}
 /* ── 兩欄式篩選（Amazon 風格：左側類別／右側選項）── */
@@ -780,6 +818,9 @@ body{
 #crop-ov.vis{opacity:1}
 #crop-head{flex:0 0 auto;padding:14px 16px;text-align:center;color:#fff;font-size:14px;font-weight:700;letter-spacing:1px;background:#0b0f1a}
 #crop-head small{display:block;font-size:11px;font-weight:400;color:#7986cb;margin-top:3px;letter-spacing:0}
+#crop-mode-bar{flex:0 0 auto;display:flex;gap:8px;padding:0 16px 10px;justify-content:center;background:#0b0f1a}
+#crop-mode-bar button{flex:1;max-width:170px;padding:8px 10px;border-radius:8px;border:1px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+#crop-mode-bar button.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700}
 #crop-stage{flex:1 1 auto;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
 /* v02.102：使用者實測回報，裁切畫面上方擠在標題列裡的品名太小、不明顯，
    跟批次相機取景框（#fscan-framelbl）的處理方式不一致。改成一樣疊在畫面（裁切區）
@@ -844,13 +885,16 @@ body{
 .ocr-btn:active{transform:scale(.95)}
 
 /* ── 開機啟動畫面（依手機尺寸全螢幕縮放）── */
+/* v02.137：淡出時長從.55s改為.4s，跟下面JS的DOM移除延遲(400ms)對齊——原本CSS寫.55s但
+   JS的setTimeout卻是700ms，兩個數字對不上，移除節點的時機比實際淡出完成晚了150ms，
+   雖然pointer-events:none已經先生效不影響操作，但這次順便修正讓兩個數字一致。 */
 #boot-splash{position:fixed;inset:0;z-index:100000;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:radial-gradient(circle at 50% 38%,#0e1730 0%,#080c18 70%);
-  transition:opacity .55s ease;width:100vw;height:100vh;height:100dvh}
+  transition:opacity .4s ease;width:100vw;height:100vh;height:100dvh}
 #boot-splash.hide{opacity:0;pointer-events:none}
 #boot-logo{width:min(82vw,82vh,440px);height:min(82vw,82vh,440px);max-width:440px;max-height:440px;border-radius:24%;
   box-shadow:0 0 60px rgba(0,229,255,.35),0 0 0 1px rgba(0,229,255,.18) inset;
-  animation:bootZoom 1.1s cubic-bezier(.16,.8,.3,1) both}
+  animation:bootZoom .65s cubic-bezier(.16,.8,.3,1) both}
 #boot-splash .boot-name{margin-top:min(6vh,32px);font-size:min(8vw,30px);font-weight:800;letter-spacing:3px;
   background:linear-gradient(90deg,#00e5ff,#2979ff);-webkit-background-clip:text;background-clip:text;color:transparent}
 #boot-splash .boot-sub{margin-top:8px;font-size:min(3.4vw,13px);color:#5c6a90;letter-spacing:2px}
@@ -880,7 +924,7 @@ body{
 .ec-card:active{transform:scale(.97)}
 .ec-card .eci{font-size:24px;line-height:1}
 .ec-card .ect{font-size:13px;font-weight:700}
-.ec-card .ecd{font-size:10px;color:#555}
+.ec-card .ecd{font-size:10px;color:#7a8499}
 .ec-card.on{background:rgba(0,229,255,.1);border-color:#00e5ff}
 .ec-card.on .ect{color:#00e5ff}
 /* 建檔方式卡（v25.07）：沿用 .ec-card 尺寸，內含彩色 SVG 圖示盒 */
@@ -920,7 +964,7 @@ body{
 .dbsrc-name{font-size:14px;font-weight:600;color:#e8eaf6;display:flex;align-items:center;flex-wrap:wrap;gap:2px;row-gap:3px}
 .dbsrc-row.off .dbsrc-name{color:#666}
 .dbsrc-desc{font-size:11px;color:#7986cb;margin-top:3px;line-height:1.4}
-.dbsrc-row.off .dbsrc-desc{color:#555}
+.dbsrc-row.off .dbsrc-desc{color:#7a8499}
 .dbsrc-note{font-size:10px;color:#ff7043;margin-left:2px}
 .plat-row.on{background:rgba(0,229,255,.1);color:#00e5ff;border-left:3px solid #00e5ff;font-weight:600;padding-left:15px}
 .plat-row .pk{font-size:16px;color:#00e5ff;flex-shrink:0}
@@ -1083,7 +1127,7 @@ body{
               <div style="display:flex;align-items:center;gap:7px"><span style="display:inline-block;width:4px;height:16px;border-radius:2px;background:#ffb300;flex-shrink:0"></span><div style="color:#e8eaf6;font-size:13px;font-weight:700;letter-spacing:.5px">Step 3 · 平台選擇</div></div>
               <button onclick="toggleHelp('step3')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>
             </div>
-            <div style="font-size:10px;color:#555;margin-bottom:10px;letter-spacing:.5px">選填，提升 AI 辨識準確率</div>
+            <div style="font-size:10px;color:#7a8499;margin-bottom:10px;letter-spacing:.5px">選填，提升 AI 辨識準確率</div>
             <select id="step3-plat" tabindex="-1" style="display:none"></select>
             <div id="step3-plat-card" class="plat-card" onclick="openStep3PlatPicker()">
               <div class="mb-ico" style="background:rgba(0,229,255,.12)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#00e5ff" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M7 12h3M8.5 10.5v3"/><circle cx="16" cy="11" r="1"/><circle cx="18.5" cy="13.5" r="1"/></svg></div>
@@ -2019,7 +2063,7 @@ body{
             </select>
             <div onclick="openSelectSheet('c-aipref','偏好 AI 引擎')" style="position:absolute;inset:0;cursor:pointer"></div>
           </div>
-          <div style="font-size:11px;color:#555;margin-top:4px">選「只用」時若該引擎失敗不會自動切換；混合模式需同時設定 Gemini 與 DeepSeek 金鑰</div>
+          <div style="font-size:11px;color:#7a8499;margin-top:4px">選「只用」時若該引擎失敗不會自動切換；混合模式需同時設定 Gemini 與 DeepSeek 金鑰</div>
         </div>
         <div class="srow">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -2030,10 +2074,11 @@ body{
           <div style="position:relative;display:block">
             <select class="fsel" id="c-gmdl" style="margin-top:8px;width:100%;pointer-events:none" tabindex="-1" onchange="toggleProNote(this.value)">
               <optgroup label="── 免費（AI Studio 金鑰）──">
-                <option value="gemini-2.5-flash">2.5 Flash ✦ 推薦</option>
+                <option value="gemini-3.5-flash-lite">3.5 Flash-Lite ✦ 推薦</option>
+                <option value="gemini-2.5-flash">2.5 Flash（舊版）</option>
               </optgroup>
               <optgroup label="── 付費（需啟用 Cloud 帳單）──">
-                <option value="gemini-2.5-pro-preview-06-05">2.5 Pro Preview ★ 最強</option>
+                <option value="gemini-3.1-pro">3.1 Pro ★ 最強</option>
               </optgroup>
             </select>
             <div onclick="openSelectSheet('c-gmdl','選擇 Gemini 模型')" style="position:absolute;inset:0;cursor:pointer"></div>
@@ -2388,7 +2433,7 @@ body{
         </div>
         <div class="stitle">說明文件</div>
         <button class="btn bo bw bs" style="color:#7986cb;border-color:#7986cb;margin-bottom:8px" onclick="downloadManual()" type="button">📖 下載使用說明書</button>
-        <div style="font-size:11px;color:#555;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
           <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v51.02</span></strong><br>
@@ -2408,9 +2453,9 @@ body{
         </div>
         <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
         <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
-        <div style="font-size:11px;color:#555;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
         <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
-        <div style="font-size:11px;color:#555;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
 
       </div>
     </div>
@@ -2809,7 +2854,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.131';
+const APP_VERSION='v02.137';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4566,10 +4611,13 @@ function loadCfg(){
   }
   _onFuzzyDupToggle();
   // 清除已失效的 model 值
-  var validModels=['gemini-2.5-flash','gemini-2.5-pro-preview-06-05'];
+  // v02.134：Gemini系列已經演進到3.x世代（3.5 Flash-Lite／3.1 Pro皆為GA穩定版），
+  // 原本這裡列的2.5 Pro Preview（帶著06-05這個特定預覽版日期戳記）早已被後續好幾代
+  // 預覽版取代、幾乎確定已經失效；改成目前這幾個確認可用的模型ID。
+  var validModels=['gemini-3.5-flash-lite','gemini-2.5-flash','gemini-3.1-pro'];
   if(cfg.gmdl&&validModels.indexOf(cfg.gmdl)<0){
-    cfg.gmdl='gemini-2.5-flash';
-    toast('模型已更新為 Gemini 2.5 Flash（舊模型名稱已不可用）','',4000);
+    cfg.gmdl='gemini-3.5-flash-lite';
+    toast('模型已更新為 Gemini 3.5 Flash-Lite（舊模型名稱已不可用）','',4000);
   }
   if($('c-gmdl')&&cfg.gmdl){$('c-gmdl').value=cfg.gmdl;toggleProNote(cfg.gmdl);}
   if($('c-gbkey')&&cfg.gbkey)$('c-gbkey').value=cfg.gbkey;
@@ -5276,7 +5324,7 @@ function clearAll(){
   localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
   // 同時清空畫面上的欄位
   ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  var md=document.getElementById('c-gmdl');if(md)md.value='gemini-2.5-flash';
+  var md=document.getElementById('c-gmdl');if(md)md.value='gemini-3.5-flash-lite'; // v02.134：清除設定後回到目前推薦的模型，不是舊版
   renderGlist();updateStats();toast('已清除所有設定與快取');
   _btnRelease('clearAll');
 }
@@ -6149,7 +6197,7 @@ function cancelAI(){
 
 function callGemini(parts,opts){
   if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
-  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
   // v42.05：grounding 與 responseSchema 互斥（Gemini API 限制），二擇一。
   // 僅呼叫端明確傳入 allowGrounding 且使用者開啟「AI 上網查證」時才切換為 grounding 模式。
@@ -6254,7 +6302,7 @@ function callGemini(parts,opts){
 // -- callGeminiOCR --
 function callGeminiOCR(parts,_isRetry,maxTokens){
   if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
-  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
   var genCfg={temperature:0.1,maxOutputTokens:maxTokens||128};
   if(mdl.indexOf('2.5')>=0){genCfg.thinkingConfig={thinkingBudget:0};}
@@ -6496,7 +6544,7 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region,imageDa
   // 用純文字呼叫（優先 Gemini 免費，無圖片）
   function geminiText(){
     if(!cfg.gkey)return Promise.reject(new Error('無 Gemini key'));
-    var mdl=cfg.gmdl||'gemini-2.5-flash';
+    var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
     var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
     function run(useGround){
       // v02.99：有帶圖片時一律走JSON強制輸出、不使用grounding搜尋工具——grounding跟JSON
@@ -6634,7 +6682,7 @@ function testGemini(){
   if(!key.startsWith('AIza')){toast('金鑰格式錯誤（'+key.slice(0,10)+'...），應以 AIza 開頭','er',5000);return;}
   if(key.length<35){toast('金鑰長度異常（'+key.length+'字），請重新複製','er');return;}
   cfg.gkey=key;cfg.gmdl=$('c-gmdl').value;
-  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
   loading('測試 '+mdl+'（金鑰：'+key.slice(0,8)+'...'+key.slice(-4)+'）');
   fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+key,{
     method:'POST',
@@ -6795,7 +6843,26 @@ function initGameCodeComboMode(){
 // OCR 讀取遊戲編碼（純編碼模式）
 // ════════════════ 通用圖片裁切器 ════════════════
 // 任何「辨識」用途的圖片（拍照或相簿）皆先進入裁切步驟，再進入後續流程。
-var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null,_autoDetected:false};
+var _crop={img:null,resolve:null,reject:null,view:{x:0,y:0,w:0,h:0,scale:1},box:null,drag:null,_autoDetected:false,mode:'rect',quad:null};
+// v02.132：矩形／透視校正（四角）模式切換。切到四角模式時，若還沒有四角資料，用目前矩形框
+// 的四個角初始化（延續使用者已經選好的範圍，不用重新框一次）；切回矩形模式不動 box，
+// box 本來就一直維護著、沒有被四角模式覆蓋掉。
+function cropSetMode(mode){
+  if(_crop.mode===mode)return;
+  _crop.mode=mode;
+  var b1=$('crop-mode-rect'),b2=$('crop-mode-quad');
+  if(b1)b1.classList.toggle('on',mode==='rect');
+  if(b2)b2.classList.toggle('on',mode==='quad');
+  var head=$('crop-head');
+  if(head)head.innerHTML=(mode==='quad')
+    ?'裁切圖片<small>拖曳四個角點對齊物體實際邊緣，會自動拉直成矩形</small>'
+    :'裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small>';
+  if(mode==='quad'&&!_crop.quad&&_crop.box){
+    var b=_crop.box;
+    _crop.quad={tl:{x:b.x,y:b.y},tr:{x:b.x+b.w,y:b.y},br:{x:b.x+b.w,y:b.y+b.h},bl:{x:b.x,y:b.y+b.h}};
+  }
+  _cropDraw();
+}
 // 讀檔→開啟裁切器，回傳裁切後的 Blob（image/jpeg）。取消則 reject。
 // v02.102：改用跟批次相機取景框（openFieldScanner/_fscanFrameLabel）完全一致的
 // idx/total/name三參數模式與視覺樣式，兩處「目前處理到第幾件」的呈現方式統一。
@@ -6851,12 +6918,22 @@ function _cropLayout(){
   var cv=$('crop-canvas');
   cv.width=sw;cv.height=sh;cv.style.width=sw+'px';cv.style.height=sh+'px';
   // v02.34：resize（已偵測過）時保留使用者現有框，依版面比例換算，避免重置手動調整
-  if(_crop._autoDetected&&_crop.box&&prevView&&prevView.w){
-    var b=_crop.box;
-    // 既有框 → 原圖比例 → 新 view 座標
-    var fx=(b.x-prevView.x)/prevView.w, fy=(b.y-prevView.y)/prevView.h;
-    var fw=b.w/prevView.w, fh=b.h/prevView.h;
-    _crop.box={x:Math.round(x+fx*w),y:Math.round(y+fy*h),w:Math.round(fw*w),h:Math.round(fh*h)};
+  // v02.132：同一段邏輯延伸涵蓋四角模式的quad，換算方式完全一樣，只是逐點處理。
+  if(_crop._autoDetected&&prevView&&prevView.w){
+    if(_crop.box){
+      var b=_crop.box;
+      // 既有框 → 原圖比例 → 新 view 座標
+      var fx=(b.x-prevView.x)/prevView.w, fy=(b.y-prevView.y)/prevView.h;
+      var fw=b.w/prevView.w, fh=b.h/prevView.h;
+      _crop.box={x:Math.round(x+fx*w),y:Math.round(y+fy*h),w:Math.round(fw*w),h:Math.round(fh*h)};
+    }
+    if(_crop.quad){
+      var _remapPt=function(p){
+        var pfx=(p.x-prevView.x)/prevView.w, pfy=(p.y-prevView.y)/prevView.h;
+        return {x:Math.round(x+pfx*w),y:Math.round(y+pfy*h)};
+      };
+      _crop.quad={tl:_remapPt(_crop.quad.tl),tr:_remapPt(_crop.quad.tr),br:_remapPt(_crop.quad.br),bl:_remapPt(_crop.quad.bl)};
+    }
     _cropDraw();_cropBind();return;
   }
   // v02.74：修正誤解——使用者要的「四邊角落先定位」是指貼緊「被攝商品」的實際邊緣，
@@ -6891,9 +6968,11 @@ function _cropLayout(){
 }
 function _cropDraw(){
   var cv=$('crop-canvas');if(!cv)return;var ctx=cv.getContext('2d');
-  var v=_crop.view,b=_crop.box;
+  var v=_crop.view;
   ctx.clearRect(0,0,cv.width,cv.height);
   ctx.drawImage(_crop.img,v.x,v.y,v.w,v.h);
+  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv);return;}
+  var b=_crop.box;
   // 遮罩（框外變暗）
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
   ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
@@ -6912,6 +6991,23 @@ function _cropDraw(){
     ctx.fillRect(p[0]-hs/2,p[1]-hs/2,hs,hs);
   });
 }
+// v02.132：四角透視校正模式的畫面呈現——遮罩挖空成任意四邊形（不是矩形）、四個獨立
+// 可拖曳的角落把手、外加一條淡淡的對角虛線標示三角形分割方式，讓使用者大概理解裁切
+// 時是沿哪條線分兩個三角形處理（角度大時這條線附近可能有輕微接縫，見cropConfirmQuad）。
+function _cropDrawQuad(ctx,cv){
+  var q=_crop.quad;
+  ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
+  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.moveTo(q.tl.x,q.tl.y);ctx.lineTo(q.tr.x,q.tr.y);ctx.lineTo(q.br.x,q.br.y);ctx.lineTo(q.bl.x,q.bl.y);ctx.closePath();
+  ctx.fill('evenodd');ctx.restore();
+  ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(q.tl.x,q.tl.y);ctx.lineTo(q.tr.x,q.tr.y);ctx.lineTo(q.br.x,q.br.y);ctx.lineTo(q.bl.x,q.bl.y);ctx.closePath();ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(q.tl.x,q.tl.y);ctx.lineTo(q.br.x,q.br.y);ctx.stroke();
+  ctx.setLineDash([]);
+  var hs=15;ctx.fillStyle='#00e5ff';
+  [q.tl,q.tr,q.br,q.bl].forEach(function(p){ctx.fillRect(p.x-hs/2,p.y-hs/2,hs,hs);});
+}
 function _cropHit(px,py){
   var b=_crop.box,t=18;
   var corners={nw:[b.x,b.y],ne:[b.x+b.w,b.y],sw:[b.x,b.y+b.h],se:[b.x+b.w,b.y+b.h]};
@@ -6921,14 +7017,41 @@ function _cropHit(px,py){
   if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h)return 'move';
   return null;
 }
+// 四角模式的觸控熱區比矩形把手大一點（22 vs 18）——四個點各自獨立，手指誤觸鄰近角點的
+// 代價比矩形模式高（矩形角點鄰邊本來就連動，四角模式完全獨立、點錯了要重新調整）。
+// 用字串鍵值（'tl'/'tr'/'br'/'bl'）而非陣列索引，避免索引0跟現有「!_crop.drag視為未拖曳」
+// 的判斷式衝突（若用0-3索引，左上角index=0會被誤判成falsy、判斷成沒有在拖曳）。
+function _cropHitQuad(px,py){
+  var q=_crop.quad,t=22,keys=['tl','tr','br','bl'];
+  for(var i=0;i<keys.length;i++){
+    var k=keys[i],p=q[k];
+    if(Math.abs(px-p.x)<=t&&Math.abs(py-p.y)<=t)return k;
+  }
+  return null;
+}
 function _cropBind(){
   var cv=$('crop-canvas');if(!cv||cv._bound)return;cv._bound=true;
   var last=null;
   function pt(e){var r=cv.getBoundingClientRect();var t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
-  function down(e){e.preventDefault();var p=pt(e);_crop.drag=_cropHit(p.x,p.y);last=p;}
+  function down(e){
+    e.preventDefault();var p=pt(e);
+    _crop.drag=(_crop.mode==='quad')?_cropHitQuad(p.x,p.y):_cropHit(p.x,p.y);
+    last=p;
+  }
   function move(e){
     if(!_crop.drag)return;e.preventDefault();
-    var p=pt(e),dx=p.x-last.x,dy=p.y-last.y,b=_crop.box,v=_crop.view;
+    var p=pt(e),v=_crop.view;
+    if(_crop.mode==='quad'){
+      // 四角模式：拖到的那一點直接設定成觸控座標（限制在圖片顯示範圍內），四點完全
+      // 獨立，不像矩形模式的邊會牽動相鄰角。
+      var minX=v.x,minY=v.y,maxX=v.x+v.w,maxY=v.y+v.h;
+      var qp=_crop.quad[_crop.drag];
+      qp.x=Math.max(minX,Math.min(p.x,maxX));
+      qp.y=Math.max(minY,Math.min(p.y,maxY));
+      last=p;_cropDraw();
+      return;
+    }
+    var dx=p.x-last.x,dy=p.y-last.y,b=_crop.box;
     var minX=v.x,minY=v.y,maxX=v.x+v.w,maxY=v.y+v.h,mn=30;
     if(_crop.drag==='move'){
       b.x=Math.max(minX,Math.min(b.x+dx,maxX-b.w));
@@ -6953,6 +7076,13 @@ function _cropBind(){
 function _cropClose(){
   var ov=$('crop-ov');if(ov){ov.classList.remove('vis');ov.classList.remove('on');}
   _crop.img=null;_crop.resolve=null;_crop.reject=null;_crop.box=null;_crop.drag=null;
+  // v02.132：關閉時重置回矩形模式並清空四角資料，下次開啟一律從矩形模式開始（比較
+  // 保守熟悉的預設），不記憶上次選的模式；如果之後這個功能證實好用、常態要用四角模式，
+  // 再考慮做成可記憶的偏好設定。
+  _crop.quad=null;_crop.mode='rect';
+  var b1=$('crop-mode-rect'),b2=$('crop-mode-quad');
+  if(b1)b1.classList.add('on');
+  if(b2)b2.classList.remove('on');
 }
 function cropCancel(){var rj=_crop.reject;_cropClose();if(rj)rj(new Error('已取消裁切'));}
 function cropUseFull(){
@@ -6963,6 +7093,7 @@ function cropUseFull(){
   var durl=c.toDataURL('image/jpeg',0.92);_cropClose();rs(_dataUrlToBlob(durl));
 }
 function cropConfirm(){
+  if(_crop.mode==='quad'){cropConfirmQuad();return;}
   var img=_crop.img,v=_crop.view,b=_crop.box,rs=_crop.resolve;if(!img||!rs){_cropClose();return;}
   // 把顯示座標換回原圖座標
   var sx=(b.x-v.x)/v.scale,sy=(b.y-v.y)/v.scale,sw=b.w/v.scale,sh=b.h/v.scale;
@@ -6970,6 +7101,62 @@ function cropConfirm(){
   sw=Math.round(sw);sh=Math.round(sh);
   var c=document.createElement('canvas');c.width=sw;c.height=sh;
   c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+  var durl=c.toDataURL('image/jpeg',0.92);_cropClose();rs(_dataUrlToBlob(durl));
+}
+// ── 四角透視校正（簡化版：三角形分割仿射變形）──
+// v02.132：Canvas 2D 的 drawImage() 只支援仿射變形（縮放/旋轉/平移/斜切），不支援真正的
+// 投影(perspective/homography)變形。要把任意四邊形「拉直」成矩形，常見的省成本做法是把
+// 四邊形沿一條對角線切成兩個三角形，各自用仿射變形貼圖——這是本次「簡化實作」採用的方式。
+// ponytail：已知上限——四邊形角度差異很大時（例如嚴重透視變形），沿對角線接縫處可能有
+// 極輕微的不連續，不是完全無縫的真正透視校正。真正的投影變形需要逐一目標像素反推來源
+// 座標取樣，計算量高出很多；先用這個簡化版驗證效果是否已經夠用，之後有需要再升級。
+// 從3組對應點（來源3點、目標3點）解出仿射矩陣 a~f，使 u=a*x+c*y+e, v=b*x+d*y+f
+// 把來源三角形的三個頂點精確映射到目標三角形的三個頂點。
+function _affineFrom3Points(sx,sy,dx,dy){
+  var x0=sx[0],x1=sx[1],x2=sx[2],y0=sy[0],y1=sy[1],y2=sy[2];
+  var u0=dx[0],u1=dx[1],u2=dx[2],v0=dy[0],v1=dy[1],v2=dy[2];
+  var denom=x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1);
+  if(!denom)return null; // 三點共線，無法解出仿射矩陣（理論上不會發生，四角模式的三角形不會退化成一條線）
+  var a=(u0*(y1-y2)+u1*(y2-y0)+u2*(y0-y1))/denom;
+  var b=(v0*(y1-y2)+v1*(y2-y0)+v2*(y0-y1))/denom;
+  var c=(u0*(x2-x1)+u1*(x0-x2)+u2*(x1-x0))/denom;
+  var d=(v0*(x2-x1)+v1*(x0-x2)+v2*(x1-x0))/denom;
+  var e=(u0*(x1*y2-x2*y1)+u1*(x2*y0-x0*y2)+u2*(x0*y1-x1*y0))/denom;
+  var f=(v0*(x1*y2-x2*y1)+v1*(x2*y0-x0*y2)+v2*(x0*y1-x1*y0))/denom;
+  return {a:a,b:b,c:c,d:d,e:e,f:f};
+}
+// 把來源三角形對應的整張圖，透過仿射變形貼到目標三角形範圍內（clip先夾出目標三角形，
+// 再套用變形矩陣畫整張圖，只有clip範圍內看得到）。
+function _drawWarpedTriangle(ctx,img,sPts,dPts){
+  var m=_affineFrom3Points(
+    [sPts[0].x,sPts[1].x,sPts[2].x],[sPts[0].y,sPts[1].y,sPts[2].y],
+    [dPts[0].x,dPts[1].x,dPts[2].x],[dPts[0].y,dPts[1].y,dPts[2].y]
+  );
+  if(!m)return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(dPts[0].x,dPts[0].y);ctx.lineTo(dPts[1].x,dPts[1].y);ctx.lineTo(dPts[2].x,dPts[2].y);ctx.closePath();
+  ctx.clip();
+  ctx.transform(m.a,m.b,m.c,m.d,m.e,m.f);
+  ctx.drawImage(img,0,0);
+  ctx.restore();
+}
+function cropConfirmQuad(){
+  var img=_crop.img,v=_crop.view,q=_crop.quad,rs=_crop.resolve;
+  if(!img||!rs||!q){_cropClose();return;}
+  function toImg(p){return {x:(p.x-v.x)/v.scale,y:(p.y-v.y)/v.scale};}
+  var A=toImg(q.tl),B=toImg(q.tr),C=toImg(q.br),D=toImg(q.bl);
+  function dist(p1,p2){return Math.hypot(p2.x-p1.x,p2.y-p1.y);}
+  // 輸出尺寸：上下邊長平均當寬、左右邊長平均當高，盡量還原被攝物體實際比例
+  // （四邊形本身上下/左右邊長通常不會完全相等，取平均是合理的折衷）
+  var W=Math.max(20,Math.round((dist(A,B)+dist(D,C))/2));
+  var H=Math.max(20,Math.round((dist(A,D)+dist(B,C))/2));
+  var c=document.createElement('canvas');c.width=W;c.height=H;
+  var ctx=c.getContext('2d');
+  var dTL={x:0,y:0},dTR={x:W,y:0},dBR={x:W,y:H},dBL={x:0,y:H};
+  // 沿左上-右下對角線切成兩個三角形（跟畫面上顯示的虛線輔助線是同一條對角線）
+  _drawWarpedTriangle(ctx,img,[A,B,C],[dTL,dTR,dBR]);
+  _drawWarpedTriangle(ctx,img,[A,C,D],[dTL,dBR,dBL]);
   var durl=c.toDataURL('image/jpeg',0.92);_cropClose();rs(_dataUrlToBlob(durl));
 }
 window.addEventListener('resize',function(){if($('crop-ov')&&$('crop-ov').classList.contains('on'))_cropLayout();});
@@ -7527,7 +7714,7 @@ function showDbSrcSheet(){
   ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:84vh;display:flex;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6">查詢資料來源</div></div>'+
-    '<div style="font-size:10px;color:#555;line-height:1.6;margin:0 2px 10px;flex-shrink:0">💡 純條碼／編碼流程中，「名稱」型資料庫需 AI 先辨識出名稱才會被調用；書籍類查詢只會調用書籍類（📖）資料庫。</div>'+
+    '<div style="font-size:10px;color:#7a8499;line-height:1.6;margin:0 2px 10px;flex-shrink:0">💡 純條碼／編碼流程中，「名稱」型資料庫需 AI 先辨識出名稱才會被調用；書籍類查詢只會調用書籍類（📖）資料庫。</div>'+
     '<div class="dbsrc-table" style="overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;padding-right:2px">'+rows+'</div>'+
     '<div style="flex-shrink:0"><button class="btn bo bw bs" style="color:#7986cb;margin-top:10px" onclick="_dbSrcClose()" type="button">關閉</button></div></div>';
   ov._openedAt=Date.now();
@@ -9086,7 +9273,7 @@ function pickTypeAndPlatform(mode,cb){
     // 平台選擇（僅遊戲時顯示）
     '<div id="tp-plat-row" style="margin-bottom:18px;display:'+(_selectedType==='遊戲'?'block':'none')+'">'+
       '<div style="font-size:11px;color:#7986cb;letter-spacing:1px;margin-bottom:8px">'+
-        '平台 <span style="font-size:10px;color:#555">（提供給 AI 提高辨識準確率）</span></div>'+
+        '平台 <span style="font-size:10px;color:#7a8499">（提供給 AI 提高辨識準確率）</span></div>'+
       fselPickerize('<select id="tp-platform" class="fsel" style="width:100%">'+platSelHtml+'</select>','選擇平台')+
     '</div>'+
     // 確認按鈕
@@ -9521,7 +9708,7 @@ function scanSetStep(n){
     var active=i===n, done=i<n;
     el.style.background=active?'rgba(0,229,255,.15)':(done?'rgba(0,229,255,.07)':'#0f1525');
     el.style.borderColor=active?'#00e5ff':(done?'rgba(0,229,255,.4)':'#1e2a45');
-    el.querySelector('div:last-child').style.color=active?'#00e5ff':(done?'rgba(0,229,255,.6)':'#555');
+    el.querySelector('div:last-child').style.color=active?'#00e5ff':(done?'rgba(0,229,255,.6)':'#7a8499');
   });
 }
 
@@ -12864,7 +13051,7 @@ function _dashModel(cat,filtered2,catOf){
   if(cat==='遊戲'){
     var cleared=statusCnt(filtered2,'play_status','通關')+statusCnt(filtered2,'play_status','全成就');
     var clearRate=Math.round(cleared/filtered2.length*100);
-    var playColors={'未遊玩':'#7986cb','進行中':'#ffb300','通關':'#00e676','全成就':'#00e5ff','放棄':'#ff5252','N/A':'#555'};
+    var playColors={'未遊玩':'#7986cb','進行中':'#ffb300','通關':'#00e676','全成就':'#00e5ff','放棄':'#ff5252','N/A':'#7a8499'};
     var gPlat=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
     D={kpi:[
         {label:'遊戲',val:filtered2.length,color:'#00e5ff',icon:'🎮'},
@@ -13484,7 +13671,7 @@ function renderDash(){
     if(condSec)condSec.style.display='';
     var condMap={};
     filtered2.forEach(function(c){var g=overallCond(c.data.category,c.data.completeness)||'\u672a\u586b';condMap[g]=(condMap[g]||0)+1;});
-    var condColors=Object.assign({},COND_COLORS,{'\u672a\u586b':'#555'});
+    var condColors=Object.assign({},COND_COLORS,{'\u672a\u586b':'#7a8499'});
     drawCondChart(condMap,condColors);
   }else{
     if(condSec)condSec.style.display='none';
@@ -13689,7 +13876,7 @@ function initColImgSearch(source){
     var r=new FileReader();
     r.onload=function(){
       var b64=r.result.split(',')[1];
-      var url='https://generativelanguage.googleapis.com/v1beta/models/'+(cfg.gmdl||'gemini-2.5-flash')+':generateContent?key='+cfg.gkey;
+      var url='https://generativelanguage.googleapis.com/v1beta/models/'+(cfg.gmdl||'gemini-3.5-flash-lite')+':generateContent?key='+cfg.gkey;
       fetch(url,{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -14920,7 +15107,13 @@ function _showActionSheet(o){
     };
     document.body.appendChild(ov);
   }
-  var btns=o.buttons.map(function(b){return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';}).join('');
+  // v02.135：新增header類型的按鈕項目——不可點擊，純粹當分組標題用（optgroup標籤）。
+  // 第一個項目如果剛好就是header（例如選單開頭就是一個分組，沒有分組外的選項），
+  // 省略上方留白跟分隔線，不然標題正下方緊接著標題文字會有一條多餘的線貼在一起。
+  var btns=o.buttons.map(function(b,i){
+    if(b.header)return '<div style="font-size:11px;color:#7986cb;font-weight:700;margin:'+(i===0?'0':'12px')+' 2px 6px;'+(i===0?'':'padding-top:8px;border-top:1px solid #1e2a45')+'">'+esc(b.label)+'</div>';
+    return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';
+  }).join('');
   ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;display:flex;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.name)+'</div></div>'+
@@ -14968,17 +15161,29 @@ function fselPickerize(selectHtml, title, wrapperStyle){
   return '<div style="position:relative;'+(wrapperStyle||'display:inline-block')+'">'+wrapped+
     '<div onclick="openSelectSheet(\''+_escAttr(id)+'\',\''+_escAttr(title)+'\')" style="position:absolute;inset:0;cursor:pointer"></div></div>';
 }
+// v02.135：使用者實測回報怕「3.1 Pro」被誤會成免費——原本這個自訂選單只是把
+// sel.options攤平成一排按鈕，完全略過原生<select>裡的<optgroup>分組（「── 免費 ──」
+// 「── 付費 ──」那兩組），導致使用者看到的清單裡三個選項長得一模一樣，看不出哪些免費、
+// 哪些要付費。改成走sel.children（同時涵蓋<option>跟<optgroup>），遇到<optgroup>時
+// 插入一個不可點擊的分組標題，把原本就存在的免費/付費分組實際顯示出來。這是通用邏輯，
+// 不是只給Gemini模型選單用——之後其他下拉選單如果也用<optgroup>，一樣會自動套用。
 function openSelectSheet(selId,title){
   var sel=$(selId);if(!sel)return;
   var cur=sel.value;
-  var opts=Array.prototype.map.call(sel.options,function(o){return {value:o.value,label:o.textContent};});
-  _showActionSheet({
-    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:title,
-    buttons:opts.map(function(o){
-      var isCur=(o.value===cur);
-      return {color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(o.label),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(o.value)+"')"};
-    })
+  var buttons=[];
+  Array.prototype.forEach.call(sel.children,function(node){
+    if(node.tagName==='OPTGROUP'){
+      buttons.push({header:true,label:node.label});
+      Array.prototype.forEach.call(node.children,function(o){
+        var isCur=(o.value===cur);
+        buttons.push({color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(o.textContent),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(o.value)+"')"});
+      });
+    }else if(node.tagName==='OPTION'){
+      var isCur=(node.value===cur);
+      buttons.push({color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(node.textContent),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(node.value)+"')"});
+    }
   });
+  _showActionSheet({ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:title,buttons:buttons});
 }
 function pickSelectSheetOpt(selId,val){
   var sel=$(selId);if(!sel)return;
@@ -16394,9 +16599,12 @@ function _showUpdateBanner(){
   if(!document.getElementById('sw-update-style')){
     var st=document.createElement('style');
     st.id='sw-update-style';
+    // v02.137：這個更新橫幅是JS動態插入<style>，不在主要的<style>區塊裡，reduced-motion
+    // 規則要一起塞進同一段字串，不然會漏掉（主要<style>區塊那邊的@media規則管不到這裡）。
     st.textContent='@keyframes swBannerIn{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}'+
       '@keyframes swBannerGlow{0%,100%{box-shadow:0 4px 26px rgba(0,229,255,.55),0 0 0 1px rgba(255,255,255,.15)}50%{box-shadow:0 4px 34px rgba(0,229,255,.9),0 0 0 1px rgba(255,255,255,.25)}}'+
-      '#sw-update-banner{animation:swBannerIn .35s ease-out,swBannerGlow 1.8s ease-in-out infinite}';
+      '#sw-update-banner{animation:swBannerIn .35s ease-out,swBannerGlow 1.8s ease-in-out infinite}'+
+      '@media(prefers-reduced-motion:reduce){#sw-update-banner{animation-duration:.2s,3.5s}}';
     document.head.appendChild(st);
   }
   b=document.createElement('div');
@@ -16442,14 +16650,17 @@ window.onload=function(){
     localforage.getItem('gv_img_logo').then(function(d){if(d){var b=document.getElementById('boot-logo');if(b)b.src=d;}}).catch(function(){});
     localforage.getItem('gv_img_bg').then(function(d){if(d)_applyAppBg(d);}).catch(function(){});
   }catch(e){}
+  // v02.137：開機停留時間從1500ms降到950ms，跟上面#shell的淡入完成時機（0.15s延遲+0.8s
+  // 淡入=0.95s）對齊；DOM移除延遲從700ms改成400ms，對齊上面CSS的實際淡出時長（.4s），
+  // 原本700ms跟CSS的.55s對不上，節點會在視覺上已經消失之後還多留150ms才真正移除。
   setTimeout(function(){
     var bs=document.getElementById('boot-splash');
-    if(bs){bs.classList.add('hide');setTimeout(function(){if(bs&&bs.parentNode)bs.parentNode.removeChild(bs);},700);}
+    if(bs){bs.classList.add('hide');setTimeout(function(){if(bs&&bs.parentNode)bs.parentNode.removeChild(bs);},400);}
     // 首次打開時提示載入樣本（在開機畫面淡出後）
     checkFirstLaunchSamples();
     // 首次打開時檢查是否需要設定 GAS URL
     checkFirstLaunchSetup();
-  },1500);
+  },950);
 };
 
 // ══════════════════════════════════════════════════════
@@ -18363,6 +18574,12 @@ function _imgToB64(src){
 
 <div id="crop-ov">
   <div id="crop-head">裁切圖片<small>拖曳調整框線範圍，可拖角縮放</small></div>
+  <!-- v02.132：透視校正（四角）模式切換——評估後先做三角形分割仿射變形的簡化版，
+       不是完整投影(homography)變形，見_drawWarpedTriangle/cropConfirmQuad內的說明。 -->
+  <div id="crop-mode-bar">
+    <button id="crop-mode-rect" class="on" onclick="cropSetMode('rect')" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg> 矩形</button>
+    <button id="crop-mode-quad" onclick="cropSetMode('quad')" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4 4l4 4M20 4l-4 4M4 20l4-4M20 20l-4-4"/><circle cx="4" cy="4" r="1.5" fill="currentColor"/><circle cx="20" cy="4" r="1.5" fill="currentColor"/><circle cx="4" cy="20" r="1.5" fill="currentColor"/><circle cx="20" cy="20" r="1.5" fill="currentColor"/></svg> 透視校正（四角）</button>
+  </div>
   <div id="crop-stage"><canvas id="crop-canvas"></canvas><div id="crop-framelbl"><span id="crop-framelbl-idx"></span><span id="crop-framelbl-name"></span></div></div>
   <div id="crop-bar">
     <button onclick="cropCancel()" type="button">取消</button>
