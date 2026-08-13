@@ -2033,10 +2033,11 @@ body{
           <div style="position:relative;display:block">
             <select class="fsel" id="c-gmdl" style="margin-top:8px;width:100%;pointer-events:none" tabindex="-1" onchange="toggleProNote(this.value)">
               <optgroup label="── 免費（AI Studio 金鑰）──">
-                <option value="gemini-2.5-flash">2.5 Flash ✦ 推薦</option>
+                <option value="gemini-3.5-flash-lite">3.5 Flash-Lite ✦ 推薦</option>
+                <option value="gemini-2.5-flash">2.5 Flash（舊版）</option>
               </optgroup>
               <optgroup label="── 付費（需啟用 Cloud 帳單）──">
-                <option value="gemini-2.5-pro-preview-06-05">2.5 Pro Preview ★ 最強</option>
+                <option value="gemini-3.1-pro">3.1 Pro ★ 最強</option>
               </optgroup>
             </select>
             <div onclick="openSelectSheet('c-gmdl','選擇 Gemini 模型')" style="position:absolute;inset:0;cursor:pointer"></div>
@@ -2812,7 +2813,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.133';
+const APP_VERSION='v02.134';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4569,10 +4570,13 @@ function loadCfg(){
   }
   _onFuzzyDupToggle();
   // 清除已失效的 model 值
-  var validModels=['gemini-2.5-flash','gemini-2.5-pro-preview-06-05'];
+  // v02.134：Gemini系列已經演進到3.x世代（3.5 Flash-Lite／3.1 Pro皆為GA穩定版），
+  // 原本這裡列的2.5 Pro Preview（帶著06-05這個特定預覽版日期戳記）早已被後續好幾代
+  // 預覽版取代、幾乎確定已經失效；改成目前這幾個確認可用的模型ID。
+  var validModels=['gemini-3.5-flash-lite','gemini-2.5-flash','gemini-3.1-pro'];
   if(cfg.gmdl&&validModels.indexOf(cfg.gmdl)<0){
-    cfg.gmdl='gemini-2.5-flash';
-    toast('模型已更新為 Gemini 2.5 Flash（舊模型名稱已不可用）','',4000);
+    cfg.gmdl='gemini-3.5-flash-lite';
+    toast('模型已更新為 Gemini 3.5 Flash-Lite（舊模型名稱已不可用）','',4000);
   }
   if($('c-gmdl')&&cfg.gmdl){$('c-gmdl').value=cfg.gmdl;toggleProNote(cfg.gmdl);}
   if($('c-gbkey')&&cfg.gbkey)$('c-gbkey').value=cfg.gbkey;
@@ -5279,7 +5283,7 @@ function clearAll(){
   localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
   // 同時清空畫面上的欄位
   ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  var md=document.getElementById('c-gmdl');if(md)md.value='gemini-2.5-flash';
+  var md=document.getElementById('c-gmdl');if(md)md.value='gemini-3.5-flash-lite'; // v02.134：清除設定後回到目前推薦的模型，不是舊版
   renderGlist();updateStats();toast('已清除所有設定與快取');
   _btnRelease('clearAll');
 }
@@ -6152,7 +6156,7 @@ function cancelAI(){
 
 function callGemini(parts,opts){
   if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
-  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
   // v42.05：grounding 與 responseSchema 互斥（Gemini API 限制），二擇一。
   // 僅呼叫端明確傳入 allowGrounding 且使用者開啟「AI 上網查證」時才切換為 grounding 模式。
@@ -6257,7 +6261,7 @@ function callGemini(parts,opts){
 // -- callGeminiOCR --
 function callGeminiOCR(parts,_isRetry,maxTokens){
   if(!cfg.gkey)return Promise.reject(new Error('未設定 Gemini 金鑰'));
-  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
   var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
   var genCfg={temperature:0.1,maxOutputTokens:maxTokens||128};
   if(mdl.indexOf('2.5')>=0){genCfg.thinkingConfig={thinkingBudget:0};}
@@ -6499,7 +6503,7 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region,imageDa
   // 用純文字呼叫（優先 Gemini 免費，無圖片）
   function geminiText(){
     if(!cfg.gkey)return Promise.reject(new Error('無 Gemini key'));
-    var mdl=cfg.gmdl||'gemini-2.5-flash';
+    var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
     var url='https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+cfg.gkey;
     function run(useGround){
       // v02.99：有帶圖片時一律走JSON強制輸出、不使用grounding搜尋工具——grounding跟JSON
@@ -6637,7 +6641,7 @@ function testGemini(){
   if(!key.startsWith('AIza')){toast('金鑰格式錯誤（'+key.slice(0,10)+'...），應以 AIza 開頭','er',5000);return;}
   if(key.length<35){toast('金鑰長度異常（'+key.length+'字），請重新複製','er');return;}
   cfg.gkey=key;cfg.gmdl=$('c-gmdl').value;
-  var mdl=cfg.gmdl||'gemini-2.5-flash';
+  var mdl=cfg.gmdl||'gemini-3.5-flash-lite';
   loading('測試 '+mdl+'（金鑰：'+key.slice(0,8)+'...'+key.slice(-4)+'）');
   fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mdl+':generateContent?key='+key,{
     method:'POST',
@@ -13831,7 +13835,7 @@ function initColImgSearch(source){
     var r=new FileReader();
     r.onload=function(){
       var b64=r.result.split(',')[1];
-      var url='https://generativelanguage.googleapis.com/v1beta/models/'+(cfg.gmdl||'gemini-2.5-flash')+':generateContent?key='+cfg.gkey;
+      var url='https://generativelanguage.googleapis.com/v1beta/models/'+(cfg.gmdl||'gemini-3.5-flash-lite')+':generateContent?key='+cfg.gkey;
       fetch(url,{
         method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
