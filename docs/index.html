@@ -215,7 +215,11 @@ body{
 #save-bar{position:sticky;bottom:0;background:#080c18;border-top:1px solid #1e2a45;padding:12px 16px;display:flex;gap:10px}
 
 /* === Stats === */
-#col-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);padding-bottom:8px}
+/* v02.137：sticky區域的backdrop-filter拿掉——這是手機上數一數二耗效能的CSS效果，
+   position:sticky元素滾動時要持續重算模糊範圍，成本會隨頁面內容量疊加。背景本來就是
+   96%不透明（rgba(8,12,24,.96)），拿掉模糊後視覺上的區隔感幾乎沒有變化，配合既有的
+   box-shadow已經足夠跟底下內容分隔開。 */
+#col-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);padding-bottom:8px}
 #pg-col #col-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding:14px 16px 2px}
 #pg-col #col-sticky .hd>div:first-child{gap:14px;flex-wrap:wrap;row-gap:10px}
 #pg-col #col-sticky .hd>div:first-child>div:last-child{gap:10px;flex-wrap:wrap;justify-content:flex-end}
@@ -250,7 +254,9 @@ body{
 #sort-bar .sortbar-lbl{flex-shrink:0;font-size:12px;color:#7986cb;margin-right:2px;letter-spacing:.5px}
 .sortc{flex-shrink:0;min-height:32px;padding:6px 11px;border-radius:8px;border:1px solid #1e2a45;background:rgba(15,21,37,.82);color:#9fa8c8;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;line-height:1;transition:all .15s}
 /* v02.17：晶片選中「點亮」效果統一（sortc/genre-chip/genre-tab 共用同一套：淡色底＋色框＋外發光），取代原本各自不同的純色實心／幾乎看不見的內陰影 */
-.sortc.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
+/* v02.137：選中狀態的青色光暈原本偏亮（.85/.45），這裡跟另外兩處相同樣式（.facet-opt.on／
+   .genre-chip.on）一起減半（.4/.22），保留賽博風格但柔和一些，純視覺調整不影響效能。 */
+.sortc.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.4),0 0 14px rgba(0,229,255,.22)}
 #filter-summary{display:none;gap:8px;padding:0 16px 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
 #filter-summary::-webkit-scrollbar{display:none}
 #filter-summary.on{display:flex}
@@ -576,7 +582,7 @@ body{
 .facet-lbl{font-size:12px;color:#7986cb;margin-bottom:8px;font-weight:600}
 .facet-opt{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:16px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer;user-select:none}
 .facet-opt b{font-weight:600;color:#7986cb;font-size:11px}
-.facet-opt.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
+.facet-opt.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.4),0 0 14px rgba(0,229,255,.22)}
 .facet-opt.on b{color:#00e5ff}
 .facet-price{display:flex;align-items:center;gap:8px}
 .facet-price input{flex:1;min-width:0;background:#141b30;border:1.5px solid #2a3a5a;border-radius:8px;padding:8px 10px;color:#e8eaf6;font-size:13px}
@@ -623,7 +629,11 @@ body{
    （.gc）跟分類（.shelf-cover）兩種檢視模式的縮圖沒有一起改到，同樣的裁切問題還在。
    改成不綁定特定容器的通用class，讓.vault-cover-main／.shelf-cover／.gc-thumb三處
    共用同一套規則，容器本身只需要有position:relative+overflow:hidden即可套用。 */
-.cover-bg{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;filter:blur(18px) brightness(.5);z-index:0}
+/* v02.137：模糊強度從18px降到10px，視覺上依然有「柔化填色」效果，GPU運算量降低；
+   小螢幕（≤430px，沿用全站既有的窄螢幕斷點）直接關閉這層模糊背景——螢幕小、卡片本身
+   也小，這層填色視覺效益本來就有限，關掉換取效能比較划算。 */
+.cover-bg{position:absolute;inset:-12%;width:124%;height:124%;object-fit:cover;filter:blur(10px) brightness(.5);z-index:0}
+@media(max-width:430px){.cover-bg{display:none}}
 .cover-fg{position:relative;z-index:1;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block}
 .vault-cover-main{width:172px;height:172px;border-radius:8px;background:#080c18;border:1px solid #1e2a45;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:48px;position:relative}
 .vault-cover-thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
@@ -718,7 +728,7 @@ body{
 #hunt-lens-fab svg,#hunt-barcode-fab svg{width:26px;height:26px}
 #hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
 #hunt-fab-wrap.open #hunt-fab-main{transform:rotate(90deg)}
-#hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);padding-bottom:10px}
+#hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
 .hunt-actionbar{display:flex;gap:8px;align-items:center;padding:10px 16px 0}
 .hunt-actionbar .sw{flex:1;min-width:0;margin:0}
@@ -762,7 +772,7 @@ body{
 .genre-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .genre-chip{display:inline-flex;align-items:center;padding:7px 12px;border-radius:18px;border:1.5px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:13px;cursor:pointer;transition:all .15s;user-select:none}
 .genre-chip:active{transform:scale(.95)}
-.genre-chip.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.85),0 0 14px rgba(0,229,255,.45)}
+.genre-chip.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700;box-shadow:0 0 4px rgba(0,229,255,.4),0 0 14px rgba(0,229,255,.22)}
 /* v54.79：遊戲類型分組頁籤——橫向可滑動，點選後下方顯示該組晶片 */
 .genre-tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 2px 6px;margin-top:6px;scrollbar-width:none}
 .genre-tabs::-webkit-scrollbar{display:none}
@@ -2854,7 +2864,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.137';
+const APP_VERSION='v02.138';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
