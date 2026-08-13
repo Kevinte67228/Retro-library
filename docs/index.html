@@ -781,7 +781,7 @@ body{
 #crop-head{flex:0 0 auto;padding:14px 16px;text-align:center;color:#fff;font-size:14px;font-weight:700;letter-spacing:1px;background:#0b0f1a}
 #crop-head small{display:block;font-size:11px;font-weight:400;color:#7986cb;margin-top:3px;letter-spacing:0}
 #crop-mode-bar{flex:0 0 auto;display:flex;gap:8px;padding:0 16px 10px;justify-content:center;background:#0b0f1a}
-#crop-mode-bar button{flex:1;max-width:170px;padding:8px 10px;border-radius:8px;border:1px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer}
+#crop-mode-bar button{flex:1;max-width:170px;padding:8px 10px;border-radius:8px;border:1px solid #2a3a5a;background:#141b30;color:#9fa8c8;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
 #crop-mode-bar button.on{background:rgba(0,229,255,.15);border-color:#00e5ff;color:#00e5ff;font-weight:700}
 #crop-stage{flex:1 1 auto;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000}
 /* v02.102：使用者實測回報，裁切畫面上方擠在標題列裡的品名太小、不明顯，
@@ -2812,7 +2812,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.132';
+const APP_VERSION='v02.133';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -18508,8 +18508,8 @@ function _imgToB64(src){
   <!-- v02.132：透視校正（四角）模式切換——評估後先做三角形分割仿射變形的簡化版，
        不是完整投影(homography)變形，見_drawWarpedTriangle/cropConfirmQuad內的說明。 -->
   <div id="crop-mode-bar">
-    <button id="crop-mode-rect" class="on" onclick="cropSetMode('rect')" type="button">▭ 矩形</button>
-    <button id="crop-mode-quad" onclick="cropSetMode('quad')" type="button">◈ 透視校正（四角）</button>
+    <button id="crop-mode-rect" class="on" onclick="cropSetMode('rect')" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg> 矩形</button>
+    <button id="crop-mode-quad" onclick="cropSetMode('quad')" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4 4l4 4M20 4l-4 4M4 20l4-4M20 20l-4-4"/><circle cx="4" cy="4" r="1.5" fill="currentColor"/><circle cx="20" cy="4" r="1.5" fill="currentColor"/><circle cx="4" cy="20" r="1.5" fill="currentColor"/><circle cx="20" cy="20" r="1.5" fill="currentColor"/></svg> 透視校正（四角）</button>
   </div>
   <div id="crop-stage"><canvas id="crop-canvas"></canvas><div id="crop-framelbl"><span id="crop-framelbl-idx"></span><span id="crop-framelbl-name"></span></div></div>
   <div id="crop-bar">
