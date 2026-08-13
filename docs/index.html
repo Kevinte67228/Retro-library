@@ -8,15 +8,29 @@
 <meta name="apple-mobile-web-app-title" content="RetroVault">
 <meta name="application-name" content="RetroVault">
 <meta name="theme-color" content="#080c18">
-<link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="144x144" href="https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/icons/icon-144.png">
+<!-- v02.136：圖示來源統一——原本這幾個連結指向 raw.githubusercontent.com（跨網域），
+     跟 manifest.json 裡用的相對路徑（./icons/...）來源不一致，多繞一層跨網域請求，
+     且依賴 GitHub raw 網域的存取規則不變。改成跟 manifest.json 一致的同源相對路徑，
+     反正這些圖示本來就跟 index.html 一起部署在 docs/ 底下。 -->
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="144x144" href="./icons/icon-144.png">
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>RetroVault</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- v02.136：CDN 資源加上 SRI 完整性驗證，防範 CDN 被植入惡意程式碼時波及本站。
+     雜湊值直接從 npm 官方套件（localforage@1.10.0、chart.js@4.4.0）下載後自行計算
+     （sha384，OpenSSL 與 Python hashlib 交叉驗證過一致），不是憑空抄來的。
+     chart.js 這裡刻意把網址從 chart.umd.min.js 改成 chart.umd.js（未壓縮版）——
+     查證後確認 chart.js@4.4.0 這個 npm 套件本身沒有內建 chart.umd.min.js 這個檔案，
+     jsDelivr 看到 .min.js 副檔名是「即時動態壓縮」出來的，不是固定不變的靜態檔案；
+     jsDelivr 官方文件本身就明講 SRI 只能用在「保證不會變動」的靜態單一檔案連結上，
+     動態壓縮的內容之後有可能因為 jsDelivr 壓縮器版本更新而悄悄變動，雜湊值就會跟著
+     兜不起來、讓瀏覽器直接拒絕載入整個圖表功能——寧可多傳一點檔案大小（未壓縮版），
+     換取 SRI 雜湊值長期穩定可靠。 -->
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js" integrity="sha384-MTDrIlFOzEqpmOxY6UIA/1Zkh0a64UlmJ6R0UrZXqXCPx99siPGi8EmtQjIeCcTH" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" integrity="sha384-FcQlsUOd0TJjROrBxhJdUhXTUgNJQxTMcxZe6nHbaEfFL1zjQ+bq/uRoBQxb0KMo" crossorigin="anonymous"></script>
 <style>
 /* === Reset === */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2813,7 +2827,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.135';
+const APP_VERSION='v02.136';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
