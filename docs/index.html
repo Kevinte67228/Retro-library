@@ -2813,7 +2813,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.134';
+const APP_VERSION='v02.135';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -15066,7 +15066,13 @@ function _showActionSheet(o){
     };
     document.body.appendChild(ov);
   }
-  var btns=o.buttons.map(function(b){return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';}).join('');
+  // v02.135：新增header類型的按鈕項目——不可點擊，純粹當分組標題用（optgroup標籤）。
+  // 第一個項目如果剛好就是header（例如選單開頭就是一個分組，沒有分組外的選項），
+  // 省略上方留白跟分隔線，不然標題正下方緊接著標題文字會有一條多餘的線貼在一起。
+  var btns=o.buttons.map(function(b,i){
+    if(b.header)return '<div style="font-size:11px;color:#7986cb;font-weight:700;margin:'+(i===0?'0':'12px')+' 2px 6px;'+(i===0?'':'padding-top:8px;border-top:1px solid #1e2a45')+'">'+esc(b.label)+'</div>';
+    return '<button class="btn bw" style="background:#0f1525;color:'+b.color+';margin-bottom:8px;justify-content:flex-start;gap:10px" onclick="'+b.onclick+'" type="button">'+b.label+'</button>';
+  }).join('');
   ov.innerHTML='<div class="sheet-panel" style="width:100%;max-width:480px;background:#141b30;border-radius:16px 16px 0 0;padding:14px 16px 26px;max-height:80vh;display:flex;flex-direction:column">'+
     '<div style="flex-shrink:0;text-align:center;margin-bottom:10px"><div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 12px"></div>'+
     '<div style="font-size:14px;font-weight:700;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(o.name)+'</div></div>'+
@@ -15114,17 +15120,29 @@ function fselPickerize(selectHtml, title, wrapperStyle){
   return '<div style="position:relative;'+(wrapperStyle||'display:inline-block')+'">'+wrapped+
     '<div onclick="openSelectSheet(\''+_escAttr(id)+'\',\''+_escAttr(title)+'\')" style="position:absolute;inset:0;cursor:pointer"></div></div>';
 }
+// v02.135：使用者實測回報怕「3.1 Pro」被誤會成免費——原本這個自訂選單只是把
+// sel.options攤平成一排按鈕，完全略過原生<select>裡的<optgroup>分組（「── 免費 ──」
+// 「── 付費 ──」那兩組），導致使用者看到的清單裡三個選項長得一模一樣，看不出哪些免費、
+// 哪些要付費。改成走sel.children（同時涵蓋<option>跟<optgroup>），遇到<optgroup>時
+// 插入一個不可點擊的分組標題，把原本就存在的免費/付費分組實際顯示出來。這是通用邏輯，
+// 不是只給Gemini模型選單用——之後其他下拉選單如果也用<optgroup>，一樣會自動套用。
 function openSelectSheet(selId,title){
   var sel=$(selId);if(!sel)return;
   var cur=sel.value;
-  var opts=Array.prototype.map.call(sel.options,function(o){return {value:o.value,label:o.textContent};});
-  _showActionSheet({
-    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:title,
-    buttons:opts.map(function(o){
-      var isCur=(o.value===cur);
-      return {color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(o.label),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(o.value)+"')"};
-    })
+  var buttons=[];
+  Array.prototype.forEach.call(sel.children,function(node){
+    if(node.tagName==='OPTGROUP'){
+      buttons.push({header:true,label:node.label});
+      Array.prototype.forEach.call(node.children,function(o){
+        var isCur=(o.value===cur);
+        buttons.push({color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(o.textContent),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(o.value)+"')"});
+      });
+    }else if(node.tagName==='OPTION'){
+      var isCur=(node.value===cur);
+      buttons.push({color:isCur?'#00e5ff':'#e8eaf6',label:(isCur?'✓ ':'')+esc(node.textContent),onclick:"pickSelectSheetOpt('"+_escAttr(selId)+"','"+_escAttr(node.value)+"')"});
+    }
   });
+  _showActionSheet({ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:title,buttons:buttons});
 }
 function pickSelectSheetOpt(selId,val){
   var sel=$(selId);if(!sel)return;
