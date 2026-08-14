@@ -2880,7 +2880,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.145';
+const APP_VERSION='v02.146';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -8103,15 +8103,24 @@ function extractField(src,data,field){
       };
       return tgMap[field]||'';
     case 'igdb':
+      // v02.146：使用者實測回報IGDB搜尋帶入後平台欄位是空的，追查後發現GAS後端的
+      // igdbProxy()其實早就把資料拆解整理成扁平物件回傳（platform直接是字串、
+      // release_date已格式化成YYYY/MM/DD、還準備了meta給顯示用），但這裡原本寫的是
+      // IGDB原始API那種巢狀格式（data.platforms[0].name、data.first_release_date
+      // 時間戳記等），欄位名稱完全對不上，導致平台/開發商/發行商/發售日/類型這幾個
+      // 欄位一直悄悄抓空——不只影響這次新增的搜尋功能，crossRefLookupPromise既有的
+      // IGDB跨源比對也一樣中招，只是那邊有其他資料源互相補位沒那麼明顯。改成對照
+      // 後端實際回傳的扁平欄位；release_date順便把後端的/分隔符統一成App其他地方用的
+      // -分隔符（沿用原本用時間戳記换算出來的格式）。
       var igMap={
         primary_name:data.name||'',
-        platform:(data.platforms&&data.platforms[0]&&data.platforms[0].name)||'',
-        developer:(data.involved_companies&&data.involved_companies.filter(function(c){return c.developer;})[0]&&data.involved_companies.filter(function(c){return c.developer;})[0].company&&data.involved_companies.filter(function(c){return c.developer;})[0].company.name)||'',
-        publisher:(data.involved_companies&&data.involved_companies.filter(function(c){return c.publisher;})[0]&&data.involved_companies.filter(function(c){return c.publisher;})[0].company&&data.involved_companies.filter(function(c){return c.publisher;})[0].company.name)||'',
-        release_date:(data.first_release_date?new Date(data.first_release_date*1000).toISOString().slice(0,10):'')||'',
-        genre:(data.genres&&data.genres.map(function(g){return g.name;}).join(', '))||'',
+        platform:data.platform||'',
+        developer:data.developer||'',
+        publisher:data.publisher||'',
+        release_date:(data.release_date||'').replace(/\//g,'-'),
+        genre:data.genre||'',
         summary:data.summary||'',
-        ref_link:data.url||'',
+        ref_link:'', // 後端目前沒有回傳IGDB網址欄位，留空
         cover_url:data.cover_url||''
       };
       return igMap[field]||'';
@@ -9607,13 +9616,12 @@ function manualSearchDB(){
   });
 }
 function _showManualSearchPicker(games){
+  // v02.146：直接用後端igdbProxy()已經準備好的meta欄位（格式是「平台 · 年份」），
+  // 不要自己憑錯誤的巢狀結構假設重組一次——這正是平台欄位原本沒顯示出來的原因。
   _showActionSheet({
     ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'選擇搜尋結果（'+games.length+' 筆，點選帶入表單）',
     buttons:games.slice(0,20).map(function(g,i){
-      var plat=(g.platforms&&g.platforms[0]&&g.platforms[0].name)||'';
-      var yr=g.first_release_date?new Date(g.first_release_date*1000).getFullYear():'';
-      var meta=[plat,yr].filter(Boolean).join('　');
-      var label=esc(g.name||'（無名稱）')+(meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(meta)+'</span>':'');
+      var label=esc(g.name||'（無名稱）')+(g.meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(g.meta)+'</span>':'');
       return {color:'#e8eaf6',label:label,onclick:'manualSearchPick('+i+')'};
     })
   });
