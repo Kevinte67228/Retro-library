@@ -1,8 +1,8 @@
-const CACHE_NAME = 'retrovault-v02-137';
+const CACHE_NAME = 'retrovault-v02-142';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './RetroVault_v02_137_index.html',
+  './RetroVault_v02_142_index.html',
   './manifest.json',
   './manual.html',
   './bg.webp'
@@ -20,7 +20,12 @@ const STATIC_ASSETS = [
 // 走獨立的快取優先策略，不受版號 CACHE_NAME 影響（換版本不會被清空，圖片不需要跟著
 // 應用程式版本一起失效）。
 const IMG_CACHE_NAME = 'retrovault-img-v1';
-const IMG_CACHE_MAX = 240; // 上限筆數，避免快取無止盡成長佔用裝置容量；用簡單FIFO汰換
+// v02.142：使用者實測回報圖片載入偏慢，查證後發現240筆上限對現在的收藏量（300+件）明顯
+// 偏小——而且同一張圖在不同畫面（卡片/詳情頁/燈箱）會用不同尺寸參數，對Drive來說是不同
+// 網址、會各自佔用一個快取名額，實際覆蓋到的「收藏件數」又比240筆的字面數字更少，快取
+// 因此更容易被擠爆、造成本來不該再打網路的圖片重新被踢出去。上調到400筆，緩解這個容量
+// 跟收藏量對不上的問題；仍然保留上限（不是無限），避免佔用裝置容量沒有節制。
+const IMG_CACHE_MAX = 400; // 上限筆數，避免快取無止盡成長佔用裝置容量；用簡單FIFO汰換
 // 舊的（Cache API本身沒有內建LRU，真要做需要額外記錄每筆的存取時間，對縮圖快取這種
 // 時效性不高的用途不成比例，FIFO已經夠用）。
 
