@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.04';
+const APP_VERSION='v03.05';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -10847,6 +10847,13 @@ function barAIFill(bc,hint,hasGB){
 // ── 圖片 slot（封面/封底/側邊）──
 var _imgSlot='cover'; // 目前選中的 slot
 var _slotImgs={cover:null,back:null,spine:null}; // 各 slot 的 File 物件
+// v02.159：使用者實測回報縮圖預覽有記憶體洩漏——renderSlotThumbs()每次重繪都會
+// createObjectURL()建立一個新的暫時網址，但從來沒有對應的revokeObjectURL()釋放。
+// 全站其他4處用到createObjectURL的地方都有搭配釋放，只有這裡沒有。單次建檔可能不明顯，
+// 但連續建很多筆時，舊的縮圖網址會一直堆積在記憶體裡不釋放。加上這個快取，追蹤各slot
+// 目前正在使用的blob網址（含對應的File物件），只有File真的變了才建立新網址並釋放舊的，
+// 沒變的話直接重用——同時避免不必要的churn，也修正洩漏。
+var _slotThumbUrls={cover:null,back:null,spine:null};
 
 function setImgSlot(slot){
   _imgSlot=slot;
@@ -10875,10 +10882,22 @@ function renderSlotThumbs(){
     var has=!!_slotImgs[s];
     var inner;
     if(has){
-      var url=URL.createObjectURL(_slotImgs[s]);
+      // v02.159：只有這個slot的File真的變了才建立新的blob網址（並釋放舊的），沒變的話
+      // 直接重用快取的網址——避免每次重繪都對「沒動過」的slot也重新createObjectURL。
+      var cached=_slotThumbUrls[s];
+      var url;
+      if(cached&&cached.file===_slotImgs[s]){
+        url=cached.url;
+      }else{
+        if(cached&&cached.url)URL.revokeObjectURL(cached.url);
+        url=URL.createObjectURL(_slotImgs[s]);
+        _slotThumbUrls[s]={file:_slotImgs[s],url:url};
+      }
       inner='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover">'+
             '<button class="tslot-del" onclick="event.stopPropagation();clearSlot(\''+s+'\')" type="button">\u2715</button>';
     }else{
+      // slot是空的：如果之前有殘留的blob網址（剛被清空），釋放掉
+      if(_slotThumbUrls[s]&&_slotThumbUrls[s].url){URL.revokeObjectURL(_slotThumbUrls[s].url);_slotThumbUrls[s]=null;}
       inner='<div class="tslot-ph">'+lbls[s]+'</div>';
     }
     return '<div class="tslot'+(has?'':' empty')+sel+'" onclick="setImgSlot(\''+s+'\')">'+
@@ -10897,6 +10916,10 @@ function clearSlot(slot,ev){
 }
 
 function resetSlots(){
+  // v02.159：重置前先釋放所有還沒清掉的blob網址，避免殘留（例如使用者拍到一半取消、
+  // 換分類重來）
+  Object.keys(_slotThumbUrls).forEach(function(s){if(_slotThumbUrls[s]&&_slotThumbUrls[s].url)URL.revokeObjectURL(_slotThumbUrls[s].url);});
+  _slotThumbUrls={cover:null,back:null,spine:null};
   _slotImgs={cover:null,back:null,spine:null};
   _imgSlot='cover';
   renderSlotThumbs();
