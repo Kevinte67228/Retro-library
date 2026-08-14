@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.03';
+const APP_VERSION='v03.04';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9572,16 +9572,17 @@ function aiWebCopyAndOpen(destId){
   if(!d)return;
   _aiWebSelectedDest=destId;_aiWebRenderDests(); // v02.07：點擊後立即點亮對應晶片
   var promptTxt=_aiWebBuildPrompt(subject);
-  var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁：\n1. 在輸入框「貼上」提示詞並送出\n2. 複製 AI 回覆的 JSON 內容\n3. 回到 RetroVault 貼到下方框裡，按「解析並匯入」\n\n按「確定」開啟 '+d.label+'。';
-  function openIt(){
-    var a=document.createElement('a');
-    a.href=d.url;a.target='_blank';a.rel='noopener noreferrer';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-  }
+  // v02.158：拿掉每次使用都要多點一下的原生confirm()阻斷對話框，改成複製成功後直接
+  // 開啟AI網頁＋用toast提示接下來的步驟，跟全站其他地方（toast取代原生對話框）的風格
+  // 一致，減少已經熟悉流程的使用者每次都要多按一次「確定」的摩擦。外部連結開啟沿用
+  // 既有的_openExternal()共用函式（v02.152已經確認過比window.open()更可靠跳出PWA，
+  // 不用另外重寫一次同樣的邏輯）。
   navigator.clipboard.writeText(promptTxt).then(function(){
-    if(confirm(notice))openIt();
+    toast('已複製提示詞 ✓ 即將開啟 '+d.label+'，貼上並送出後把回覆貼回這裡','ok',4500);
+    _openExternal(d.url);
   }).catch(function(){
-    if(confirm('無法自動複製提示詞（瀏覽器限制），請進入 '+d.label+' 後手動描述需求。\n\n按「確定」開啟 '+d.label+'。'))openIt();
+    toast('複製失敗（瀏覽器限制），請進入 '+d.label+' 後手動描述需求','er',4500);
+    _openExternal(d.url);
   });
 }
 // 貼上 AI 回覆 → extractJson() 容錯解析 → 預填手動建檔表單
@@ -9604,24 +9605,34 @@ function aiWebParseAndImport(){
   var cat=_selectedType||'遊戲';
   var subtype=_selectedSubtype||'';
   var fields=_aiWebCoreFields(cat,subtype);
-  var filled=0;
+  var filled=0,matched=0,skippedExisting=0;
   fields.forEach(function(f){
     var k=f[0];
     var v=_aiStr(res[k]);
     if(!v||v==='無'||v==='未知'||v==='N/A')return;
+    matched++;
+    // v02.158：只補空欄，不覆蓋使用者已經輸入/修改過的內容，跟全站其他資料匯入流程
+    // （manualSearchPick／huntSearchPick／_mergeDbIntoEntry）一致的既有慣例——原本這裡
+    // 是無條件覆寫entry[k]=v，如果使用者貼上第一輪AI回覆後手動修正過某個欄位，
+    // 之後又貼了第二輪回覆（例如換個提示詞再問一次），手動修正的內容會被悄悄蓋掉。
+    if(entry[k]){skippedExisting++;return;}
     if(k==='genre')v=matchGenreMulti(v)||v;
     entry[k]=v;
     entry._src=entry._src||{};entry._src[k]='ai';
     filled++;
   });
-  if(!filled){
+  if(!matched){
     if(st){st.style.display='block';st.style.color='#ff5252';st.textContent='沒有解析到可用的欄位資料，請確認 AI 回覆的 key 是否正確';}
     toast('沒有解析到可用的欄位','er',4000);
     return;
   }
   hideAllSecs();
   showForm('AI 網頁查詢');
-  toast('✓ 已匯入 '+filled+' 個欄位','ok',2500);
+  if(filled){
+    toast('✓ 已匯入 '+filled+' 個欄位'+(skippedExisting?'（'+skippedExisting+' 個欄位已有內容，未覆蓋）':''),'ok',3000);
+  }else{
+    toast('AI 回覆的欄位都已經有內容，沒有變更','',3000);
+  }
 }
 function initManualMode(){
   pickTypeAndPlatform('manual',function(type,platform){
