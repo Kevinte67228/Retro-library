@@ -1698,6 +1698,17 @@ body{
             <span style="font-size:12px;color:#7986cb" id="form-src">來源：—</span>
             <button class="btn bo bs" onclick="clearForm()" type="button">清除</button>
           </div>
+          <!-- v02.144：使用者要求在「手動建檔」加入輔助搜尋功能——查IGDB（既有已串接的正式
+               API，不是爬網頁）取得候選清單讓使用者自己挑，不是自動選第一筆。只在手動建檔
+               模式顯示，其他建檔路徑（條碼/AI辨識等）本來就有自己的資料來源，不需要這個。 -->
+          <div id="manual-search-wrap" style="display:none;padding:0 16px 12px;border-bottom:1px solid #1e2a45;margin-bottom:12px">
+            <div style="font-size:12px;color:#7986cb;margin-bottom:6px">🔍 搜尋資料庫帶入（輔助功能，選填）</div>
+            <div style="display:flex;gap:8px">
+              <input class="fi" id="manual-search-inp" type="text" placeholder="輸入品名搜尋（例：薩爾達傳說）" style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();manualSearchDB();}">
+              <button class="btn bp" style="flex:0 0 auto;padding:0 16px" onclick="manualSearchDB()" type="button">搜尋</button>
+            </div>
+            <div id="manual-search-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:8px"></div>
+          </div>
           <div id="hunt-aifill-wrap" style="display:none;padding:0 16px 10px">
             <button class="btn bp bw" onclick="huntConvertAIFill()" type="button">✨ AI 補齊資料</button>
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
@@ -2869,7 +2880,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.143';
+const APP_VERSION='v02.144';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9573,6 +9584,63 @@ function initManualMode(){
     showForm('手動建檔');
   });
 }
+// v02.144：手動建檔的輔助搜尋功能——查IGDB（既有已串接的正式API）取得候選清單，讓使用者
+// 自己挑對的那一筆帶入表單，不是自動選第一筆。IGDB的igdb_search本來就會回傳整包候選
+// （r.games陣列），先前其他呼叫端（crossRefLookupPromise等）都只取r.games[0]自動選最佳
+// 猜測，這裡刻意改成把完整清單show給使用者自己選。
+var _manualSearchResults=[];
+function manualSearchDB(){
+  var inp=$('manual-search-inp');var q=inp?inp.value.trim():'';
+  if(!q){toast('請輸入品名','er');return;}
+  if(!(cfg.iid&&cfg.isec)){toast('請先到設定頁填入 IGDB（Twitch）憑證才能使用這個功能','er',4000);return;}
+  var st=$('manual-search-status');
+  if(st){st.style.display='block';st.textContent='查詢中...';}
+  shPost({action:'igdb_search',q:q,client_id:cfg.iid,client_secret:cfg.isec}).then(function(r){
+    if(st)st.style.display='none';
+    var games=(r&&r.games)||[];
+    if(!games.length){toast('查無結果，資料庫可能沒有收錄，建議改用手動輸入','er',4000);return;}
+    _manualSearchResults=games;
+    _showManualSearchPicker(games);
+  }).catch(function(e){
+    if(st)st.style.display='none';
+    toast('查詢失敗：'+((e&&e.message)||'請稍後再試'),'er',4000);
+  });
+}
+function _showManualSearchPicker(games){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'選擇搜尋結果（'+games.length+' 筆，點選帶入表單）',
+    buttons:games.slice(0,20).map(function(g,i){
+      var plat=(g.platforms&&g.platforms[0]&&g.platforms[0].name)||'';
+      var yr=g.first_release_date?new Date(g.first_release_date*1000).getFullYear():'';
+      var meta=[plat,yr].filter(Boolean).join('　');
+      var label=esc(g.name||'（無名稱）')+(meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(meta)+'</span>':'');
+      return {color:'#e8eaf6',label:label,onclick:'manualSearchPick('+i+')'};
+    })
+  });
+}
+function manualSearchPick(idx){
+  var g=_manualSearchResults&&_manualSearchResults[idx];
+  if(!g)return;
+  closeSelectSheet();
+  // v02.144：沿用既有的extractField('igdb',...)欄位對照表（跟其他IGDB呼叫端共用同一份
+  // 對照邏輯，不重新寫一次），組出扁平的db物件後交給既有的_mergeDbIntoEntry(db)共用合併
+  // 規則處理——這樣事實欄位/版本欄位/圖片來源優先權這些既有的保護邏輯都會一併套用，
+  // 不用另外重寫一次合併規則、也不會因為兩處各自實作而不一致（這正是_mergeDbIntoEntry
+  // 當初被抽成共用函式要修的問題）。
+  var db={};
+  ['primary_name','platform','developer','publisher','release_date','genre','summary','ref_link','cover_url'].forEach(function(k){
+    var v=extractField('igdb',g,k);
+    if(v)db[k]=v;
+  });
+  if(db.primary_name)entry.primary_name=db.primary_name;
+  if(db.genre)entry.genre=matchGenreMulti(db.genre)||db.genre;
+  if(db.ref_link)entry.ref_link=db.ref_link;
+  _mergeDbIntoEntry(db);
+  if(db.cover_url&&!entry.cover_img)entry.cover_img=db.cover_url; // 只補空欄，不覆蓋使用者已有的封面
+  _carrySelPlat();_carrySelRegion();_carrySelSubtype();
+  renderForm();
+  toast('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存','ok',3500);
+}
 // ── 數位下載版：貼上商店連結自動抓資料（v42.14）──
 function initDigitalLinkMode(){
   pickTypeAndPlatform('digital-link',function(type,platform){
@@ -11955,6 +12023,8 @@ function showForm(src){
   // 手動建檔直接進表單，保留返回列；其他模式表單階段隱藏（用底部 ✕）
   var _mbb=$('mode-back-bar');
   if(_mbb)_mbb.style.display=(src==='手動建檔')?'flex':'none';
+  var _msw=$('manual-search-wrap');
+  if(_msw)_msw.style.display=(src==='手動建檔')?'block':'none';
   $('form-sec').style.display='block';$('form-src').textContent='來源：'+src;
   // 尋寶轉入表單顯示「AI 補齊」鈕（其他建檔流程沿用 img-sec 內的 AI 鈕）
   var _haf=$('hunt-aifill-wrap');if(_haf)_haf.style.display=(src.indexOf('尋寶轉入')>=0)?'block':'none';
