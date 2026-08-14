@@ -962,6 +962,9 @@ function addRow(row, type, fields) {
     return (v !== undefined && v !== null) ? v : '';
   });
   // 圖片欄：base64 → 上傳 Drive，格子改存 file ID
+  // v02.154：圖片上傳留在鎖外面——這段慢（上傳到Drive），且不會跟其他請求搶「寫入試算表
+  // 的哪一列」這件事衝突，鎖只需要護住appendRow+getLastRow那一小段，鎖住的時間越短，
+  // 平行請求排隊等鎖的時間就越少。
   const imgs = {};
   IMG_COLS.forEach(function(col) {
     const idx = headers.indexOf(col);
@@ -974,15 +977,30 @@ function addRow(row, type, fields) {
     padded[eiIdxAdd] = processedAdd.json;
     imgs[EXTRA_IMG_COL] = processedAdd.json;
   }
-  sheet.appendRow(padded);
-  const newRow = sheet.getLastRow();
-  // created_at 防呆（E1）：強制該格為純文字格式並以字串重寫，避免 Sheets 自動把
-  // 「YYYY/MM/DD HH:MM」判定為日期型別、回讀時序列化成 UTC ISO（建檔時間編碼亂掉的根因）
-  const _caIdx = headers.indexOf('created_at');
-  if (_caIdx >= 0) {
-    const _caCell = sheet.getRange(newRow, _caIdx + 1);
-    _caCell.setNumberFormat('@');
-    _caCell.setValue(String(padded[_caIdx]));
+  // v02.154：App前端要平行儲存批次建檔的多筆項目，原本appendRow()寫入後緊接著
+  // getLastRow()去問「我剛寫的是第幾列」，如果兩個請求幾乎同時執行，可能發生A還沒問到
+  // 自己寫的列號、B已經先appendRow完成，導致A的getLastRow()問到的其實是B剛寫的那一列，
+  // 回傳給前端錯誤的rowNum，之後前端操作這筆看似剛存好的項目時可能誤動到別筆資料。
+  // 用LockService.getScriptLock()把「寫入＋確認列號」這段關鍵區間鎖起來，同一時間只有
+  // 一個請求能執行這段，其餘平行送來的請求會排隊等待，確保每個請求問到的列號一定是
+  // 自己剛寫的那一列。等30秒還拿不到鎖就直接丟例外（避免使用者卡住等到天荒地老，讓
+  // 前端的錯誤處理接手告知失敗、之後重試即可）。
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  let newRow;
+  try {
+    sheet.appendRow(padded);
+    newRow = sheet.getLastRow();
+    // created_at 防呆（E1）：強制該格為純文字格式並以字串重寫，避免 Sheets 自動把
+    // 「YYYY/MM/DD HH:MM」判定為日期型別、回讀時序列化成 UTC ISO（建檔時間編碼亂掉的根因）
+    const _caIdx = headers.indexOf('created_at');
+    if (_caIdx >= 0) {
+      const _caCell = sheet.getRange(newRow, _caIdx + 1);
+      _caCell.setNumberFormat('@');
+      _caCell.setValue(String(padded[_caIdx]));
+    }
+  } finally {
+    lock.releaseLock();
   }
   // 取出實際寫入的 uuid（第二欄）
   const uuidIdx = headers.indexOf('uuid');
