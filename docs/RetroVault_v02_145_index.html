@@ -601,16 +601,19 @@ body{
 #det-fab-wrap.show{display:flex}
 #det-fab-main{flex:0 0 auto;width:48px;padding:10px 0;color:#7986cb;font-weight:900;font-size:15px}
 #det-fab-main.open-ind{color:#ce93d8;border-color:#ce93d8}
-#det-lens-fab,#det-barcode-fab,#det-cd-fab{
+/* v02.141：使用者實測回報編輯表單頁的「拍照辨識」（粉紅色相機圖示）在這個情境用不到——
+   這裡是編輯「已經存在、已經辨識過」的收藏項目，不是像尋寶頁那樣要從零辨識未知商品，
+   AI重新辨識整個商品在這個情境沒有實際用途。拿掉這顆按鈕，保留條碼查詢跟日系資料庫查詢
+   （這兩個是查特定欄位/補資料，情境上仍然合理）。 */
+#det-barcode-fab,#det-cd-fab{
   width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
-#det-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
 #det-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
 #det-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:10px;overflow:hidden}
 #det-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-#det-lens-fab svg,#det-barcode-fab svg{width:24px;height:24px}
-#det-fab-wrap.open #det-lens-fab,#det-fab-wrap.open #det-barcode-fab,#det-fab-wrap.open #det-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#det-barcode-fab svg{width:24px;height:24px}
+#det-fab-wrap.open #det-barcode-fab,#det-fab-wrap.open #det-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
 #dprev-float{left:8px}
 #dnext-float{right:8px}
 .dnav-float.off{opacity:.2;pointer-events:none}
@@ -717,16 +720,17 @@ body{
 #hunt-fab-wrap{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:300;display:flex;flex-direction:column-reverse;align-items:center;gap:12px}
 #hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #hunt-fab-main:active{transform:scale(.93)}
-#hunt-lens-fab,#hunt-barcode-fab,#hunt-cd-fab{
+#hunt-lens-fab,#hunt-barcode-fab,#hunt-cd-fab,#hunt-add-fab{
   width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
 #hunt-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
 #hunt-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
 #hunt-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:12px;overflow:hidden}
+#hunt-add-fab{background:linear-gradient(135deg,#b388ff,#7c4dff);color:#fff;box-shadow:0 6px 18px rgba(124,77,255,.45)}
 #hunt-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-#hunt-lens-fab svg,#hunt-barcode-fab svg{width:26px;height:26px}
-#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#hunt-lens-fab svg,#hunt-barcode-fab svg,#hunt-add-fab svg{width:26px;height:26px}
+#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab,#hunt-fab-wrap.open #hunt-add-fab{opacity:1;transform:scale(1);pointer-events:auto}
 #hunt-fab-wrap.open #hunt-fab-main{transform:rotate(90deg)}
 #hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
@@ -738,13 +742,11 @@ body{
 .hunt-toolbar-row{display:flex;gap:6px;align-items:center}
 .hunt-toolbar-row.select{flex:1}
 .hunt-toolbar-row.select .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-.hunt-act-add{flex:0 0 auto;min-height:44px;padding:0 14px;white-space:nowrap;font-size:13px}
 .hunt-act-icon{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#141b30;border:1px solid #2a3a5a;border-radius:10px;color:#9fa8c8;cursor:pointer;padding:0}
 .hunt-act-icon:active{transform:scale(.94)}
 @media(max-width:430px){
   #pg-hunt #hunt-sticky .hd{padding-left:14px;padding-right:14px}
   .hunt-actionbar{padding:8px 12px 0;gap:6px}
-  .hunt-act-add{padding:0 12px;font-size:12px;min-height:42px}
   .hunt-act-icon{width:42px;height:42px}
   .hunt-toolbar-row.select .btn{min-height:42px;font-size:12px}
 }
@@ -1696,6 +1698,17 @@ body{
             <span style="font-size:12px;color:#7986cb" id="form-src">來源：—</span>
             <button class="btn bo bs" onclick="clearForm()" type="button">清除</button>
           </div>
+          <!-- v02.144：使用者要求在「手動建檔」加入輔助搜尋功能——查IGDB（既有已串接的正式
+               API，不是爬網頁）取得候選清單讓使用者自己挑，不是自動選第一筆。只在手動建檔
+               模式顯示，其他建檔路徑（條碼/AI辨識等）本來就有自己的資料來源，不需要這個。 -->
+          <div id="manual-search-wrap" style="display:none;padding:0 16px 12px;border-bottom:1px solid #1e2a45;margin-bottom:12px">
+            <div style="font-size:12px;color:#7986cb;margin-bottom:6px">🔍 搜尋資料庫帶入（輔助功能，選填）</div>
+            <div style="display:flex;gap:8px">
+              <input class="fi" id="manual-search-inp" type="text" placeholder="輸入品名搜尋（例：薩爾達傳說）" style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();manualSearchDB();}">
+              <button class="btn bp" style="flex:0 0 auto;padding:0 16px" onclick="manualSearchDB()" type="button">搜尋</button>
+            </div>
+            <div id="manual-search-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:8px"></div>
+          </div>
           <div id="hunt-aifill-wrap" style="display:none;padding:0 16px 10px">
             <button class="btn bp bw" onclick="huntConvertAIFill()" type="button">✨ AI 補齊資料</button>
             <div style="font-size:10px;color:#7986cb;text-align:center;margin-top:4px">依名稱／平台向 AI 查詢，自動填入空白欄位</div>
@@ -1704,7 +1717,6 @@ body{
           <div id="det-fab-wrap">
             <button id="det-cd-fab" onclick="detFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
             <button id="det-barcode-fab" onclick="detFabAction('openBarcodeWebSearch')" aria-label="條碼/品名查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
-            <button id="det-lens-fab" onclick="detFabAction('huntLensStart')" aria-label="拍照辨識" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
           </div>
           <div id="save-bar">
             <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
@@ -2477,7 +2489,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="openReleaseCal()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售</button>
+              <button type="button" onclick="window.open(_gamerskyReleaseUrl(),'_blank')" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2494,6 +2506,10 @@ body{
       <div id="hunt-body"></div>
       <div id="hunt-fab-wrap">
         <button id="hunt-fab-main" onclick="toggleHuntFab()" aria-label="更多功能" type="button">•••</button>
+        <!-- v02.140：使用者要求把頂部工具列的「＋新增」整合進浮動按鈕群組，不要再獨立放在
+             搜尋列旁邊。放在離主按鈕最近的位置（展開時最先看到、最好點），因為手動新增追蹤
+             目標估計是最常用的動作，比另外三個查詢類捷徑更優先。 -->
+        <button id="hunt-add-fab" onclick="huntFabAction('huntStartAdd')" aria-label="新增追蹤目標" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
         <button id="hunt-cd-fab" onclick="huntFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
         <button id="hunt-barcode-fab" onclick="huntFabAction('openBarcodeWebSearch')" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
         <button id="hunt-lens-fab" onclick="huntFabAction('huntLensStart')" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
@@ -2864,7 +2880,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.139';
+const APP_VERSION='v02.145';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4210,8 +4226,20 @@ function _regionCtx(){
 }
 // v24.03：分類感知。_selectedType 已知（遊戲/攻略/主機/週邊）→ 注入該類角色＋schema＋固定 category，勿改判；
 //          未知 → 退回原「遊戲 vs 攻略」自由分類（含兩類 schema）。區域上下文不變。
-function buildSYS(){
-  var st=catInternal(_selectedType);
+// v02.140：使用者實測回報尋寶頁某個遊戲AI辨識一直沒有結果，懷疑跟建檔頁的選擇有關。
+// 追查後確認是真的：原本buildSYS()直接讀全域變數_selectedType（建檔頁Step1選的分類），
+// 沒有參數化。尋寶頁的AI辨識（_huntStartAIFill）呼叫callAIVision→callGemini時完全沒有
+// 傳customSystem，因此也是呼叫這個buildSYS()——但_selectedType是建檔頁專用的全域變數，
+// 切換到尋寶頁時完全沒有被重置或跟尋寶項目的實際分類同步！如果使用者上一次在建檔頁
+// 選的是「書籍」，之後去尋寶頁幫一款遊戲拍照，AI收到的系統提示會是「本次建檔類別已由
+// 使用者指定為【書籍】...category固定填書籍」——等於叫AI硬把遊戲照片當書籍辨識，規格
+// 完全兜不上，導致辨識失敗或給出空結果。
+// 修正：把核心邏輯抽成接受明確cat參數的_buildSYSForCat(cat)，buildSYS()改成薄包裝、
+// 沿用_selectedType（建檔頁既有呼叫全部不用改，行為完全不變，零回歸風險）；尋寶頁改成
+// 呼叫_buildSYSForCat(_huntEntry.target_cat)，用尋寶項目自己實際指定的分類，不再受
+// 建檔頁殘留的全域變數影響。
+function _buildSYSForCat(_st){
+  var st=catInternal(_st);
   var cat=_aiSpecFor(st)?st:'';
   var head,catBlocks;
   if(cat){
@@ -4224,6 +4252,7 @@ function buildSYS(){
   }
   return head+'\n\n'+_SYS_COMMON+'\n\n'+catBlocks+'\n\n'+_SYS_TAIL+_regionCtx();
 }
+function buildSYS(){return _buildSYSForCat(_selectedType);}
 
 // 🤖🤖🤖 ═══ AI 辨識區塊 END（1/2）═══ 🤖🤖🤖
 
@@ -6615,7 +6644,7 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region,imageDa
 }
 
 // 統一 AI 視覺辨識入口（依 cfg.aipref 選擇引擎），回傳 Promise<res>
-function callAIVision(parts){
+function callAIVision(parts,opts){
   var pref=cfg.aipref||'gemini';
   // 從 parts 取出圖片 base64 和文字
   var imgPart=parts.filter(function(p){return p.inlineData;})[0];
@@ -6626,7 +6655,7 @@ function callAIVision(parts){
 
   function gptCall(){
     var msgs=[
-      {role:'system',content:buildSYS()}, // v23.03 動態注入區域上下文
+      {role:'system',content:(opts&&opts.customSystem)||buildSYS()}, // v02.140：optional customSystem，尋寶頁靠這個帶入正確分類
       {role:'user',content:[
         {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+coverB64}},
         {type:'text',text:promptTxt}
@@ -6651,28 +6680,28 @@ function callAIVision(parts){
     });
   }
 
-  if(pref==='gemini')return callGemini(parts);
+  if(pref==='gemini')return callGemini(parts,opts);
   if(pref==='gpt'){
     if(hasGPT)return gptCall();
-    return callGemini(parts); // 無 GPT key 退回 Gemini
+    return callGemini(parts,opts); // 無 GPT key 退回 Gemini
   }
   if(pref==='hybrid'){
     if(cfg.gkey&&cfg.dskey)return callHybridVision(parts).catch(function(e){
       console.warn('[Hybrid]'+e.message+'，轉一般 Gemini 辨識');
-      return callGemini(parts);
+      return callGemini(parts,opts);
     });
-    return callGemini(parts); // 缺 Gemini 或 DeepSeek 金鑰時退回一般 Gemini
+    return callGemini(parts,opts); // 缺 Gemini 或 DeepSeek 金鑰時退回一般 Gemini
   }
   // auto：智慧分流 — 亞洲版/CJK封面優先嘗試混合模式（Gemini OCR+DeepSeek校正），其他情況 GPT 優先失敗轉 Gemini
   if((_region==='jp'||_region==='asia')&&cfg.gkey&&cfg.dskey){
     return callHybridVision(parts).catch(function(e){
       console.warn('[Hybrid-auto]'+e.message+'，轉一般辨識');
-      if(hasGPT)return gptCall().catch(function(){return callGemini(parts);});
-      return callGemini(parts);
+      if(hasGPT)return gptCall().catch(function(){return callGemini(parts,opts);});
+      return callGemini(parts,opts);
     });
   }
-  if(hasGPT)return gptCall().catch(function(e){console.warn('[GPT]'+e.message+'，轉 Gemini');return callGemini(parts);});
-  return callGemini(parts);
+  if(hasGPT)return gptCall().catch(function(e){console.warn('[GPT]'+e.message+'，轉 Gemini');return callGemini(parts,opts);});
+  return callGemini(parts,opts);
 }
 function testDeepSeek(){
   var key=($('c-dskey')&&$('c-dskey').value||'').trim();
@@ -9555,6 +9584,102 @@ function initManualMode(){
     showForm('手動建檔');
   });
 }
+// v02.144：手動建檔的輔助搜尋功能——查IGDB（既有已串接的正式API）取得候選清單，讓使用者
+// 自己挑對的那一筆帶入表單，不是自動選第一筆。IGDB的igdb_search本來就會回傳整包候選
+// （r.games陣列），先前其他呼叫端（crossRefLookupPromise等）都只取r.games[0]自動選最佳
+// 猜測，這裡刻意改成把完整清單show給使用者自己選。
+var _manualSearchResults=[];
+function manualSearchDB(){
+  var inp=$('manual-search-inp');var q=inp?inp.value.trim():'';
+  if(!q){toast('請輸入品名','er');return;}
+  if(!(cfg.iid&&cfg.isec)){toast('請先到設定頁填入 IGDB（Twitch）憑證才能使用這個功能','er',4000);return;}
+  var st=$('manual-search-status');
+  if(st){st.style.display='block';st.textContent='查詢中...';}
+  shPost({action:'igdb_search',q:q,client_id:cfg.iid,client_secret:cfg.isec}).then(function(r){
+    if(st)st.style.display='none';
+    var games=(r&&r.games)||[];
+    if(!games.length){toast('查無結果，資料庫可能沒有收錄，建議改用手動輸入','er',4000);return;}
+    _manualSearchResults=games;
+    _showManualSearchPicker(games);
+  }).catch(function(e){
+    if(st)st.style.display='none';
+    toast('查詢失敗：'+((e&&e.message)||'請稍後再試'),'er',4000);
+  });
+}
+function _showManualSearchPicker(games){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'選擇搜尋結果（'+games.length+' 筆，點選帶入表單）',
+    buttons:games.slice(0,20).map(function(g,i){
+      var plat=(g.platforms&&g.platforms[0]&&g.platforms[0].name)||'';
+      var yr=g.first_release_date?new Date(g.first_release_date*1000).getFullYear():'';
+      var meta=[plat,yr].filter(Boolean).join('　');
+      var label=esc(g.name||'（無名稱）')+(meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(meta)+'</span>':'');
+      return {color:'#e8eaf6',label:label,onclick:'manualSearchPick('+i+')'};
+    })
+  });
+}
+function manualSearchPick(idx){
+  var g=_manualSearchResults&&_manualSearchResults[idx];
+  if(!g)return;
+  closeSelectSheet();
+  // v02.144：沿用既有的extractField('igdb',...)欄位對照表（跟其他IGDB呼叫端共用同一份
+  // 對照邏輯，不重新寫一次），組出扁平的db物件後交給既有的_mergeDbIntoEntry(db)共用合併
+  // 規則處理——這樣事實欄位/版本欄位/圖片來源優先權這些既有的保護邏輯都會一併套用，
+  // 不用另外重寫一次合併規則、也不會因為兩處各自實作而不一致（這正是_mergeDbIntoEntry
+  // 當初被抽成共用函式要修的問題）。
+  var db={};
+  ['primary_name','platform','developer','publisher','release_date','genre','summary','ref_link','cover_url'].forEach(function(k){
+    var v=extractField('igdb',g,k);
+    if(v)db[k]=v;
+  });
+  if(db.primary_name)entry.primary_name=db.primary_name;
+  if(db.genre)entry.genre=matchGenreMulti(db.genre)||db.genre;
+  if(db.ref_link)entry.ref_link=db.ref_link;
+  entry._src=entry._src||{};
+  _mergeDbIntoEntry(db);
+  if(db.cover_url&&!entry.cover_img)entry.cover_img=db.cover_url; // 只補空欄，不覆蓋使用者已有的封面
+  _carrySelPlat();_carrySelRegion();_carrySelSubtype();
+  renderForm();
+  // v02.145：使用者實測回報IGDB帶入後沒有接續AI補全空白欄位，確認是真的漏了——全站其他
+  // 「確認拿到一筆資料庫命中」的路徑（例如條碼查詢命中後的barAIFill）都會接著跑AI補全
+  // 剩餘欄位（中文名/簡介/年齡分級等IGDB沒有的資訊），唯獨這裡漏接。這裡的AI補全刻意
+  // 不要求要有封面圖才觸發——那個限制是給「還沒有任何資料庫命中、純靠OCR/視覺」的情境用
+  // 的，這裡已經有IGDB的確定命中當依據，跟barAIFill同樣性質，補上同一套流程。
+  var _type=entry.category||_selectedType||'遊戲';
+  var _checkFields=_checkFieldsFor(_type);
+  var _missing=_checkFields.filter(function(k){
+    var val=(''+(entry[k]||'')).trim();
+    if(!val)return true;
+    if(k==='summary'&&!/[\u4e00-\u9fff]/.test(val))return true; // 簡介無中文→視為缺，讓AI補中文
+    return false;
+  });
+  if(_missing.length&&entry.primary_name){
+    loading('AI 補全其餘 '+_missing.length+' 個欄位...');
+    var _fillTimeout=new Promise(function(res){setTimeout(function(){res({});},15000);});
+    Promise.race([aiKnowledgeFill(entry.primary_name,entry.platform,_missing,_type,_region),_fillTimeout]).then(function(ai){
+      noLoad();
+      var aiFilled=0;
+      if(ai&&typeof ai==='object'){
+        normalizeLanguageFields(ai);
+        _missing.forEach(function(k){
+          var v=ai[k];
+          var val=_aiStr(v);
+          if(val&&val!=='無'&&val!=='未知'){
+            if(k==='genre')val=matchGenreMulti(val);
+            entry[k]=val;entry._src[k]='ai';aiFilled++;
+          }
+        });
+      }
+      renderForm();
+      toast(aiFilled?('已帶入「'+(db.primary_name||'')+'」，AI 補全了 '+aiFilled+' 個欄位，請確認後儲存'):('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存'),'ok',3500);
+    }).catch(function(){
+      noLoad();
+      toast('已帶入「'+(db.primary_name||'')+'」，AI 補全失敗，請確認欄位後儲存','',3500);
+    });
+  }else{
+    toast('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存','ok',3500);
+  }
+}
 // ── 數位下載版：貼上商店連結自動抓資料（v42.14）──
 function initDigitalLinkMode(){
   pickTypeAndPlatform('digital-link',function(type,platform){
@@ -11699,7 +11824,7 @@ function _batchRenderList(){
     // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
     // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
-      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'"'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;object-fit:cover;border-radius:8px;'+(editable?'cursor:pointer;':'')+'background:#141b30;flex-shrink:0" title="'+(editable?'點擊編輯／補拍照片':'')+'">'
+      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" loading="lazy"'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;object-fit:cover;border-radius:8px;'+(editable?'cursor:pointer;':'')+'background:#141b30;flex-shrink:0" title="'+(editable?'點擊編輯／補拍照片':'')+'">'
       : '<div'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;'+(editable?'cursor:pointer;':'')+'color:#7986cb;text-align:center;line-height:1.2" title="'+(editable?'點擊拍照補上圖片':'')+'">📷</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
@@ -11937,6 +12062,8 @@ function showForm(src){
   // 手動建檔直接進表單，保留返回列；其他模式表單階段隱藏（用底部 ✕）
   var _mbb=$('mode-back-bar');
   if(_mbb)_mbb.style.display=(src==='手動建檔')?'flex':'none';
+  var _msw=$('manual-search-wrap');
+  if(_msw)_msw.style.display=(src==='手動建檔')?'block':'none';
   $('form-sec').style.display='block';$('form-src').textContent='來源：'+src;
   // 尋寶轉入表單顯示「AI 補齊」鈕（其他建檔流程沿用 img-sec 內的 AI 鈕）
   var _haf=$('hunt-aifill-wrap');if(_haf)_haf.style.display=(src.indexOf('尋寶轉入')>=0)?'block':'none';
@@ -14136,7 +14263,7 @@ function renderShelf(){
       var shortTitle=title.length>10?title.slice(0,10)+'…':title;
       var sold=d.collect_status==='已出售'?'<div class="shelf-sold-tag">已出售</div>':'';
       var thumb=coverImg
-        ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
+        ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'" loading="lazy">'
         :'<div class="shelf-cover-default" style="background:'+color+'">'+esc(shortTitle)+'</div>';
       return '<div style="flex-shrink:0">'+
         '<div class="shelf-cover" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
@@ -14984,7 +15111,7 @@ function renderGlist(){
     var _icon=_catMeta(cat,d.subtype).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt=""></div>':
+      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt="" loading="lazy"></div>':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
@@ -16933,8 +17060,8 @@ function renderHuntToolbar(){
       '<button class="btn bo" onclick="huntToggleSelect()" type="button">取消</button></div>';
   }else{
     if(bar)bar.classList.remove('selmode');
+    // v02.140：「＋新增」已整合進右下角浮動按鈕群組（hunt-add-fab），這裡不再重複放置。
     tb.innerHTML='<div class="hunt-toolbar-row">'+
-      '<button class="btn bp hunt-act-add" onclick="huntStartAdd()" type="button">＋ 新增</button>'+
       '<button class="hunt-act-icon" title="大量刪除" aria-label="大量刪除" onclick="huntToggleSelect()" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>'+
       '<div style="position:relative;display:inline-block">'+
         '<button class="hunt-act-icon" id="hunt-menu-btn" title="更多功能" aria-label="更多功能" onclick="toggleHuntMenu()" type="button" style="font-size:20px;line-height:1">⋯</button>'+
@@ -17038,28 +17165,18 @@ function huntCardHtml(h){
 }
 
 // ── 新增目標：選類型/平台 → 掃條碼(可略過) → 拍照 → 填名稱 ──
-// ══ v54.04：近期發售瀏覽（獨立小工具，串接 IGDB，與收藏庫無關）══
-// IGDB 平台 ID 對照表：若查詢結果異常（尤其 Switch 2，較新平台 ID 可能隨 IGDB 資料庫調整），可在此调整數字
-var RC_PLATFORMS=[
-  {id:130,label:'Switch'},
-  {id:508,label:'Switch 2'},
-  {id:167,label:'PS5'},
-  {id:48,label:'PS4'},
-  {id:169,label:'Xbox Series'},
-  {id:6,label:'PC'}
-];
-// v54.10：地區篩選（region）因IGDB資料完整度不足連續查空，改用「支援語言」取代，
-// 語意從「該地區發售」變成「支援該語言」；用IGDB語言名稱字串直接比對，不用猜數字ID
-var RC_LANGS=[
-  {id:'',label:'全部'},
-  {id:'Japanese',label:'🇯🇵 支援日文'},
-  {id:'English',label:'🇺🇸 支援英文'},
-  {id:'Chinese (Traditional)',label:'🇹🇼 支援繁中'},
-  {id:'Chinese (Simplified)',label:'🇨🇳 支援簡中'}
-];
-var _rcPlatform=RC_PLATFORMS[0].id;
-var _rcLang=RC_LANGS[0].id;
-var _rcYear,_rcMonth; // 1-12
+// v02.143：使用者要求把「近期發售」從原本串接 IGDB API 的獨立瀏覽小工具，改成直接連結到
+// 游民星空的月度發售表（外部網站，不在 App 內解析/爬取內容，純粹是開新分頁）。IGDB 憑證跟
+// 其他用途（AI辨識跨源查詢、封面圖片補源）完全不受影響，只有這個「近期發售」按鈕本身的
+// 行為改變，原本的IGDB發售日曆功能（openReleaseCal/rcLoad等）已整段移除。
+// 網址依「現在的年月」動態組出來，不寫死成使用者當初給的那個月份，不然過一個月連結就會
+// 指向舊月份的清單。
+function _gamerskyReleaseUrl(){
+  var d=new Date();
+  var y=d.getFullYear();
+  var m=d.getMonth()+1;
+  return 'https://ku.gamersky.com/release/pc_'+y+(m<10?'0'+m:m)+'/';
+}
 // ══ v54.44：條碼查詢改為 8 個目的地，分兩排。
 // 第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）：標準網址查詢格式，直接開網頁帶入條碼。
 // 第二排 AI 助手（DeepSeek/GPT/Gemini/Claude）：實測證實 AI 聊天網頁不支援用網址帶入文字，
@@ -17273,73 +17390,6 @@ document.addEventListener('visibilitychange',function(){
     }
   }
 });
-function openReleaseCal(){
-  if(!cfg.iid||!cfg.isec){toast('請先到設定頁填入 IGDB（Twitch）憑證','er',4000);return;}
-  var now=new Date();
-  if(!_rcYear){_rcYear=now.getFullYear();_rcMonth=now.getMonth()+1;}
-  var ov=$('release-cal-ov');if(ov)ov.style.display='flex';
-  _rcRenderTabs();
-  _rcRenderLangTabs();
-  rcLoad();
-}
-function closeReleaseCal(){var ov=$('release-cal-ov');if(ov)ov.style.display='none';}
-function _rcRenderTabs(){
-  var wrap=$('rc-plat-tabs');if(!wrap)return;
-  wrap.innerHTML=RC_PLATFORMS.map(function(p){
-    var on=p.id===_rcPlatform;
-    return '<button type="button" onclick="rcSelectPlatform('+p.id+')" style="flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;white-space:nowrap;'+
-      (on?'background:#00e5ff;color:#001018;border:none;font-weight:700':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(p.label)+'</button>';
-  }).join('');
-}
-function _rcRenderLangTabs(){
-  var wrap=$('rc-region-tabs');if(!wrap)return;
-  wrap.innerHTML=RC_LANGS.map(function(r){
-    var on=r.id===_rcLang; // 兩邊都是字串，直接嚴格比較即可
-    return '<button type="button" onclick="rcSelectLang(\''+r.id+'\')" style="flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:11px;white-space:nowrap;'+
-      (on?'background:#69f0ae;color:#001018;border:none;font-weight:700':'background:#141b30;color:#7986cb;border:1px solid #1e2a45')+'">'+esc(r.label)+'</button>';
-  }).join('');
-}
-function rcSelectPlatform(id){_rcPlatform=id;_rcRenderTabs();rcLoad();}
-function rcSelectLang(id){_rcLang=id;_rcRenderLangTabs();rcLoad();}
-function rcShiftMonth(delta){
-  _rcMonth+=delta;
-  if(_rcMonth>12){_rcMonth=1;_rcYear++;}
-  if(_rcMonth<1){_rcMonth=12;_rcYear--;}
-  rcLoad();
-}
-function rcLoad(){
-  var ym=_rcYear+'-'+(_rcMonth<10?'0'+_rcMonth:_rcMonth);
-  var lab=$('rc-ym-label');if(lab)lab.textContent=_rcYear+'年'+_rcMonth+'月';
-  var listEl=$('rc-list');
-  if(listEl)listEl.innerHTML='<div style="text-align:center;color:#7986cb;padding:40px 0">查詢中...</div>';
-  shPost({action:'igdb_upcoming',platform_id:_rcPlatform,ym:ym,lang:_rcLang,client_id:cfg.iid,client_secret:cfg.isec}).then(function(res){
-    if(!listEl)return;
-    if(!res||!res.ok){
-      listEl.innerHTML='<div style="text-align:center;color:#ff5252;padding:40px 16px;font-size:13px">查詢失敗：'+esc((res&&res.error)||'未知錯誤')+'</div>';
-      return;
-    }
-    var games=res.games||[];
-    if(!games.length){
-      listEl.innerHTML='<div style="text-align:center;color:#7986cb;padding:40px 16px;font-size:13px">這個月這個平台查無發售資料<br>（IGDB 對日系獨佔／小廠遊戲收錄不一定完整）</div>';
-      return;
-    }
-    listEl.innerHTML=games.map(function(g){
-      var img=g.cover_url?('<img src="'+esc(g.cover_url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#141b30">'):
-        '<div style="width:44px;height:44px;border-radius:8px;flex-shrink:0;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:18px">🎮</div>';
-      var metaParts=[g.release_date,g.developer||g.publisher,g.genres].filter(Boolean);
-      var clickAttr=g.igdb_url?(' onclick="window.open(\''+esc(g.igdb_url)+'\',\'_blank\')" style="cursor:pointer"'):'';
-      return '<div'+clickAttr+' style="padding:10px 0;border-bottom:1px solid #1e2a45'+(g.igdb_url?';cursor:pointer':'')+'">'+
-        '<div style="display:flex;align-items:center;gap:10px">'+
-          img+
-          '<div style="flex:1;min-width:0;font-size:14px;font-weight:600;color:#e8eaf6">'+esc(g.name||'')+(g.igdb_url?' <span style="color:#00e5ff;font-size:11px">↗</span>':'')+'</div>'+
-        '</div>'+
-        (metaParts.length?('<div style="font-size:11px;color:#7986cb;margin-top:6px;margin-left:54px">'+esc(metaParts.join(' · '))+'</div>'):'')+
-      '</div>';
-    }).join('');
-  }).catch(function(){
-    if(listEl)listEl.innerHTML='<div style="text-align:center;color:#ff5252;padding:40px 16px;font-size:13px">查詢失敗，請檢查網路後重試</div>';
-  });
-}
 function huntStartAdd(){
   pickTypeAndPlatform('hunt',function(type,platform){
     _huntEntry={category:'狩獵',target_cat:type,platform:platform||'',primary_name:'',jp_name:'',barcode:'',notes:'',summary:'',region:'',cover_img:'',sightings:'[]',hunt_status:'追蹤中'};
@@ -17444,13 +17494,17 @@ function _huntStartAIFill(){
   _huntAIStatusUpdate('AI 辨識中，請稍候…');
   var barcode=(_huntEntry&&_huntEntry.barcode)||'';
   var dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  // v02.140：用尋寶項目自己的target_cat組系統提示，不要沿用callAIVision預設呼叫的
+  // buildSYS()（那個讀的是建檔頁的全域_selectedType，跟這裡的尋寶項目毫無關係，見
+  // _buildSYSForCat定義處的完整說明）。
+  var huntSys=_buildSYSForCat((_huntEntry&&_huntEntry.target_cat)||'遊戲');
   var aiP=_imgToB64(_huntPhoto).then(function(b64){
     if(!b64)return null;
     var hint=barcode?('條碼：'+barcode+'。'):'';
     return callAIVision([
       {inlineData:{mimeType:'image/jpeg',data:b64.split(',')[1]}},
       {text:hint+'請辨識這款商品，輸出所有已知欄位 JSON（品名、平台、簡介等）。'}
-    ]).catch(function(){return null;});
+    ],{customSystem:huntSys}).catch(function(){return null;});
   }).catch(function(){return null;});
   Promise.all([dbP,aiP]).then(function(r){
     var db=r[0]||{},ai=r[1]||null;
@@ -18556,24 +18610,6 @@ function _imgToB64(src){
     <button class="btn bo bw" style="width:100%;border-color:#00e5ff;color:#00e5ff;margin-bottom:16px" id="cd-web-go-btn" onclick="goCdWebSearch()" type="button">🔍 查詢</button>
     <div id="cd-web-results"></div>
   </div>
-</div>
-
-<!-- ══ 近期發售瀏覽 overlay（v54.04：獨立小工具，串接 IGDB，與收藏庫無關）══ -->
-<div id="release-cal-ov" style="display:none;position:fixed;inset:0;z-index:330;background:#080c18;flex-direction:column">
-  <div style="padding:14px 16px;border-bottom:1px solid #1e2a45;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-    <div style="font-size:16px;font-weight:700;color:#00e5ff">📅 近期發售瀏覽</div>
-    <button type="button" onclick="closeReleaseCal()" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:50%;font-size:16px">✕</button>
-  </div>
-  <div style="padding:10px 16px;border-bottom:1px solid #1e2a45;flex-shrink:0">
-    <div id="rc-plat-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px"></div>
-    <div id="rc-region-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px"></div>
-    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:4px">
-      <button type="button" onclick="rcShiftMonth(-1)" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:8px;font-size:16px">‹</button>
-      <div id="rc-ym-label" style="font-size:15px;font-weight:700;color:#e8eaf6;min-width:100px;text-align:center">2026年7月</div>
-      <button type="button" onclick="rcShiftMonth(1)" style="background:#141b30;border:1px solid #1e2a45;color:#e8eaf6;width:32px;height:32px;border-radius:8px;font-size:16px">›</button>
-    </div>
-  </div>
-  <div id="rc-list" style="flex:1;overflow-y:auto;padding:12px 16px 40px"></div>
 </div>
 
 <!-- ══ 圖片裁切器 overlay ══ -->

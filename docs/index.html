@@ -2880,7 +2880,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.144';
+const APP_VERSION='v02.145';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9635,11 +9635,50 @@ function manualSearchPick(idx){
   if(db.primary_name)entry.primary_name=db.primary_name;
   if(db.genre)entry.genre=matchGenreMulti(db.genre)||db.genre;
   if(db.ref_link)entry.ref_link=db.ref_link;
+  entry._src=entry._src||{};
   _mergeDbIntoEntry(db);
   if(db.cover_url&&!entry.cover_img)entry.cover_img=db.cover_url; // 只補空欄，不覆蓋使用者已有的封面
   _carrySelPlat();_carrySelRegion();_carrySelSubtype();
   renderForm();
-  toast('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存','ok',3500);
+  // v02.145：使用者實測回報IGDB帶入後沒有接續AI補全空白欄位，確認是真的漏了——全站其他
+  // 「確認拿到一筆資料庫命中」的路徑（例如條碼查詢命中後的barAIFill）都會接著跑AI補全
+  // 剩餘欄位（中文名/簡介/年齡分級等IGDB沒有的資訊），唯獨這裡漏接。這裡的AI補全刻意
+  // 不要求要有封面圖才觸發——那個限制是給「還沒有任何資料庫命中、純靠OCR/視覺」的情境用
+  // 的，這裡已經有IGDB的確定命中當依據，跟barAIFill同樣性質，補上同一套流程。
+  var _type=entry.category||_selectedType||'遊戲';
+  var _checkFields=_checkFieldsFor(_type);
+  var _missing=_checkFields.filter(function(k){
+    var val=(''+(entry[k]||'')).trim();
+    if(!val)return true;
+    if(k==='summary'&&!/[\u4e00-\u9fff]/.test(val))return true; // 簡介無中文→視為缺，讓AI補中文
+    return false;
+  });
+  if(_missing.length&&entry.primary_name){
+    loading('AI 補全其餘 '+_missing.length+' 個欄位...');
+    var _fillTimeout=new Promise(function(res){setTimeout(function(){res({});},15000);});
+    Promise.race([aiKnowledgeFill(entry.primary_name,entry.platform,_missing,_type,_region),_fillTimeout]).then(function(ai){
+      noLoad();
+      var aiFilled=0;
+      if(ai&&typeof ai==='object'){
+        normalizeLanguageFields(ai);
+        _missing.forEach(function(k){
+          var v=ai[k];
+          var val=_aiStr(v);
+          if(val&&val!=='無'&&val!=='未知'){
+            if(k==='genre')val=matchGenreMulti(val);
+            entry[k]=val;entry._src[k]='ai';aiFilled++;
+          }
+        });
+      }
+      renderForm();
+      toast(aiFilled?('已帶入「'+(db.primary_name||'')+'」，AI 補全了 '+aiFilled+' 個欄位，請確認後儲存'):('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存'),'ok',3500);
+    }).catch(function(){
+      noLoad();
+      toast('已帶入「'+(db.primary_name||'')+'」，AI 補全失敗，請確認欄位後儲存','',3500);
+    });
+  }else{
+    toast('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存','ok',3500);
+  }
 }
 // ── 數位下載版：貼上商店連結自動抓資料（v42.14）──
 function initDigitalLinkMode(){
