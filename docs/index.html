@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.152';
+const APP_VERSION='v02.153';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11984,8 +11984,21 @@ function batchCancelItemEdit(){
 // 但跳過單筆存檔的 confirm() 對話框（重複/序號模糊已在確認清單階段由使用者決定）。
 function batchSaveAll(){
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
-  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok';});
-  if(!toSave.length){toast('沒有勾選任何項目','er');return;}
+  // v02.153：使用者實測回報儲存階段中斷（斷網/切背景/當機）後沒有續傳保護——解析階段
+  // 每解析完一件就存草稿，中斷可以接續；但儲存階段完全沒有，重新打開後系統不知道「已經
+  // 存了幾件」，重按「儲存全部」可能把已經成功寫進試算表的項目再存一次，造成重複資料。
+  // 加上!it.saved過濾已經成功存過的項目；失敗的項目不標記saved，會在下次「儲存全部」
+  // 時正常重試。
+  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok'&&!it.saved;});
+  if(!toSave.length){
+    var _alreadySaved=_batchItems.some(function(it){return it.saved;});
+    if(_alreadySaved){
+      toast('這批項目已經全部儲存完成','ok',3000);
+      _batchClearDraft();resetAll();showPg('col');
+      return;
+    }
+    toast('沒有勾選任何項目','er');return;
+  }
   if(_saving)return;
   _saving=true;
   var _backupEntry=entry;
@@ -11994,9 +12007,12 @@ function batchSaveAll(){
     if(i>=toSave.length){
       _saving=false;entry=_backupEntry;
       localforage.setItem('gv_col',col).catch(function(){});updateStats();
+      // v02.153：累計「這批全部項目」裡標記為saved的總數（含這次中斷前已經存過的），
+      // 不是只算這次執行存了幾件，避免中斷續傳時使用者被顯示的數字誤導成「才存了這麼少」。
+      var _totalSaved=_batchItems.filter(function(it){return it.saved;}).length;
       _batchClearDraft(); // v02.100：整批已經存進收藏，草稿不再需要，避免下次進批次模式又問「要不要接續」
       noLoad();
-      toast('批次儲存完成：成功 '+savedCount+' 件'+(failCount?'，失敗 '+failCount+' 件':''),'ok',4500);
+      toast('批次儲存完成：成功 '+_totalSaved+' 件'+(failCount?'，本次失敗 '+failCount+' 件':''),'ok',4500);
       var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
       resetAll();
       showPg('col');
@@ -12018,6 +12034,7 @@ function batchSaveAll(){
       shPost({action:'add',row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
         if(res.ok){
           savedCount++;
+          toSave[i].saved=true; // v02.153：標記這件已成功寫入試算表，避免中斷後重複儲存
           var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
           if(res.uuid&&!entry.uuid)entry.uuid=res.uuid;
           if(res.imgs){
@@ -12026,7 +12043,10 @@ function batchSaveAll(){
           }
           col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});
         }else{failCount++;}
-      }).catch(function(){failCount++;}).finally(function(){saveOne(i+1);});
+      }).catch(function(){failCount++;}).finally(function(){
+        _batchSaveDraft(); // v02.153：每次嘗試（不論成功失敗）都更新草稿進度，中斷後才能正確接續，不重複儲存
+        saveOne(i+1);
+      });
     });
   }
   saveOne(0);
