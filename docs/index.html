@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.05';
+const APP_VERSION='v03.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9909,26 +9909,35 @@ function scanSetStep(n){
 
 // 條碼掃到 → 進入步驟二
 function scanGoStep2(bc){
-  if(bc&&!confirmBarcodeDup(bc)){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-  _scanBC=bc;
-  var s1=$('scan-step1');if(s1)s1.style.display='none';
-  var s2=$('scan-step2');if(s2)s2.style.display='block';
-  // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
-  var _h2=$('scan-step2-hint');
-  if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
-  var badge=$('scan-bc-badge');
-  if(bc){
-    if(badge)badge.style.display='flex';
-    var num=$('scan-bc-num');if(num)num.textContent=bc;
-  }else{
-    if(badge)badge.style.display='none';
+  function _proceed(){
+    _scanBC=bc;
+    var s1=$('scan-step1');if(s1)s1.style.display='none';
+    var s2=$('scan-step2');if(s2)s2.style.display='block';
+    // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
+    var _h2=$('scan-step2-hint');
+    if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
+    var badge=$('scan-bc-badge');
+    if(bc){
+      if(badge)badge.style.display='flex';
+      var num=$('scan-bc-num');if(num)num.textContent=bc;
+    }else{
+      if(badge)badge.style.display='none';
+    }
+    var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
+    var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
+    var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
+    _scanImg=null;
+    _scanImgBack=null; // v02.33（C）
+    scanSetStep(2);
   }
-  var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
-  var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
-  var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
-  _scanImg=null;
-  _scanImgBack=null; // v02.33（C）
-  scanSetStep(2);
+  if(bc){
+    confirmBarcodeDup(bc).then(function(proceed){
+      if(!proceed){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
+      _proceed();
+    });
+  }else{
+    _proceed();
+  }
 }
 
 // 步驟二：拍照 / 相簿選圖
@@ -10337,9 +10346,16 @@ function comboScanFromBtn(){
 function comboSearchFromInput(){
   var bi=$('combo-bar-inp');var v=(bi&&bi.value||'').trim();
   if(!v&&!_scanImg&&!_scanImgBack){toast('請掃描／輸入條碼，或先拍攝封面/封底','er');return;}
-  if(v&&!confirmBarcodeDup(v)){return;} // 與原流程一致的重複條碼防護
-  _scanBC=v;
-  scanStep3AI();
+  if(v){
+    confirmBarcodeDup(v).then(function(proceed){
+      if(!proceed)return; // 與原流程一致的重複條碼防護
+      _scanBC=v;
+      scanStep3AI();
+    });
+  }else{
+    _scanBC=v;
+    scanStep3AI();
+  }
 }
 
 // ponytail: combo barcode scanning now uses the shared field scanner; keep old cleanup calls harmless.
@@ -10667,42 +10683,44 @@ function huntBarcodeScan(inputId){
 // ── 純掃條碼模式：掃到後直接查詢資料庫/AI，不需拍照 ──
 function onBarcode(bc){
   bc=(bc||'').trim();if(!bc){toast('條碼為空','er');return;}
-  if(!confirmBarcodeDup(bc)){restartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-  stopScanner();
+  confirmBarcodeDup(bc).then(function(proceed){
+    if(!proceed){restartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
+    stopScanner();
 
-  // 顯示已掃到的條碼
-  var br=$('bar-result');if(br)br.style.display='block';
-  var bv=$('bar-val');if(bv)bv.textContent=bc;
-  var bs=$('bar-status');if(bs)bs.textContent='條碼已鎖定，查詢中...';
+    // 顯示已掃到的條碼
+    var br=$('bar-result');if(br)br.style.display='block';
+    var bv=$('bar-val');if(bv)bv.textContent=bc;
+    var bs=$('bar-status');if(bs)bs.textContent='條碼已鎖定，查詢中...';
 
-  var isISBN=bc.startsWith('978')||bc.startsWith('979');
-  var type=_selectedType||'遊戲';
-  entry=Object.assign({},_defaultsFor(type),{category:type,barcode:bc});
-  toast('📷 '+(isISBN?'ISBN':'條碼')+' '+bc,'ok',2000);
-  // 震動回饋（掃描成功）
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
+    var isISBN=bc.startsWith('978')||bc.startsWith('979');
+    var type=_selectedType||'遊戲';
+    entry=Object.assign({},_defaultsFor(type),{category:type,barcode:bc});
+    toast('📷 '+(isISBN?'ISBN':'條碼')+' '+bc,'ok',2000);
+    // 震動回饋（掃描成功）
+    try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
 
-  // ISBN → 書籍資料庫查詢（v18.01 兩段式：openBD＋NDL → Open Library）
-  if(isISBN){
-    loading('ISBN 查詢中...');
-    bookLookupPromise(bc).then(function(bk){
-      noLoad();
-      if(bk){
-        entry=Object.assign(entry,bk);
-        toast('📚 ISBN 查詢成功','ok',3000);
-        showForm('ISBN 查詢');
-        aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
-      }else{
-        barAIFill(bc,'');
-      }
-    }).catch(function(){noLoad();barAIFill(bc,'');});
-    return;
-  }
+    // ISBN → 書籍資料庫查詢（v18.01 兩段式：openBD＋NDL → Open Library）
+    if(isISBN){
+      loading('ISBN 查詢中...');
+      bookLookupPromise(bc).then(function(bk){
+        noLoad();
+        if(bk){
+          entry=Object.assign(entry,bk);
+          toast('📚 ISBN 查詢成功','ok',3000);
+          showForm('ISBN 查詢');
+          aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
+        }else{
+          barAIFill(bc,'');
+        }
+      }).catch(function(){noLoad();barAIFill(bc,'');});
+      return;
+    }
 
-  // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
-  // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
-  loading('條碼查詢中...');
-  barWithGB(bc,'');
+    // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
+    // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
+    loading('條碼查詢中...');
+    barWithGB(bc,'');
+  });
 }
 
 // ── 純條碼 AI 補全（無圖片，只用條碼+名稱做文字搜尋）──
@@ -16745,14 +16763,40 @@ function checkBarcodeDup(bc){
   return col.filter(function(it){return (''+(it.data.barcode||'')).trim()===bc;});
 }
 // Req4a：掃到/輸入條碼時，若已存在於收藏庫則跳出確認。回傳 true 表示繼續建檔。
+// v02.160：把原生confirm()改成非同步的自訂彈窗，跟App其他地方（toast/自訂彈出選單）的
+// 視覺風格一致。跟AI網頁查詢那次拿掉的confirm()不同——這裡是真正的分支判斷（使用者選
+// 取消要中止流程），不能直接拿掉，改成回傳Promise的版本，呼叫端用.then()接續。
+function _customConfirm(title,message){
+  return new Promise(function(resolve){
+    var ov=document.getElementById('custom-confirm-ov');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='custom-confirm-ov';
+      ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:24px';
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML='<div style="background:#141b30;border:1px solid #2a3a5a;border-radius:16px;padding:20px;max-width:340px;width:100%">'+
+      '<div style="font-size:15px;font-weight:700;color:#e8eaf6;margin-bottom:10px;white-space:pre-line;line-height:1.5">'+esc(title)+'</div>'+
+      (message?'<div style="font-size:13px;color:#9fa8c8;margin-bottom:16px;white-space:pre-line;line-height:1.6">'+esc(message)+'</div>':'')+
+      '<div style="display:flex;gap:8px">'+
+        '<button id="custom-confirm-cancel" class="btn bo bw" type="button">取消</button>'+
+        '<button id="custom-confirm-ok" class="btn bp bw" type="button">確定</button>'+
+      '</div>'+
+    '</div>';
+    ov.style.display='flex';
+    var cleanup=function(v){ov.style.display='none';resolve(v);};
+    document.getElementById('custom-confirm-cancel').onclick=function(){cleanup(false);};
+    document.getElementById('custom-confirm-ok').onclick=function(){cleanup(true);};
+  });
+}
 function confirmBarcodeDup(bc){
   var dups=checkBarcodeDup(bc);
-  if(!dups.length)return true;
+  if(!dups.length)return Promise.resolve(true);
   var names=dups.slice(0,3).map(function(d){
     return '・'+(d.data.primary_name||d.data.zh_name||'未命名')+(d.data.platform?'（'+d.data.platform+'）':'');
   }).join('\n');
   var more=dups.length>3?('\n…等共 '+dups.length+' 筆'):'';
-  return confirm('⚠️ 該條碼已存在於收藏庫中：\n'+names+more+'\n\n是否仍要新增寫入資料庫？');
+  return _customConfirm('⚠️ 該條碼已存在於收藏庫中',names+more+'\n\n是否仍要新增寫入資料庫？');
 }
 
 // v02.129：字元層級Levenshtein編輯距離，供findDuplicate的模糊比對用。純JS實作，

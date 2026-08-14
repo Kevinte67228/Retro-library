@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.155';
+const APP_VERSION='v03.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9572,16 +9572,17 @@ function aiWebCopyAndOpen(destId){
   if(!d)return;
   _aiWebSelectedDest=destId;_aiWebRenderDests(); // v02.07：點擊後立即點亮對應晶片
   var promptTxt=_aiWebBuildPrompt(subject);
-  var notice='已複製查詢提示詞 ✓\n\n接下來會開啟 '+d.label+' 網頁：\n1. 在輸入框「貼上」提示詞並送出\n2. 複製 AI 回覆的 JSON 內容\n3. 回到 RetroVault 貼到下方框裡，按「解析並匯入」\n\n按「確定」開啟 '+d.label+'。';
-  function openIt(){
-    var a=document.createElement('a');
-    a.href=d.url;a.target='_blank';a.rel='noopener noreferrer';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-  }
+  // v02.158：拿掉每次使用都要多點一下的原生confirm()阻斷對話框，改成複製成功後直接
+  // 開啟AI網頁＋用toast提示接下來的步驟，跟全站其他地方（toast取代原生對話框）的風格
+  // 一致，減少已經熟悉流程的使用者每次都要多按一次「確定」的摩擦。外部連結開啟沿用
+  // 既有的_openExternal()共用函式（v02.152已經確認過比window.open()更可靠跳出PWA，
+  // 不用另外重寫一次同樣的邏輯）。
   navigator.clipboard.writeText(promptTxt).then(function(){
-    if(confirm(notice))openIt();
+    toast('已複製提示詞 ✓ 即將開啟 '+d.label+'，貼上並送出後把回覆貼回這裡','ok',4500);
+    _openExternal(d.url);
   }).catch(function(){
-    if(confirm('無法自動複製提示詞（瀏覽器限制），請進入 '+d.label+' 後手動描述需求。\n\n按「確定」開啟 '+d.label+'。'))openIt();
+    toast('複製失敗（瀏覽器限制），請進入 '+d.label+' 後手動描述需求','er',4500);
+    _openExternal(d.url);
   });
 }
 // 貼上 AI 回覆 → extractJson() 容錯解析 → 預填手動建檔表單
@@ -9604,24 +9605,34 @@ function aiWebParseAndImport(){
   var cat=_selectedType||'遊戲';
   var subtype=_selectedSubtype||'';
   var fields=_aiWebCoreFields(cat,subtype);
-  var filled=0;
+  var filled=0,matched=0,skippedExisting=0;
   fields.forEach(function(f){
     var k=f[0];
     var v=_aiStr(res[k]);
     if(!v||v==='無'||v==='未知'||v==='N/A')return;
+    matched++;
+    // v02.158：只補空欄，不覆蓋使用者已經輸入/修改過的內容，跟全站其他資料匯入流程
+    // （manualSearchPick／huntSearchPick／_mergeDbIntoEntry）一致的既有慣例——原本這裡
+    // 是無條件覆寫entry[k]=v，如果使用者貼上第一輪AI回覆後手動修正過某個欄位，
+    // 之後又貼了第二輪回覆（例如換個提示詞再問一次），手動修正的內容會被悄悄蓋掉。
+    if(entry[k]){skippedExisting++;return;}
     if(k==='genre')v=matchGenreMulti(v)||v;
     entry[k]=v;
     entry._src=entry._src||{};entry._src[k]='ai';
     filled++;
   });
-  if(!filled){
+  if(!matched){
     if(st){st.style.display='block';st.style.color='#ff5252';st.textContent='沒有解析到可用的欄位資料，請確認 AI 回覆的 key 是否正確';}
     toast('沒有解析到可用的欄位','er',4000);
     return;
   }
   hideAllSecs();
   showForm('AI 網頁查詢');
-  toast('✓ 已匯入 '+filled+' 個欄位','ok',2500);
+  if(filled){
+    toast('✓ 已匯入 '+filled+' 個欄位'+(skippedExisting?'（'+skippedExisting+' 個欄位已有內容，未覆蓋）':''),'ok',3000);
+  }else{
+    toast('AI 回覆的欄位都已經有內容，沒有變更','',3000);
+  }
 }
 function initManualMode(){
   pickTypeAndPlatform('manual',function(type,platform){
@@ -9898,26 +9909,35 @@ function scanSetStep(n){
 
 // 條碼掃到 → 進入步驟二
 function scanGoStep2(bc){
-  if(bc&&!confirmBarcodeDup(bc)){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-  _scanBC=bc;
-  var s1=$('scan-step1');if(s1)s1.style.display='none';
-  var s2=$('scan-step2');if(s2)s2.style.display='block';
-  // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
-  var _h2=$('scan-step2-hint');
-  if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
-  var badge=$('scan-bc-badge');
-  if(bc){
-    if(badge)badge.style.display='flex';
-    var num=$('scan-bc-num');if(num)num.textContent=bc;
-  }else{
-    if(badge)badge.style.display='none';
+  function _proceed(){
+    _scanBC=bc;
+    var s1=$('scan-step1');if(s1)s1.style.display='none';
+    var s2=$('scan-step2');if(s2)s2.style.display='block';
+    // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
+    var _h2=$('scan-step2-hint');
+    if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
+    var badge=$('scan-bc-badge');
+    if(bc){
+      if(badge)badge.style.display='flex';
+      var num=$('scan-bc-num');if(num)num.textContent=bc;
+    }else{
+      if(badge)badge.style.display='none';
+    }
+    var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
+    var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
+    var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
+    _scanImg=null;
+    _scanImgBack=null; // v02.33（C）
+    scanSetStep(2);
   }
-  var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
-  var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
-  var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
-  _scanImg=null;
-  _scanImgBack=null; // v02.33（C）
-  scanSetStep(2);
+  if(bc){
+    confirmBarcodeDup(bc).then(function(proceed){
+      if(!proceed){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
+      _proceed();
+    });
+  }else{
+    _proceed();
+  }
 }
 
 // 步驟二：拍照 / 相簿選圖
@@ -10326,9 +10346,16 @@ function comboScanFromBtn(){
 function comboSearchFromInput(){
   var bi=$('combo-bar-inp');var v=(bi&&bi.value||'').trim();
   if(!v&&!_scanImg&&!_scanImgBack){toast('請掃描／輸入條碼，或先拍攝封面/封底','er');return;}
-  if(v&&!confirmBarcodeDup(v)){return;} // 與原流程一致的重複條碼防護
-  _scanBC=v;
-  scanStep3AI();
+  if(v){
+    confirmBarcodeDup(v).then(function(proceed){
+      if(!proceed)return; // 與原流程一致的重複條碼防護
+      _scanBC=v;
+      scanStep3AI();
+    });
+  }else{
+    _scanBC=v;
+    scanStep3AI();
+  }
 }
 
 // ponytail: combo barcode scanning now uses the shared field scanner; keep old cleanup calls harmless.
@@ -10656,42 +10683,44 @@ function huntBarcodeScan(inputId){
 // ── 純掃條碼模式：掃到後直接查詢資料庫/AI，不需拍照 ──
 function onBarcode(bc){
   bc=(bc||'').trim();if(!bc){toast('條碼為空','er');return;}
-  if(!confirmBarcodeDup(bc)){restartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-  stopScanner();
+  confirmBarcodeDup(bc).then(function(proceed){
+    if(!proceed){restartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
+    stopScanner();
 
-  // 顯示已掃到的條碼
-  var br=$('bar-result');if(br)br.style.display='block';
-  var bv=$('bar-val');if(bv)bv.textContent=bc;
-  var bs=$('bar-status');if(bs)bs.textContent='條碼已鎖定，查詢中...';
+    // 顯示已掃到的條碼
+    var br=$('bar-result');if(br)br.style.display='block';
+    var bv=$('bar-val');if(bv)bv.textContent=bc;
+    var bs=$('bar-status');if(bs)bs.textContent='條碼已鎖定，查詢中...';
 
-  var isISBN=bc.startsWith('978')||bc.startsWith('979');
-  var type=_selectedType||'遊戲';
-  entry=Object.assign({},_defaultsFor(type),{category:type,barcode:bc});
-  toast('📷 '+(isISBN?'ISBN':'條碼')+' '+bc,'ok',2000);
-  // 震動回饋（掃描成功）
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
+    var isISBN=bc.startsWith('978')||bc.startsWith('979');
+    var type=_selectedType||'遊戲';
+    entry=Object.assign({},_defaultsFor(type),{category:type,barcode:bc});
+    toast('📷 '+(isISBN?'ISBN':'條碼')+' '+bc,'ok',2000);
+    // 震動回饋（掃描成功）
+    try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
 
-  // ISBN → 書籍資料庫查詢（v18.01 兩段式：openBD＋NDL → Open Library）
-  if(isISBN){
-    loading('ISBN 查詢中...');
-    bookLookupPromise(bc).then(function(bk){
-      noLoad();
-      if(bk){
-        entry=Object.assign(entry,bk);
-        toast('📚 ISBN 查詢成功','ok',3000);
-        showForm('ISBN 查詢');
-        aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
-      }else{
-        barAIFill(bc,'');
-      }
-    }).catch(function(){noLoad();barAIFill(bc,'');});
-    return;
-  }
+    // ISBN → 書籍資料庫查詢（v18.01 兩段式：openBD＋NDL → Open Library）
+    if(isISBN){
+      loading('ISBN 查詢中...');
+      bookLookupPromise(bc).then(function(bk){
+        noLoad();
+        if(bk){
+          entry=Object.assign(entry,bk);
+          toast('📚 ISBN 查詢成功','ok',3000);
+          showForm('ISBN 查詢');
+          aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
+        }else{
+          barAIFill(bc,'');
+        }
+      }).catch(function(){noLoad();barAIFill(bc,'');});
+      return;
+    }
 
-  // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
-  // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
-  loading('條碼查詢中...');
-  barWithGB(bc,'');
+    // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
+    // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
+    loading('條碼查詢中...');
+    barWithGB(bc,'');
+  });
 }
 
 // ── 純條碼 AI 補全（無圖片，只用條碼+名稱做文字搜尋）──
@@ -10836,6 +10865,13 @@ function barAIFill(bc,hint,hasGB){
 // ── 圖片 slot（封面/封底/側邊）──
 var _imgSlot='cover'; // 目前選中的 slot
 var _slotImgs={cover:null,back:null,spine:null}; // 各 slot 的 File 物件
+// v02.159：使用者實測回報縮圖預覽有記憶體洩漏——renderSlotThumbs()每次重繪都會
+// createObjectURL()建立一個新的暫時網址，但從來沒有對應的revokeObjectURL()釋放。
+// 全站其他4處用到createObjectURL的地方都有搭配釋放，只有這裡沒有。單次建檔可能不明顯，
+// 但連續建很多筆時，舊的縮圖網址會一直堆積在記憶體裡不釋放。加上這個快取，追蹤各slot
+// 目前正在使用的blob網址（含對應的File物件），只有File真的變了才建立新網址並釋放舊的，
+// 沒變的話直接重用——同時避免不必要的churn，也修正洩漏。
+var _slotThumbUrls={cover:null,back:null,spine:null};
 
 function setImgSlot(slot){
   _imgSlot=slot;
@@ -10864,10 +10900,22 @@ function renderSlotThumbs(){
     var has=!!_slotImgs[s];
     var inner;
     if(has){
-      var url=URL.createObjectURL(_slotImgs[s]);
+      // v02.159：只有這個slot的File真的變了才建立新的blob網址（並釋放舊的），沒變的話
+      // 直接重用快取的網址——避免每次重繪都對「沒動過」的slot也重新createObjectURL。
+      var cached=_slotThumbUrls[s];
+      var url;
+      if(cached&&cached.file===_slotImgs[s]){
+        url=cached.url;
+      }else{
+        if(cached&&cached.url)URL.revokeObjectURL(cached.url);
+        url=URL.createObjectURL(_slotImgs[s]);
+        _slotThumbUrls[s]={file:_slotImgs[s],url:url};
+      }
       inner='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover">'+
             '<button class="tslot-del" onclick="event.stopPropagation();clearSlot(\''+s+'\')" type="button">\u2715</button>';
     }else{
+      // slot是空的：如果之前有殘留的blob網址（剛被清空），釋放掉
+      if(_slotThumbUrls[s]&&_slotThumbUrls[s].url){URL.revokeObjectURL(_slotThumbUrls[s].url);_slotThumbUrls[s]=null;}
       inner='<div class="tslot-ph">'+lbls[s]+'</div>';
     }
     return '<div class="tslot'+(has?'':' empty')+sel+'" onclick="setImgSlot(\''+s+'\')">'+
@@ -10886,6 +10934,10 @@ function clearSlot(slot,ev){
 }
 
 function resetSlots(){
+  // v02.159：重置前先釋放所有還沒清掉的blob網址，避免殘留（例如使用者拍到一半取消、
+  // 換分類重來）
+  Object.keys(_slotThumbUrls).forEach(function(s){if(_slotThumbUrls[s]&&_slotThumbUrls[s].url)URL.revokeObjectURL(_slotThumbUrls[s].url);});
+  _slotThumbUrls={cover:null,back:null,spine:null};
   _slotImgs={cover:null,back:null,spine:null};
   _imgSlot='cover';
   renderSlotThumbs();
@@ -16711,14 +16763,40 @@ function checkBarcodeDup(bc){
   return col.filter(function(it){return (''+(it.data.barcode||'')).trim()===bc;});
 }
 // Req4a：掃到/輸入條碼時，若已存在於收藏庫則跳出確認。回傳 true 表示繼續建檔。
+// v02.160：把原生confirm()改成非同步的自訂彈窗，跟App其他地方（toast/自訂彈出選單）的
+// 視覺風格一致。跟AI網頁查詢那次拿掉的confirm()不同——這裡是真正的分支判斷（使用者選
+// 取消要中止流程），不能直接拿掉，改成回傳Promise的版本，呼叫端用.then()接續。
+function _customConfirm(title,message){
+  return new Promise(function(resolve){
+    var ov=document.getElementById('custom-confirm-ov');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='custom-confirm-ov';
+      ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:24px';
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML='<div style="background:#141b30;border:1px solid #2a3a5a;border-radius:16px;padding:20px;max-width:340px;width:100%">'+
+      '<div style="font-size:15px;font-weight:700;color:#e8eaf6;margin-bottom:10px;white-space:pre-line;line-height:1.5">'+esc(title)+'</div>'+
+      (message?'<div style="font-size:13px;color:#9fa8c8;margin-bottom:16px;white-space:pre-line;line-height:1.6">'+esc(message)+'</div>':'')+
+      '<div style="display:flex;gap:8px">'+
+        '<button id="custom-confirm-cancel" class="btn bo bw" type="button">取消</button>'+
+        '<button id="custom-confirm-ok" class="btn bp bw" type="button">確定</button>'+
+      '</div>'+
+    '</div>';
+    ov.style.display='flex';
+    var cleanup=function(v){ov.style.display='none';resolve(v);};
+    document.getElementById('custom-confirm-cancel').onclick=function(){cleanup(false);};
+    document.getElementById('custom-confirm-ok').onclick=function(){cleanup(true);};
+  });
+}
 function confirmBarcodeDup(bc){
   var dups=checkBarcodeDup(bc);
-  if(!dups.length)return true;
+  if(!dups.length)return Promise.resolve(true);
   var names=dups.slice(0,3).map(function(d){
     return '・'+(d.data.primary_name||d.data.zh_name||'未命名')+(d.data.platform?'（'+d.data.platform+'）':'');
   }).join('\n');
   var more=dups.length>3?('\n…等共 '+dups.length+' 筆'):'';
-  return confirm('⚠️ 該條碼已存在於收藏庫中：\n'+names+more+'\n\n是否仍要新增寫入資料庫？');
+  return _customConfirm('⚠️ 該條碼已存在於收藏庫中',names+more+'\n\n是否仍要新增寫入資料庫？');
 }
 
 // v02.129：字元層級Levenshtein編輯距離，供findDuplicate的模糊比對用。純JS實作，
@@ -17582,6 +17660,31 @@ function huntScanStep(){
     '</div>';
   huntStartScanner();
 }
+// v02.156：使用者實測評估後確認——原本掃到條碼只是存進_huntEntry.barcode，實際的
+// 資料庫查詢要等使用者「拍照」之後才會觸發（見下方_huntStartAIFill開頭的if(!_huntPhoto)
+// return）。但條碼本身就足以查到品名/平台等資料，不需要一定要有照片才查；如果使用者
+// 選擇略過拍照，條碼就白掃了。改成條碼一掃到就立刻查，跟拍照這個動作解耦。
+var _huntBarcodeDbCache=null; // {barcode, result} 快取，避免使用者接著又拍照時_huntStartAIFill重複查一次一樣的條碼
+function _huntBarcodeLookup(bc){
+  if(!bc)return;
+  _huntAIStatusUpdate('查詢條碼資料庫中…');
+  crossRefLookupPromise(bc,'').then(function(db){
+    db=db||{};
+    _huntBarcodeDbCache={barcode:bc,result:db};
+    if(_huntEntry){
+      // 只補空欄，不覆蓋使用者已經輸入的內容（此時通常是剛建立的空白項目，但保守起見
+      // 沿用全站一致的「不覆蓋既有內容」慣例）
+      Object.keys(db).forEach(function(k){if(db[k]&&!_huntEntry[k])_huntEntry[k]=db[k];});
+    }
+    _huntAIResult=db; // 沿用既有的_huntApplyAIResultIfFormOpen()/_huntApplyAIResultToEntry()機制，不用另外寫一套套用邏輯
+    var nm=db.primary_name||db.zh_name||db.jp_name;
+    _huntAIStatusUpdate(nm?('條碼查詢：'+nm):'條碼查無資料，可拍照或手動填寫',true);
+    _huntApplyAIResultIfFormOpen();
+  }).catch(function(){
+    _huntBarcodeDbCache={barcode:bc,result:{}};
+    _huntAIStatusUpdate('');
+  });
+}
 // hunt 尋寶掃描器（hunt-scan-video）：不支援/失敗皆靜默（不給 onUnsupported/onError）
 var _huntScan=createScanner({videoId:'hunt-scan-video',
   onDetect:function(bc){huntGotBarcode(bc);}});
@@ -17592,17 +17695,20 @@ function huntGotBarcode(bc){
   if(_huntEntry)_huntEntry.barcode=bc;
   if(bc){toast('📷 條碼 '+bc,'ok',1500);try{if(navigator.vibrate)navigator.vibrate([80,40,80]);}catch(e){}}
   huntStopScanner();huntPhotoStep();
+  if(bc)_huntBarcodeLookup(bc); // v02.156：條碼一掃到就立刻查資料庫，不用等使用者決定要不要拍照
 }
 function huntScanNext(){
   var inp=$('hunt-bc-inp');var v=inp?inp.value.trim():'';
   if(_huntEntry)_huntEntry.barcode=v;
   huntStopScanner();huntPhotoStep();
+  if(v)_huntBarcodeLookup(v); // v02.156：手動輸入條碼確認後同樣立刻查，跟掃描偵測到的路徑一致
 }
 function huntCancelAdd(){
   huntStopScanner();
   var ov=$('hunt-add-ov');if(ov)ov.classList.remove('on');
   _huntEntry=null;_huntPhoto='';_huntLensData=null;
   _huntAIResult=null;_huntAIBusy=false; // v02.85：避免下次尋寶記錄殘留上次的AI辨識結果
+  _huntBarcodeDbCache=null; // v02.156：避免下次尋寶記錄誤用上一筆殘留的條碼查詢快取
   _huntAIStatusUpdate(''); // v02.86：同步隱藏banner，避免殘留在畫面上
 }
 function huntPhotoStep(){
@@ -17648,7 +17754,14 @@ function _huntStartAIFill(){
   _huntAIResult=null;_huntAIBusy=true;
   _huntAIStatusUpdate('AI 辨識中，請稍候…');
   var barcode=(_huntEntry&&_huntEntry.barcode)||'';
-  var dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  // v02.156：如果條碼掃描階段已經查過同一個條碼（見_huntBarcodeLookup），直接重用快取
+  // 結果，不要再打一次一樣的資料庫查詢——避免使用者拍照時被迫多等一次重複的網路請求。
+  var dbP;
+  if(barcode&&_huntBarcodeDbCache&&_huntBarcodeDbCache.barcode===barcode){
+    dbP=Promise.resolve(_huntBarcodeDbCache.result||{});
+  }else{
+    dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  }
   // v02.140：用尋寶項目自己的target_cat組系統提示，不要沿用callAIVision預設呼叫的
   // buildSYS()（那個讀的是建檔頁的全域_selectedType，跟這裡的尋寶項目毫無關係，見
   // _buildSYSForCat定義處的完整說明）。
@@ -18015,9 +18128,77 @@ function huntFormStep(){
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">③ 目標資訊</div>'+
       '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+
+      _huntSearchBoxHtml()+
       _huntFormFieldsHtml(e,'hf')+
       '<button class="btn bp bw" onclick="huntSaveTarget()" type="button">儲存目標</button>'+
     '</div>';
+}
+// v02.157：使用者要求把「搜尋資料庫帶入」加進尋寶新增流程——尋寶場景常常沒有實體可以
+// 掃條碼/拍照（朋友推薦、清單上看到的還沒入手），名稱搜尋常常是唯一能取得資料的方式。
+// 直接沿用手動建檔那份「查IGDB、列候選讓使用者自己挑」的機制與說明內容
+// （toggleHelp('manualsearch')），不重新寫一套。
+function _huntSearchBoxHtml(){
+  return '<div style="padding:0 0 12px;border-bottom:1px solid #1e2a45;margin-bottom:12px">'+
+    '<div style="font-size:12px;color:#7986cb;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">'+
+      '<span>🔍 搜尋資料庫帶入（輔助功能，選填）</span>'+
+      '<button onclick="toggleHelp(\'manualsearch\')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<input class="fi" id="hunt-search-inp" type="text" placeholder="輸入品名搜尋" style="flex:1;font-size:13px" onkeydown="if(event.key===\'Enter\'){event.preventDefault();huntSearchDB();}">'+
+      '<button class="btn bp" style="flex:0 0 auto;padding:0 16px" onclick="huntSearchDB()" type="button">搜尋</button>'+
+    '</div>'+
+    '<div id="hunt-search-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:8px"></div>'+
+  '</div>';
+}
+var _huntSearchResults=[];
+function huntSearchDB(){
+  var inp=$('hunt-search-inp');var q=inp?inp.value.trim():'';
+  if(!q){toast('請輸入品名','er');return;}
+  if(!(cfg.iid&&cfg.isec)){toast('請先到設定頁填入 IGDB（Twitch）憑證才能使用這個功能','er',4000);return;}
+  var st=$('hunt-search-status');
+  if(st){st.style.display='block';st.textContent='查詢中...';}
+  shPost({action:'igdb_search',q:q,client_id:cfg.iid,client_secret:cfg.isec}).then(function(r){
+    if(st)st.style.display='none';
+    var games=(r&&r.games)||[];
+    if(!games.length){toast('查無結果，資料庫可能沒有收錄，建議改用手動輸入','er',4000);return;}
+    _huntSearchResults=games;
+    _showHuntSearchPicker(games);
+  }).catch(function(e){
+    if(st)st.style.display='none';
+    toast('查詢失敗：'+((e&&e.message)||'請稍後再試'),'er',4000);
+  });
+}
+function _showHuntSearchPicker(games){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'選擇搜尋結果（'+games.length+' 筆，點選帶入表單）',
+    buttons:games.slice(0,20).map(function(g,i){
+      var label=esc(g.name||'（無名稱）')+(g.meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(g.meta)+'</span>':'');
+      return {color:'#e8eaf6',label:label,onclick:'huntSearchPick('+i+')'};
+    })
+  });
+}
+function huntSearchPick(idx){
+  var g=_huntSearchResults&&_huntSearchResults[idx];
+  if(!g||!_huntEntry)return;
+  closeSelectSheet();
+  var db={};
+  ['primary_name','platform','summary'].forEach(function(k){
+    var v=extractField('igdb',g,k);
+    if(v)db[k]=v;
+  });
+  if(db.primary_name)_huntEntry.primary_name=db.primary_name;
+  // 平台比照_huntApplyAIResultToEntry既有慣例：只有使用者還沒主動改過平台（目前值仍
+  // 等於進入尋寶前的預設值）才覆蓋，已經手動改過的話尊重使用者選擇
+  if(db.platform&&_huntEntry.platform===_huntDefaultPlat)_huntEntry.platform=db.platform;
+  if(db.summary&&!_huntEntry.summary)_huntEntry.summary=db.summary;
+  // 這個功能只出現在Step3表單頁，此時表單一定是開著的，直接同步畫面欄位
+  var nameInp=$('hf-name');if(nameInp)nameInp.value=_huntEntry.primary_name||'';
+  var sumInp=$('hf-summary');if(sumInp&&db.summary)sumInp.value=_huntEntry.summary;
+  if(db.platform&&_huntEntry.platform===db.platform){
+    var platSel=$('hf-plat');if(platSel)platSel.value=_huntEntry.platform;
+    var platVal=$('hf-plat-val');if(platVal)platVal.textContent=_huntEntry.platform||'— 不指定 —';
+  }
+  toast('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存','ok',3500);
 }
 // v54.66：仿照收藏 _entryFields() 的做法，額外送出 by-name 的 fields 物件，
 // 讓 extra_images 等新欄位不受 HUNT_HDR/試算表欄位順序限制，只要試算表有對應欄位標題即可寫入
