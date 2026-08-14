@@ -717,16 +717,17 @@ body{
 #hunt-fab-wrap{position:fixed;right:18px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:300;display:flex;flex-direction:column-reverse;align-items:center;gap:12px}
 #hunt-fab-main{width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#7986cb,#5c6bc0);color:#fff;font-size:18px;font-weight:900;box-shadow:0 6px 18px rgba(121,134,203,.45);display:flex;align-items:center;justify-content:center;line-height:1;overflow:hidden}
 #hunt-fab-main:active{transform:scale(.93)}
-#hunt-lens-fab,#hunt-barcode-fab,#hunt-cd-fab{
+#hunt-lens-fab,#hunt-barcode-fab,#hunt-cd-fab,#hunt-add-fab{
   width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:scale(.4);pointer-events:none;transition:opacity .16s ease,transform .16s ease;
 }
 #hunt-lens-fab{background:linear-gradient(135deg,#ff6e9c,#ff4d7e);color:#fff;box-shadow:0 6px 18px rgba(255,77,126,.45)}
 #hunt-barcode-fab{background:linear-gradient(135deg,#69f0ae,#26c98a);color:#001a10;box-shadow:0 6px 18px rgba(105,240,174,.45)}
 #hunt-cd-fab{background:linear-gradient(135deg,#00e5ff,#00b8d4);color:#001018;box-shadow:0 6px 18px rgba(0,229,255,.45);padding:12px;overflow:hidden}
+#hunt-add-fab{background:linear-gradient(135deg,#b388ff,#7c4dff);color:#fff;box-shadow:0 6px 18px rgba(124,77,255,.45)}
 #hunt-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-#hunt-lens-fab svg,#hunt-barcode-fab svg{width:26px;height:26px}
-#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
+#hunt-lens-fab svg,#hunt-barcode-fab svg,#hunt-add-fab svg{width:26px;height:26px}
+#hunt-fab-wrap.open #hunt-lens-fab,#hunt-fab-wrap.open #hunt-barcode-fab,#hunt-fab-wrap.open #hunt-cd-fab,#hunt-fab-wrap.open #hunt-add-fab{opacity:1;transform:scale(1);pointer-events:auto}
 #hunt-fab-wrap.open #hunt-fab-main{transform:rotate(90deg)}
 #hunt-sticky{position:sticky;top:0;z-index:100;background:rgba(8,12,24,.96);border-bottom:1px solid #1e2a45;box-shadow:0 8px 18px rgba(0,0,0,.25);padding-bottom:10px}
 #pg-hunt #hunt-sticky .hd{position:static;top:auto;z-index:auto;border-bottom:none;padding-bottom:8px}
@@ -738,13 +739,11 @@ body{
 .hunt-toolbar-row{display:flex;gap:6px;align-items:center}
 .hunt-toolbar-row.select{flex:1}
 .hunt-toolbar-row.select .btn{flex:1;min-width:0;white-space:nowrap;min-height:44px;padding:0 8px;font-size:13px}
-.hunt-act-add{flex:0 0 auto;min-height:44px;padding:0 14px;white-space:nowrap;font-size:13px}
 .hunt-act-icon{flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#141b30;border:1px solid #2a3a5a;border-radius:10px;color:#9fa8c8;cursor:pointer;padding:0}
 .hunt-act-icon:active{transform:scale(.94)}
 @media(max-width:430px){
   #pg-hunt #hunt-sticky .hd{padding-left:14px;padding-right:14px}
   .hunt-actionbar{padding:8px 12px 0;gap:6px}
-  .hunt-act-add{padding:0 12px;font-size:12px;min-height:42px}
   .hunt-act-icon{width:42px;height:42px}
   .hunt-toolbar-row.select .btn{min-height:42px;font-size:12px}
 }
@@ -2494,6 +2493,10 @@ body{
       <div id="hunt-body"></div>
       <div id="hunt-fab-wrap">
         <button id="hunt-fab-main" onclick="toggleHuntFab()" aria-label="更多功能" type="button">•••</button>
+        <!-- v02.140：使用者要求把頂部工具列的「＋新增」整合進浮動按鈕群組，不要再獨立放在
+             搜尋列旁邊。放在離主按鈕最近的位置（展開時最先看到、最好點），因為手動新增追蹤
+             目標估計是最常用的動作，比另外三個查詢類捷徑更優先。 -->
+        <button id="hunt-add-fab" onclick="huntFabAction('huntStartAdd')" aria-label="新增追蹤目標" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
         <button id="hunt-cd-fab" onclick="huntFabAction('openCdWebSearch')" aria-label="日系資料庫查詢" type="button"><img src="https://consoledictionary.com/asset/icons/favicon-32x32.png" alt=""></button>
         <button id="hunt-barcode-fab" onclick="huntFabAction('openBarcodeWebSearch')" aria-label="條碼查詢" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 8v8M9 8v8M12 8v8M15 8v5M18 8v8"/></svg></button>
         <button id="hunt-lens-fab" onclick="huntFabAction('huntLensStart')" aria-label="拍照辨識遊戲" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></button>
@@ -2864,7 +2867,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.139';
+const APP_VERSION='v02.140';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4210,8 +4213,20 @@ function _regionCtx(){
 }
 // v24.03：分類感知。_selectedType 已知（遊戲/攻略/主機/週邊）→ 注入該類角色＋schema＋固定 category，勿改判；
 //          未知 → 退回原「遊戲 vs 攻略」自由分類（含兩類 schema）。區域上下文不變。
-function buildSYS(){
-  var st=catInternal(_selectedType);
+// v02.140：使用者實測回報尋寶頁某個遊戲AI辨識一直沒有結果，懷疑跟建檔頁的選擇有關。
+// 追查後確認是真的：原本buildSYS()直接讀全域變數_selectedType（建檔頁Step1選的分類），
+// 沒有參數化。尋寶頁的AI辨識（_huntStartAIFill）呼叫callAIVision→callGemini時完全沒有
+// 傳customSystem，因此也是呼叫這個buildSYS()——但_selectedType是建檔頁專用的全域變數，
+// 切換到尋寶頁時完全沒有被重置或跟尋寶項目的實際分類同步！如果使用者上一次在建檔頁
+// 選的是「書籍」，之後去尋寶頁幫一款遊戲拍照，AI收到的系統提示會是「本次建檔類別已由
+// 使用者指定為【書籍】...category固定填書籍」——等於叫AI硬把遊戲照片當書籍辨識，規格
+// 完全兜不上，導致辨識失敗或給出空結果。
+// 修正：把核心邏輯抽成接受明確cat參數的_buildSYSForCat(cat)，buildSYS()改成薄包裝、
+// 沿用_selectedType（建檔頁既有呼叫全部不用改，行為完全不變，零回歸風險）；尋寶頁改成
+// 呼叫_buildSYSForCat(_huntEntry.target_cat)，用尋寶項目自己實際指定的分類，不再受
+// 建檔頁殘留的全域變數影響。
+function _buildSYSForCat(_st){
+  var st=catInternal(_st);
   var cat=_aiSpecFor(st)?st:'';
   var head,catBlocks;
   if(cat){
@@ -4224,6 +4239,7 @@ function buildSYS(){
   }
   return head+'\n\n'+_SYS_COMMON+'\n\n'+catBlocks+'\n\n'+_SYS_TAIL+_regionCtx();
 }
+function buildSYS(){return _buildSYSForCat(_selectedType);}
 
 // 🤖🤖🤖 ═══ AI 辨識區塊 END（1/2）═══ 🤖🤖🤖
 
@@ -6615,7 +6631,7 @@ function aiKnowledgeFill(gameName,platform,missingFields,category,region,imageDa
 }
 
 // 統一 AI 視覺辨識入口（依 cfg.aipref 選擇引擎），回傳 Promise<res>
-function callAIVision(parts){
+function callAIVision(parts,opts){
   var pref=cfg.aipref||'gemini';
   // 從 parts 取出圖片 base64 和文字
   var imgPart=parts.filter(function(p){return p.inlineData;})[0];
@@ -6626,7 +6642,7 @@ function callAIVision(parts){
 
   function gptCall(){
     var msgs=[
-      {role:'system',content:buildSYS()}, // v23.03 動態注入區域上下文
+      {role:'system',content:(opts&&opts.customSystem)||buildSYS()}, // v02.140：optional customSystem，尋寶頁靠這個帶入正確分類
       {role:'user',content:[
         {type:'image_url',image_url:{url:'data:image/jpeg;base64,'+coverB64}},
         {type:'text',text:promptTxt}
@@ -6651,28 +6667,28 @@ function callAIVision(parts){
     });
   }
 
-  if(pref==='gemini')return callGemini(parts);
+  if(pref==='gemini')return callGemini(parts,opts);
   if(pref==='gpt'){
     if(hasGPT)return gptCall();
-    return callGemini(parts); // 無 GPT key 退回 Gemini
+    return callGemini(parts,opts); // 無 GPT key 退回 Gemini
   }
   if(pref==='hybrid'){
     if(cfg.gkey&&cfg.dskey)return callHybridVision(parts).catch(function(e){
       console.warn('[Hybrid]'+e.message+'，轉一般 Gemini 辨識');
-      return callGemini(parts);
+      return callGemini(parts,opts);
     });
-    return callGemini(parts); // 缺 Gemini 或 DeepSeek 金鑰時退回一般 Gemini
+    return callGemini(parts,opts); // 缺 Gemini 或 DeepSeek 金鑰時退回一般 Gemini
   }
   // auto：智慧分流 — 亞洲版/CJK封面優先嘗試混合模式（Gemini OCR+DeepSeek校正），其他情況 GPT 優先失敗轉 Gemini
   if((_region==='jp'||_region==='asia')&&cfg.gkey&&cfg.dskey){
     return callHybridVision(parts).catch(function(e){
       console.warn('[Hybrid-auto]'+e.message+'，轉一般辨識');
-      if(hasGPT)return gptCall().catch(function(){return callGemini(parts);});
-      return callGemini(parts);
+      if(hasGPT)return gptCall().catch(function(){return callGemini(parts,opts);});
+      return callGemini(parts,opts);
     });
   }
-  if(hasGPT)return gptCall().catch(function(e){console.warn('[GPT]'+e.message+'，轉 Gemini');return callGemini(parts);});
-  return callGemini(parts);
+  if(hasGPT)return gptCall().catch(function(e){console.warn('[GPT]'+e.message+'，轉 Gemini');return callGemini(parts,opts);});
+  return callGemini(parts,opts);
 }
 function testDeepSeek(){
   var key=($('c-dskey')&&$('c-dskey').value||'').trim();
@@ -16933,8 +16949,8 @@ function renderHuntToolbar(){
       '<button class="btn bo" onclick="huntToggleSelect()" type="button">取消</button></div>';
   }else{
     if(bar)bar.classList.remove('selmode');
+    // v02.140：「＋新增」已整合進右下角浮動按鈕群組（hunt-add-fab），這裡不再重複放置。
     tb.innerHTML='<div class="hunt-toolbar-row">'+
-      '<button class="btn bp hunt-act-add" onclick="huntStartAdd()" type="button">＋ 新增</button>'+
       '<button class="hunt-act-icon" title="大量刪除" aria-label="大量刪除" onclick="huntToggleSelect()" type="button"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>'+
       '<div style="position:relative;display:inline-block">'+
         '<button class="hunt-act-icon" id="hunt-menu-btn" title="更多功能" aria-label="更多功能" onclick="toggleHuntMenu()" type="button" style="font-size:20px;line-height:1">⋯</button>'+
@@ -17444,13 +17460,17 @@ function _huntStartAIFill(){
   _huntAIStatusUpdate('AI 辨識中，請稍候…');
   var barcode=(_huntEntry&&_huntEntry.barcode)||'';
   var dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  // v02.140：用尋寶項目自己的target_cat組系統提示，不要沿用callAIVision預設呼叫的
+  // buildSYS()（那個讀的是建檔頁的全域_selectedType，跟這裡的尋寶項目毫無關係，見
+  // _buildSYSForCat定義處的完整說明）。
+  var huntSys=_buildSYSForCat((_huntEntry&&_huntEntry.target_cat)||'遊戲');
   var aiP=_imgToB64(_huntPhoto).then(function(b64){
     if(!b64)return null;
     var hint=barcode?('條碼：'+barcode+'。'):'';
     return callAIVision([
       {inlineData:{mimeType:'image/jpeg',data:b64.split(',')[1]}},
       {text:hint+'請辨識這款商品，輸出所有已知欄位 JSON（品名、平台、簡介等）。'}
-    ]).catch(function(){return null;});
+    ],{customSystem:huntSys}).catch(function(){return null;});
   }).catch(function(){return null;});
   Promise.all([dbP,aiP]).then(function(r){
     var db=r[0]||{},ai=r[1]||null;
