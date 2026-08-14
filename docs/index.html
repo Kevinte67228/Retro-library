@@ -2509,7 +2509,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="window.open(_gamerskyReleaseUrl(),'_blank')" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
+              <button type="button" onclick="_openExternal(_gamerskyReleaseUrl())" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.151';
+const APP_VERSION='v02.152';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17237,6 +17237,19 @@ function huntCardHtml(h){
 // 行為改變，原本的IGDB發售日曆功能（openReleaseCal/rcLoad等）已整段移除。
 // 網址依「現在的年月」動態組出來，不寫死成使用者當初給的那個月份，不然過一個月連結就會
 // 指向舊月份的清單。
+// v02.152：使用者實測回報「近期發售」點下去是在App本身開啟，不是跳出到手機瀏覽器。
+// PWA以standalone模式安裝後，window.open()對外部網域的處理在部分手機/瀏覽器組合上
+// 不夠可靠，有時候還是留在App自己的瀏覽情境裡，感覺像「在App裡打開」而不是真正切換到
+// 手機的預設瀏覽器。改成動態建立一個帶rel="noopener noreferrer"的<a>元素、用程式模擬
+// 點擊——這是PWA開發常見的作法，比直接呼叫window.open()更可靠地讓連結真正跳出PWA自己
+// 的瀏覽環境，交給系統預設瀏覽器處理。
+function _openExternal(url){
+  var a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 function _gamerskyReleaseUrl(){
   var d=new Date();
   var y=d.getFullYear();
