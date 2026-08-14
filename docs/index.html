@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.01';
+const APP_VERSION='v03.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17582,6 +17582,31 @@ function huntScanStep(){
     '</div>';
   huntStartScanner();
 }
+// v02.156：使用者實測評估後確認——原本掃到條碼只是存進_huntEntry.barcode，實際的
+// 資料庫查詢要等使用者「拍照」之後才會觸發（見下方_huntStartAIFill開頭的if(!_huntPhoto)
+// return）。但條碼本身就足以查到品名/平台等資料，不需要一定要有照片才查；如果使用者
+// 選擇略過拍照，條碼就白掃了。改成條碼一掃到就立刻查，跟拍照這個動作解耦。
+var _huntBarcodeDbCache=null; // {barcode, result} 快取，避免使用者接著又拍照時_huntStartAIFill重複查一次一樣的條碼
+function _huntBarcodeLookup(bc){
+  if(!bc)return;
+  _huntAIStatusUpdate('查詢條碼資料庫中…');
+  crossRefLookupPromise(bc,'').then(function(db){
+    db=db||{};
+    _huntBarcodeDbCache={barcode:bc,result:db};
+    if(_huntEntry){
+      // 只補空欄，不覆蓋使用者已經輸入的內容（此時通常是剛建立的空白項目，但保守起見
+      // 沿用全站一致的「不覆蓋既有內容」慣例）
+      Object.keys(db).forEach(function(k){if(db[k]&&!_huntEntry[k])_huntEntry[k]=db[k];});
+    }
+    _huntAIResult=db; // 沿用既有的_huntApplyAIResultIfFormOpen()/_huntApplyAIResultToEntry()機制，不用另外寫一套套用邏輯
+    var nm=db.primary_name||db.zh_name||db.jp_name;
+    _huntAIStatusUpdate(nm?('條碼查詢：'+nm):'條碼查無資料，可拍照或手動填寫',true);
+    _huntApplyAIResultIfFormOpen();
+  }).catch(function(){
+    _huntBarcodeDbCache={barcode:bc,result:{}};
+    _huntAIStatusUpdate('');
+  });
+}
 // hunt 尋寶掃描器（hunt-scan-video）：不支援/失敗皆靜默（不給 onUnsupported/onError）
 var _huntScan=createScanner({videoId:'hunt-scan-video',
   onDetect:function(bc){huntGotBarcode(bc);}});
@@ -17592,17 +17617,20 @@ function huntGotBarcode(bc){
   if(_huntEntry)_huntEntry.barcode=bc;
   if(bc){toast('📷 條碼 '+bc,'ok',1500);try{if(navigator.vibrate)navigator.vibrate([80,40,80]);}catch(e){}}
   huntStopScanner();huntPhotoStep();
+  if(bc)_huntBarcodeLookup(bc); // v02.156：條碼一掃到就立刻查資料庫，不用等使用者決定要不要拍照
 }
 function huntScanNext(){
   var inp=$('hunt-bc-inp');var v=inp?inp.value.trim():'';
   if(_huntEntry)_huntEntry.barcode=v;
   huntStopScanner();huntPhotoStep();
+  if(v)_huntBarcodeLookup(v); // v02.156：手動輸入條碼確認後同樣立刻查，跟掃描偵測到的路徑一致
 }
 function huntCancelAdd(){
   huntStopScanner();
   var ov=$('hunt-add-ov');if(ov)ov.classList.remove('on');
   _huntEntry=null;_huntPhoto='';_huntLensData=null;
   _huntAIResult=null;_huntAIBusy=false; // v02.85：避免下次尋寶記錄殘留上次的AI辨識結果
+  _huntBarcodeDbCache=null; // v02.156：避免下次尋寶記錄誤用上一筆殘留的條碼查詢快取
   _huntAIStatusUpdate(''); // v02.86：同步隱藏banner，避免殘留在畫面上
 }
 function huntPhotoStep(){
@@ -17648,7 +17676,14 @@ function _huntStartAIFill(){
   _huntAIResult=null;_huntAIBusy=true;
   _huntAIStatusUpdate('AI 辨識中，請稍候…');
   var barcode=(_huntEntry&&_huntEntry.barcode)||'';
-  var dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  // v02.156：如果條碼掃描階段已經查過同一個條碼（見_huntBarcodeLookup），直接重用快取
+  // 結果，不要再打一次一樣的資料庫查詢——避免使用者拍照時被迫多等一次重複的網路請求。
+  var dbP;
+  if(barcode&&_huntBarcodeDbCache&&_huntBarcodeDbCache.barcode===barcode){
+    dbP=Promise.resolve(_huntBarcodeDbCache.result||{});
+  }else{
+    dbP=barcode?crossRefLookupPromise(barcode,'').catch(function(){return{};}):Promise.resolve({});
+  }
   // v02.140：用尋寶項目自己的target_cat組系統提示，不要沿用callAIVision預設呼叫的
   // buildSYS()（那個讀的是建檔頁的全域_selectedType，跟這裡的尋寶項目毫無關係，見
   // _buildSYSForCat定義處的完整說明）。

@@ -2509,7 +2509,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="window.open(_gamerskyReleaseUrl(),'_blank')" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
+              <button type="button" onclick="_openExternal(_gamerskyReleaseUrl())" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.151';
+const APP_VERSION='v03.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11840,6 +11840,31 @@ function _batchResolveAll(){
   }).then(_restoreEntry,function(err){_restoreEntry();throw err;});
 }
 
+// v02.155：使用者要求批次書背建檔的第4項優化——單筆失敗項目可以個別重試，不用整批
+// 重新解析或直接放棄改成手動輸入。跟_batchResolveAll()的平行工作池一樣，
+// _batchResolveOne()內部的_crossRefQuery會讀全域entry.platform組楽天查詢字串，單獨
+// 重試一件時也要比照設定好這個共用情境物件，不然會用到上一次單品建檔殘留的舊平台。
+function batchRetryOne(i){
+  var item=_batchItems[i];
+  if(!item||_batchResolving||item._retrying)return; // 整批解析中或這件已經在重試中，避免重複觸發
+  item._retrying=true;
+  item.status='resolving';
+  _batchRenderList();
+  var _entryBak=entry;
+  entry=Object.assign({},_defaultsFor(_selectedType),{category:_selectedType,platform:_selectedPlatform||''});
+  _batchResolveOne(item,_selectedType).then(function(failed){
+    item.dup=findDuplicate(item.entry);
+    item.status=failed?'failed':'ok';
+  }).catch(function(){
+    item.status='failed';
+  }).finally(function(){
+    entry=_entryBak;
+    item._retrying=false;
+    _batchRenderList();
+    _batchSaveDraft();
+    toast(item.status==='ok'?'重試成功':'重試仍然失敗，可以手動編輯補上資料',item.status==='ok'?'ok':'er',2500);
+  });
+}
 function _batchStatusBadge(item){
   if(item.status==='pending')return '<span style="color:#7986cb">等待中</span>';
   if(item.status==='resolving')return '<span style="color:#00e5ff">解析中...</span>';
@@ -11870,6 +11895,7 @@ function _batchRenderList(){
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
     var hasImg=!!(e&&e.cover_img);
     var editable=item.status==='ok'&&!_batchResolving; // v02.54：整批解析完成前一律不可編輯，不只看單一項目狀態
+    var isFailed=item.status==='failed'&&!_batchResolving; // v02.155：失敗項目可個別重試，不用整批重跑
     // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
     // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
@@ -11894,6 +11920,7 @@ function _batchRenderList(){
         '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+'</div>'+
       '</div>'+
       (editable?'<button type="button" onclick="batchEditItem('+i+')" title="編輯其他欄位" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#9fa8c8;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer">✎</button>':'')+
+      (isFailed?'<button type="button" onclick="batchRetryOne('+i+')" title="重新查詢這一件" style="flex-shrink:0;background:#141b30;border:1px solid #ff5252;color:#ff5252;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer">🔄</button>':'')+
     '</div>';
   }).join('');
   var doneCount=_batchItems.filter(function(it){return it.status==='ok'||it.status==='failed';}).length;
@@ -11984,26 +12011,80 @@ function batchCancelItemEdit(){
 // 但跳過單筆存檔的 confirm() 對話框（重複/序號模糊已在確認清單階段由使用者決定）。
 function batchSaveAll(){
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
-  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok';});
-  if(!toSave.length){toast('沒有勾選任何項目','er');return;}
+  // v02.153：使用者實測回報儲存階段中斷（斷網/切背景/當機）後沒有續傳保護——解析階段
+  // 每解析完一件就存草稿，中斷可以接續；但儲存階段完全沒有，重新打開後系統不知道「已經
+  // 存了幾件」，重按「儲存全部」可能把已經成功寫進試算表的項目再存一次，造成重複資料。
+  // 加上!it.saved過濾已經成功存過的項目；失敗的項目不標記saved，會在下次「儲存全部」
+  // 時正常重試。
+  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok'&&!it.saved;});
+  if(!toSave.length){
+    var _alreadySaved=_batchItems.some(function(it){return it.saved;});
+    if(_alreadySaved){
+      toast('這批項目已經全部儲存完成','ok',3000);
+      _batchClearDraft();resetAll();showPg('col');
+      return;
+    }
+    toast('沒有勾選任何項目','er');return;
+  }
   if(_saving)return;
   _saving=true;
   var _backupEntry=entry;
-  var savedCount=0,failCount=0;
-  function saveOne(i){
-    if(i>=toSave.length){
-      _saving=false;entry=_backupEntry;
-      localforage.setItem('gv_col',col).catch(function(){});updateStats();
-      _batchClearDraft(); // v02.100：整批已經存進收藏，草稿不再需要，避免下次進批次模式又問「要不要接續」
-      noLoad();
-      toast('批次儲存完成：成功 '+savedCount+' 件'+(failCount?'，失敗 '+failCount+' 件':''),'ok',4500);
-      var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
-      resetAll();
-      showPg('col');
-      if(_contCat){selectEntryCat(_contCat);_selectedPlatform=_contPlat;}
+  var savedCount=0,failCount=0,doneCount=0,inFlight=0,total=toSave.length;
+  loading('批次儲存中...（0／'+total+'）');
+  function updateProgress(){loading('批次儲存中...（'+doneCount+'／'+total+'）');}
+  function finishAll(){
+    _saving=false;entry=_backupEntry;
+    localforage.setItem('gv_col',col).catch(function(){});updateStats();
+    // v02.153：累計「這批全部項目」裡標記為saved的總數（含這次中斷前已經存過的），
+    // 不是只算這次執行存了幾件，避免中斷續傳時使用者被顯示的數字誤導成「才存了這麼少」。
+    var _totalSaved=_batchItems.filter(function(it){return it.saved;}).length;
+    _batchClearDraft(); // v02.100：整批已經存進收藏，草稿不再需要，避免下次進批次模式又問「要不要接續」
+    noLoad();
+    toast('批次儲存完成：成功 '+_totalSaved+' 件'+(failCount?'，本次失敗 '+failCount+' 件':''),'ok',4500);
+    var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
+    resetAll();
+    showPg('col');
+    if(_contCat){selectEntryCat(_contCat);_selectedPlatform=_contPlat;}
+  }
+  // v02.154：使用者評估後確認要把儲存階段平行化（比照解析階段），但儲存流程裡
+  // _normalizeEntryEnums()／_compressAndSave() 這些既有共用函式都是直接讀寫全域entry
+  // 變數，不接受參數——如果直接讓多件同時呼叫這段，會互相搶用同一個全域entry、彼此覆蓋，
+  // 存錯資料。改成把流程拆成「準備」跟「送出」兩段：準備段（碰全域entry，含圖片壓縮）
+  // 維持逐件循序執行，但每準備完一件，不等它送出完成就立刻繼續準備下一件；送出段
+  // （shPost網路請求，真正耗時的部分）改成最多同時_BATCH_CONCURRENCY件平行送出。這樣
+  // 完全不用更動_compressAndSave等共用函式的介面（降低風險、不影響其他呼叫這些函式的
+  // 既有流程），又能吃到「送出」這段平行化帶來的加速——網路來回通常才是真正的時間大頭，
+  // 準備段本身（主要是圖片壓縮）相對快，逐件執行的等待時間可以接受。
+  // 後端GAS的addRow()同一次更新已經加上LockService，確保平行送出時每個請求問到的
+  // rowNum一定對應自己剛寫的那一列，不會被平行的另一個請求搶走。
+  function sendOne(item,payload){
+    inFlight++;
+    shPost({action:'add',row:payload.row,fields:payload.fields,category:payload.category}).then(function(res){
+      var savedEntry=payload.entrySnapshot;
+      if(res.ok){
+        savedCount++;
+        item.saved=true; // v02.153：標記這件已成功寫入試算表，避免中斷後重複儲存
+        var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+        if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+        if(res.imgs){
+          ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+          if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+        }
+        col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
+      }else{failCount++;}
+    }).catch(function(){failCount++;}).finally(function(){
+      inFlight--;
+      doneCount++;updateProgress();
+      _batchSaveDraft(); // v02.153：每次嘗試（不論成功失敗）都更新草稿進度，中斷後才能正確接續，不重複儲存
+      if(doneCount>=total)finishAll();
+    });
+  }
+  function prepareNext(i){
+    if(i>=total)return;
+    if(inFlight>=_BATCH_CONCURRENCY){
+      setTimeout(function(){prepareNext(i);},120); // 送出名額滿了，稍等有名額釋出再繼續準備下一件
       return;
     }
-    loading('批次儲存中...（'+(i+1)+'／'+toSave.length+'）');
     entry=Object.assign({},toSave[i].entry);
     if(!entry.uuid)entry.uuid=_genUuid();
     if(!entry.created_at)entry.created_at=tpeDateTime();
@@ -12014,22 +12095,17 @@ function batchSaveAll(){
       });
       _capExtraImagesSize();
       var _SF=fieldsFor(entry.category,entry.subtype);
-      var row=_rowFromFields(entry,_SF);
-      shPost({action:'add',row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
-        if(res.ok){
-          savedCount++;
-          var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
-          if(res.uuid&&!entry.uuid)entry.uuid=res.uuid;
-          if(res.imgs){
-            ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];});
-            if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images;
-          }
-          col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});
-        }else{failCount++;}
-      }).catch(function(){failCount++;}).finally(function(){saveOne(i+1);});
+      var payload={
+        row:_rowFromFields(entry,_SF),
+        fields:_entryFields(entry),
+        category:catInternal(entry.category)||'遊戲',
+        entrySnapshot:Object.assign({},entry) // 準備完成當下的快照，避免下一件的全域entry變動影響到這件送出後的資料
+      };
+      sendOne(toSave[i],payload);
+      prepareNext(i+1);
     });
   }
-  saveOne(0);
+  prepareNext(0);
 }
 
 // ── Form ──
@@ -17237,6 +17313,19 @@ function huntCardHtml(h){
 // 行為改變，原本的IGDB發售日曆功能（openReleaseCal/rcLoad等）已整段移除。
 // 網址依「現在的年月」動態組出來，不寫死成使用者當初給的那個月份，不然過一個月連結就會
 // 指向舊月份的清單。
+// v02.152：使用者實測回報「近期發售」點下去是在App本身開啟，不是跳出到手機瀏覽器。
+// PWA以standalone模式安裝後，window.open()對外部網域的處理在部分手機/瀏覽器組合上
+// 不夠可靠，有時候還是留在App自己的瀏覽情境裡，感覺像「在App裡打開」而不是真正切換到
+// 手機的預設瀏覽器。改成動態建立一個帶rel="noopener noreferrer"的<a>元素、用程式模擬
+// 點擊——這是PWA開發常見的作法，比直接呼叫window.open()更可靠地讓連結真正跳出PWA自己
+// 的瀏覽環境，交給系統預設瀏覽器處理。
+function _openExternal(url){
+  var a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 function _gamerskyReleaseUrl(){
   var d=new Date();
   var y=d.getFullYear();
