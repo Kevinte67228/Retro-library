@@ -2864,7 +2864,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.138';
+const APP_VERSION='v02.139';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13061,15 +13061,19 @@ function _dashModel(cat,filtered2,catOf){
   if(cat==='遊戲'){
     var cleared=statusCnt(filtered2,'play_status','通關')+statusCnt(filtered2,'play_status','全成就');
     var clearRate=Math.round(cleared/filtered2.length*100);
-    var playColors={'未遊玩':'#7986cb','進行中':'#ffb300','通關':'#00e676','全成就':'#00e5ff','放棄':'#ff5252','N/A':'#7a8499'};
+    // v02.139：「通關」（原本#00e676綠）跟「全成就」（原本#00e5ff青）色相太接近，色弱使用者
+    // 不易區分。換成藍/金，色相差距拉大很多；「進行中」本來就是#ffb300，不用改。KPI/標籤
+    // 裡另外兩處直接寫死同樣顏色描述同一組數字（'通關率'／'全成就'計數），一併同步更新，
+    // 不然圖表跟旁邊的數字卡片顏色會對不上。
+    var playColors={'未遊玩':'#7986cb','進行中':'#ffb300','通關':'#4fc3f7','全成就':'#ffd54f','放棄':'#ff5252','N/A':'#7a8499'};
     var gPlat=buildMap(filtered2,function(c){return platShort(c.data.platform||'');});
     D={kpi:[
         {label:'遊戲',val:filtered2.length,color:'#00e5ff',icon:'🎮'},
-        {label:'通關率',val:clearRate+'%',color:'#00e676',icon:'🏆'},
+        {label:'通關率',val:clearRate+'%',color:'#4fc3f7',icon:'🏆'},
         {label:'積壓',val:statusCnt(filtered2,'play_status','未遊玩'),color:'#ff5252',icon:'😅'},
         {label:'平均評分',val:avgRating(filtered2),color:'#ffb300',icon:'⭐'}],
       tags:[
-        {label:'全成就 '+statusCnt(filtered2,'play_status','全成就'),color:'#00e5ff'},
+        {label:'全成就 '+statusCnt(filtered2,'play_status','全成就'),color:'#ffd54f'},
         {label:'進行中 '+statusCnt(filtered2,'play_status','進行中'),color:'#ffb300'},
         {label:'全新品 '+condCnt(filtered2,'全新'),color:'#00e676'},
         {label:'有封面 '+withImg,color:'#7986cb'}],
@@ -13760,10 +13764,16 @@ function drawDonut(map,total,colorMap,centerText){
   var defaultColors=['#00e5ff','#69f0ae','#ffb300','#ce93d8','#80deea','#ff8c00','#f48fb1','#90a4ae'];
   var entries2=Object.entries(map).sort(function(a,b){return b[1]-a[1];});
   var tot=total||1;var ang=-Math.PI/2;
+  // v02.139：加邊框分隔每個區塊——色弱使用者即使色相分不清楚，區塊之間的邊界仍然能靠
+  // 亮度/形狀的不連續辨識出來，是比單靠調色更根本的輔助方式。用closePath()把扇形的
+  // 兩條直邊也一併納入描邊範圍，不是只有外圍弧線。
   entries2.forEach(function(e,i){
     var clr=(colorMap&&colorMap[e[0]])||defaultColors[i%defaultColors.length];
     var sw=e[1]/tot*(2*Math.PI);
-    ctx2.beginPath();ctx2.moveTo(cx,cy);ctx2.arc(cx,cy,R,ang,ang+sw);ctx2.fillStyle=clr;ctx2.fill();ang+=sw;
+    ctx2.beginPath();ctx2.moveTo(cx,cy);ctx2.arc(cx,cy,R,ang,ang+sw);ctx2.closePath();
+    ctx2.fillStyle=clr;ctx2.fill();
+    ctx2.strokeStyle='#0f1525';ctx2.lineWidth=2;ctx2.stroke();
+    ang+=sw;
   });
   ctx2.beginPath();ctx2.arc(cx,cy,ri,0,2*Math.PI);ctx2.fillStyle='#0f1525';ctx2.fill();
   ctx2.fillStyle='#e8eaf6';ctx2.font='bold '+Math.round(R*0.32)+'px sans-serif';ctx2.textAlign='center';ctx2.textBaseline='middle';
