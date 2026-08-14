@@ -1269,6 +1269,22 @@ body{
                   <div>輸入商品名稱／條碼／關鍵字，系統依目前分類自動帶入所需的核心欄位（名稱、平台、開發商、發售日等，不含購入日期／價格／保管位置等個人記錄）產生查詢提示詞。選一個 AI 助手（DeepSeek／GPT／Gemini／Claude）會自動複製提示詞並開啟其網頁，貼上送出後把 AI 回覆的 JSON 複製回來貼上，按「解析並匯入」即可自動預填手動建檔表單。適合沒有條碼、圖片辨識也查不到，但想借助 AI 網頁版查詢能力的商品。</div>
                 </div>
               </div>
+              <!-- v02.147：「搜尋資料庫帶入」輔助功能的說明——主要是解釋IGDB是英文資料庫、
+                   查詢不會自動翻譯這件事，避免使用者以為系統會幫忙轉換中日文查詢。 -->
+              <div id="help-content-manualsearch" style="display:none;font-size:12px;color:#9fa8c8;line-height:1.8">
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45;background:rgba(0,229,255,.06);border-radius:8px;padding:10px 12px">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🔍 這是什麼</div>
+                  <div>查詢 IGDB 遊戲資料庫，列出候選結果讓你自己挑選一筆帶入表單（不是自動選第一筆），適合手動建檔時想借助資料庫快速帶入名稱、平台、開發商、發售日等欄位的情況。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⚠️ 不會自動翻譯</div>
+                  <div>輸入的中文／日文會原封不動直接送給 IGDB 查詢，系統不會幫忙翻譯成英文。IGDB 是以英文為主的資料庫，對超知名作品（例如薩爾達傳說）通常也收錄了非英文別名，中文/日文查詢剛好比對到別名還是查得到；但比較冷門或小眾的作品，很可能因為沒有收錄對應別名而查無結果。查不到的話，建議改用英文原名或羅馬拼音再試一次。</div>
+                </div>
+                <div>
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">✨ AI 補全空白欄位</div>
+                  <div>選定候選結果後，若 IGDB 沒有的欄位（例如中文名、中文簡介、年齡分級）仍是空白，系統會自動接著跑一輪 AI 補全，不需要另外手動觸發。</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1702,7 +1718,10 @@ body{
                API，不是爬網頁）取得候選清單讓使用者自己挑，不是自動選第一筆。只在手動建檔
                模式顯示，其他建檔路徑（條碼/AI辨識等）本來就有自己的資料來源，不需要這個。 -->
           <div id="manual-search-wrap" style="display:none;padding:0 16px 12px;border-bottom:1px solid #1e2a45;margin-bottom:12px">
-            <div style="font-size:12px;color:#7986cb;margin-bottom:6px">🔍 搜尋資料庫帶入（輔助功能，選填）</div>
+            <div style="font-size:12px;color:#7986cb;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+              <span>🔍 搜尋資料庫帶入（輔助功能，選填）</span>
+              <button onclick="toggleHelp('manualsearch')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>
+            </div>
             <div style="display:flex;gap:8px">
               <input class="fi" id="manual-search-inp" type="text" placeholder="輸入品名搜尋（例：薩爾達傳說）" style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();manualSearchDB();}">
               <button class="btn bp" style="flex:0 0 auto;padding:0 16px" onclick="manualSearchDB()" type="button">搜尋</button>
@@ -2880,7 +2899,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.146';
+const APP_VERSION='v02.147';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9413,7 +9432,7 @@ function setMbActive(which){
     if(titleDiv)titleDiv.style.color=on?c:'#e8eaf6';
   });
 }
-var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明'};
+var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明',manualsearch:'搜尋資料庫帶入 · 說明'};
 function toggleHelp(step){
   var overlay=$('help-overlay');
   var panel=$('help-panel');
@@ -9425,7 +9444,7 @@ function toggleHelp(step){
   panel.style.display=open?'flex':'none';
   document.querySelectorAll('.step-help-btn').forEach(function(b){b.classList.remove('on');});
   if(step){
-    ['step1','step2','step3','step4'].forEach(function(k){
+    ['step1','step2','step3','step4','manualsearch'].forEach(function(k){
       var el=$('help-content-'+k);if(el)el.style.display=(k===step)?'block':'none';
     });
     var titleEl=$('help-panel-title');if(titleEl)titleEl.textContent=STEP_HELP_TITLES[step]||'說明';
