@@ -1208,6 +1208,8 @@ body{
           </div>
 
           <!-- 建檔說明（v54.16）：改為 Step1-4 各自獨立說明內容，標頭(含關閉鈕)改sticky固定頂部不會被滑走 -->
+        </div>
+
           <div id="help-overlay" onclick="if(event.target===this)toggleHelp()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:999;"></div>
           <div id="help-panel" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0f1525;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;max-height:70vh;z-index:1000;flex-direction:column">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:24px 16px 16px;flex-shrink:0;background:#0f1525;border-radius:20px 20px 0 0">
@@ -1269,9 +1271,24 @@ body{
                   <div>輸入商品名稱／條碼／關鍵字，系統依目前分類自動帶入所需的核心欄位（名稱、平台、開發商、發售日等，不含購入日期／價格／保管位置等個人記錄）產生查詢提示詞。選一個 AI 助手（DeepSeek／GPT／Gemini／Claude）會自動複製提示詞並開啟其網頁，貼上送出後把 AI 回覆的 JSON 複製回來貼上，按「解析並匯入」即可自動預填手動建檔表單。適合沒有條碼、圖片辨識也查不到，但想借助 AI 網頁版查詢能力的商品。</div>
                 </div>
               </div>
+              <!-- v02.147：「搜尋資料庫帶入」輔助功能的說明——主要是解釋IGDB是英文資料庫、
+                   查詢不會自動翻譯這件事，避免使用者以為系統會幫忙轉換中日文查詢。 -->
+              <div id="help-content-manualsearch" style="display:none;font-size:12px;color:#9fa8c8;line-height:1.8">
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45;background:rgba(0,229,255,.06);border-radius:8px;padding:10px 12px">
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">🔍 這是什麼</div>
+                  <div>查詢 IGDB 遊戲資料庫，列出候選結果讓你自己挑選一筆帶入表單（不是自動選第一筆），適合手動建檔時想借助資料庫快速帶入名稱、平台、開發商、發售日等欄位的情況。</div>
+                </div>
+                <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #1e2a45">
+                  <div style="color:#ffb300;font-weight:700;margin-bottom:4px">⚠️ 不會自動翻譯</div>
+                  <div>輸入的中文／日文會原封不動直接送給 IGDB 查詢，系統不會幫忙翻譯成英文。IGDB 是以英文為主的資料庫，對超知名作品（例如薩爾達傳說）通常也收錄了非英文別名，中文/日文查詢剛好比對到別名還是查得到；但比較冷門或小眾的作品，很可能因為沒有收錄對應別名而查無結果。查不到的話，建議改用英文原名或羅馬拼音再試一次。</div>
+                </div>
+                <div>
+                  <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">✨ AI 補全空白欄位</div>
+                  <div>選定候選結果後，若 IGDB 沒有的欄位（例如中文名、中文簡介、年齡分級）仍是空白，系統會自動接著跑一輪 AI 補全，不需要另外手動觸發。</div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
         <!-- 條碼區 -->
         <div id="aiweb-sec" style="display:none;margin-top:20px;border-top:1px solid #1e2a45;padding-top:16px">
@@ -1702,7 +1719,10 @@ body{
                API，不是爬網頁）取得候選清單讓使用者自己挑，不是自動選第一筆。只在手動建檔
                模式顯示，其他建檔路徑（條碼/AI辨識等）本來就有自己的資料來源，不需要這個。 -->
           <div id="manual-search-wrap" style="display:none;padding:0 16px 12px;border-bottom:1px solid #1e2a45;margin-bottom:12px">
-            <div style="font-size:12px;color:#7986cb;margin-bottom:6px">🔍 搜尋資料庫帶入（輔助功能，選填）</div>
+            <div style="font-size:12px;color:#7986cb;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+              <span>🔍 搜尋資料庫帶入（輔助功能，選填）</span>
+              <button onclick="toggleHelp('manualsearch')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>
+            </div>
             <div style="display:flex;gap:8px">
               <input class="fi" id="manual-search-inp" type="text" placeholder="輸入品名搜尋（例：薩爾達傳說）" style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();manualSearchDB();}">
               <button class="btn bp" style="flex:0 0 auto;padding:0 16px" onclick="manualSearchDB()" type="button">搜尋</button>
@@ -2880,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.145';
+const APP_VERSION='v02.150';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6955,7 +6975,15 @@ function _cropLayout(){
   var prevView=_crop.view; // v02.34：resize 時用來把既有框換算到新版面
   _crop.view={x:x,y:y,w:w,h:h,scale:scale};
   var cv=$('crop-canvas');
-  cv.width=sw;cv.height=sh;cv.style.width=sw+'px';cv.style.height=sh+'px';
+  // v02.150：裁切工具的畫布也有跟甜甜圈圖一樣的模糊問題——內部畫布尺寸原本直接等於
+  // 顯示尺寸，沒有乘上裝置畫素比，框線、三分格線、四角把手這些細線條在高解析度螢幕上
+  // 會偏模糊。做法跟drawDonut()一致：內部畫布尺寸乘上devicePixelRatio、CSS顯示尺寸
+  // 鎖住不變，邏輯座標（sw/sh）另外存起來供_cropDraw()使用，取代原本直接讀
+  // cv.width/cv.height（那兩個屬性現在已經是放大過的實際畫布尺寸，不能再拿來當邏輯
+  // 座標用，會超出畫面）。
+  var dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(sw*dpr);cv.height=Math.round(sh*dpr);cv.style.width=sw+'px';cv.style.height=sh+'px';
+  _crop.dpr=dpr;_crop.stageW=sw;_crop.stageH=sh;
   // v02.34：resize（已偵測過）時保留使用者現有框，依版面比例換算，避免重置手動調整
   // v02.132：同一段邏輯延伸涵蓋四角模式的quad，換算方式完全一樣，只是逐點處理。
   if(_crop._autoDetected&&prevView&&prevView.w){
@@ -7007,14 +7035,22 @@ function _cropLayout(){
 }
 function _cropDraw(){
   var cv=$('crop-canvas');if(!cv)return;var ctx=cv.getContext('2d');
+  // v02.150：每次繪製都重新setTransform（不是只在resize時設一次）——canvas.width/height
+  // 被設定時瀏覽器會自動把transform重置回單位矩陣，_cropLayout()每次resize都會重新
+  // 設定寬高，如果只在那邊setTransform一次、後續单純呼叫_cropDraw()時transform還在，
+  // 理論上沒問題，但為了不用假設呼叫順序、跟drawDonut()採同一套防禦性寫法，這裡固定
+  // 在繪製最前面重新套用一次，確保不管呼叫時機為何都一定是正確的縮放狀態。
+  var dpr=_crop.dpr||1;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var stageW=_crop.stageW||cv.width,stageH=_crop.stageH||cv.height;
   var v=_crop.view;
-  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.clearRect(0,0,stageW,stageH);
   ctx.drawImage(_crop.img,v.x,v.y,v.w,v.h);
-  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv);return;}
+  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv,stageW,stageH);return;}
   var b=_crop.box;
   // 遮罩（框外變暗）
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.beginPath();ctx.rect(0,0,stageW,stageH);
   ctx.rect(b.x,b.y,b.w,b.h);ctx.fill('evenodd');ctx.restore();
   // 框線
   ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.strokeRect(b.x,b.y,b.w,b.h);
@@ -7033,10 +7069,10 @@ function _cropDraw(){
 // v02.132：四角透視校正模式的畫面呈現——遮罩挖空成任意四邊形（不是矩形）、四個獨立
 // 可拖曳的角落把手、外加一條淡淡的對角虛線標示三角形分割方式，讓使用者大概理解裁切
 // 時是沿哪條線分兩個三角形處理（角度大時這條線附近可能有輕微接縫，見cropConfirmQuad）。
-function _cropDrawQuad(ctx,cv){
+function _cropDrawQuad(ctx,cv,stageW,stageH){
   var q=_crop.quad;
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.beginPath();ctx.rect(0,0,stageW,stageH);
   ctx.moveTo(q.tl.x,q.tl.y);ctx.lineTo(q.tr.x,q.tr.y);ctx.lineTo(q.br.x,q.br.y);ctx.lineTo(q.bl.x,q.bl.y);ctx.closePath();
   ctx.fill('evenodd');ctx.restore();
   ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;
@@ -8103,15 +8139,24 @@ function extractField(src,data,field){
       };
       return tgMap[field]||'';
     case 'igdb':
+      // v02.146：使用者實測回報IGDB搜尋帶入後平台欄位是空的，追查後發現GAS後端的
+      // igdbProxy()其實早就把資料拆解整理成扁平物件回傳（platform直接是字串、
+      // release_date已格式化成YYYY/MM/DD、還準備了meta給顯示用），但這裡原本寫的是
+      // IGDB原始API那種巢狀格式（data.platforms[0].name、data.first_release_date
+      // 時間戳記等），欄位名稱完全對不上，導致平台/開發商/發行商/發售日/類型這幾個
+      // 欄位一直悄悄抓空——不只影響這次新增的搜尋功能，crossRefLookupPromise既有的
+      // IGDB跨源比對也一樣中招，只是那邊有其他資料源互相補位沒那麼明顯。改成對照
+      // 後端實際回傳的扁平欄位；release_date順便把後端的/分隔符統一成App其他地方用的
+      // -分隔符（沿用原本用時間戳記换算出來的格式）。
       var igMap={
         primary_name:data.name||'',
-        platform:(data.platforms&&data.platforms[0]&&data.platforms[0].name)||'',
-        developer:(data.involved_companies&&data.involved_companies.filter(function(c){return c.developer;})[0]&&data.involved_companies.filter(function(c){return c.developer;})[0].company&&data.involved_companies.filter(function(c){return c.developer;})[0].company.name)||'',
-        publisher:(data.involved_companies&&data.involved_companies.filter(function(c){return c.publisher;})[0]&&data.involved_companies.filter(function(c){return c.publisher;})[0].company&&data.involved_companies.filter(function(c){return c.publisher;})[0].company.name)||'',
-        release_date:(data.first_release_date?new Date(data.first_release_date*1000).toISOString().slice(0,10):'')||'',
-        genre:(data.genres&&data.genres.map(function(g){return g.name;}).join(', '))||'',
+        platform:data.platform||'',
+        developer:data.developer||'',
+        publisher:data.publisher||'',
+        release_date:(data.release_date||'').replace(/\//g,'-'),
+        genre:data.genre||'',
         summary:data.summary||'',
-        ref_link:data.url||'',
+        ref_link:'', // 後端目前沒有回傳IGDB網址欄位，留空
         cover_url:data.cover_url||''
       };
       return igMap[field]||'';
@@ -9404,7 +9449,7 @@ function setMbActive(which){
     if(titleDiv)titleDiv.style.color=on?c:'#e8eaf6';
   });
 }
-var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明'};
+var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明',manualsearch:'搜尋資料庫帶入 · 說明'};
 function toggleHelp(step){
   var overlay=$('help-overlay');
   var panel=$('help-panel');
@@ -9416,7 +9461,7 @@ function toggleHelp(step){
   panel.style.display=open?'flex':'none';
   document.querySelectorAll('.step-help-btn').forEach(function(b){b.classList.remove('on');});
   if(step){
-    ['step1','step2','step3','step4'].forEach(function(k){
+    ['step1','step2','step3','step4','manualsearch'].forEach(function(k){
       var el=$('help-content-'+k);if(el)el.style.display=(k===step)?'block':'none';
     });
     var titleEl=$('help-panel-title');if(titleEl)titleEl.textContent=STEP_HELP_TITLES[step]||'說明';
@@ -9607,13 +9652,12 @@ function manualSearchDB(){
   });
 }
 function _showManualSearchPicker(games){
+  // v02.146：直接用後端igdbProxy()已經準備好的meta欄位（格式是「平台 · 年份」），
+  // 不要自己憑錯誤的巢狀結構假設重組一次——這正是平台欄位原本沒顯示出來的原因。
   _showActionSheet({
     ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'選擇搜尋結果（'+games.length+' 筆，點選帶入表單）',
     buttons:games.slice(0,20).map(function(g,i){
-      var plat=(g.platforms&&g.platforms[0]&&g.platforms[0].name)||'';
-      var yr=g.first_release_date?new Date(g.first_release_date*1000).getFullYear():'';
-      var meta=[plat,yr].filter(Boolean).join('　');
-      var label=esc(g.name||'（無名稱）')+(meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(meta)+'</span>':'');
+      var label=esc(g.name||'（無名稱）')+(g.meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(g.meta)+'</span>':'');
       return {color:'#e8eaf6',label:label,onclick:'manualSearchPick('+i+')'};
     })
   });
@@ -13885,7 +13929,24 @@ function renderBars(map,total,colorMap,drillable){
 function drawDonut(map,total,colorMap,centerText){
   var cvs=$('dash-donut');if(!cvs||!cvs.getContext)return;
   var ctx2=cvs.getContext('2d');
-  var W=cvs.width,H=cvs.height;
+  // v02.149：使用者實測回報甜甜圈圖解析度太差。原本canvas內部畫布尺寸直接寫死96×96，
+  // 但手機螢幕的裝置畫素比（devicePixelRatio）常見是2.5~3倍，瀏覽器會把這張96×96的
+  // 點陣圖放大顯示到跟畫面尺寸相符，放大後自然模糊、邊緣有鋸齒。改成內部畫布尺寸乘上
+  // devicePixelRatio（實際畫更多像素），畫面顯示尺寸用CSS style.width/height鎖住維持
+  // 96px不變，再用setTransform把座標系統縮放回原本96×96的邏輯座標——這樣底下所有既有
+  // 的繪製邏輯（cx/cy/半徑等計算）完全不用改。用setTransform而不是scale，是因為這個
+  // 函式在使用者切換分析方式（收藏組成/分類佔比等）時會重複呼叫，用scale每次呼叫都會
+  // 疊加放大、越畫越誇張；setTransform每次都是從頭重設，不會累積。
+  var LOGICAL=96;
+  var dpr=window.devicePixelRatio||1;
+  if(cvs.width!==Math.round(LOGICAL*dpr)){
+    cvs.width=Math.round(LOGICAL*dpr);
+    cvs.height=Math.round(LOGICAL*dpr);
+    cvs.style.width=LOGICAL+'px';
+    cvs.style.height=LOGICAL+'px';
+  }
+  ctx2.setTransform(dpr,0,0,dpr,0,0);
+  var W=LOGICAL,H=LOGICAL;
   ctx2.clearRect(0,0,W,H);
   var cx=W/2,cy=H/2,R=Math.min(cx,cy)-3,ri=Math.round(R*0.55);
   var defaultColors=['#00e5ff','#69f0ae','#ffb300','#ce93d8','#80deea','#ff8c00','#f48fb1','#90a4ae'];

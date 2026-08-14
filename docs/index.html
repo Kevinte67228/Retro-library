@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.150';
+const APP_VERSION='v02.151';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -9433,20 +9433,25 @@ function backToModeSelect(){
 
 function setMbActive(which){
   var ids=['bar','img','combo','manual','gcode','gcode-combo','link','aiweb','batch'];
-  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',link:'#40c4ff',aiweb:'#7c4dff',batch:'#f06292'};
+  // v02.151：使用者要求Step4這8張建檔方式卡片的選中外框統一改成跟Step1-3一樣的色系。
+  // 原本這裡用colors物件幫每張卡片各自配了一組不同顏色（呼應各卡片圖示自己的顏色），
+  // 蓋掉了.ec-card.on這個共用CSS本來就有的青色（#00e5ff，跟Step1-3的分類/平台選中
+  // 外框完全同一套）。改成固定用同一個青色，不再逐卡片查表，選中外框/背景色調/標題
+  // 文字色就會自然跟Step1-3一致；卡片圖示本身的顏色（icon background/stroke）沒有動，
+  // 未選中時仍然各自保留原本的識別色，只有「選中」這個狀態統一起來。
+  var ON_COLOR='#00e5ff';
   // hexToRgb: #rrggbb → 'r,g,b'
   function hRgb(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return r+','+g+','+b;}
   ids.forEach(function(id){
     var b=document.getElementById('mb-'+id);if(!b)return;
     var on=id===which;
-    var c=colors[id]||'#7986cb';
-    // 邊框：選中彩色，未選中深色
-    b.style.border='1.5px solid '+(on?c:'#1e2a45');
-    // 背景：選中半透明彩色，未選中深色
-    b.style.background=on?('rgba('+hRgb(c)+',.08)'):'#141b30';
+    // 邊框：選中統一青色，未選中深色
+    b.style.border='1.5px solid '+(on?ON_COLOR:'#1e2a45');
+    // 背景：選中統一半透明青色，未選中深色
+    b.style.background=on?('rgba('+hRgb(ON_COLOR)+',.08)'):'#141b30';
     // 標題文字（第一個 div > div:first-child）
     var titleDiv=b.querySelector('div>div:first-child');
-    if(titleDiv)titleDiv.style.color=on?c:'#e8eaf6';
+    if(titleDiv)titleDiv.style.color=on?ON_COLOR:'#e8eaf6';
   });
 }
 var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明',manualsearch:'搜尋資料庫帶入 · 說明'};
