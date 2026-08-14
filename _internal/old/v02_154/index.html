@@ -2509,7 +2509,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="window.open(_gamerskyReleaseUrl(),'_blank')" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
+              <button type="button" onclick="_openExternal(_gamerskyReleaseUrl())" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.149';
+const APP_VERSION='v02.154';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6975,7 +6975,15 @@ function _cropLayout(){
   var prevView=_crop.view; // v02.34：resize 時用來把既有框換算到新版面
   _crop.view={x:x,y:y,w:w,h:h,scale:scale};
   var cv=$('crop-canvas');
-  cv.width=sw;cv.height=sh;cv.style.width=sw+'px';cv.style.height=sh+'px';
+  // v02.150：裁切工具的畫布也有跟甜甜圈圖一樣的模糊問題——內部畫布尺寸原本直接等於
+  // 顯示尺寸，沒有乘上裝置畫素比，框線、三分格線、四角把手這些細線條在高解析度螢幕上
+  // 會偏模糊。做法跟drawDonut()一致：內部畫布尺寸乘上devicePixelRatio、CSS顯示尺寸
+  // 鎖住不變，邏輯座標（sw/sh）另外存起來供_cropDraw()使用，取代原本直接讀
+  // cv.width/cv.height（那兩個屬性現在已經是放大過的實際畫布尺寸，不能再拿來當邏輯
+  // 座標用，會超出畫面）。
+  var dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(sw*dpr);cv.height=Math.round(sh*dpr);cv.style.width=sw+'px';cv.style.height=sh+'px';
+  _crop.dpr=dpr;_crop.stageW=sw;_crop.stageH=sh;
   // v02.34：resize（已偵測過）時保留使用者現有框，依版面比例換算，避免重置手動調整
   // v02.132：同一段邏輯延伸涵蓋四角模式的quad，換算方式完全一樣，只是逐點處理。
   if(_crop._autoDetected&&prevView&&prevView.w){
@@ -7027,14 +7035,22 @@ function _cropLayout(){
 }
 function _cropDraw(){
   var cv=$('crop-canvas');if(!cv)return;var ctx=cv.getContext('2d');
+  // v02.150：每次繪製都重新setTransform（不是只在resize時設一次）——canvas.width/height
+  // 被設定時瀏覽器會自動把transform重置回單位矩陣，_cropLayout()每次resize都會重新
+  // 設定寬高，如果只在那邊setTransform一次、後續单純呼叫_cropDraw()時transform還在，
+  // 理論上沒問題，但為了不用假設呼叫順序、跟drawDonut()採同一套防禦性寫法，這裡固定
+  // 在繪製最前面重新套用一次，確保不管呼叫時機為何都一定是正確的縮放狀態。
+  var dpr=_crop.dpr||1;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var stageW=_crop.stageW||cv.width,stageH=_crop.stageH||cv.height;
   var v=_crop.view;
-  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.clearRect(0,0,stageW,stageH);
   ctx.drawImage(_crop.img,v.x,v.y,v.w,v.h);
-  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv);return;}
+  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv,stageW,stageH);return;}
   var b=_crop.box;
   // 遮罩（框外變暗）
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.beginPath();ctx.rect(0,0,stageW,stageH);
   ctx.rect(b.x,b.y,b.w,b.h);ctx.fill('evenodd');ctx.restore();
   // 框線
   ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.strokeRect(b.x,b.y,b.w,b.h);
@@ -7053,10 +7069,10 @@ function _cropDraw(){
 // v02.132：四角透視校正模式的畫面呈現——遮罩挖空成任意四邊形（不是矩形）、四個獨立
 // 可拖曳的角落把手、外加一條淡淡的對角虛線標示三角形分割方式，讓使用者大概理解裁切
 // 時是沿哪條線分兩個三角形處理（角度大時這條線附近可能有輕微接縫，見cropConfirmQuad）。
-function _cropDrawQuad(ctx,cv){
+function _cropDrawQuad(ctx,cv,stageW,stageH){
   var q=_crop.quad;
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.beginPath();ctx.rect(0,0,stageW,stageH);
   ctx.moveTo(q.tl.x,q.tl.y);ctx.lineTo(q.tr.x,q.tr.y);ctx.lineTo(q.br.x,q.br.y);ctx.lineTo(q.bl.x,q.bl.y);ctx.closePath();
   ctx.fill('evenodd');ctx.restore();
   ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;
@@ -9417,20 +9433,25 @@ function backToModeSelect(){
 
 function setMbActive(which){
   var ids=['bar','img','combo','manual','gcode','gcode-combo','link','aiweb','batch'];
-  var colors={bar:'#7986cb',img:'#00e5ff',combo:'#ce93d8',manual:'#69f0ae','gcode':'#ffb74d','gcode-combo':'#80cbc4',link:'#40c4ff',aiweb:'#7c4dff',batch:'#f06292'};
+  // v02.151：使用者要求Step4這8張建檔方式卡片的選中外框統一改成跟Step1-3一樣的色系。
+  // 原本這裡用colors物件幫每張卡片各自配了一組不同顏色（呼應各卡片圖示自己的顏色），
+  // 蓋掉了.ec-card.on這個共用CSS本來就有的青色（#00e5ff，跟Step1-3的分類/平台選中
+  // 外框完全同一套）。改成固定用同一個青色，不再逐卡片查表，選中外框/背景色調/標題
+  // 文字色就會自然跟Step1-3一致；卡片圖示本身的顏色（icon background/stroke）沒有動，
+  // 未選中時仍然各自保留原本的識別色，只有「選中」這個狀態統一起來。
+  var ON_COLOR='#00e5ff';
   // hexToRgb: #rrggbb → 'r,g,b'
   function hRgb(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return r+','+g+','+b;}
   ids.forEach(function(id){
     var b=document.getElementById('mb-'+id);if(!b)return;
     var on=id===which;
-    var c=colors[id]||'#7986cb';
-    // 邊框：選中彩色，未選中深色
-    b.style.border='1.5px solid '+(on?c:'#1e2a45');
-    // 背景：選中半透明彩色，未選中深色
-    b.style.background=on?('rgba('+hRgb(c)+',.08)'):'#141b30';
+    // 邊框：選中統一青色，未選中深色
+    b.style.border='1.5px solid '+(on?ON_COLOR:'#1e2a45');
+    // 背景：選中統一半透明青色，未選中深色
+    b.style.background=on?('rgba('+hRgb(ON_COLOR)+',.08)'):'#141b30';
     // 標題文字（第一個 div > div:first-child）
     var titleDiv=b.querySelector('div>div:first-child');
-    if(titleDiv)titleDiv.style.color=on?c:'#e8eaf6';
+    if(titleDiv)titleDiv.style.color=on?ON_COLOR:'#e8eaf6';
   });
 }
 var STEP_HELP_TITLES={step1:'選擇分類 · 說明',step2:'商品區域 · 說明',step3:'平台選擇 · 說明',step4:'建檔方式 · 說明',manualsearch:'搜尋資料庫帶入 · 說明'};
@@ -11963,26 +11984,80 @@ function batchCancelItemEdit(){
 // 但跳過單筆存檔的 confirm() 對話框（重複/序號模糊已在確認清單階段由使用者決定）。
 function batchSaveAll(){
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
-  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok';});
-  if(!toSave.length){toast('沒有勾選任何項目','er');return;}
+  // v02.153：使用者實測回報儲存階段中斷（斷網/切背景/當機）後沒有續傳保護——解析階段
+  // 每解析完一件就存草稿，中斷可以接續；但儲存階段完全沒有，重新打開後系統不知道「已經
+  // 存了幾件」，重按「儲存全部」可能把已經成功寫進試算表的項目再存一次，造成重複資料。
+  // 加上!it.saved過濾已經成功存過的項目；失敗的項目不標記saved，會在下次「儲存全部」
+  // 時正常重試。
+  var toSave=_batchItems.filter(function(it){return it.include&&it.entry&&it.status==='ok'&&!it.saved;});
+  if(!toSave.length){
+    var _alreadySaved=_batchItems.some(function(it){return it.saved;});
+    if(_alreadySaved){
+      toast('這批項目已經全部儲存完成','ok',3000);
+      _batchClearDraft();resetAll();showPg('col');
+      return;
+    }
+    toast('沒有勾選任何項目','er');return;
+  }
   if(_saving)return;
   _saving=true;
   var _backupEntry=entry;
-  var savedCount=0,failCount=0;
-  function saveOne(i){
-    if(i>=toSave.length){
-      _saving=false;entry=_backupEntry;
-      localforage.setItem('gv_col',col).catch(function(){});updateStats();
-      _batchClearDraft(); // v02.100：整批已經存進收藏，草稿不再需要，避免下次進批次模式又問「要不要接續」
-      noLoad();
-      toast('批次儲存完成：成功 '+savedCount+' 件'+(failCount?'，失敗 '+failCount+' 件':''),'ok',4500);
-      var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
-      resetAll();
-      showPg('col');
-      if(_contCat){selectEntryCat(_contCat);_selectedPlatform=_contPlat;}
+  var savedCount=0,failCount=0,doneCount=0,inFlight=0,total=toSave.length;
+  loading('批次儲存中...（0／'+total+'）');
+  function updateProgress(){loading('批次儲存中...（'+doneCount+'／'+total+'）');}
+  function finishAll(){
+    _saving=false;entry=_backupEntry;
+    localforage.setItem('gv_col',col).catch(function(){});updateStats();
+    // v02.153：累計「這批全部項目」裡標記為saved的總數（含這次中斷前已經存過的），
+    // 不是只算這次執行存了幾件，避免中斷續傳時使用者被顯示的數字誤導成「才存了這麼少」。
+    var _totalSaved=_batchItems.filter(function(it){return it.saved;}).length;
+    _batchClearDraft(); // v02.100：整批已經存進收藏，草稿不再需要，避免下次進批次模式又問「要不要接續」
+    noLoad();
+    toast('批次儲存完成：成功 '+_totalSaved+' 件'+(failCount?'，本次失敗 '+failCount+' 件':''),'ok',4500);
+    var _contCat=_selectedType||'',_contPlat=_selectedPlatform||'';
+    resetAll();
+    showPg('col');
+    if(_contCat){selectEntryCat(_contCat);_selectedPlatform=_contPlat;}
+  }
+  // v02.154：使用者評估後確認要把儲存階段平行化（比照解析階段），但儲存流程裡
+  // _normalizeEntryEnums()／_compressAndSave() 這些既有共用函式都是直接讀寫全域entry
+  // 變數，不接受參數——如果直接讓多件同時呼叫這段，會互相搶用同一個全域entry、彼此覆蓋，
+  // 存錯資料。改成把流程拆成「準備」跟「送出」兩段：準備段（碰全域entry，含圖片壓縮）
+  // 維持逐件循序執行，但每準備完一件，不等它送出完成就立刻繼續準備下一件；送出段
+  // （shPost網路請求，真正耗時的部分）改成最多同時_BATCH_CONCURRENCY件平行送出。這樣
+  // 完全不用更動_compressAndSave等共用函式的介面（降低風險、不影響其他呼叫這些函式的
+  // 既有流程），又能吃到「送出」這段平行化帶來的加速——網路來回通常才是真正的時間大頭，
+  // 準備段本身（主要是圖片壓縮）相對快，逐件執行的等待時間可以接受。
+  // 後端GAS的addRow()同一次更新已經加上LockService，確保平行送出時每個請求問到的
+  // rowNum一定對應自己剛寫的那一列，不會被平行的另一個請求搶走。
+  function sendOne(item,payload){
+    inFlight++;
+    shPost({action:'add',row:payload.row,fields:payload.fields,category:payload.category}).then(function(res){
+      var savedEntry=payload.entrySnapshot;
+      if(res.ok){
+        savedCount++;
+        item.saved=true; // v02.153：標記這件已成功寫入試算表，避免中斷後重複儲存
+        var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+        if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+        if(res.imgs){
+          ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+          if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+        }
+        col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
+      }else{failCount++;}
+    }).catch(function(){failCount++;}).finally(function(){
+      inFlight--;
+      doneCount++;updateProgress();
+      _batchSaveDraft(); // v02.153：每次嘗試（不論成功失敗）都更新草稿進度，中斷後才能正確接續，不重複儲存
+      if(doneCount>=total)finishAll();
+    });
+  }
+  function prepareNext(i){
+    if(i>=total)return;
+    if(inFlight>=_BATCH_CONCURRENCY){
+      setTimeout(function(){prepareNext(i);},120); // 送出名額滿了，稍等有名額釋出再繼續準備下一件
       return;
     }
-    loading('批次儲存中...（'+(i+1)+'／'+toSave.length+'）');
     entry=Object.assign({},toSave[i].entry);
     if(!entry.uuid)entry.uuid=_genUuid();
     if(!entry.created_at)entry.created_at=tpeDateTime();
@@ -11993,22 +12068,17 @@ function batchSaveAll(){
       });
       _capExtraImagesSize();
       var _SF=fieldsFor(entry.category,entry.subtype);
-      var row=_rowFromFields(entry,_SF);
-      shPost({action:'add',row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
-        if(res.ok){
-          savedCount++;
-          var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
-          if(res.uuid&&!entry.uuid)entry.uuid=res.uuid;
-          if(res.imgs){
-            ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];});
-            if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images;
-          }
-          col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});
-        }else{failCount++;}
-      }).catch(function(){failCount++;}).finally(function(){saveOne(i+1);});
+      var payload={
+        row:_rowFromFields(entry,_SF),
+        fields:_entryFields(entry),
+        category:catInternal(entry.category)||'遊戲',
+        entrySnapshot:Object.assign({},entry) // 準備完成當下的快照，避免下一件的全域entry變動影響到這件送出後的資料
+      };
+      sendOne(toSave[i],payload);
+      prepareNext(i+1);
     });
   }
-  saveOne(0);
+  prepareNext(0);
 }
 
 // ── Form ──
@@ -17216,6 +17286,19 @@ function huntCardHtml(h){
 // 行為改變，原本的IGDB發售日曆功能（openReleaseCal/rcLoad等）已整段移除。
 // 網址依「現在的年月」動態組出來，不寫死成使用者當初給的那個月份，不然過一個月連結就會
 // 指向舊月份的清單。
+// v02.152：使用者實測回報「近期發售」點下去是在App本身開啟，不是跳出到手機瀏覽器。
+// PWA以standalone模式安裝後，window.open()對外部網域的處理在部分手機/瀏覽器組合上
+// 不夠可靠，有時候還是留在App自己的瀏覽情境裡，感覺像「在App裡打開」而不是真正切換到
+// 手機的預設瀏覽器。改成動態建立一個帶rel="noopener noreferrer"的<a>元素、用程式模擬
+// 點擊——這是PWA開發常見的作法，比直接呼叫window.open()更可靠地讓連結真正跳出PWA自己
+// 的瀏覽環境，交給系統預設瀏覽器處理。
+function _openExternal(url){
+  var a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 function _gamerskyReleaseUrl(){
   var d=new Date();
   var y=d.getFullYear();

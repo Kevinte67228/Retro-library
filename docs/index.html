@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.154';
+const APP_VERSION='v02.155';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11840,6 +11840,31 @@ function _batchResolveAll(){
   }).then(_restoreEntry,function(err){_restoreEntry();throw err;});
 }
 
+// v02.155：使用者要求批次書背建檔的第4項優化——單筆失敗項目可以個別重試，不用整批
+// 重新解析或直接放棄改成手動輸入。跟_batchResolveAll()的平行工作池一樣，
+// _batchResolveOne()內部的_crossRefQuery會讀全域entry.platform組楽天查詢字串，單獨
+// 重試一件時也要比照設定好這個共用情境物件，不然會用到上一次單品建檔殘留的舊平台。
+function batchRetryOne(i){
+  var item=_batchItems[i];
+  if(!item||_batchResolving||item._retrying)return; // 整批解析中或這件已經在重試中，避免重複觸發
+  item._retrying=true;
+  item.status='resolving';
+  _batchRenderList();
+  var _entryBak=entry;
+  entry=Object.assign({},_defaultsFor(_selectedType),{category:_selectedType,platform:_selectedPlatform||''});
+  _batchResolveOne(item,_selectedType).then(function(failed){
+    item.dup=findDuplicate(item.entry);
+    item.status=failed?'failed':'ok';
+  }).catch(function(){
+    item.status='failed';
+  }).finally(function(){
+    entry=_entryBak;
+    item._retrying=false;
+    _batchRenderList();
+    _batchSaveDraft();
+    toast(item.status==='ok'?'重試成功':'重試仍然失敗，可以手動編輯補上資料',item.status==='ok'?'ok':'er',2500);
+  });
+}
 function _batchStatusBadge(item){
   if(item.status==='pending')return '<span style="color:#7986cb">等待中</span>';
   if(item.status==='resolving')return '<span style="color:#00e5ff">解析中...</span>';
@@ -11870,6 +11895,7 @@ function _batchRenderList(){
     var name=(e&&(e.primary_name||e.zh_name||e.jp_name))||item.title_guess||'(未辨識到名稱)';
     var hasImg=!!(e&&e.cover_img);
     var editable=item.status==='ok'&&!_batchResolving; // v02.54：整批解析完成前一律不可編輯，不只看單一項目狀態
+    var isFailed=item.status==='failed'&&!_batchResolving; // v02.155：失敗項目可個別重試，不用整批重跑
     // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
     // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
@@ -11894,6 +11920,7 @@ function _batchRenderList(){
         '<div style="font-size:11px;margin-top:3px">'+_batchStatusBadge(item)+(editable&&!hasImg?'　<span style="color:#ffb74d">尚未補圖，點縮圖拍照</span>':'')+'</div>'+
       '</div>'+
       (editable?'<button type="button" onclick="batchEditItem('+i+')" title="編輯其他欄位" style="flex-shrink:0;background:#141b30;border:1px solid #2a3a5a;color:#9fa8c8;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer">✎</button>':'')+
+      (isFailed?'<button type="button" onclick="batchRetryOne('+i+')" title="重新查詢這一件" style="flex-shrink:0;background:#141b30;border:1px solid #ff5252;color:#ff5252;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer">🔄</button>':'')+
     '</div>';
   }).join('');
   var doneCount=_batchItems.filter(function(it){return it.status==='ok'||it.status==='failed';}).length;
