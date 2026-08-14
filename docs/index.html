@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.149';
+const APP_VERSION='v02.150';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6975,7 +6975,15 @@ function _cropLayout(){
   var prevView=_crop.view; // v02.34：resize 時用來把既有框換算到新版面
   _crop.view={x:x,y:y,w:w,h:h,scale:scale};
   var cv=$('crop-canvas');
-  cv.width=sw;cv.height=sh;cv.style.width=sw+'px';cv.style.height=sh+'px';
+  // v02.150：裁切工具的畫布也有跟甜甜圈圖一樣的模糊問題——內部畫布尺寸原本直接等於
+  // 顯示尺寸，沒有乘上裝置畫素比，框線、三分格線、四角把手這些細線條在高解析度螢幕上
+  // 會偏模糊。做法跟drawDonut()一致：內部畫布尺寸乘上devicePixelRatio、CSS顯示尺寸
+  // 鎖住不變，邏輯座標（sw/sh）另外存起來供_cropDraw()使用，取代原本直接讀
+  // cv.width/cv.height（那兩個屬性現在已經是放大過的實際畫布尺寸，不能再拿來當邏輯
+  // 座標用，會超出畫面）。
+  var dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(sw*dpr);cv.height=Math.round(sh*dpr);cv.style.width=sw+'px';cv.style.height=sh+'px';
+  _crop.dpr=dpr;_crop.stageW=sw;_crop.stageH=sh;
   // v02.34：resize（已偵測過）時保留使用者現有框，依版面比例換算，避免重置手動調整
   // v02.132：同一段邏輯延伸涵蓋四角模式的quad，換算方式完全一樣，只是逐點處理。
   if(_crop._autoDetected&&prevView&&prevView.w){
@@ -7027,14 +7035,22 @@ function _cropLayout(){
 }
 function _cropDraw(){
   var cv=$('crop-canvas');if(!cv)return;var ctx=cv.getContext('2d');
+  // v02.150：每次繪製都重新setTransform（不是只在resize時設一次）——canvas.width/height
+  // 被設定時瀏覽器會自動把transform重置回單位矩陣，_cropLayout()每次resize都會重新
+  // 設定寬高，如果只在那邊setTransform一次、後續单純呼叫_cropDraw()時transform還在，
+  // 理論上沒問題，但為了不用假設呼叫順序、跟drawDonut()採同一套防禦性寫法，這裡固定
+  // 在繪製最前面重新套用一次，確保不管呼叫時機為何都一定是正確的縮放狀態。
+  var dpr=_crop.dpr||1;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var stageW=_crop.stageW||cv.width,stageH=_crop.stageH||cv.height;
   var v=_crop.view;
-  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.clearRect(0,0,stageW,stageH);
   ctx.drawImage(_crop.img,v.x,v.y,v.w,v.h);
-  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv);return;}
+  if(_crop.mode==='quad'&&_crop.quad){_cropDrawQuad(ctx,cv,stageW,stageH);return;}
   var b=_crop.box;
   // 遮罩（框外變暗）
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.beginPath();ctx.rect(0,0,stageW,stageH);
   ctx.rect(b.x,b.y,b.w,b.h);ctx.fill('evenodd');ctx.restore();
   // 框線
   ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;ctx.strokeRect(b.x,b.y,b.w,b.h);
@@ -7053,10 +7069,10 @@ function _cropDraw(){
 // v02.132：四角透視校正模式的畫面呈現——遮罩挖空成任意四邊形（不是矩形）、四個獨立
 // 可拖曳的角落把手、外加一條淡淡的對角虛線標示三角形分割方式，讓使用者大概理解裁切
 // 時是沿哪條線分兩個三角形處理（角度大時這條線附近可能有輕微接縫，見cropConfirmQuad）。
-function _cropDrawQuad(ctx,cv){
+function _cropDrawQuad(ctx,cv,stageW,stageH){
   var q=_crop.quad;
   ctx.save();ctx.fillStyle='rgba(0,0,0,.55)';
-  ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);
+  ctx.beginPath();ctx.rect(0,0,stageW,stageH);
   ctx.moveTo(q.tl.x,q.tl.y);ctx.lineTo(q.tr.x,q.tr.y);ctx.lineTo(q.br.x,q.br.y);ctx.lineTo(q.bl.x,q.bl.y);ctx.closePath();
   ctx.fill('evenodd');ctx.restore();
   ctx.strokeStyle='#00e5ff';ctx.lineWidth=2;
