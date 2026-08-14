@@ -2869,7 +2869,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.141';
+const APP_VERSION='v02.142';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -11717,7 +11717,7 @@ function _batchRenderList(){
     // v02.57：縮圖改成可點擊的編輯入口（開啟完整表單，使用者可拍照/編輯任何欄位），
     // 不再是自動抓圖的候選選擇列；沒有圖片時顯示提示文字引導使用者點擊拍照補上
     var imgTag=hasImg
-      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'"'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;object-fit:cover;border-radius:8px;'+(editable?'cursor:pointer;':'')+'background:#141b30;flex-shrink:0" title="'+(editable?'點擊編輯／補拍照片':'')+'">'
+      ? '<img src="'+esc(imgUrl(e.cover_img,120))+'" loading="lazy"'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;object-fit:cover;border-radius:8px;'+(editable?'cursor:pointer;':'')+'background:#141b30;flex-shrink:0" title="'+(editable?'點擊編輯／補拍照片':'')+'">'
       : '<div'+(editable?' onclick="batchEditItem('+i+')"':'')+' style="width:44px;height:44px;border-radius:8px;background:#141b30;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;'+(editable?'cursor:pointer;':'')+'color:#7986cb;text-align:center;line-height:1.2" title="'+(editable?'點擊拍照補上圖片':'')+'">📷</div>';
     var checked=(item.status==='ok'&&item.include)?'checked':'';
     var disabled=item.status==='ok'?'':'disabled';
@@ -14154,7 +14154,7 @@ function renderShelf(){
       var shortTitle=title.length>10?title.slice(0,10)+'…':title;
       var sold=d.collect_status==='已出售'?'<div class="shelf-sold-tag">已出售</div>':'';
       var thumb=coverImg
-        ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'">'
+        ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'" loading="lazy">'
         :'<div class="shelf-cover-default" style="background:'+color+'">'+esc(shortTitle)+'</div>';
       return '<div style="flex-shrink:0">'+
         '<div class="shelf-cover" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
@@ -15002,7 +15002,7 @@ function renderGlist(){
     var _icon=_catMeta(cat,d.subtype).icon;
     // 縮圖：優先 cover_img，否則 emoji
     var thumb=hasImgVal(d.cover_img)?
-      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt=""></div>':
+      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt="" loading="lazy"></div>':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
