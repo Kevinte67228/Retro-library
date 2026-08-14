@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.02';
+const APP_VERSION='v03.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -18050,9 +18050,77 @@ function huntFormStep(){
       '<div style="font-size:15px;font-weight:700;color:#ff6e9c">③ 目標資訊</div>'+
       '<button onclick="huntCancelAdd()" style="background:none;border:none;color:#7986cb;font-size:24px;line-height:1;cursor:pointer" type="button">×</button></div>'+
     '<div style="padding:16px;flex:1;overflow-y:auto">'+
+      _huntSearchBoxHtml()+
       _huntFormFieldsHtml(e,'hf')+
       '<button class="btn bp bw" onclick="huntSaveTarget()" type="button">儲存目標</button>'+
     '</div>';
+}
+// v02.157：使用者要求把「搜尋資料庫帶入」加進尋寶新增流程——尋寶場景常常沒有實體可以
+// 掃條碼/拍照（朋友推薦、清單上看到的還沒入手），名稱搜尋常常是唯一能取得資料的方式。
+// 直接沿用手動建檔那份「查IGDB、列候選讓使用者自己挑」的機制與說明內容
+// （toggleHelp('manualsearch')），不重新寫一套。
+function _huntSearchBoxHtml(){
+  return '<div style="padding:0 0 12px;border-bottom:1px solid #1e2a45;margin-bottom:12px">'+
+    '<div style="font-size:12px;color:#7986cb;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">'+
+      '<span>🔍 搜尋資料庫帶入（輔助功能，選填）</span>'+
+      '<button onclick="toggleHelp(\'manualsearch\')" class="step-help-btn" type="button"><span>💡</span><span>說明</span></button>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<input class="fi" id="hunt-search-inp" type="text" placeholder="輸入品名搜尋" style="flex:1;font-size:13px" onkeydown="if(event.key===\'Enter\'){event.preventDefault();huntSearchDB();}">'+
+      '<button class="btn bp" style="flex:0 0 auto;padding:0 16px" onclick="huntSearchDB()" type="button">搜尋</button>'+
+    '</div>'+
+    '<div id="hunt-search-status" style="display:none;text-align:center;font-size:12px;color:#7986cb;margin-top:8px"></div>'+
+  '</div>';
+}
+var _huntSearchResults=[];
+function huntSearchDB(){
+  var inp=$('hunt-search-inp');var q=inp?inp.value.trim():'';
+  if(!q){toast('請輸入品名','er');return;}
+  if(!(cfg.iid&&cfg.isec)){toast('請先到設定頁填入 IGDB（Twitch）憑證才能使用這個功能','er',4000);return;}
+  var st=$('hunt-search-status');
+  if(st){st.style.display='block';st.textContent='查詢中...';}
+  shPost({action:'igdb_search',q:q,client_id:cfg.iid,client_secret:cfg.isec}).then(function(r){
+    if(st)st.style.display='none';
+    var games=(r&&r.games)||[];
+    if(!games.length){toast('查無結果，資料庫可能沒有收錄，建議改用手動輸入','er',4000);return;}
+    _huntSearchResults=games;
+    _showHuntSearchPicker(games);
+  }).catch(function(e){
+    if(st)st.style.display='none';
+    toast('查詢失敗：'+((e&&e.message)||'請稍後再試'),'er',4000);
+  });
+}
+function _showHuntSearchPicker(games){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'選擇搜尋結果（'+games.length+' 筆，點選帶入表單）',
+    buttons:games.slice(0,20).map(function(g,i){
+      var label=esc(g.name||'（無名稱）')+(g.meta?'<br><span style="font-size:11px;color:#7986cb">'+esc(g.meta)+'</span>':'');
+      return {color:'#e8eaf6',label:label,onclick:'huntSearchPick('+i+')'};
+    })
+  });
+}
+function huntSearchPick(idx){
+  var g=_huntSearchResults&&_huntSearchResults[idx];
+  if(!g||!_huntEntry)return;
+  closeSelectSheet();
+  var db={};
+  ['primary_name','platform','summary'].forEach(function(k){
+    var v=extractField('igdb',g,k);
+    if(v)db[k]=v;
+  });
+  if(db.primary_name)_huntEntry.primary_name=db.primary_name;
+  // 平台比照_huntApplyAIResultToEntry既有慣例：只有使用者還沒主動改過平台（目前值仍
+  // 等於進入尋寶前的預設值）才覆蓋，已經手動改過的話尊重使用者選擇
+  if(db.platform&&_huntEntry.platform===_huntDefaultPlat)_huntEntry.platform=db.platform;
+  if(db.summary&&!_huntEntry.summary)_huntEntry.summary=db.summary;
+  // 這個功能只出現在Step3表單頁，此時表單一定是開著的，直接同步畫面欄位
+  var nameInp=$('hf-name');if(nameInp)nameInp.value=_huntEntry.primary_name||'';
+  var sumInp=$('hf-summary');if(sumInp&&db.summary)sumInp.value=_huntEntry.summary;
+  if(db.platform&&_huntEntry.platform===db.platform){
+    var platSel=$('hf-plat');if(platSel)platSel.value=_huntEntry.platform;
+    var platVal=$('hf-plat-val');if(platVal)platVal.textContent=_huntEntry.platform||'— 不指定 —';
+  }
+  toast('已帶入「'+(db.primary_name||'')+'」，請確認欄位後儲存','ok',3500);
 }
 // v54.66：仿照收藏 _entryFields() 的做法，額外送出 by-name 的 fields 物件，
 // 讓 extra_images 等新欄位不受 HUNT_HDR/試算表欄位順序限制，只要試算表有對應欄位標題即可寫入
