@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v02.148';
+const APP_VERSION='v02.149';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13913,7 +13913,24 @@ function renderBars(map,total,colorMap,drillable){
 function drawDonut(map,total,colorMap,centerText){
   var cvs=$('dash-donut');if(!cvs||!cvs.getContext)return;
   var ctx2=cvs.getContext('2d');
-  var W=cvs.width,H=cvs.height;
+  // v02.149：使用者實測回報甜甜圈圖解析度太差。原本canvas內部畫布尺寸直接寫死96×96，
+  // 但手機螢幕的裝置畫素比（devicePixelRatio）常見是2.5~3倍，瀏覽器會把這張96×96的
+  // 點陣圖放大顯示到跟畫面尺寸相符，放大後自然模糊、邊緣有鋸齒。改成內部畫布尺寸乘上
+  // devicePixelRatio（實際畫更多像素），畫面顯示尺寸用CSS style.width/height鎖住維持
+  // 96px不變，再用setTransform把座標系統縮放回原本96×96的邏輯座標——這樣底下所有既有
+  // 的繪製邏輯（cx/cy/半徑等計算）完全不用改。用setTransform而不是scale，是因為這個
+  // 函式在使用者切換分析方式（收藏組成/分類佔比等）時會重複呼叫，用scale每次呼叫都會
+  // 疊加放大、越畫越誇張；setTransform每次都是從頭重設，不會累積。
+  var LOGICAL=96;
+  var dpr=window.devicePixelRatio||1;
+  if(cvs.width!==Math.round(LOGICAL*dpr)){
+    cvs.width=Math.round(LOGICAL*dpr);
+    cvs.height=Math.round(LOGICAL*dpr);
+    cvs.style.width=LOGICAL+'px';
+    cvs.style.height=LOGICAL+'px';
+  }
+  ctx2.setTransform(dpr,0,0,dpr,0,0);
+  var W=LOGICAL,H=LOGICAL;
   ctx2.clearRect(0,0,W,H);
   var cx=W/2,cy=H/2,R=Math.min(cx,cy)-3,ri=Math.round(R*0.55);
   var defaultColors=['#00e5ff','#69f0ae','#ffb300','#ce93d8','#80deea','#ff8c00','#f48fb1','#90a4ae'];
