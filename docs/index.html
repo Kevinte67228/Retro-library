@@ -2509,7 +2509,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="_openExternal(_gamerskyReleaseUrl())" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
+              <button type="button" onclick="openReleaseScheduleMenu()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.10';
+const APP_VERSION='v03.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17570,6 +17570,31 @@ function _gamerskyReleaseUrl(){
   var y=d.getFullYear();
   var m=d.getMonth()+1;
   return 'https://ku.gamersky.com/release/pc_'+y+(m<10?'0'+m:m)+'/';
+}
+// v02.164：使用者要求「近期發售」補上主流主機平台＋Steam的官方發售表連結，不是只有
+// 游民星空這個第三方彙整站。改成點下去先跳出小選單讓使用者選要看哪個平台，選定後才
+// 用_openExternal()開啟——網址都是查證過的官方頁面，不是爬蟲抓資料，純粹是連結，不涉及
+// 資料擷取的技術/法律風險（跟先前評估「能不能爬這些官網」是兩回事）。
+var RELEASE_SCHEDULE_DESTS=[
+  {id:'gamersky',label:'PC 遊戲（游民星空・中文彙整）'},
+  {id:'nintendo',label:'Nintendo',url:'https://www.nintendo.com/jp/schedule/index.html'},
+  {id:'playstation',label:'PlayStation',url:'https://store.playstation.com/ja-jp/category/82ced94c-ed3f-4d81-9b50-4d4cf1da170b/1'},
+  {id:'xbox',label:'Xbox',url:'https://www.xbox.com/ja-JP/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'steam',label:'Steam（官方即將推出）',url:'https://store.steampowered.com/explore/upcoming/'}
+];
+function openReleaseScheduleMenu(){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'近期發售 · 選擇平台',
+    buttons:RELEASE_SCHEDULE_DESTS.map(function(d){
+      return {color:'#e8eaf6',label:esc(d.label),onclick:"openReleaseScheduleDest('"+d.id+"')"};
+    })
+  });
+}
+function openReleaseScheduleDest(id){
+  closeSelectSheet();
+  var d=RELEASE_SCHEDULE_DESTS.filter(function(x){return x.id===id;})[0];
+  if(!d)return;
+  _openExternal(d.url||_gamerskyReleaseUrl());
 }
 // ══ v54.44：條碼查詢改為 8 個目的地，分兩排。
 // 第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）：標準網址查詢格式，直接開網頁帶入條碼。
