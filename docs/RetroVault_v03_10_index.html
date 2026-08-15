@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.04';
+const APP_VERSION='v03.10';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5989,24 +5989,168 @@ function colDeleteSelected(){
   }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
 }
 
-// v02.100：批次編輯——收藏頁多選原本只有全選／刪除，整理收藏最常見的「這批改存放位置／
-// 收藏狀態／系列」卻要一筆筆點進去改。沿用單筆更新既有的shPost({action:'update',...})
-// 模式（跟marketSaveEstimate同一套），逐筆循序送出，只覆蓋使用者勾選的欄位、其餘欄位
-// 完全不動。
+// v02.162：批次編輯改成依分類動態顯示欄位，取代原本固定寫死的5個欄位（保管位置/收藏
+// 狀態/系列/平台/地區）。原本「平台」欄位對主機/週邊/原聲帶/公仔/動漫美術完全不適用
+// （這些分類根本沒有platform欄位），使用者提出後重新設計。跟使用者確認過的規劃：
+// - 通用欄位：保管位置/收藏狀態（全分類都有）、品項完整度（除了數位下載版，沒有實體
+//   配件的概念，其餘7個分類都有）
+// - 各分類專屬的「歸屬性」欄位（地區/平台/系列等），依各分類實際存在的欄位設計
+// - 刻意不加「類型」欄位（genre/book_type/peripheral_type）——這類欄位是內容分類性質，
+//   同一批項目通常本來就不會是同一個類型，批次寫入同一個值大機率會覆蓋掉正確的個別
+//   資料，跟保管位置/完整度這種「一整批東西剛好真的相同」的情境不同，風險評估後不建議做
+var BULK_EDIT_STATUS_OPTS=['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'];
+// v02.163：使用者實測回報遊戲的批次編輯沒看到「裸卡」選項——查證後發現「品項完整度」
+// 根本不是簡單的下拉選單，是逐項配件（本體/外盒/說明書等，依分類各自不同）各自獨立
+// 評級、序列化成一個字串存進entry.completeness的複合欄位（見COMP_COMPONENTS／
+// serializeComp／parseComp）。原本用一組憑印象猜的固定選項（全新/完整/缺件/部分登錄/
+// 未評級）完全對不上實際的資料格式，是錯的。改成沿用單筆編輯表單quickCompPreset()
+// 那5個快速預設（全新/盒書完整/裸卡/缺件/清空），套用時依「這一件自己的分類」算出
+// 對應的組件序列化字串，不是套用同一個固定字串給所有分類不同的項目。
+var BULK_EDIT_COMP_PRESETS=[
+  {v:'new',label:'全新'},
+  {v:'complete',label:'盒書完整'},
+  {v:'bare',label:'裸卡'},
+  {v:'missing',label:'缺件'}
+];
+var BULK_EDIT_REGION_OPTS=['日本','亞洲','美國','其他'];
+var BULK_EDIT_CAT_FIELDS={
+  '遊戲':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'platform',label:'平台',type:'platform'},
+    {key:'series',label:'系列',type:'text',placeholder:'例如：Summer Lesson'}
+  ],
+  '攻略':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'series',label:'系列',type:'text',placeholder:'例如：Summer Lesson'},
+    {key:'related_game',label:'關聯遊戲',type:'text',placeholder:'例如：魔物獵人 崛起'}
+  ],
+  '主機':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'brand',label:'品牌',type:'text',placeholder:'例如：Sony'}
+  ],
+  '週邊':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'brand',label:'品牌',type:'text',placeholder:'例如：Sony'},
+    {key:'compat_platform',label:'相容平台',type:'text',placeholder:'例如：PlayStation 5'}
+  ],
+  '數位下載版':[
+    {key:'platform',label:'平台',type:'platform'},
+    {key:'store',label:'商店平台',type:'text',placeholder:'例如：Nintendo eShop'},
+    {key:'series',label:'系列',type:'text',placeholder:'例如：Summer Lesson'}
+  ],
+  '原聲帶':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'related_work',label:'作品／IP名稱',type:'text',placeholder:'例如：Final Fantasy'},
+    {key:'label',label:'發行廠牌',type:'text',placeholder:'例如：SME'}
+  ],
+  '動漫/美術設定集':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'series',label:'系列',type:'text',placeholder:'例如：鬼滅之刃'}
+  ],
+  '公仔':[
+    {key:'region',label:'地區',type:'select',options:BULK_EDIT_REGION_OPTS,def:'日本'},
+    {key:'series',label:'系列',type:'text',placeholder:'例如：鬼滅之刃'},
+    {key:'character',label:'角色名稱',type:'text',placeholder:'例如：竈門炭治郎'},
+    {key:'brand',label:'品牌',type:'text',placeholder:'例如：Good Smile Company'}
+  ]
+};
+function _bulkEditFieldsFor(cat){
+  var fields=[
+    {key:'storage_location',label:'保管位置',type:'text',placeholder:'例如：A架-2層'},
+    {key:'collect_status',label:'收藏狀態',type:'select',options:BULK_EDIT_STATUS_OPTS,def:'收藏中'}
+  ];
+  if(cat!=='數位下載版'){
+    fields.push({key:'completeness',label:'品項完整度',type:'comp-preset',options:BULK_EDIT_COMP_PRESETS,def:'complete'});
+  }
+  return fields.concat(BULK_EDIT_CAT_FIELDS[cat]||[]);
+}
+// 混合分類（勾選的項目橫跨多個大分類）時，只顯示全部分類都適用的共通欄位，避免顯示出
+// 對某些選取項目根本不存在的欄位
+function _bulkEditFieldsForCats(cats){
+  if(cats.length===1)return _bulkEditFieldsFor(cats[0]);
+  var fields=[
+    {key:'storage_location',label:'保管位置',type:'text',placeholder:'例如：A架-2層'},
+    {key:'collect_status',label:'收藏狀態',type:'select',options:BULK_EDIT_STATUS_OPTS,def:'收藏中'}
+  ];
+  if(cats.indexOf('數位下載版')<0){
+    fields.push({key:'completeness',label:'品項完整度',type:'comp-preset',options:BULK_EDIT_COMP_PRESETS,def:'complete'});
+  }
+  return fields;
+}
+function _bulkEditFieldRowHtml(f){
+  var id='bulk-edit-'+f.key;
+  var head='<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">'+
+    '<input type="checkbox" id="'+id+'-on" style="width:16px;height:16px;accent-color:#ce93d8">'+
+    '<span class="fl" style="margin:0">'+esc(f.label)+'</span></label>';
+  var body;
+  if(f.type==='text'){
+    body='<input class="fi" id="'+id+'" placeholder="'+esc(f.placeholder||'')+'">';
+  }else if(f.type==='select'){
+    body='<div style="position:relative;display:block">'+
+      '<select class="fsel" id="'+id+'" style="pointer-events:none" tabindex="-1">'+
+        f.options.map(function(o){return '<option value="'+esc(o)+'">'+esc(o)+'</option>';}).join('')+
+      '</select>'+
+      '<div onclick="openSelectSheet(\''+id+'\',\''+esc(f.label)+'\')" style="position:absolute;inset:0;cursor:pointer"></div>'+
+    '</div>';
+  }else if(f.type==='platform'){
+    // v02.118的既有慣例：平台選項數量多（60+），用JS動態產生，不在HTML裡手寫一長串<option>
+    body='<div style="position:relative;display:block">'+
+      '<select class="fsel" id="'+id+'" style="pointer-events:none" tabindex="-1">'+
+        PLATFORMS.map(function(p){return '<option value="'+esc(p.v)+'">'+esc(p.v)+'</option>';}).join('')+
+      '</select>'+
+      '<div onclick="openSelectSheet(\''+id+'\',\''+esc(f.label)+'\')" style="position:absolute;inset:0;cursor:pointer"></div>'+
+    '</div>';
+  }else if(f.type==='comp-preset'){
+    // v02.163：完整度不是簡單字串，是快速預設（對應quickCompPreset()的5個預設鍵值），
+    // 套用時另外在bulkEditSave()裡依每一件自己的分類算出正確的序列化字串
+    body='<div style="position:relative;display:block">'+
+      '<select class="fsel" id="'+id+'" style="pointer-events:none" tabindex="-1">'+
+        f.options.map(function(o){return '<option value="'+esc(o.v)+'">'+esc(o.label)+'</option>';}).join('')+
+      '</select>'+
+      '<div onclick="openSelectSheet(\''+id+'\',\''+esc(f.label)+'\')" style="position:absolute;inset:0;cursor:pointer"></div>'+
+    '</div>';
+  }
+  return '<div class="fg">'+head+body+'</div>';
+}
+// v02.163：複製自quickCompPreset()的預設邏輯，但這裡不能直接操作表單DOM（批次編輯是
+// 針對多筆、各自可能不同分類的項目），改成純函式回傳{組件:等級}的map，讓bulkEditSave()
+// 依「這一件自己的分類」算出正確的組件清單後再呼叫serializeComp()序列化。
+function _compPresetMap(preset,cat){
+  cat=catInternal(cat);
+  var body=compBodyKey(cat);
+  var comps=COMP_COMPONENTS[cat]||[];
+  var map={};
+  comps.forEach(function(comp){
+    if(preset==='new')map[comp]='全新';
+    else if(preset==='complete')map[comp]='良好';
+    else if(preset==='bare')map[comp]=(comp===body)?'裸卡':'缺少';
+    else if(preset==='missing')map[comp]=(comp===body)?'良好':'缺少';
+    else map[comp]='無'; // clear
+  });
+  map['__custom']='無';
+  return map;
+}
+var _bulkEditCurrentFields=[]; // bulkEditSave() 讀取目前畫面上實際顯示了哪些欄位
 function bulkEditOpen(){
   if(!_colSelSet.size){toast('尚未選取','er');return;}
   $('bulk-edit-count').textContent=_colSelSet.size;
-  ['loc','status','series','plat','region'].forEach(function(k){var cb=$('bulk-edit-'+k+'-on');if(cb)cb.checked=false;});
-  $('bulk-edit-loc').value='';
-  $('bulk-edit-series').value='';
-  $('bulk-edit-status').value='收藏中';
-  // v02.118：平台選項數量多（60+），用JS動態產生，不在HTML裡手寫一長串<option>
-  var platSel=$('bulk-edit-plat');
-  if(platSel&&!platSel.options.length){
-    platSel.innerHTML=PLATFORMS.map(function(p){return '<option value="'+esc(p.v)+'">'+esc(p.v)+'</option>';}).join('');
-  }
-  if(platSel)platSel.value=PLATFORMS[0].v;
-  $('bulk-edit-region').value='日本';
+  var keySet=_colSelSet;
+  var items=col.filter(function(c){return keySet.has(_colKey(c));});
+  var catsSeen={};
+  items.forEach(function(it){var c=catInternal((it.data&&it.data.category)||'遊戲')||'遊戲';catsSeen[c]=1;});
+  var cats=Object.keys(catsSeen);
+  var fields=_bulkEditFieldsForCats(cats);
+  _bulkEditCurrentFields=fields;
+  var body=$('bulk-edit-fields');
+  if(body)body.innerHTML=fields.map(_bulkEditFieldRowHtml).join('');
+  fields.forEach(function(f){
+    var on=$('bulk-edit-'+f.key+'-on');if(on)on.checked=false;
+    var el=$('bulk-edit-'+f.key);if(!el)return;
+    if(f.type==='text'){el.value='';}
+    else if(f.type==='select'){el.value=f.def||f.options[0];}
+    else if(f.type==='platform'){el.value=PLATFORMS[0].v;}
+    else if(f.type==='comp-preset'){el.value=f.def||f.options[0].v;}
+  });
   var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
   if(ov)ov.classList.add('on');
   if(p)p.classList.add('on');
@@ -6019,42 +6163,59 @@ function bulkEditClose(){
 function bulkEditSave(){
   if(!cfg.url){toast('請先設定試算表 URL','er');bulkEditClose();showPg('cfg');return;}
   var patch={};
-  if($('bulk-edit-loc-on').checked)patch.storage_location=($('bulk-edit-loc').value||'').trim();
-  if($('bulk-edit-status-on').checked)patch.collect_status=$('bulk-edit-status').value;
-  if($('bulk-edit-series-on').checked)patch.series=($('bulk-edit-series').value||'').trim();
-  if($('bulk-edit-plat-on').checked)patch.platform=$('bulk-edit-plat').value;
-  if($('bulk-edit-region-on').checked)patch.region=$('bulk-edit-region').value;
+  var fieldLabels={};
+  (_bulkEditCurrentFields||[]).forEach(function(f){
+    var on=$('bulk-edit-'+f.key+'-on');
+    if(on&&on.checked){
+      var el=$('bulk-edit-'+f.key);
+      var v=el?(el.value||'').trim():'';
+      patch[f.key]=v;
+      fieldLabels[f.key]=f.label;
+    }
+  });
   if(!Object.keys(patch).length){toast('請至少勾選一個要修改的欄位','er');return;}
   var keys=Array.from(_colSelSet);
   if(!keys.length){toast('尚未選取','er');return;}
-  var fieldLabels={storage_location:'存放位置',collect_status:'收藏狀態',series:'系列',platform:'平台',region:'地區'};
   var patchDesc=Object.keys(patch).map(function(k){return fieldLabels[k];}).join('、');
   bulkEditClose();
-  if(!confirm('確定要把這 '+keys.length+' 筆的「'+patchDesc+'」都改成上面填的值嗎？'))return;
-  var keySet=new Set(keys);
-  var items=col.filter(function(c){return keySet.has(_colKey(c));});
-  if(!items.length){toast('找不到選取的項目','er');return;}
-  var i=0,okCount=0,failCount=0;
-  function next(){
-    if(i>=items.length){
-      localforage.setItem('gv_col',col).catch(function(){});
-      updateStats();filterCol();noLoad();
-      toast('批次編輯完成：成功 '+okCount+' 筆'+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4000);
-      colToggleSelect(); // 完成後退出選取模式，回到一般瀏覽
-      return;
+  // v02.162：這裡本來就是需要使用者明確做選擇的分支判斷（跟商品條碼那次同一種情境），
+  // 沿用v02.160已經建好的_customConfirm()共用非同步彈窗，不用原生confirm()。
+  _customConfirm('確定要批次修改嗎？',
+    '把這 '+keys.length+' 筆的「'+patchDesc+'」都改成上面填的值？').then(function(proceed){
+    if(!proceed)return;
+    var keySet=new Set(keys);
+    var items=col.filter(function(c){return keySet.has(_colKey(c));});
+    if(!items.length){toast('找不到選取的項目','er');return;}
+    var i=0,okCount=0,failCount=0;
+    function next(){
+      if(i>=items.length){
+        localforage.setItem('gv_col',col).catch(function(){});
+        updateStats();filterCol();noLoad();
+        toast('批次編輯完成：成功 '+okCount+' 筆'+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4000);
+        colToggleSelect(); // 完成後退出選取模式，回到一般瀏覽
+        return;
+      }
+      var item=items[i];
+      loading('批次編輯中...（'+(i+1)+'／'+items.length+'）');
+      var updated=Object.assign({},item.data||{},patch);
+      // v02.163：completeness在patch裡存的是預設鍵值（'new'/'complete'/'bare'/'missing'/
+      // 'clear'），不是能直接寫入的欄位值——上面的Object.assign已經把這個鍵值誤蓋進
+      // updated.completeness，這裡要覆寫成依「這一件自己的分類」正確算出的序列化字串
+      // （不同分類的組件清單不一樣，例如攻略是「書本體/書腰/外封/特典附錄」，遊戲是
+      // 「外盒/本體/配件/說明書/側標」，不能套用同一個字串）。
+      if(patch.completeness){
+        updated.completeness=serializeComp(updated.category,_compPresetMap(patch.completeness,updated.category),'');
+      }
+      var fields=fieldsFor(updated.category,updated.subtype);
+      var row=_rowFromFields(updated,fields);
+      var rowNum=item.uid||item.rowNum;
+      var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
+      shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
+        if(res&&res.ok){item.data=updated;okCount++;}else{failCount++;}
+      }).catch(function(){failCount++;}).finally(function(){i++;next();});
     }
-    var item=items[i];
-    loading('批次編輯中...（'+(i+1)+'／'+items.length+'）');
-    var updated=Object.assign({},item.data||{},patch);
-    var fields=fieldsFor(updated.category,updated.subtype);
-    var row=_rowFromFields(updated,fields);
-    var rowNum=item.uid||item.rowNum;
-    var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
-    shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
-      if(res&&res.ok){item.data=updated;okCount++;}else{failCount++;}
-    }).catch(function(){failCount++;}).finally(function(){i++;next();});
-  }
-  next();
+    next();
+  });
 }
 
 // v02.100：依系列瀏覽——把有填「系列」欄位的收藏分組，一眼看出某系列收了幾件；同時對照
@@ -9909,26 +10070,35 @@ function scanSetStep(n){
 
 // 條碼掃到 → 進入步驟二
 function scanGoStep2(bc){
-  if(bc&&!confirmBarcodeDup(bc)){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-  _scanBC=bc;
-  var s1=$('scan-step1');if(s1)s1.style.display='none';
-  var s2=$('scan-step2');if(s2)s2.style.display='block';
-  // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
-  var _h2=$('scan-step2-hint');
-  if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
-  var badge=$('scan-bc-badge');
-  if(bc){
-    if(badge)badge.style.display='flex';
-    var num=$('scan-bc-num');if(num)num.textContent=bc;
-  }else{
-    if(badge)badge.style.display='none';
+  function _proceed(){
+    _scanBC=bc;
+    var s1=$('scan-step1');if(s1)s1.style.display='none';
+    var s2=$('scan-step2');if(s2)s2.style.display='block';
+    // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
+    var _h2=$('scan-step2-hint');
+    if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
+    var badge=$('scan-bc-badge');
+    if(bc){
+      if(badge)badge.style.display='flex';
+      var num=$('scan-bc-num');if(num)num.textContent=bc;
+    }else{
+      if(badge)badge.style.display='none';
+    }
+    var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
+    var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
+    var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
+    _scanImg=null;
+    _scanImgBack=null; // v02.33（C）
+    scanSetStep(2);
   }
-  var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
-  var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
-  var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
-  _scanImg=null;
-  _scanImgBack=null; // v02.33（C）
-  scanSetStep(2);
+  if(bc){
+    confirmBarcodeDup(bc).then(function(proceed){
+      if(!proceed){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
+      _proceed();
+    });
+  }else{
+    _proceed();
+  }
 }
 
 // 步驟二：拍照 / 相簿選圖
@@ -10337,9 +10507,16 @@ function comboScanFromBtn(){
 function comboSearchFromInput(){
   var bi=$('combo-bar-inp');var v=(bi&&bi.value||'').trim();
   if(!v&&!_scanImg&&!_scanImgBack){toast('請掃描／輸入條碼，或先拍攝封面/封底','er');return;}
-  if(v&&!confirmBarcodeDup(v)){return;} // 與原流程一致的重複條碼防護
-  _scanBC=v;
-  scanStep3AI();
+  if(v){
+    confirmBarcodeDup(v).then(function(proceed){
+      if(!proceed)return; // 與原流程一致的重複條碼防護
+      _scanBC=v;
+      scanStep3AI();
+    });
+  }else{
+    _scanBC=v;
+    scanStep3AI();
+  }
 }
 
 // ponytail: combo barcode scanning now uses the shared field scanner; keep old cleanup calls harmless.
@@ -10667,42 +10844,44 @@ function huntBarcodeScan(inputId){
 // ── 純掃條碼模式：掃到後直接查詢資料庫/AI，不需拍照 ──
 function onBarcode(bc){
   bc=(bc||'').trim();if(!bc){toast('條碼為空','er');return;}
-  if(!confirmBarcodeDup(bc)){restartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-  stopScanner();
+  confirmBarcodeDup(bc).then(function(proceed){
+    if(!proceed){restartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
+    stopScanner();
 
-  // 顯示已掃到的條碼
-  var br=$('bar-result');if(br)br.style.display='block';
-  var bv=$('bar-val');if(bv)bv.textContent=bc;
-  var bs=$('bar-status');if(bs)bs.textContent='條碼已鎖定，查詢中...';
+    // 顯示已掃到的條碼
+    var br=$('bar-result');if(br)br.style.display='block';
+    var bv=$('bar-val');if(bv)bv.textContent=bc;
+    var bs=$('bar-status');if(bs)bs.textContent='條碼已鎖定，查詢中...';
 
-  var isISBN=bc.startsWith('978')||bc.startsWith('979');
-  var type=_selectedType||'遊戲';
-  entry=Object.assign({},_defaultsFor(type),{category:type,barcode:bc});
-  toast('📷 '+(isISBN?'ISBN':'條碼')+' '+bc,'ok',2000);
-  // 震動回饋（掃描成功）
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
+    var isISBN=bc.startsWith('978')||bc.startsWith('979');
+    var type=_selectedType||'遊戲';
+    entry=Object.assign({},_defaultsFor(type),{category:type,barcode:bc});
+    toast('📷 '+(isISBN?'ISBN':'條碼')+' '+bc,'ok',2000);
+    // 震動回饋（掃描成功）
+    try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
 
-  // ISBN → 書籍資料庫查詢（v18.01 兩段式：openBD＋NDL → Open Library）
-  if(isISBN){
-    loading('ISBN 查詢中...');
-    bookLookupPromise(bc).then(function(bk){
-      noLoad();
-      if(bk){
-        entry=Object.assign(entry,bk);
-        toast('📚 ISBN 查詢成功','ok',3000);
-        showForm('ISBN 查詢');
-        aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
-      }else{
-        barAIFill(bc,'');
-      }
-    }).catch(function(){noLoad();barAIFill(bc,'');});
-    return;
-  }
+    // ISBN → 書籍資料庫查詢（v18.01 兩段式：openBD＋NDL → Open Library）
+    if(isISBN){
+      loading('ISBN 查詢中...');
+      bookLookupPromise(bc).then(function(bk){
+        noLoad();
+        if(bk){
+          entry=Object.assign(entry,bk);
+          toast('📚 ISBN 查詢成功','ok',3000);
+          showForm('ISBN 查詢');
+          aiCompleteMissing(function(n){if(n)toast('✓ AI 補全 '+n+' 欄','ok',2500);}); // 統一全欄位補全
+        }else{
+          barAIFill(bc,'');
+        }
+      }).catch(function(){noLoad();barAIFill(bc,'');});
+      return;
+    }
 
-  // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
-  // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
-  loading('條碼查詢中...');
-  barWithGB(bc,'');
+    // EAN/UPC → 多資料庫比對（楽天/BarcodeLookup/AI）
+    // v42.06：UPC ItemDB 已徹底移除（見 _crossRefQuery），先前只移除半套導致條碼誤配未解決
+    loading('條碼查詢中...');
+    barWithGB(bc,'');
+  });
 }
 
 // ── 純條碼 AI 補全（無圖片，只用條碼+名稱做文字搜尋）──
@@ -10847,6 +11026,13 @@ function barAIFill(bc,hint,hasGB){
 // ── 圖片 slot（封面/封底/側邊）──
 var _imgSlot='cover'; // 目前選中的 slot
 var _slotImgs={cover:null,back:null,spine:null}; // 各 slot 的 File 物件
+// v02.159：使用者實測回報縮圖預覽有記憶體洩漏——renderSlotThumbs()每次重繪都會
+// createObjectURL()建立一個新的暫時網址，但從來沒有對應的revokeObjectURL()釋放。
+// 全站其他4處用到createObjectURL的地方都有搭配釋放，只有這裡沒有。單次建檔可能不明顯，
+// 但連續建很多筆時，舊的縮圖網址會一直堆積在記憶體裡不釋放。加上這個快取，追蹤各slot
+// 目前正在使用的blob網址（含對應的File物件），只有File真的變了才建立新網址並釋放舊的，
+// 沒變的話直接重用——同時避免不必要的churn，也修正洩漏。
+var _slotThumbUrls={cover:null,back:null,spine:null};
 
 function setImgSlot(slot){
   _imgSlot=slot;
@@ -10875,10 +11061,22 @@ function renderSlotThumbs(){
     var has=!!_slotImgs[s];
     var inner;
     if(has){
-      var url=URL.createObjectURL(_slotImgs[s]);
+      // v02.159：只有這個slot的File真的變了才建立新的blob網址（並釋放舊的），沒變的話
+      // 直接重用快取的網址——避免每次重繪都對「沒動過」的slot也重新createObjectURL。
+      var cached=_slotThumbUrls[s];
+      var url;
+      if(cached&&cached.file===_slotImgs[s]){
+        url=cached.url;
+      }else{
+        if(cached&&cached.url)URL.revokeObjectURL(cached.url);
+        url=URL.createObjectURL(_slotImgs[s]);
+        _slotThumbUrls[s]={file:_slotImgs[s],url:url};
+      }
       inner='<img src="'+url+'" alt="" style="width:100%;height:100%;object-fit:cover">'+
             '<button class="tslot-del" onclick="event.stopPropagation();clearSlot(\''+s+'\')" type="button">\u2715</button>';
     }else{
+      // slot是空的：如果之前有殘留的blob網址（剛被清空），釋放掉
+      if(_slotThumbUrls[s]&&_slotThumbUrls[s].url){URL.revokeObjectURL(_slotThumbUrls[s].url);_slotThumbUrls[s]=null;}
       inner='<div class="tslot-ph">'+lbls[s]+'</div>';
     }
     return '<div class="tslot'+(has?'':' empty')+sel+'" onclick="setImgSlot(\''+s+'\')">'+
@@ -10897,6 +11095,10 @@ function clearSlot(slot,ev){
 }
 
 function resetSlots(){
+  // v02.159：重置前先釋放所有還沒清掉的blob網址，避免殘留（例如使用者拍到一半取消、
+  // 換分類重來）
+  Object.keys(_slotThumbUrls).forEach(function(s){if(_slotThumbUrls[s]&&_slotThumbUrls[s].url)URL.revokeObjectURL(_slotThumbUrls[s].url);});
+  _slotThumbUrls={cover:null,back:null,spine:null};
   _slotImgs={cover:null,back:null,spine:null};
   _imgSlot='cover';
   renderSlotThumbs();
@@ -16722,14 +16924,40 @@ function checkBarcodeDup(bc){
   return col.filter(function(it){return (''+(it.data.barcode||'')).trim()===bc;});
 }
 // Req4a：掃到/輸入條碼時，若已存在於收藏庫則跳出確認。回傳 true 表示繼續建檔。
+// v02.160：把原生confirm()改成非同步的自訂彈窗，跟App其他地方（toast/自訂彈出選單）的
+// 視覺風格一致。跟AI網頁查詢那次拿掉的confirm()不同——這裡是真正的分支判斷（使用者選
+// 取消要中止流程），不能直接拿掉，改成回傳Promise的版本，呼叫端用.then()接續。
+function _customConfirm(title,message){
+  return new Promise(function(resolve){
+    var ov=document.getElementById('custom-confirm-ov');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='custom-confirm-ov';
+      ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:24px';
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML='<div style="background:#141b30;border:1px solid #2a3a5a;border-radius:16px;padding:20px;max-width:340px;width:100%">'+
+      '<div style="font-size:15px;font-weight:700;color:#e8eaf6;margin-bottom:10px;white-space:pre-line;line-height:1.5">'+esc(title)+'</div>'+
+      (message?'<div style="font-size:13px;color:#9fa8c8;margin-bottom:16px;white-space:pre-line;line-height:1.6">'+esc(message)+'</div>':'')+
+      '<div style="display:flex;gap:8px">'+
+        '<button id="custom-confirm-cancel" class="btn bo bw" type="button">取消</button>'+
+        '<button id="custom-confirm-ok" class="btn bp bw" type="button">確定</button>'+
+      '</div>'+
+    '</div>';
+    ov.style.display='flex';
+    var cleanup=function(v){ov.style.display='none';resolve(v);};
+    document.getElementById('custom-confirm-cancel').onclick=function(){cleanup(false);};
+    document.getElementById('custom-confirm-ok').onclick=function(){cleanup(true);};
+  });
+}
 function confirmBarcodeDup(bc){
   var dups=checkBarcodeDup(bc);
-  if(!dups.length)return true;
+  if(!dups.length)return Promise.resolve(true);
   var names=dups.slice(0,3).map(function(d){
     return '・'+(d.data.primary_name||d.data.zh_name||'未命名')+(d.data.platform?'（'+d.data.platform+'）':'');
   }).join('\n');
   var more=dups.length>3?('\n…等共 '+dups.length+' 筆'):'';
-  return confirm('⚠️ 該條碼已存在於收藏庫中：\n'+names+more+'\n\n是否仍要新增寫入資料庫？');
+  return _customConfirm('⚠️ 該條碼已存在於收藏庫中',names+more+'\n\n是否仍要新增寫入資料庫？');
 }
 
 // v02.129：字元層級Levenshtein編輯距離，供findDuplicate的模糊比對用。純JS實作，
@@ -17402,17 +17630,21 @@ function _openExternalLink(url){
   document.body.removeChild(a);
 }
 // AI 助手：複製查詢文字＋開啟網頁，比照既有 copyAndPromptGemini() 的做法（已驗證可用的模式）
+// v02.161：跟aiWebCopyAndOpen()同一次優化拿掉的confirm()是同一種模式（純粹「知道了、
+// 繼續」的提示，不是分支判斷），這裡比照辦理，拿掉每次使用都要多點一下的原生對話框，
+// 改成複製成功後直接開啟＋toast提示步驟。
 function _bcWebCopyAndOpen(code){
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
   if(!d)return;
   var prompt=_bcWebMode==='name'
     ?'這是一個商品名稱：'+code+'，請幫我找這個商品的正確封面圖／包裝圖，並簡短說明來源。'
     :'這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品，並簡短說明。';
-  var notice='已複製查詢文字 ✓\n\n接下來會開啟 '+d.label+' 網頁，進入後請在輸入框「貼上」文字並送出，即可查詢。\n\n按「確定」開啟 '+d.label+'。';
   navigator.clipboard.writeText(prompt).then(function(){
-    if(confirm(notice))_openExternalLink(d.homeUrl);
+    toast('已複製查詢文字 ✓ 即將開啟 '+d.label+'，貼上並送出即可查詢','ok',4500);
+    _openExternalLink(d.homeUrl);
   }).catch(function(){
-    if(confirm('無法自動複製文字，請進入 '+d.label+' 後手動輸入查詢。\n\n按「確定」開啟 '+d.label+'。'))_openExternalLink(d.homeUrl);
+    toast('複製失敗（瀏覽器限制），請進入 '+d.label+' 後手動輸入查詢','er',4500);
+    _openExternalLink(d.homeUrl);
   });
 }
 var _bcWebScan=createScanner({videoId:'barcode-web-video',
@@ -19016,67 +19248,7 @@ function _imgToB64(src){
   </div>
   <div style="padding:16px;padding-bottom:24px;overflow-y:auto;flex:1">
     <div style="font-size:11px;color:#7986cb;margin-bottom:14px;line-height:1.5">只有勾選左邊核取方塊的欄位才會套用到全部選取項目，沒勾的欄位維持每筆原本的值不變。</div>
-    <div class="fg">
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-        <input type="checkbox" id="bulk-edit-loc-on" style="width:16px;height:16px;accent-color:#ce93d8">
-        <span class="fl" style="margin:0">存放位置</span>
-      </label>
-      <input class="fi" id="bulk-edit-loc" placeholder="例如：A架-2層">
-    </div>
-    <div class="fg">
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-        <input type="checkbox" id="bulk-edit-status-on" style="width:16px;height:16px;accent-color:#ce93d8">
-        <span class="fl" style="margin:0">收藏狀態</span>
-      </label>
-      <div style="position:relative;display:block">
-        <select class="fsel" id="bulk-edit-status" style="pointer-events:none" tabindex="-1">
-          <option value="收藏中">收藏中</option>
-          <option value="借出中">借出中</option>
-          <option value="已出售">已出售</option>
-          <option value="遺失或損毀">遺失或損毀</option>
-          <option value="預購中">預購中</option>
-          <option value="願望清單">願望清單</option>
-        </select>
-        <div onclick="openSelectSheet('bulk-edit-status','收藏狀態')" style="position:absolute;inset:0;cursor:pointer"></div>
-      </div>
-    </div>
-    <div class="fg">
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-        <input type="checkbox" id="bulk-edit-series-on" style="width:16px;height:16px;accent-color:#ce93d8">
-        <span class="fl" style="margin:0">系列</span>
-      </label>
-      <input class="fi" id="bulk-edit-series" placeholder="例如：Summer Lesson">
-    </div>
-    <!-- v02.118：使用者提出——批次書背建檔一開始選錯平台/地區時，整批都會是錯的，事後
-         逐筆改很累，補上這兩個欄位讓錯誤可以一次修正。刻意不加「分類」「子類型」——那兩個
-         決定資料實際存在哪張工作表，改掉需要搬移整筆資料到別的分頁，跟這裡「只更新既有
-         這一列裡的欄位值」的簡單更新模式不是同一回事，風險與複雜度都高出很多，不在這次
-         範圍內。 -->
-    <div class="fg">
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-        <input type="checkbox" id="bulk-edit-plat-on" style="width:16px;height:16px;accent-color:#ce93d8">
-        <span class="fl" style="margin:0">平台</span>
-      </label>
-      <div style="position:relative;display:block">
-        <select class="fsel" id="bulk-edit-plat" style="pointer-events:none" tabindex="-1"></select>
-        <div onclick="openSelectSheet('bulk-edit-plat','平台')" style="position:absolute;inset:0;cursor:pointer"></div>
-      </div>
-    </div>
-    <div class="fg">
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer">
-        <input type="checkbox" id="bulk-edit-region-on" style="width:16px;height:16px;accent-color:#ce93d8">
-        <span class="fl" style="margin:0">地區</span>
-      </label>
-      <div style="position:relative;display:block">
-        <select class="fsel" id="bulk-edit-region" style="pointer-events:none" tabindex="-1">
-          <option value="日本">日本</option>
-          <option value="亞洲">亞洲</option>
-          <option value="美國">美國</option>
-          <option value="其他">其他</option>
-        </select>
-        <div onclick="openSelectSheet('bulk-edit-region','地區')" style="position:absolute;inset:0;cursor:pointer"></div>
-      </div>
-    </div>
+    <div id="bulk-edit-fields"></div>
   </div>
   <div style="padding:14px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid #1e2a45;display:flex;gap:10px;background:#0f1525">
     <button class="btn bo bs" style="flex:1" onclick="bulkEditClose()" type="button">取消</button>
