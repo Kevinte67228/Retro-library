@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.06';
+const APP_VERSION='v03.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17469,17 +17469,21 @@ function _openExternalLink(url){
   document.body.removeChild(a);
 }
 // AI 助手：複製查詢文字＋開啟網頁，比照既有 copyAndPromptGemini() 的做法（已驗證可用的模式）
+// v02.161：跟aiWebCopyAndOpen()同一次優化拿掉的confirm()是同一種模式（純粹「知道了、
+// 繼續」的提示，不是分支判斷），這裡比照辦理，拿掉每次使用都要多點一下的原生對話框，
+// 改成複製成功後直接開啟＋toast提示步驟。
 function _bcWebCopyAndOpen(code){
   var d=BC_WEB_DESTS.filter(function(x){return x.id===_bcWebDest;})[0];
   if(!d)return;
   var prompt=_bcWebMode==='name'
     ?'這是一個商品名稱：'+code+'，請幫我找這個商品的正確封面圖／包裝圖，並簡短說明來源。'
     :'這是一個商品條碼：'+code+'，請幫我查詢這是什麼商品，並簡短說明。';
-  var notice='已複製查詢文字 ✓\n\n接下來會開啟 '+d.label+' 網頁，進入後請在輸入框「貼上」文字並送出，即可查詢。\n\n按「確定」開啟 '+d.label+'。';
   navigator.clipboard.writeText(prompt).then(function(){
-    if(confirm(notice))_openExternalLink(d.homeUrl);
+    toast('已複製查詢文字 ✓ 即將開啟 '+d.label+'，貼上並送出即可查詢','ok',4500);
+    _openExternalLink(d.homeUrl);
   }).catch(function(){
-    if(confirm('無法自動複製文字，請進入 '+d.label+' 後手動輸入查詢。\n\n按「確定」開啟 '+d.label+'。'))_openExternalLink(d.homeUrl);
+    toast('複製失敗（瀏覽器限制），請進入 '+d.label+' 後手動輸入查詢','er',4500);
+    _openExternalLink(d.homeUrl);
   });
 }
 var _bcWebScan=createScanner({videoId:'barcode-web-video',
