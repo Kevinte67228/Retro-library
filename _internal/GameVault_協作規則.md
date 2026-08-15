@@ -81,6 +81,10 @@ GameVault 是一個 PWA 收藏管理工具，前端網頁負責手機操作體�
 | 掃描條碼／OCR 拍照辨識編碼（單一欄位輸入） | `openFieldScanner(opt)` | 統一的欄位掃描 overlay。`mode:'barcode'` 用 `BarcodeDetector` 即時偵測；`mode:'ocr'` 開相機、使用者按拍攝後送 Gemini 辨識（依 `_selectedType` 自動套用對應分類的編碼格式提示詞）。`opt.secondary` 可加次要按鈕（如「跳過」），`opt.onResult`/`opt.onCapture` 拿結果。 |
 | 純即時條碼偵測（不需要完整的欄位輸入 UI） | `createScanner(opt)` | `BarcodeDetector` 為主、ZXing 為 iOS 退回方案的掃描器 factory，`openFieldScanner` 內部用的就是這個，也可以單獨呼叫。 |
 | 批次建檔（逐件狀態管理／確認清單／DB查詢＋AI補全／批次儲存） | `_batchItems`／`_batchRenderList`／`batchEditItem`／`_batchResolveNext`／`batchSaveAll` | 批次書背 4 步驟精靈共用的核心基礎設施，新增批次相關功能前先看這幾個函式能不能直接沿用或擴充，不要另開一條平行的資料流。 |
+| 非阻斷式確認對話框（取代原生 `confirm()`） | `_customConfirm(title,message)` | 回傳 `Promise<boolean>`，彈出符合 App 深色風格的自訂對話框（「取消」／「確定」兩顆按鈕）。原生 `confirm()` 是同步阻斷的，跟 App 其他地方的視覺風格不一致；凡是需要使用者做「繼續／取消」分支判斷的情境（不是純提示型的「知道了」），都應該用這個，不要再寫原生 `confirm()`。純提示型（不需要分支判斷、只是告知後繼續）則直接拿掉阻斷框，改用 `toast()`。 |
+| 可靠地跳出 PWA 開啟外部連結（取代 `window.open()`） | `_openExternal(url)` | PWA 以 standalone 模式安裝後，`window.open()` 對外部網域的處理在部分手機/瀏覽器組合上不夠可靠，可能停留在 PWA 自己的瀏覽情境裡。這個函式改用動態建立帶 `rel="noopener noreferrer"` 的 `<a>` 元素、程式模擬點擊，更可靠地讓連結真正跳出 PWA、交給系統預設瀏覽器處理。「近期發售」「AI 網頁查詢」等所有開外部連結的地方都已經改用這個，新增類似功能直接沿用，不要再呼叫 `window.open()`。 |
+| 依分類動態決定要顯示的欄位（例如批次編輯這類「跨分類共用同一個操作介面」的情境） | `_bulkEditFieldsFor(cat)`／`_bulkEditFieldsForCats(cats)`／`BULK_EDIT_CAT_FIELDS` | 8 大分類的欄位結構差異很大（例如「平台」只有遊戲/數位下載版有），單一分類選取時顯示該分類專屬欄位組合，混合分類選取時只顯示全部分類都適用的共通欄位。這個「先算出涉及的分類交集、再決定顯示什麼」的模式，未來任何「跨分類共用同一介面」的新功能都可以參考這個做法，不用重新設計一套判斷邏輯。 |
+| 搜尋資料庫（IGDB）、列出候選讓使用者自己挑，而不是自動選第一筆 | `manualSearchDB()`／`huntSearchDB()` 這組模式 | 手動建檔、尋寶新增流程都有這個「輔助功能，選填」的搜尋框。查詢邏輯共用既有的 `extractField('igdb',...)` 欄位對照表跟 `_mergeDbIntoEntry(db)` 共用合併規則（只補空欄，不覆蓋使用者已輸入的內容），不要重新寫一套對照/合併邏輯。**注意**：呼叫 `extractField('igdb',...)` 時要對照 GAS 後端 `igdbProxy()` 實際回傳的扁平化欄位格式（`platform`/`developer`/`release_date` 等直接是字串），不是 IGDB 原始 API 那種巢狀結構——這裡曾經對錯格式導致欄位悄悄抓空（v02.146 修過），修改這塊前先確認資料格式對不對。 |
 
 ### 已知踩坑（跟共用機制搭配使用時要注意）
 
