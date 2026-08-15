@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.11';
+const APP_VERSION='v03.12';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17575,11 +17575,20 @@ function _gamerskyReleaseUrl(){
 // 游民星空這個第三方彙整站。改成點下去先跳出小選單讓使用者選要看哪個平台，選定後才
 // 用_openExternal()開啟——網址都是查證過的官方頁面，不是爬蟲抓資料，純粹是連結，不涉及
 // 資料擷取的技術/法律風險（跟先前評估「能不能爬這些官網」是兩回事）。
+// v02.165：使用者要求除了日版之外，補上台灣／香港版本的官方發售頁連結，讓使用者
+// 自己選要看哪個地區。保留原本的日版選項（沒有要求移除），Steam跟游民星空本身不分地區
+// 版本，維持不變。
 var RELEASE_SCHEDULE_DESTS=[
   {id:'gamersky',label:'PC 遊戲（游民星空・中文彙整）'},
-  {id:'nintendo',label:'Nintendo',url:'https://www.nintendo.com/jp/schedule/index.html'},
-  {id:'playstation',label:'PlayStation',url:'https://store.playstation.com/ja-jp/category/82ced94c-ed3f-4d81-9b50-4d4cf1da170b/1'},
-  {id:'xbox',label:'Xbox',url:'https://www.xbox.com/ja-JP/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'nintendo_jp',label:'Nintendo（日本）',url:'https://www.nintendo.com/jp/schedule/index.html'},
+  {id:'nintendo_tw',label:'Nintendo（台灣）',url:'https://www.nintendo.com/tw/schedule'},
+  {id:'nintendo_hk',label:'Nintendo（香港）',url:'https://www.nintendo.com/hk/schedule'},
+  {id:'playstation_jp',label:'PlayStation（日本）',url:'https://store.playstation.com/ja-jp/category/82ced94c-ed3f-4d81-9b50-4d4cf1da170b/1'},
+  {id:'playstation_tw',label:'PlayStation（台灣・預購）',url:'https://store.playstation.com/zh-hant-tw/category/3bf499d7-7acf-4931-97dd-2667494ee2c9/1'},
+  {id:'playstation_hk',label:'PlayStation（香港・預購）',url:'https://store.playstation.com/zh-hant-hk/category/3bf499d7-7acf-4931-97dd-2667494ee2c9/1'},
+  {id:'xbox_jp',label:'Xbox（日本）',url:'https://www.xbox.com/ja-JP/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'xbox_tw',label:'Xbox（台灣）',url:'https://www.xbox.com/zh-TW/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'xbox_hk',label:'Xbox（香港）',url:'https://www.xbox.com/zh-HK/games/browse/DynamicChannel.GamesComingSoon'},
   {id:'steam',label:'Steam（官方即將推出）',url:'https://store.steampowered.com/explore/upcoming/'}
 ];
 function openReleaseScheduleMenu(){
