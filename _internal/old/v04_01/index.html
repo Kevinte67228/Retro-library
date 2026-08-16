@@ -1780,8 +1780,18 @@ body{
             </button>
             <!-- ⋯⋯ 更多選單 -->
             <div style="position:relative">
-              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px" type="button">⋯</button>
+              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px;position:relative" type="button">⋯
+                <!-- v02.166：離線佇列有待同步項目時，即使沒點開選單也能看到小紅點提示 -->
+                <span class="offline-queue-dot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#ff6e9c;border:1.5px solid #0f1525"></span>
+              </button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <button class="col-menu-item" id="offline-queue-menu-item" style="display:none;justify-content:space-between" onclick="syncOfflineQueue();closeColMenu()" type="button">
+                  <span style="display:flex;align-items:center;gap:8px">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.4-6.4-2.8 2.8M9.4 14.6l-2.8 2.8m0-10.8 2.8 2.8m5.2 5.2 2.8 2.8"/></svg>
+                    同步離線佇列
+                  </span>
+                  <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
+                </button>
                 <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
                   依系列瀏覽
@@ -1882,6 +1892,9 @@ body{
       </div>
       <div id="sort-bar"></div>
       <div id="filter-summary"></div>
+      <!-- v02.167：借出到期提醒——只在有借出中且設定了預計歸還日的項目符合條件時顯示，
+           平常完全不佔畫面空間 -->
+      <div id="loan-reminder-banner" style="display:none;margin:0 16px 10px;padding:10px 12px;border-radius:10px;background:rgba(255,110,156,.08);border:1px solid #ff6e9c;font-size:12px;color:#e8eaf6;line-height:1.6"></div>
       </div>
       <div id="glist"></div>
       <div id="shelf-view" style="display:none"></div>
@@ -2509,7 +2522,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="_openExternal(_gamerskyReleaseUrl())" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
+              <button type="button" onclick="openReleaseScheduleMenu()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2622,6 +2635,8 @@ const FIELDS=[
   ['features','主要支援功能','txt','遊戲規格'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','特典/附件說明','txt','收藏狀態'],
   ['bonus_code_status','DLC狀態','sel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
@@ -2831,6 +2846,8 @@ const BOOK_FIELDS=[
   ['barcode','ISBN/條碼','txt','編碼條碼'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','附件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
@@ -2900,7 +2917,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.10';
+const APP_VERSION='v04.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2928,6 +2945,8 @@ const CONSOLE_FIELDS=[
   ['suggest_price','建議售價','price','主機資訊'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','特典/附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
@@ -3005,6 +3024,8 @@ const PERIPH_FIELDS=[
   ['release_date','發售日期','dateq','週邊資訊'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','特典/附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
@@ -3268,6 +3289,8 @@ function _osTail(){
     ['collect_status','收藏狀態','sel','收藏狀態'],
     ['obi_status','側標狀態','sel','收藏狀態'],
     ['completeness','品項完整度','comp','品相完整度'],
+    ['loan_to','借出對象','txt','收藏狀態'],
+    ['loan_due','預計歸還日','date','收藏狀態'],
     ['storage_location','保管位置','storagesel','收藏狀態'],
     ['buy_date','購入日期','date','收藏狀態'],
     ['purchase_channel','購入管道','txt','收藏狀態'],
@@ -3397,6 +3420,8 @@ function _anTail(){
     ['collect_status','購買狀態','sel','收藏狀態'],
     ['condition','品況','sel','收藏狀態'],
     ['completeness','品項完整度','comp','品相完整度'],
+    ['loan_to','借出對象','txt','收藏狀態'],
+    ['loan_due','預計歸還日','date','收藏狀態'],
     ['storage_location','存放位置','storagesel','收藏狀態'],
     ['buy_date','購入日期','date','收藏狀態'],
     ['purchase_channel','購入管道','txt','收藏狀態'],
@@ -3558,6 +3583,8 @@ function _figTail(){
     ['box_condition','盒況','sel','收藏狀態'],
     ['condition','本體狀態','sel','收藏狀態'],
     ['completeness','品項完整度','comp','品相完整度'],
+    ['loan_to','借出對象','txt','收藏狀態'],
+    ['loan_due','預計歸還日','date','收藏狀態'],
     ['storage_location','存放／展示位置','storagesel','收藏狀態'],
     ['buy_date','購入日期','date','收藏狀態'],
     ['purchase_channel','購入管道','txt','收藏狀態'],
@@ -5400,6 +5427,93 @@ function translateSheetError(status){
   return 'Apps Script 連線異常（HTTP '+status+'），請稍後重試';
 }
 // ── fetchWithRetry：網路瞬斷時自動重試一次 ──────────────
+// v02.166：離線新增佇列——使用者實測回報常在訊號不穩的地方（二手店/駿河屋）掃描建檔，
+// doSave()原本網路失敗就直接顯示「儲存失敗」，使用者要嘛留在原地等訊號、要嘛放棄這筆
+// 資料重新輸入。改成偵測到疑似網路連線問題時，先把這筆資料存進本機佇列，不會因為訊號
+// 不好而遺失或漏建檔；連線恢復後自動嘗試補送，也可以手動觸發。
+var OFFLINE_QUEUE_KEY='gv_offline_queue';
+function _isNetworkError(e){
+  // fetch()對「完全連不上」（無網路/DNS失敗/CORS阻擋）會拋出TypeError，跟伺服器有回應
+  // 但回報邏輯錯誤（500/驗證失敗等，這些是shPost()自己throw new Error(...)）是不同性質——
+  // 只有前者適合排入離線佇列重試，後者排隊重試大機率還是會失敗，應該讓使用者看到實際
+  // 錯誤訊息，不要誤導成「之後會自動補送」。
+  // 額外比對錯誤訊息文字：不同瀏覽器對「連不上」的措辭不一樣（Chrome是"Failed to fetch"、
+  // Firefox是"NetworkError..."、Safari是"Load failed"），只看instanceof TypeError在某些
+  // 環境下可能不夠準，訊息比對當作額外的判斷依據。
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return true;
+  if(typeof TypeError!=='undefined'&&e instanceof TypeError)return true;
+  var msg=((e&&e.message)||'').toLowerCase();
+  return msg.indexOf('failed to fetch')>=0||msg.indexOf('networkerror')>=0||msg.indexOf('load failed')>=0||msg.indexOf('network request failed')>=0;
+}
+function _queueOfflineSave(payload){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
+    q=q||[];
+    payload._qid=_genUuid();
+    payload._qat=Date.now();
+    q.push(payload);
+    return localforage.setItem(OFFLINE_QUEUE_KEY,q);
+  });
+}
+function _offlineQueueCount(){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){return (q||[]).length;}).catch(function(){return 0;});
+}
+function _updateOfflineQueueBadge(){
+  _offlineQueueCount().then(function(n){
+    document.querySelectorAll('.offline-queue-dot').forEach(function(el){el.style.display=n>0?'block':'none';});
+    document.querySelectorAll('.offline-queue-badge').forEach(function(el){el.style.display=n>0?'inline-block':'none';el.textContent=n;});
+    var mi=$('offline-queue-menu-item');if(mi)mi.style.display=n>0?'flex':'none';
+  });
+}
+function syncOfflineQueue(silent){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
+    q=q||[];
+    if(!q.length){if(!silent)toast('沒有待同步的項目','',2000);return;}
+    if(!cfg.url){if(!silent)toast('請先設定試算表 URL','er');return;}
+    var remaining=[];
+    var okCount=0,failCount=0;
+    var i=0;
+    return new Promise(function(resolveAll){
+      function next(){
+        if(i>=q.length){
+          localforage.setItem(OFFLINE_QUEUE_KEY,remaining).then(function(){
+            _updateOfflineQueueBadge();
+            if(!silent||okCount){
+              toast('離線佇列同步完成：成功 '+okCount+' 筆'+(failCount?'，仍有 '+failCount+' 筆待重試':''),okCount?'ok':'',3500);
+            }
+            if(okCount){localforage.setItem('gv_col',col).catch(function(){});updateStats();filterCol();}
+            resolveAll();
+          });
+          return;
+        }
+        var item=q[i];
+        shPost({action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
+          if(res&&res.ok){
+            okCount++;
+            var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+            var savedEntry=Object.assign({},item.entrySnapshot);
+            if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+            if(res.imgs){
+              ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+              if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+            }
+            col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
+          }else{
+            failCount++;remaining.push(item); // 還是失敗，留著下次再試，不遺失資料
+          }
+        }).catch(function(){
+          failCount++;remaining.push(item); // 還是連不上，留著下次再試
+        }).finally(function(){
+          i++;next();
+        });
+      }
+      next();
+    });
+  });
+}
+// 連線恢復時自動嘗試同步一次（靜默，不打擾使用者；成功的話畫面跟徽章會自動更新）
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('online',function(){syncOfflineQueue(true);});
+}
 function fetchWithRetry(url,opts,retries){
   retries=retries||1;
   return fetch(url,opts).then(function(r){
@@ -5863,7 +5977,21 @@ function doSave(){
       showPg('col');
     }}
     else throw new Error(res.error||'未知');
-  }).catch(function(e){toast('儲存失敗，請確認網路和設定後重試','er');}).finally(function(){
+  }).catch(function(e){
+    if(_isNetworkError(e)){
+      // v02.166：疑似網路連線問題（不是伺服器回報的邏輯錯誤），先存進離線佇列，
+      // 不直接判定失敗——連線恢復後會自動補送，也可以在「⋯」選單手動觸發同步。
+      var _qPayload={row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
+      _queueOfflineSave(_qPayload).then(function(){
+        _updateOfflineQueueBadge();
+        toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
+        resetAll();
+        showPg('col');
+      });
+    }else{
+      toast('儲存失敗，請確認網路和設定後重試','er');
+    }
+  }).finally(function(){
     _saving=false;
     noLoad();
     var sb=$('save-btn');if(sb){sb.disabled=false;sb.textContent='儲存至收藏';}
@@ -14975,6 +15103,7 @@ function filterCol(){
   if(currentView==='gallery')renderGalleryView();
   _updateFilterBadge();
   renderFilterSummary();
+  _renderLoanReminderBanner(); // v02.167：借出到期提醒，每次收藏頁重新整理時一併檢查
 }
 // ── 匯出目前篩選結果為 CSV（人類可讀，供保險／備份／分享）──
 // ── 收藏頁 ⋯⋯ 選單開關 ──
@@ -15196,6 +15325,35 @@ function _syncImportedRecords(list,idx,skip,total){
   }
 }
 // 解析日期為可比較的時間戳；未填、2099 佔位、無法解析 → NaN（視為空值）
+// v02.167：借出到期提醒——掃描收藏狀態為「借出中」且有填預計歸還日的項目，區分「已逾期」
+// 跟「7天內到期」兩種，只在有符合條件的項目時才顯示，平常不佔畫面空間。這個App沒有走
+// 系統推播通知（需要額外的Service Worker push訂閱＋後端推播基礎設施，超出目前範圍），
+// 改成每次進收藏頁/篩選時主動檢查並顯示，屬於「打開App就看得到」的提醒，不是主動推送。
+function _renderLoanReminderBanner(){
+  var banner=$('loan-reminder-banner');if(!banner)return;
+  var now=new Date();
+  var todayTs=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  var overdue=[],upcoming=[];
+  (col||[]).forEach(function(item){
+    var d=item.data||{};
+    if(d.collect_status!=='借出中'||!d.loan_due)return;
+    var dueTs=_sortTs(d.loan_due);
+    if(isNaN(dueTs))return;
+    var diffDays=Math.round((dueTs-todayTs)/86400000);
+    if(diffDays<0)overdue.push(d);
+    else if(diffDays<=7)upcoming.push(d);
+  });
+  if(!overdue.length&&!upcoming.length){banner.style.display='none';return;}
+  function _loanNames(list){
+    var names=list.slice(0,3).map(function(d){return d.primary_name||d.zh_name||'未命名';});
+    return esc(names.join('、'))+(list.length>3?' 等 '+list.length+' 筆':'');
+  }
+  var lines=[];
+  if(overdue.length)lines.push('<div>⚠️ 已逾期未歸還：'+_loanNames(overdue)+'</div>');
+  if(upcoming.length)lines.push('<div style="margin-top:2px">📅 7 天內到期：'+_loanNames(upcoming)+'</div>');
+  banner.innerHTML='<div style="font-weight:700;margin-bottom:4px;color:#ff6e9c">🔔 借出提醒</div>'+lines.join('');
+  banner.style.display='block';
+}
 function _sortTs(v){
   if(!v)return NaN;
   var m=String(v).match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:[ T](\d{1,2}):(\d{2}))?/);
@@ -17149,6 +17307,10 @@ function _showUpdateBanner(){
 window.onload=function(){
   loadCfg();
   registerServiceWorker();
+  // v02.166：App 啟動時檢查離線佇列——不管是上次關閉時還沒同步完，或是這次重開時網路
+  // 已經恢復，都先讓徽章顯示正確狀態，並嘗試靜默補送一次
+  _updateOfflineQueueBadge();
+  if(typeof navigator!=='undefined'&&navigator.onLine!==false)setTimeout(function(){syncOfflineQueue(true);},2500);
   // 進入 UI 還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
   if(typeof resetEntryStep1==='function')resetEntryStep1();
   // 版本號集中顯示
@@ -17570,6 +17732,37 @@ function _gamerskyReleaseUrl(){
   var y=d.getFullYear();
   var m=d.getMonth()+1;
   return 'https://ku.gamersky.com/release/pc_'+y+(m<10?'0'+m:m)+'/';
+}
+// v02.164：使用者要求「近期發售」補上主流主機平台＋Steam的官方發售表連結，不是只有
+// 游民星空這個第三方彙整站。改成點下去先跳出小選單讓使用者選要看哪個平台，選定後才
+// 用_openExternal()開啟——網址都是查證過的官方頁面，不是爬蟲抓資料，純粹是連結，不涉及
+// 資料擷取的技術/法律風險（跟先前評估「能不能爬這些官網」是兩回事）。
+// v02.165：使用者要求除了日版之外，補上台灣／香港版本的官方發售頁連結，讓使用者
+// 自己選要看哪個地區。保留原本的日版選項（沒有要求移除），Steam跟游民星空本身不分地區
+// 版本，維持不變。
+var RELEASE_SCHEDULE_DESTS=[
+  {id:'gamersky',label:'PC 遊戲（游民星空・中文彙整）'},
+  {id:'nintendo_jp',label:'Nintendo（日本）',url:'https://www.nintendo.com/jp/schedule/index.html'},
+  {id:'nintendo_tw',label:'Nintendo（台灣）',url:'https://www.nintendo.com/tw/schedule'},
+  {id:'playstation_jp',label:'PlayStation（日本）',url:'https://store.playstation.com/ja-jp/category/82ced94c-ed3f-4d81-9b50-4d4cf1da170b/1'},
+  {id:'playstation_tw',label:'PlayStation（台灣・預購）',url:'https://store.playstation.com/zh-hant-tw/category/3bf499d7-7acf-4931-97dd-2667494ee2c9/1'},
+  {id:'xbox_jp',label:'Xbox（日本）',url:'https://www.xbox.com/ja-JP/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'xbox_tw',label:'Xbox（台灣）',url:'https://www.xbox.com/zh-TW/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'steam',label:'Steam（官方即將推出）',url:'https://store.steampowered.com/explore/upcoming/'}
+];
+function openReleaseScheduleMenu(){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'近期發售 · 選擇平台',
+    buttons:RELEASE_SCHEDULE_DESTS.map(function(d){
+      return {color:'#e8eaf6',label:esc(d.label),onclick:"openReleaseScheduleDest('"+d.id+"')"};
+    })
+  });
+}
+function openReleaseScheduleDest(id){
+  closeSelectSheet();
+  var d=RELEASE_SCHEDULE_DESTS.filter(function(x){return x.id===id;})[0];
+  if(!d)return;
+  _openExternal(d.url||_gamerskyReleaseUrl());
 }
 // ══ v54.44：條碼查詢改為 8 個目的地，分兩排。
 // 第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）：標準網址查詢格式，直接開網頁帶入條碼。

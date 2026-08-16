@@ -2917,7 +2917,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v04.01';
+const APP_VERSION='v04.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6349,6 +6349,10 @@ function bulkEditSave(){
 // v02.100：依系列瀏覽——把有填「系列」欄位的收藏分組，一眼看出某系列收了幾件；同時對照
 // 「尋寶」清單，品名含有該系列名稱的項目視為「可能缺這款」。Hunt的欄位表（HUNT_HDR）本身
 // 沒有series欄位，沒辦法精確比對，用品名字串包含關係做best-effort比對，非嚴謹比對。
+function _existingSeriesNames(){
+  // v02.168：重用_seriesGroupsBuild()既有的分組邏輯取得系列名稱清單，不重新掃一次col
+  return Object.keys(_seriesGroupsBuild()).sort(function(a,b){return a.localeCompare(b);});
+}
 function _seriesGroupsBuild(){
   var groups={};
   col.forEach(function(c){
@@ -6381,7 +6385,17 @@ function renderSeriesBrowse(){
     return;
   }
   wrap.innerHTML=names.map(function(s){
-    var items=groups[s];
+    var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
+    // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
+    items.sort(function(a,b){
+      var ta=_sortTs(a.data.release_date),tb=_sortTs(b.data.release_date);
+      var aEmpty=isNaN(ta),bEmpty=isNaN(tb);
+      if(aEmpty&&bEmpty)return (a.data.primary_name||'').localeCompare(b.data.primary_name||'');
+      if(aEmpty)return 1;
+      if(bEmpty)return -1;
+      return ta-tb;
+    });
     var related=_seriesRelatedHunt(s);
     var cardsHtml=items.map(function(c){
       var d=c.data;
@@ -13423,8 +13437,13 @@ function renderFld(f){
     tag='<button type="button" class="ocr-btn" onclick="document.getElementById(\'flcam-'+k+'\').click()">📷 OCR</button>';
     extraInp='<input type="file" accept="image/*" capture="environment" id="flcam-'+k+'" style="display:none" onchange="nameFieldOCR(this,\'fld-'+k+'\',\''+_nlang+'\')">';
   }
+  // v02.168：使用者要求優化「依系列瀏覽」——原本系列欄位純手動輸入，同一系列打字方式
+  // 不一致（例如多一個空格、中英文混用）就會被分成好幾組，使用者自己也很難發現。加上
+  // datalist自動完成，輸入時提示既有收藏裡已經用過的系列名稱，從輸入源頭減少這個問題，
+  // 不強制一定要選、還是可以自由輸入新系列名稱。
+  var _seriesDatalist=k==='series'?('<datalist id="series-suggest-list">'+_existingSeriesNames().map(function(s){return '<option value="'+esc(s)+'">';}).join('')+'</datalist>'):'';
   return wrap+'<label class="fl">'+lbl+tag+'</label>'+
-    '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'" oninput="onFld(this.dataset.k,this.value)">'+extraInp+'</div>';
+    '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'"'+(k==='series'?' list="series-suggest-list"':'')+' oninput="onFld(this.dataset.k,this.value)">'+extraInp+_seriesDatalist+'</div>';
 }
 // v54.79：橫向頁籤切換——只切換顯示/隱藏(display)，不移除DOM，確保未顯示分組的已勾選checkbox仍在文件中可被收集到
 function switchGenreTab(btn){
