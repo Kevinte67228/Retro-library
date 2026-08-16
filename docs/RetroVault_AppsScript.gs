@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v04            ║
+// ║  RetroVault — Google Apps Script 後端  v05            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -2726,7 +2726,18 @@ function fixSheetHeaders() {
             return oldIdx >= 0 ? row[oldIdx] : '';
           });
         });
-        sheet.getRange(2, 1, remapped.length, headers.length).setValues(remapped);
+        // v02.169：使用者實測回報修復工作表標題列失敗，錯誤是某儲存格「設有資料驗證規則」
+        // 而寫入值違反規則。追查後發現：資料驗證規則是綁在「儲存格位置」上，不是綁在
+        // 「欄位」上；欄位順序異動、資料依名稱重新搬移到新位置時，如果目標儲存格位置剛好
+        // 殘留一條跟目前欄位選項不同步的舊驗證規則（例如很久以前手動或自動設定、選項清單
+        // 沒有隨著欄位選項擴充而更新），搬過去的合法新值就可能不在那條舊規則的允許清單裡，
+        // 導致setValues()直接被Google試算表擋下寫入。這個坑原本就存在，只是「欄位順序沒變」
+        // 這個安全路徑先前一直被走、沒有機會觸發到這段搬移邏輯。寫入前先清掉目標範圍的資料
+        // 驗證規則，避免殘留規則擋住修復流程；即使沒有殘留規則，clearDataValidations()也是
+        // 安全的no-op操作。
+        const targetRange = sheet.getRange(2, 1, remapped.length, headers.length);
+        targetRange.clearDataValidations();
+        targetRange.setValues(remapped);
         Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, remapped.length);
       }
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
