@@ -1780,8 +1780,18 @@ body{
             </button>
             <!-- ⋯⋯ 更多選單 -->
             <div style="position:relative">
-              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px" type="button">⋯</button>
+              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px;position:relative" type="button">⋯
+                <!-- v02.166：離線佇列有待同步項目時，即使沒點開選單也能看到小紅點提示 -->
+                <span class="offline-queue-dot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#ff6e9c;border:1.5px solid #0f1525"></span>
+              </button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <button class="col-menu-item" id="offline-queue-menu-item" style="display:none;justify-content:space-between" onclick="syncOfflineQueue();closeColMenu()" type="button">
+                  <span style="display:flex;align-items:center;gap:8px">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.4-6.4-2.8 2.8M9.4 14.6l-2.8 2.8m0-10.8 2.8 2.8m5.2 5.2 2.8 2.8"/></svg>
+                    同步離線佇列
+                  </span>
+                  <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
+                </button>
                 <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
                   依系列瀏覽
@@ -2900,7 +2910,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.13';
+const APP_VERSION='v03.14';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5400,6 +5410,93 @@ function translateSheetError(status){
   return 'Apps Script 連線異常（HTTP '+status+'），請稍後重試';
 }
 // ── fetchWithRetry：網路瞬斷時自動重試一次 ──────────────
+// v02.166：離線新增佇列——使用者實測回報常在訊號不穩的地方（二手店/駿河屋）掃描建檔，
+// doSave()原本網路失敗就直接顯示「儲存失敗」，使用者要嘛留在原地等訊號、要嘛放棄這筆
+// 資料重新輸入。改成偵測到疑似網路連線問題時，先把這筆資料存進本機佇列，不會因為訊號
+// 不好而遺失或漏建檔；連線恢復後自動嘗試補送，也可以手動觸發。
+var OFFLINE_QUEUE_KEY='gv_offline_queue';
+function _isNetworkError(e){
+  // fetch()對「完全連不上」（無網路/DNS失敗/CORS阻擋）會拋出TypeError，跟伺服器有回應
+  // 但回報邏輯錯誤（500/驗證失敗等，這些是shPost()自己throw new Error(...)）是不同性質——
+  // 只有前者適合排入離線佇列重試，後者排隊重試大機率還是會失敗，應該讓使用者看到實際
+  // 錯誤訊息，不要誤導成「之後會自動補送」。
+  // 額外比對錯誤訊息文字：不同瀏覽器對「連不上」的措辭不一樣（Chrome是"Failed to fetch"、
+  // Firefox是"NetworkError..."、Safari是"Load failed"），只看instanceof TypeError在某些
+  // 環境下可能不夠準，訊息比對當作額外的判斷依據。
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return true;
+  if(typeof TypeError!=='undefined'&&e instanceof TypeError)return true;
+  var msg=((e&&e.message)||'').toLowerCase();
+  return msg.indexOf('failed to fetch')>=0||msg.indexOf('networkerror')>=0||msg.indexOf('load failed')>=0||msg.indexOf('network request failed')>=0;
+}
+function _queueOfflineSave(payload){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
+    q=q||[];
+    payload._qid=_genUuid();
+    payload._qat=Date.now();
+    q.push(payload);
+    return localforage.setItem(OFFLINE_QUEUE_KEY,q);
+  });
+}
+function _offlineQueueCount(){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){return (q||[]).length;}).catch(function(){return 0;});
+}
+function _updateOfflineQueueBadge(){
+  _offlineQueueCount().then(function(n){
+    document.querySelectorAll('.offline-queue-dot').forEach(function(el){el.style.display=n>0?'block':'none';});
+    document.querySelectorAll('.offline-queue-badge').forEach(function(el){el.style.display=n>0?'inline-block':'none';el.textContent=n;});
+    var mi=$('offline-queue-menu-item');if(mi)mi.style.display=n>0?'flex':'none';
+  });
+}
+function syncOfflineQueue(silent){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
+    q=q||[];
+    if(!q.length){if(!silent)toast('沒有待同步的項目','',2000);return;}
+    if(!cfg.url){if(!silent)toast('請先設定試算表 URL','er');return;}
+    var remaining=[];
+    var okCount=0,failCount=0;
+    var i=0;
+    return new Promise(function(resolveAll){
+      function next(){
+        if(i>=q.length){
+          localforage.setItem(OFFLINE_QUEUE_KEY,remaining).then(function(){
+            _updateOfflineQueueBadge();
+            if(!silent||okCount){
+              toast('離線佇列同步完成：成功 '+okCount+' 筆'+(failCount?'，仍有 '+failCount+' 筆待重試':''),okCount?'ok':'',3500);
+            }
+            if(okCount){localforage.setItem('gv_col',col).catch(function(){});updateStats();filterCol();}
+            resolveAll();
+          });
+          return;
+        }
+        var item=q[i];
+        shPost({action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
+          if(res&&res.ok){
+            okCount++;
+            var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+            var savedEntry=Object.assign({},item.entrySnapshot);
+            if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+            if(res.imgs){
+              ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+              if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+            }
+            col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
+          }else{
+            failCount++;remaining.push(item); // 還是失敗，留著下次再試，不遺失資料
+          }
+        }).catch(function(){
+          failCount++;remaining.push(item); // 還是連不上，留著下次再試
+        }).finally(function(){
+          i++;next();
+        });
+      }
+      next();
+    });
+  });
+}
+// 連線恢復時自動嘗試同步一次（靜默，不打擾使用者；成功的話畫面跟徽章會自動更新）
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('online',function(){syncOfflineQueue(true);});
+}
 function fetchWithRetry(url,opts,retries){
   retries=retries||1;
   return fetch(url,opts).then(function(r){
@@ -5863,7 +5960,21 @@ function doSave(){
       showPg('col');
     }}
     else throw new Error(res.error||'未知');
-  }).catch(function(e){toast('儲存失敗，請確認網路和設定後重試','er');}).finally(function(){
+  }).catch(function(e){
+    if(_isNetworkError(e)){
+      // v02.166：疑似網路連線問題（不是伺服器回報的邏輯錯誤），先存進離線佇列，
+      // 不直接判定失敗——連線恢復後會自動補送，也可以在「⋯」選單手動觸發同步。
+      var _qPayload={row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
+      _queueOfflineSave(_qPayload).then(function(){
+        _updateOfflineQueueBadge();
+        toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
+        resetAll();
+        showPg('col');
+      });
+    }else{
+      toast('儲存失敗，請確認網路和設定後重試','er');
+    }
+  }).finally(function(){
     _saving=false;
     noLoad();
     var sb=$('save-btn');if(sb){sb.disabled=false;sb.textContent='儲存至收藏';}
@@ -17149,6 +17260,10 @@ function _showUpdateBanner(){
 window.onload=function(){
   loadCfg();
   registerServiceWorker();
+  // v02.166：App 啟動時檢查離線佇列——不管是上次關閉時還沒同步完，或是這次重開時網路
+  // 已經恢復，都先讓徽章顯示正確狀態，並嘗試靜默補送一次
+  _updateOfflineQueueBadge();
+  if(typeof navigator!=='undefined'&&navigator.onLine!==false)setTimeout(function(){syncOfflineQueue(true);},2500);
   // 進入 UI 還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
   if(typeof resetEntryStep1==='function')resetEntryStep1();
   // 版本號集中顯示

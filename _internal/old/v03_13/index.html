@@ -2509,7 +2509,7 @@ body{
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <div class="ht">尋寶清單</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button type="button" onclick="_openExternal(_gamerskyReleaseUrl())" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
+              <button type="button" onclick="openReleaseScheduleMenu()" style="background:#141b30;border:1.5px solid #00e5ff;color:#00e5ff;font-size:13px;font-weight:700;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:6px">📅 近期發售 <span style="font-size:11px">↗</span></button>
             </div>
           </div>
           <div class="hs">二手比價 · 看到先拍照記價，最佳 CP 再出手</div>
@@ -2900,7 +2900,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.08';
+const APP_VERSION='v03.13';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5999,7 +5999,19 @@ function colDeleteSelected(){
 //   同一批項目通常本來就不會是同一個類型，批次寫入同一個值大機率會覆蓋掉正確的個別
 //   資料，跟保管位置/完整度這種「一整批東西剛好真的相同」的情境不同，風險評估後不建議做
 var BULK_EDIT_STATUS_OPTS=['收藏中','借出中','已出售','遺失或損毀','預購中','願望清單'];
-var BULK_EDIT_COMP_OPTS=['全新','完整','缺件','部分登錄','未評級'];
+// v02.163：使用者實測回報遊戲的批次編輯沒看到「裸卡」選項——查證後發現「品項完整度」
+// 根本不是簡單的下拉選單，是逐項配件（本體/外盒/說明書等，依分類各自不同）各自獨立
+// 評級、序列化成一個字串存進entry.completeness的複合欄位（見COMP_COMPONENTS／
+// serializeComp／parseComp）。原本用一組憑印象猜的固定選項（全新/完整/缺件/部分登錄/
+// 未評級）完全對不上實際的資料格式，是錯的。改成沿用單筆編輯表單quickCompPreset()
+// 那5個快速預設（全新/盒書完整/裸卡/缺件/清空），套用時依「這一件自己的分類」算出
+// 對應的組件序列化字串，不是套用同一個固定字串給所有分類不同的項目。
+var BULK_EDIT_COMP_PRESETS=[
+  {v:'new',label:'全新'},
+  {v:'complete',label:'盒書完整'},
+  {v:'bare',label:'裸卡'},
+  {v:'missing',label:'缺件'}
+];
 var BULK_EDIT_REGION_OPTS=['日本','亞洲','美國','其他'];
 var BULK_EDIT_CAT_FIELDS={
   '遊戲':[
@@ -6048,7 +6060,7 @@ function _bulkEditFieldsFor(cat){
     {key:'collect_status',label:'收藏狀態',type:'select',options:BULK_EDIT_STATUS_OPTS,def:'收藏中'}
   ];
   if(cat!=='數位下載版'){
-    fields.push({key:'completeness',label:'品項完整度',type:'select',options:BULK_EDIT_COMP_OPTS,def:'完整'});
+    fields.push({key:'completeness',label:'品項完整度',type:'comp-preset',options:BULK_EDIT_COMP_PRESETS,def:'complete'});
   }
   return fields.concat(BULK_EDIT_CAT_FIELDS[cat]||[]);
 }
@@ -6061,7 +6073,7 @@ function _bulkEditFieldsForCats(cats){
     {key:'collect_status',label:'收藏狀態',type:'select',options:BULK_EDIT_STATUS_OPTS,def:'收藏中'}
   ];
   if(cats.indexOf('數位下載版')<0){
-    fields.push({key:'completeness',label:'品項完整度',type:'select',options:BULK_EDIT_COMP_OPTS,def:'完整'});
+    fields.push({key:'completeness',label:'品項完整度',type:'comp-preset',options:BULK_EDIT_COMP_PRESETS,def:'complete'});
   }
   return fields;
 }
@@ -6088,8 +6100,35 @@ function _bulkEditFieldRowHtml(f){
       '</select>'+
       '<div onclick="openSelectSheet(\''+id+'\',\''+esc(f.label)+'\')" style="position:absolute;inset:0;cursor:pointer"></div>'+
     '</div>';
+  }else if(f.type==='comp-preset'){
+    // v02.163：完整度不是簡單字串，是快速預設（對應quickCompPreset()的5個預設鍵值），
+    // 套用時另外在bulkEditSave()裡依每一件自己的分類算出正確的序列化字串
+    body='<div style="position:relative;display:block">'+
+      '<select class="fsel" id="'+id+'" style="pointer-events:none" tabindex="-1">'+
+        f.options.map(function(o){return '<option value="'+esc(o.v)+'">'+esc(o.label)+'</option>';}).join('')+
+      '</select>'+
+      '<div onclick="openSelectSheet(\''+id+'\',\''+esc(f.label)+'\')" style="position:absolute;inset:0;cursor:pointer"></div>'+
+    '</div>';
   }
   return '<div class="fg">'+head+body+'</div>';
+}
+// v02.163：複製自quickCompPreset()的預設邏輯，但這裡不能直接操作表單DOM（批次編輯是
+// 針對多筆、各自可能不同分類的項目），改成純函式回傳{組件:等級}的map，讓bulkEditSave()
+// 依「這一件自己的分類」算出正確的組件清單後再呼叫serializeComp()序列化。
+function _compPresetMap(preset,cat){
+  cat=catInternal(cat);
+  var body=compBodyKey(cat);
+  var comps=COMP_COMPONENTS[cat]||[];
+  var map={};
+  comps.forEach(function(comp){
+    if(preset==='new')map[comp]='全新';
+    else if(preset==='complete')map[comp]='良好';
+    else if(preset==='bare')map[comp]=(comp===body)?'裸卡':'缺少';
+    else if(preset==='missing')map[comp]=(comp===body)?'良好':'缺少';
+    else map[comp]='無'; // clear
+  });
+  map['__custom']='無';
+  return map;
 }
 var _bulkEditCurrentFields=[]; // bulkEditSave() 讀取目前畫面上實際顯示了哪些欄位
 function bulkEditOpen(){
@@ -6110,6 +6149,7 @@ function bulkEditOpen(){
     if(f.type==='text'){el.value='';}
     else if(f.type==='select'){el.value=f.def||f.options[0];}
     else if(f.type==='platform'){el.value=PLATFORMS[0].v;}
+    else if(f.type==='comp-preset'){el.value=f.def||f.options[0].v;}
   });
   var ov=$('bulk-edit-overlay'),p=$('bulk-edit-panel');
   if(ov)ov.classList.add('on');
@@ -6158,6 +6198,14 @@ function bulkEditSave(){
       var item=items[i];
       loading('批次編輯中...（'+(i+1)+'／'+items.length+'）');
       var updated=Object.assign({},item.data||{},patch);
+      // v02.163：completeness在patch裡存的是預設鍵值（'new'/'complete'/'bare'/'missing'/
+      // 'clear'），不是能直接寫入的欄位值——上面的Object.assign已經把這個鍵值誤蓋進
+      // updated.completeness，這裡要覆寫成依「這一件自己的分類」正確算出的序列化字串
+      // （不同分類的組件清單不一樣，例如攻略是「書本體/書腰/外封/特典附錄」，遊戲是
+      // 「外盒/本體/配件/說明書/側標」，不能套用同一個字串）。
+      if(patch.completeness){
+        updated.completeness=serializeComp(updated.category,_compPresetMap(patch.completeness,updated.category),'');
+      }
       var fields=fieldsFor(updated.category,updated.subtype);
       var row=_rowFromFields(updated,fields);
       var rowNum=item.uid||item.rowNum;
@@ -17522,6 +17570,37 @@ function _gamerskyReleaseUrl(){
   var y=d.getFullYear();
   var m=d.getMonth()+1;
   return 'https://ku.gamersky.com/release/pc_'+y+(m<10?'0'+m:m)+'/';
+}
+// v02.164：使用者要求「近期發售」補上主流主機平台＋Steam的官方發售表連結，不是只有
+// 游民星空這個第三方彙整站。改成點下去先跳出小選單讓使用者選要看哪個平台，選定後才
+// 用_openExternal()開啟——網址都是查證過的官方頁面，不是爬蟲抓資料，純粹是連結，不涉及
+// 資料擷取的技術/法律風險（跟先前評估「能不能爬這些官網」是兩回事）。
+// v02.165：使用者要求除了日版之外，補上台灣／香港版本的官方發售頁連結，讓使用者
+// 自己選要看哪個地區。保留原本的日版選項（沒有要求移除），Steam跟游民星空本身不分地區
+// 版本，維持不變。
+var RELEASE_SCHEDULE_DESTS=[
+  {id:'gamersky',label:'PC 遊戲（游民星空・中文彙整）'},
+  {id:'nintendo_jp',label:'Nintendo（日本）',url:'https://www.nintendo.com/jp/schedule/index.html'},
+  {id:'nintendo_tw',label:'Nintendo（台灣）',url:'https://www.nintendo.com/tw/schedule'},
+  {id:'playstation_jp',label:'PlayStation（日本）',url:'https://store.playstation.com/ja-jp/category/82ced94c-ed3f-4d81-9b50-4d4cf1da170b/1'},
+  {id:'playstation_tw',label:'PlayStation（台灣・預購）',url:'https://store.playstation.com/zh-hant-tw/category/3bf499d7-7acf-4931-97dd-2667494ee2c9/1'},
+  {id:'xbox_jp',label:'Xbox（日本）',url:'https://www.xbox.com/ja-JP/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'xbox_tw',label:'Xbox（台灣）',url:'https://www.xbox.com/zh-TW/games/browse/DynamicChannel.GamesComingSoon'},
+  {id:'steam',label:'Steam（官方即將推出）',url:'https://store.steampowered.com/explore/upcoming/'}
+];
+function openReleaseScheduleMenu(){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'近期發售 · 選擇平台',
+    buttons:RELEASE_SCHEDULE_DESTS.map(function(d){
+      return {color:'#e8eaf6',label:esc(d.label),onclick:"openReleaseScheduleDest('"+d.id+"')"};
+    })
+  });
+}
+function openReleaseScheduleDest(id){
+  closeSelectSheet();
+  var d=RELEASE_SCHEDULE_DESTS.filter(function(x){return x.id===id;})[0];
+  if(!d)return;
+  _openExternal(d.url||_gamerskyReleaseUrl());
 }
 // ══ v54.44：條碼查詢改為 8 個目的地，分兩排。
 // 第一排搜尋引擎（Barcode Lookup/Google/Bing/Yahoo!JAPAN）：標準網址查詢格式，直接開網頁帶入條碼。
