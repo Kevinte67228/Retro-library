@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v03            ║
+// ║  RetroVault — Google Apps Script 後端  v04            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -71,7 +71,7 @@ const GAME_HEADERS = [
   'code','barcode',
   'developer','publisher','release_date','suggest_price',
   'genre','players','features',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'play_status','rating',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -88,7 +88,7 @@ const BOOK_HEADERS = [
   'publisher','developer','release_date','suggest_price',
   'region','edition','language',
   'code','barcode',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'rating',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -105,7 +105,7 @@ const CONSOLE_HEADERS = [
   'brand','model_no','platform_family','generation',
   'color','storage','region','edition','serial_no','barcode',
   'release_date','suggest_price',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'working_status','firmware',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -121,7 +121,7 @@ const PERIPH_HEADERS = [
   'brand','model_no','peripheral_type','compat_platform',
   'color','connection','region','edition','barcode',
   'release_date','suggest_price',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'working_status',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -196,7 +196,7 @@ const _OS_HEAD = ['category','subtype','related_work','primary_name','jp_name','
 const _OS_TAIL = [
   'label','catalog_number','format','edition_type',
   'release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','obi_status','completeness','storage_location',
+  'barcode','code','collect_status','obi_status','completeness','loan_to','loan_due','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost','bonus_items',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
@@ -211,7 +211,7 @@ const OSTLIVE_HEADERS = _OS_HEAD.concat(['venue','event_date','performers']).con
 const _AN_HEAD = ['category','subtype','related_work','primary_name','jp_name','zh_name','en_name'];
 const _AN_TAIL = [
   'publisher','release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','condition','completeness','storage_location',
+  'barcode','code','collect_status','condition','completeness','loan_to','loan_due','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
@@ -229,7 +229,7 @@ const ANOTHER_HEADERS = _AN_HEAD.concat([]).concat(_AN_TAIL);
 const _FIG_HEAD = ['category','subtype','series','primary_name','character','jp_name','zh_name','en_name'];
 const _FIG_TAIL = [
   'brand','manufacturer','release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','box_condition','condition','completeness','storage_location',
+  'barcode','code','collect_status','box_condition','condition','completeness','loan_to','loan_due','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
