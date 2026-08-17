@@ -2509,6 +2509,13 @@ body{
         <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
         <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
+        <!-- v02.170：使用者實測回報「修復工作表標題列」修完之後，資料還是錯位——上一次
+             失敗的執行讓標題列被改寫成新名稱、但資料因為中斷沒有真的搬過去，變成標題跟
+             資料不同步的中間狀態，這時候「修復工作表標題列」會誤判成「已經一致」而跳過
+             搬移。這顆按鈕不管標題列現況如何，都強制依欄位名稱重新搬移一次資料，用來
+             處理上面那種一般修復解決不了的情況。 -->
+        <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若「修復工作表標題列」後欄位內容看起來還是錯位（例如頁數變成日期、尺寸變成平台清單），才需要用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類</div>
         <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
 
@@ -2917,7 +2924,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v04.01';
+const APP_VERSION='v07.02';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5329,6 +5336,40 @@ function fixHeaders(){
     }
   }).catch(function(e){noLoad();toast('錯誤：'+_friendlyError(e.message),'er');});
 }
+// v02.170：強制重新比對——不管標題列現況如何都強制依欄位名稱重新搬移一次資料，用來
+// 處理「修復工作表標題列」誤判成「已經一致」而跳過真正需要的搬移的情況（詳見後端
+// forceRealignAllSheetData()的說明）。這是會重寫所有列資料的操作，先跳確認對話框。
+// v02.171：使用者要求不要一次跑全部32張工作表——一來擔心單次執行量太大，二來擔心「本來
+// 就對的」分類也被連帶重新搬移一次、增加不必要的風險。改成先選要處理的分類，只針對該
+// 分類底下實際涉及的工作表重新搬移資料（例如「原聲帶」底下有5張子類型表，「遊戲」只有
+// 1張），不再支援一次全部處理。
+var FORCE_REALIGN_CATS=['遊戲','攻略','主機','週邊','尋寶','數位下載版','原聲帶','動漫/美術設定集','公仔'];
+function forceRealignData(){
+  if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'強制重新比對資料欄位 · 選擇分類',
+    buttons:FORCE_REALIGN_CATS.map(function(c){
+      return {color:'#e8eaf6',label:esc(c),onclick:"_forceRealignCat('"+c+"')"};
+    })
+  });
+}
+function _forceRealignCat(cat){
+  closeSelectSheet();
+  _customConfirm('確定要強制重新比對「'+cat+'」的資料欄位嗎？',
+    '這會重新檢查「'+cat+'」底下涉及的工作表，把每一列的資料依欄位名稱重新搬移到正確位置並改寫。建議先確認已經跑過「修復工作表標題列」，這個還是有問題時再用；只會處理這個分類，不會動到其他分類的資料。').then(function(proceed){
+    if(!proceed)return;
+    loading('強制重新比對「'+cat+'」...');
+    shPost({action:'force_realign',category:cat}).then(function(d){
+      noLoad();
+      if(d&&d.ok){
+        toast('✓ 已完成「'+cat+'」的強制重新比對，請重新同步收藏確認結果','ok',6000);
+        localforage.removeItem('gv_col').then(function(){col=[];loadCol();});
+      }else{
+        toast('強制重新比對失敗：'+(d.error||'未知'),'er',5000);
+      }
+    }).catch(function(e){noLoad();toast('錯誤：'+_friendlyError(e.message),'er');});
+  });
+}
 
 function saveCfg(){
   var okey=($('c-okey')&&$('c-okey').value||'').trim();
@@ -5726,7 +5767,10 @@ function shGet(p){
 function shPost(d){
   if(!cfg.url)return Promise.reject(new Error('未設定試算表 URL'));
   // 寫入類 action 附帶 app_token（後端 APP_TOKEN 有設定時驗證；讀取/代理類不帶）
-  if(d&&/^(add|update|delete|deleteMany|fix_headers)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
+  // v02.172：使用者實測回報「強制重新比對資料欄位」失敗，錯誤是unauthorized——追查後
+  // 發現這條白名單漏掉了force_realign這個動作，導致這個新增的寫入類action送出時完全
+  // 沒帶app_token，後端當然會擋下來。這是新增這個action時的疏漏，補上。
+  if(d&&/^(add|update|delete|deleteMany|fix_headers|force_realign)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
   var url=fixUrl(cfg.url);
   return fetchWithRetry(url,{
     method:'POST',
@@ -6349,6 +6393,10 @@ function bulkEditSave(){
 // v02.100：依系列瀏覽——把有填「系列」欄位的收藏分組，一眼看出某系列收了幾件；同時對照
 // 「尋寶」清單，品名含有該系列名稱的項目視為「可能缺這款」。Hunt的欄位表（HUNT_HDR）本身
 // 沒有series欄位，沒辦法精確比對，用品名字串包含關係做best-effort比對，非嚴謹比對。
+function _existingSeriesNames(){
+  // v02.168：重用_seriesGroupsBuild()既有的分組邏輯取得系列名稱清單，不重新掃一次col
+  return Object.keys(_seriesGroupsBuild()).sort(function(a,b){return a.localeCompare(b);});
+}
 function _seriesGroupsBuild(){
   var groups={};
   col.forEach(function(c){
@@ -6381,7 +6429,17 @@ function renderSeriesBrowse(){
     return;
   }
   wrap.innerHTML=names.map(function(s){
-    var items=groups[s];
+    var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
+    // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
+    items.sort(function(a,b){
+      var ta=_sortTs(a.data.release_date),tb=_sortTs(b.data.release_date);
+      var aEmpty=isNaN(ta),bEmpty=isNaN(tb);
+      if(aEmpty&&bEmpty)return (a.data.primary_name||'').localeCompare(b.data.primary_name||'');
+      if(aEmpty)return 1;
+      if(bEmpty)return -1;
+      return ta-tb;
+    });
     var related=_seriesRelatedHunt(s);
     var cardsHtml=items.map(function(c){
       var d=c.data;
@@ -13423,8 +13481,13 @@ function renderFld(f){
     tag='<button type="button" class="ocr-btn" onclick="document.getElementById(\'flcam-'+k+'\').click()">📷 OCR</button>';
     extraInp='<input type="file" accept="image/*" capture="environment" id="flcam-'+k+'" style="display:none" onchange="nameFieldOCR(this,\'fld-'+k+'\',\''+_nlang+'\')">';
   }
+  // v02.168：使用者要求優化「依系列瀏覽」——原本系列欄位純手動輸入，同一系列打字方式
+  // 不一致（例如多一個空格、中英文混用）就會被分成好幾組，使用者自己也很難發現。加上
+  // datalist自動完成，輸入時提示既有收藏裡已經用過的系列名稱，從輸入源頭減少這個問題，
+  // 不強制一定要選、還是可以自由輸入新系列名稱。
+  var _seriesDatalist=k==='series'?('<datalist id="series-suggest-list">'+_existingSeriesNames().map(function(s){return '<option value="'+esc(s)+'">';}).join('')+'</datalist>'):'';
   return wrap+'<label class="fl">'+lbl+tag+'</label>'+
-    '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'" oninput="onFld(this.dataset.k,this.value)">'+extraInp+'</div>';
+    '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'"'+(k==='series'?' list="series-suggest-list"':'')+' oninput="onFld(this.dataset.k,this.value)">'+extraInp+_seriesDatalist+'</div>';
 }
 // v54.79：橫向頁籤切換——只切換顯示/隱藏(display)，不移除DOM，確保未顯示分組的已勾選checkbox仍在文件中可被收集到
 function switchGenreTab(btn){
