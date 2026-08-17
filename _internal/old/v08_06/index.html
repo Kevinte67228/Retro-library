@@ -236,6 +236,14 @@ body{
    使用者反應多餘。改成筆數只在這一行顯示一次，按鈕本身不再帶數字。 */
 #pg-col .col-sel-count{margin:14px 16px 0;font-size:12px;color:#7986cb}
 #stats-row{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
+/* v02.179：依系列瀏覽的獨立滑動列，重用#stats同一套「overflow-x + 右側淡出遮罩」手法，
+   跟原本卡片/分類/畫廊的.vtoggle是各自獨立的兩塊，互不影響 */
+.view-chips-row{padding:8px 12px 0}
+.view-chips-scroll{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
+.view-chips-scroll.at-end{mask-image:none;-webkit-mask-image:none}
+.view-chips-scroll::-webkit-scrollbar{display:none}
+.view-chip{flex:0 0 auto;white-space:nowrap;padding:8px 14px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;color:#ce93d8;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
+.view-chip:active{transform:scale(.96)}
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
 #stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
@@ -1792,10 +1800,6 @@ body{
                   </span>
                   <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
                 </button>
-                <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
-                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                  依系列瀏覽
-                </button>
                 <button class="col-menu-item" onclick="colRefresh();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
                   從雲端同步
@@ -1811,6 +1815,17 @@ body{
               </div>
             </div>
             <input type="file" id="import-csv-input" accept=".csv" multiple style="display:none" onchange="importCsv(this)">
+          </div>
+        </div>
+        <!-- v02.179：使用者要求把「依系列瀏覽」的入口做成跟下方 #stats（405/402/3...那排）
+             同樣的左右滑動效果——不是塞進卡片/分類/畫廊那個vtoggle裡面（塞進去會擠壓
+             既有3顆按鈕的排版，v02.178那次這樣做過，使用者反映排版亂掉了）。這裡另外
+             做一個獨立的小型滑動列，重用#stats同一套「overflow-x + 右側淡出遮罩」的
+             CSS手法（.view-chips-scroll／.view-chip），跟原本的vtoggle互不干擾，也讓
+             之後如果要再加其他類似的快速入口有現成的地方放，不用再另外設計一次。 -->
+        <div class="view-chips-row">
+          <div class="view-chips-scroll" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
+            <button class="view-chip" onclick="openSeriesBrowse()" type="button">📚 依系列瀏覽</button>
           </div>
         </div>
         <div id="stats-row">
@@ -2928,7 +2943,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.01';
+const APP_VERSION='v08.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6441,17 +6456,36 @@ function _seriesGroupsBuild(){
 function _seriesRelatedHunt(seriesName){
   var s=(seriesName||'').trim().toLowerCase();
   if(!s)return [];
+  // v02.174：使用者提出——系列名稱太短時（例如「勇者」）子字串比對容易誤配到不相關的
+  // 尋寶目標；另一方面，系列名稱是「Final Fantasy」但尋寶目標寫成「FF16」這種常見縮寫
+  // 又完全比對不到。前者用最短長度限制降低誤判風險；後者除了品名，額外檢查尋寶項目的
+  // 「備註」欄位——使用者常常會在追蹤原因裡寫出完整系列名稱，即使標題本身是縮寫，備註
+  // 裡比對到的機率比只看標題高。這不是完美的模糊比對，但用最小改動處理了兩個最常見的
+  // 失準情況，不引入額外的相似度演算法或外部詞庫。
+  if(s.length<2)return []; // 太短（單一字元）誤判風險過高，不比對
   return hunt.filter(function(h){
     var d=h.data||{};
     var n=(d.primary_name||'').toLowerCase();
     var jn=(d.jp_name||'').toLowerCase();
-    return (n&&n.indexOf(s)>=0)||(jn&&jn.indexOf(s)>=0);
+    var note=(d.notes||'').toLowerCase();
+    return (n&&n.indexOf(s)>=0)||(jn&&jn.indexOf(s)>=0)||(note&&note.indexOf(s)>=0);
   });
 }
 // v02.116：使用者實測回報原本的清單式呈現太醜，要求比照收藏頁本來就有的「畫廊」卡片
 // 網格瀏覽方式，只是多加系列標題分組——直接沿用既有的.gv-card/.gv-thumb/.gv-info等
 // 畫廊卡片CSS class（見renderGalleryView），系列這裡只負責分組跟標題列，卡片本身完全
 // 是同一套樣式，不再另外設計一套清單UI。
+// v02.177：使用者反映系列一多，全部展開預設看起來太雜，要求改成預設收合，並且收合狀態
+// 用更緊湊的清單列排版（細分隔線、少留白），不要沿用原本卡片標題那種大留白樣式——那種
+// 留白是為了下面的卡片網格準備的空間，收合時沒有卡片網格，留白反而顯得鬆散。
+// 追蹤語意從「哪些系列被收合」改成「哪些系列被展開」（正向語意），這樣預設（沒有任何
+// 系列被主動點開過）就自然是全部收合，不需要另外處理「新出現的系列名稱要不要預設收合」
+// 這種初始化問題。
+var _seriesExpanded={};
+function _toggleSeriesExpand(s){
+  _seriesExpanded[s]=!_seriesExpanded[s];
+  renderSeriesBrowse();
+}
 function renderSeriesBrowse(){
   var wrap=$('series-list');if(!wrap)return;
   var groups=_seriesGroupsBuild();
@@ -6460,8 +6494,29 @@ function renderSeriesBrowse(){
     wrap.innerHTML='<div style="text-align:center;padding:40px 20px;color:#7986cb;font-size:13px;line-height:1.6">目前收藏裡沒有填寫「系列」欄位的項目<br><span style="font-size:11px">幫想追蹤的作品填上系列名稱，這裡就會自動分組顯示</span></div>';
     return;
   }
-  wrap.innerHTML=names.map(function(s){
+  // v02.175：依搜尋框篩選系列名稱（不分大小寫子字串比對），搜尋框留空則顯示全部
+  var q=(($('series-search-inp')&&$('series-search-inp').value)||'').trim().toLowerCase();
+  var visibleNames=q?names.filter(function(s){return s.toLowerCase().indexOf(q)>=0;}):names;
+  if(!visibleNames.length){
+    wrap.innerHTML='<div style="text-align:center;padding:40px 20px;color:#7986cb;font-size:13px">沒有符合「'+esc(q)+'」的系列</div>';
+    return;
+  }
+  wrap.innerHTML=visibleNames.map(function(s){
     var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    var expanded=!!_seriesExpanded[s];
+    // v02.177：收合狀態是清單模式，不需要算排序/縮圖/尋寶比對這些只有展開時才用得到的
+    // 資料，省一點沒必要的運算——系列一多、大部分都收合著的時候差異會比較明顯
+    if(!expanded){
+      var relatedCount=_seriesRelatedHunt(s).length;
+      return '<div class="series-row" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 4px;border-bottom:1px solid #1e2a45;cursor:pointer">'+
+        '<div style="display:flex;align-items:center;gap:9px;min-width:0;flex:1">'+
+          '<span style="width:3px;height:18px;background:#ce93d8;border-radius:2px;flex-shrink:0"></span>'+
+          '<span style="font-weight:700;font-size:15.5px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s)+'</span>'+
+          '<span style="font-size:11px;color:#7986cb;flex-shrink:0">▶</span>'+
+        '</div>'+
+        '<div style="font-size:11.5px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(relatedCount?'・尋寶中 '+relatedCount:'')+'</div>'+
+      '</div>';
+    }
     // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
     // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
     items.sort(function(a,b){
@@ -6494,14 +6549,24 @@ function renderSeriesBrowse(){
       related.map(function(h){return '🔍 缺：'+esc((h.data||{}).primary_name||'');}).join('<br>')+
     '</div>') : '';
     return '<div style="margin-bottom:20px">'+
-      '<div class="dv2-card-hd" style="margin-bottom:10px">'+
-        '<div class="dv2-card-title" style="font-size:18px"><span class="dv2-dot" style="background:#ce93d8;height:20px"></span>'+esc(s)+'</div>'+
+      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')">'+
+        '<div class="dv2-card-title" style="font-size:18px"><span class="dv2-dot" style="background:#ce93d8;height:20px"></span>'+esc(s)+
+          '<span style="font-size:12px;color:#7986cb;margin-left:6px">▼</span></div>'+
         '<div style="font-size:11px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(related.length?'・尋寶中 '+related.length:'')+'</div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
       missingHtml+
     '</div>';
   }).join('');
+}
+// v02.176：從詳情頁直接跳轉到指定系列——關閉詳情頁、開啟依系列瀏覽，並帶入搜尋框
+// 篩選成這個系列，不用使用者自己再手動輸入一次系列名稱。
+function jumpToSeries(seriesName){
+  if(!seriesName)return;
+  closeDetail();
+  openSeriesBrowse();
+  var inp=$('series-search-inp');
+  if(inp){inp.value=seriesName;renderSeriesBrowse();}
 }
 function openSeriesBrowse(){
   renderSeriesBrowse();
@@ -16043,6 +16108,12 @@ function _detailValHtml(k,v,isBook2,cat){
     }else if(k==='created_at'&&v){
       // 建檔時間：舊資料可能被 Sheets 轉成 UTC ISO，統一還原為台北時間字串顯示
       valHtml=esc(fmtCreatedTPE(v));
+    }else if(k==='series'&&v){
+      // v02.176：使用者要求從詳情頁能直接跳轉到「依系列瀏覽」，不用先關掉詳情頁再從
+      // 收藏頁「⋯」選單找入口。系列名稱後面加一個小按鈕，點了關閉詳情頁、開啟系列瀏覽
+      // 並直接帶入搜尋框篩選成這個系列（沿用v02.175剛做好的搜尋框，不用另外寫一套
+      // 「定位到指定系列」的邏輯）。
+      valHtml=esc(v)+' <button onclick="event.stopPropagation();jumpToSeries(\''+_escAttr(v)+'\')" style="background:transparent;border:1px solid #ce93d8;border-radius:8px;color:#ce93d8;font-size:11px;padding:2px 8px;cursor:pointer;margin-left:4px" type="button">📚 同系列 ›</button>';
     }else{
       valHtml=esc(v);
     }
@@ -19551,6 +19622,10 @@ function _imgToB64(src){
   <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
     <div style="font-size:14px;font-weight:700;color:#e8eaf6">📚 依系列瀏覽</div>
     <button onclick="closeSeriesBrowse()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
+  </div>
+  <!-- v02.175：使用者反映系列一多，整頁滑過去找很麻煩，加搜尋框依系列名稱篩選 -->
+  <div style="padding:12px 16px 0;flex-shrink:0">
+    <input type="text" id="series-search-inp" class="fi" placeholder="搜尋系列名稱…" oninput="renderSeriesBrowse()" style="width:100%">
   </div>
   <div id="series-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
 </div>
