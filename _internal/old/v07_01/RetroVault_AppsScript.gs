@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v03            ║
+// ║  RetroVault — Google Apps Script 後端  v07            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -71,7 +71,7 @@ const GAME_HEADERS = [
   'code','barcode',
   'developer','publisher','release_date','suggest_price',
   'genre','players','features',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'play_status','rating',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -88,7 +88,7 @@ const BOOK_HEADERS = [
   'publisher','developer','release_date','suggest_price',
   'region','edition','language',
   'code','barcode',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'rating',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -105,7 +105,7 @@ const CONSOLE_HEADERS = [
   'brand','model_no','platform_family','generation',
   'color','storage','region','edition','serial_no','barcode',
   'release_date','suggest_price',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'working_status','firmware',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -121,7 +121,7 @@ const PERIPH_HEADERS = [
   'brand','model_no','peripheral_type','compat_platform',
   'color','connection','region','edition','barcode',
   'release_date','suggest_price',
-  'collect_status','completeness','bundle',
+  'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'working_status',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
@@ -196,7 +196,7 @@ const _OS_HEAD = ['category','subtype','related_work','primary_name','jp_name','
 const _OS_TAIL = [
   'label','catalog_number','format','edition_type',
   'release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','obi_status','completeness','storage_location',
+  'barcode','code','collect_status','obi_status','completeness','loan_to','loan_due','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost','bonus_items',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
@@ -211,7 +211,7 @@ const OSTLIVE_HEADERS = _OS_HEAD.concat(['venue','event_date','performers']).con
 const _AN_HEAD = ['category','subtype','related_work','primary_name','jp_name','zh_name','en_name'];
 const _AN_TAIL = [
   'publisher','release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','condition','completeness','storage_location',
+  'barcode','code','collect_status','condition','completeness','loan_to','loan_due','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
@@ -229,7 +229,7 @@ const ANOTHER_HEADERS = _AN_HEAD.concat([]).concat(_AN_TAIL);
 const _FIG_HEAD = ['category','subtype','series','primary_name','character','jp_name','zh_name','en_name'];
 const _FIG_TAIL = [
   'brand','manufacturer','release_date','suggest_price','region','edition',
-  'barcode','code','collect_status','box_condition','condition','completeness','storage_location',
+  'barcode','code','collect_status','box_condition','condition','completeness','loan_to','loan_due','storage_location',
   'buy_date','purchase_channel','buy_source','buy_price','local_cost',
   'market_value','market_value_confidence',
   'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at','favorite'
@@ -805,8 +805,8 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
-    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers') {
-      // 寫入類 action（含維護性質的 fix_headers）→ 驗證 app_token。
+    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers' || action === 'force_realign') {
+      // 寫入類 action（含維護性質的 fix_headers／force_realign）→ 驗證 app_token。
       // v53.01：改為 fail-closed —— 後端未設定 APP_TOKEN 時一律拒絕寫入，不再「未設定就放行」。
       // 使用前請確認已在「指令碼屬性」設定 APP_TOKEN，否則新增/修改/刪除/修復標題列都會被拒絕。
       const need = PropertiesService.getScriptProperties().getProperty('APP_TOKEN');
@@ -814,6 +814,8 @@ function doPost(e) {
         result = { ok: false, error: 'unauthorized：寫入 token 不符或未提供' };
       } else if (action === 'fix_headers') {
         result = fixSheetHeaders();
+      } else if (action === 'force_realign') {
+        result = forceRealignAllSheetData(data.category);
       } else {
         const type = resolveType(
           data.category || (data.row && data.row[0]),
@@ -2656,6 +2658,98 @@ function resolveMapLink(url) {
 }
  
 // ── 修復工作表標題列 ──────────────────────────────
+// v02.170：使用者實測回報「修復工作表標題列」修完之後，資料還是錯位的——追查後發現：
+// 上一次失敗的執行（被資料驗證擋下）雖然「搬移資料」那步中斷了，但標題列本身在那次執行
+// 的某個時間點已經被改寫成新的欄位名稱。結果這次重跑，程式看到「標題列文字已經跟目前
+// headers一致」，判斷不需要再搬資料，直接跳過了真正需要做的搬移動作，變成「標題列正常、
+// 資料還是亂的」這種標題跟資料不同步的中間狀態被誤判成「沒事」。
+// 抽出「依欄位名稱重新對應搬移資料」這段邏輯成獨立共用函式，讓正常的fixSheetHeaders()跟
+// 新增的強制重新比對功能都能共用同一份邏輯，不要各自維護一份容易分岔的複製版本。
+function _realignSheetDataByName(sheet, headerRow, headers) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return 0;
+  const data = sheet.getRange(2, 1, lastRow - 1, headerRow.length).getValues();
+  const remapped = data.map(function(row) {
+    return headers.map(function(h) {
+      const oldIdx = headerRow.indexOf(h);
+      return oldIdx >= 0 ? row[oldIdx] : '';
+    });
+  });
+  // v02.169：清掉目標範圍可能殘留的舊資料驗證規則，避免被擋下寫入（詳見下方註解歷史）
+  const targetRange = sheet.getRange(2, 1, remapped.length, headers.length);
+  targetRange.clearDataValidations();
+  targetRange.setValues(remapped);
+  return remapped.length;
+}
+// v02.170：強制重新比對——不管標題列目前看起來是不是已經跟headers一致，都強制依欄位
+// 名稱重新搬移一次資料，專門用來修復上面說明的那種「標題列被改寫、資料沒真的搬」的中間
+// 狀態。這是比「修復工作表標題列」更強力、風險也稍高一點的操作（會重寫所有列的資料），
+// 只在一般修復後資料還是錯位時才需要用。
+// v02.171：使用者要求「強制重新比對資料欄位」不要一次跑32張工作表——一來擔心單次執行量
+// 太大，二來擔心「原本是對的」的分類也被連帶重新搬移一次、增加不必要的風險。改成依分類
+// 分組，呼叫時一定要指定分類，只處理該分類底下實際涉及的工作表（例如「原聲帶」底下有5張
+// 子類型表，「遊戲」只有1張），不再支援「不指定分類＝全部一起跑」這個選項。
+const CATEGORY_SHEET_MAP = {
+  '遊戲': [[GAMES_SHEET, GAME_HEADERS]],
+  '攻略': [[BOOKS_SHEET, BOOK_HEADERS]],
+  '主機': [[CONSOLE_SHEET, CONSOLE_HEADERS]],
+  '週邊': [[PERIPH_SHEET, PERIPH_HEADERS]],
+  '尋寶': [[HUNT_SHEET, HUNT_HEADERS]],
+  '數位下載版': [
+    [DIGIGAME_SHEET, DIGIGAME_HEADERS], [DIGIDLC_SHEET, DIGIDLC_HEADERS],
+    [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
+    [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
+    [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS]
+  ],
+  '原聲帶': [
+    [OSTMAIN_SHEET, OSTMAIN_HEADERS], [OSTSINGLE_SHEET, OSTSINGLE_HEADERS],
+    [OSTCHAR_SHEET, OSTCHAR_HEADERS], [OSTDRAMA_SHEET, OSTDRAMA_HEADERS],
+    [OSTLIVE_SHEET, OSTLIVE_HEADERS]
+  ],
+  '動漫/美術設定集': [
+    [ANMANGA_SHEET, ANMANGA_HEADERS], [ANARTBOOK_SHEET, ANARTBOOK_HEADERS],
+    [ANSETTING_SHEET, ANSETTING_HEADERS], [ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS],
+    [ANMAG_SHEET, ANMAG_HEADERS], [ANTV_SHEET, ANTV_HEADERS],
+    [ANMOVIE_SHEET, ANMOVIE_HEADERS], [ANOTHER_SHEET, ANOTHER_HEADERS]
+  ],
+  '公仔': [
+    [FIGSCALE_SHEET, FIGSCALE_HEADERS], [FIGACTION_SHEET, FIGACTION_HEADERS],
+    [FIGNENDO_SHEET, FIGNENDO_HEADERS], [FIGPRIZE_SHEET, FIGPRIZE_HEADERS],
+    [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
+  ]
+};
+function forceRealignAllSheetData(category) {
+  if (!category || !CATEGORY_SHEET_MAP[category]) {
+    return { ok: false, error: '請指定要處理的分類，可用值：' + Object.keys(CATEGORY_SHEET_MAP).join('、') };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const results = {};
+  function forceOne(sheetName, headers) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return 'not_found';
+    const lastCol = sheet.getLastColumn();
+    if (sheet.getMaxColumns() < headers.length) {
+      sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
+    }
+    const headerRow = sheet.getRange(1, 1, 1, Math.max(lastCol, headers.length)).getValues()[0];
+    if (headerRow[0] !== 'category') return 'skipped_header_row_not_category';
+    const nonEmptyOld = headerRow.filter(function(h) { return h; });
+    const seen = {};
+    let hasDup = false;
+    nonEmptyOld.forEach(function(h) { if (seen[h]) hasDup = true; seen[h] = true; });
+    if (hasDup) return 'skipped_duplicate_headers';
+    const droppedCols = nonEmptyOld.filter(function(h) { return headers.indexOf(h) < 0; });
+    if (droppedCols.length) return 'skipped_has_dropped_columns:' + droppedCols.join(',');
+    const n = _realignSheetDataByName(sheet, headerRow, headers);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return 'realigned_' + n + '_rows';
+  }
+  CATEGORY_SHEET_MAP[category].forEach(function(pair) {
+    results[pair[0]] = forceOne(pair[0], pair[1]);
+  });
+  Logger.log('forceRealignAllSheetData(' + category + '): ' + JSON.stringify(results));
+  return { ok: true, category: category, results: results };
+}
 function fixSheetHeaders() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const results = {};
@@ -2717,18 +2811,8 @@ function fixSheetHeaders() {
         Logger.log('fixSheet: %s 有欄位「%s」在目前的標準欄位清單裡已經不存在，為避免資料遺失不自動搬動，請人工檢查', sheetName, droppedCols.join('、'));
         return 'skipped_has_dropped_columns:' + droppedCols.join(',');
       }
-      const lastRow = sheet.getLastRow();
-      if (lastRow > 1) {
-        const data = sheet.getRange(2, 1, lastRow - 1, headerRow.length).getValues();
-        const remapped = data.map(function(row) {
-          return headers.map(function(h) {
-            const oldIdx = headerRow.indexOf(h);
-            return oldIdx >= 0 ? row[oldIdx] : '';
-          });
-        });
-        sheet.getRange(2, 1, remapped.length, headers.length).setValues(remapped);
-        Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, remapped.length);
-      }
+      const n = _realignSheetDataByName(sheet, headerRow, headers);
+      if (n) Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, n);
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       return 'header_and_data_realigned';
     }
