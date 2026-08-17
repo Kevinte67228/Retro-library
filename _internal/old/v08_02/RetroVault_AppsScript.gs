@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v05            ║
+// ║  RetroVault — Google Apps Script 後端  v08            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -805,8 +805,9 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
-    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers') {
-      // 寫入類 action（含維護性質的 fix_headers）→ 驗證 app_token。
+    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers' || action === 'force_realign' || action === 'repair_pre_loan_field') {
+      // 寫入類 action（含維護性質的 fix_headers／force_realign／repair_pre_loan_field）
+      // → 驗證 app_token。
       // v53.01：改為 fail-closed —— 後端未設定 APP_TOKEN 時一律拒絕寫入，不再「未設定就放行」。
       // 使用前請確認已在「指令碼屬性」設定 APP_TOKEN，否則新增/修改/刪除/修復標題列都會被拒絕。
       const need = PropertiesService.getScriptProperties().getProperty('APP_TOKEN');
@@ -814,6 +815,10 @@ function doPost(e) {
         result = { ok: false, error: 'unauthorized：寫入 token 不符或未提供' };
       } else if (action === 'fix_headers') {
         result = fixSheetHeaders();
+      } else if (action === 'force_realign') {
+        result = forceRealignAllSheetData(data.category);
+      } else if (action === 'repair_pre_loan_field') {
+        result = repairPreLoanFieldRows(data.category);
       } else {
         const type = resolveType(
           data.category || (data.row && data.row[0]),
@@ -2656,6 +2661,158 @@ function resolveMapLink(url) {
 }
  
 // ── 修復工作表標題列 ──────────────────────────────
+// v02.170：使用者實測回報「修復工作表標題列」修完之後，資料還是錯位的——追查後發現：
+// 上一次失敗的執行（被資料驗證擋下）雖然「搬移資料」那步中斷了，但標題列本身在那次執行
+// 的某個時間點已經被改寫成新的欄位名稱。結果這次重跑，程式看到「標題列文字已經跟目前
+// headers一致」，判斷不需要再搬資料，直接跳過了真正需要做的搬移動作，變成「標題列正常、
+// 資料還是亂的」這種標題跟資料不同步的中間狀態被誤判成「沒事」。
+// 抽出「依欄位名稱重新對應搬移資料」這段邏輯成獨立共用函式，讓正常的fixSheetHeaders()跟
+// 新增的強制重新比對功能都能共用同一份邏輯，不要各自維護一份容易分岔的複製版本。
+function _realignSheetDataByName(sheet, headerRow, headers) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return 0;
+  const data = sheet.getRange(2, 1, lastRow - 1, headerRow.length).getValues();
+  const remapped = data.map(function(row) {
+    return headers.map(function(h) {
+      const oldIdx = headerRow.indexOf(h);
+      return oldIdx >= 0 ? row[oldIdx] : '';
+    });
+  });
+  // v02.169：清掉目標範圍可能殘留的舊資料驗證規則，避免被擋下寫入（詳見下方註解歷史）
+  const targetRange = sheet.getRange(2, 1, remapped.length, headers.length);
+  targetRange.clearDataValidations();
+  targetRange.setValues(remapped);
+  return remapped.length;
+}
+// v02.170：強制重新比對——不管標題列目前看起來是不是已經跟headers一致，都強制依欄位
+// 名稱重新搬移一次資料，專門用來修復上面說明的那種「標題列被改寫、資料沒真的搬」的中間
+// 狀態。這是比「修復工作表標題列」更強力、風險也稍高一點的操作（會重寫所有列的資料），
+// 只在一般修復後資料還是錯位時才需要用。
+// v02.171：使用者要求「強制重新比對資料欄位」不要一次跑32張工作表——一來擔心單次執行量
+// 太大，二來擔心「原本是對的」的分類也被連帶重新搬移一次、增加不必要的風險。改成依分類
+// 分組，呼叫時一定要指定分類，只處理該分類底下實際涉及的工作表（例如「原聲帶」底下有5張
+// 子類型表，「遊戲」只有1張），不再支援「不指定分類＝全部一起跑」這個選項。
+const CATEGORY_SHEET_MAP = {
+  '遊戲': [[GAMES_SHEET, GAME_HEADERS]],
+  '攻略': [[BOOKS_SHEET, BOOK_HEADERS]],
+  '主機': [[CONSOLE_SHEET, CONSOLE_HEADERS]],
+  '週邊': [[PERIPH_SHEET, PERIPH_HEADERS]],
+  '尋寶': [[HUNT_SHEET, HUNT_HEADERS]],
+  '數位下載版': [
+    [DIGIGAME_SHEET, DIGIGAME_HEADERS], [DIGIDLC_SHEET, DIGIDLC_HEADERS],
+    [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
+    [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
+    [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS]
+  ],
+  '原聲帶': [
+    [OSTMAIN_SHEET, OSTMAIN_HEADERS], [OSTSINGLE_SHEET, OSTSINGLE_HEADERS],
+    [OSTCHAR_SHEET, OSTCHAR_HEADERS], [OSTDRAMA_SHEET, OSTDRAMA_HEADERS],
+    [OSTLIVE_SHEET, OSTLIVE_HEADERS]
+  ],
+  '動漫/美術設定集': [
+    [ANMANGA_SHEET, ANMANGA_HEADERS], [ANARTBOOK_SHEET, ANARTBOOK_HEADERS],
+    [ANSETTING_SHEET, ANSETTING_HEADERS], [ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS],
+    [ANMAG_SHEET, ANMAG_HEADERS], [ANTV_SHEET, ANTV_HEADERS],
+    [ANMOVIE_SHEET, ANMOVIE_HEADERS], [ANOTHER_SHEET, ANOTHER_HEADERS]
+  ],
+  '公仔': [
+    [FIGSCALE_SHEET, FIGSCALE_HEADERS], [FIGACTION_SHEET, FIGACTION_HEADERS],
+    [FIGNENDO_SHEET, FIGNENDO_HEADERS], [FIGPRIZE_SHEET, FIGPRIZE_HEADERS],
+    [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
+  ]
+};
+// v02.173：使用者實測回報「強制重新比對資料欄位」對特定舊資料（在v02.166新增loan_to／
+// loan_due欄位之前就已經存在的列）沒有效果。追查後找到更深層的根源：force_realign／
+// fixSheet都是拿「目前寫在儲存格裡的標題列文字」當依據去remap資料，但第一次失敗的執行
+// 已經把標題列文字提早改寫成含loan_to/loan_due的新順序、資料卻沒有真的搬過去，導致
+// 「標題列說的順序」已經不能準確反映這些舊資料實際的欄位排列——後續不管跑幾次force_realign，
+// 依據的參考基準本身就是錯的，等於把新順序對應回自己，什麼都沒修到。
+// 這個函式改用「已知的舊排列」（headers數常量本身在插入loan_to/loan_due前的原始順序，
+// 可以直接從目前的headers reconstruct：整份loan_to/loan_due插入前後除了這兩個新欄位，
+// 其餘欄位相對順序完全沒變）當remap依據，不信任儲存格裡可能已經被污染的標題列文字。
+// 為了不誤傷「已經是對的」資料，用一個安全檢查：loan_due是全新欄位，正常情況下要嘛是
+// 空白、要嘛是使用者填的合理日期格式，不可能出現長文字/清單/帶時分秒的完整時間戳記這種
+// 內容——只有檢查到這種明顯不像日期的內容，才判定這筆還停留在舊排列、需要修復；本來就
+// 正確的資料檢查後會維持原樣不動。
+function _reconstructPreLoanFieldHeaders(headers) {
+  return headers.filter(function(h) { return h !== 'loan_to' && h !== 'loan_due'; });
+}
+function _looksLikePlausibleLoanDue(v) {
+  if (!v && v !== 0) return true; // 空白，正常
+  if (Object.prototype.toString.call(v) === '[object Date]') return true; // Sheets把儲存格格式化成日期時，getValues()會回傳Date物件
+  const s = String(v).trim();
+  if (!s) return true;
+  // 合理的日期字串格式：YYYY-MM-DD或YYYY/MM/DD，不含時分秒
+  return /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(s);
+}
+function repairPreLoanFieldRows(category) {
+  if (!category || !CATEGORY_SHEET_MAP[category]) {
+    return { ok: false, error: '請指定要處理的分類，可用值：' + Object.keys(CATEGORY_SHEET_MAP).join('、') };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const results = {};
+  function repairOne(sheetName, headers) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { status: 'not_found' };
+    const loanDueIdx = headers.indexOf('loan_due');
+    if (loanDueIdx < 0) return { status: 'no_loan_field_in_this_sheet' }; // 數位下載版沒有loan欄位
+    const oldHeaders = _reconstructPreLoanFieldHeaders(headers);
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return { status: 'no_data_rows' };
+    const data = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    let repaired = 0, checked = data.length;
+    data.forEach(function(row, i) {
+      if (_looksLikePlausibleLoanDue(row[loanDueIdx])) return; // 空白或合理日期，跳過不動
+      // 依「已知的舊排列」重新解讀這一列目前實際存在每個欄位位置的資料，對應回正確的新欄位
+      const remapped = headers.map(function(h) {
+        const oldIdx = oldHeaders.indexOf(h);
+        return oldIdx >= 0 ? row[oldIdx] : ''; // loan_to/loan_due在舊排列裡本來就不存在，正確地填空字串
+      });
+      const targetRange = sheet.getRange(2 + i, 1, 1, headers.length);
+      targetRange.clearDataValidations();
+      targetRange.setValues([remapped]);
+      repaired++;
+    });
+    return { status: 'checked_' + checked + '_repaired_' + repaired };
+  }
+  CATEGORY_SHEET_MAP[category].forEach(function(pair) {
+    results[pair[0]] = repairOne(pair[0], pair[1]);
+  });
+  Logger.log('repairPreLoanFieldRows(' + category + '): ' + JSON.stringify(results));
+  return { ok: true, category: category, results: results };
+}
+function forceRealignAllSheetData(category) {
+  if (!category || !CATEGORY_SHEET_MAP[category]) {
+    return { ok: false, error: '請指定要處理的分類，可用值：' + Object.keys(CATEGORY_SHEET_MAP).join('、') };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const results = {};
+  function forceOne(sheetName, headers) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return 'not_found';
+    const lastCol = sheet.getLastColumn();
+    if (sheet.getMaxColumns() < headers.length) {
+      sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
+    }
+    const headerRow = sheet.getRange(1, 1, 1, Math.max(lastCol, headers.length)).getValues()[0];
+    if (headerRow[0] !== 'category') return 'skipped_header_row_not_category';
+    const nonEmptyOld = headerRow.filter(function(h) { return h; });
+    const seen = {};
+    let hasDup = false;
+    nonEmptyOld.forEach(function(h) { if (seen[h]) hasDup = true; seen[h] = true; });
+    if (hasDup) return 'skipped_duplicate_headers';
+    const droppedCols = nonEmptyOld.filter(function(h) { return headers.indexOf(h) < 0; });
+    if (droppedCols.length) return 'skipped_has_dropped_columns:' + droppedCols.join(',');
+    const n = _realignSheetDataByName(sheet, headerRow, headers);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return 'realigned_' + n + '_rows';
+  }
+  CATEGORY_SHEET_MAP[category].forEach(function(pair) {
+    results[pair[0]] = forceOne(pair[0], pair[1]);
+  });
+  Logger.log('forceRealignAllSheetData(' + category + '): ' + JSON.stringify(results));
+  return { ok: true, category: category, results: results };
+}
 function fixSheetHeaders() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const results = {};
@@ -2717,29 +2874,8 @@ function fixSheetHeaders() {
         Logger.log('fixSheet: %s 有欄位「%s」在目前的標準欄位清單裡已經不存在，為避免資料遺失不自動搬動，請人工檢查', sheetName, droppedCols.join('、'));
         return 'skipped_has_dropped_columns:' + droppedCols.join(',');
       }
-      const lastRow = sheet.getLastRow();
-      if (lastRow > 1) {
-        const data = sheet.getRange(2, 1, lastRow - 1, headerRow.length).getValues();
-        const remapped = data.map(function(row) {
-          return headers.map(function(h) {
-            const oldIdx = headerRow.indexOf(h);
-            return oldIdx >= 0 ? row[oldIdx] : '';
-          });
-        });
-        // v02.169：使用者實測回報修復工作表標題列失敗，錯誤是某儲存格「設有資料驗證規則」
-        // 而寫入值違反規則。追查後發現：資料驗證規則是綁在「儲存格位置」上，不是綁在
-        // 「欄位」上；欄位順序異動、資料依名稱重新搬移到新位置時，如果目標儲存格位置剛好
-        // 殘留一條跟目前欄位選項不同步的舊驗證規則（例如很久以前手動或自動設定、選項清單
-        // 沒有隨著欄位選項擴充而更新），搬過去的合法新值就可能不在那條舊規則的允許清單裡，
-        // 導致setValues()直接被Google試算表擋下寫入。這個坑原本就存在，只是「欄位順序沒變」
-        // 這個安全路徑先前一直被走、沒有機會觸發到這段搬移邏輯。寫入前先清掉目標範圍的資料
-        // 驗證規則，避免殘留規則擋住修復流程；即使沒有殘留規則，clearDataValidations()也是
-        // 安全的no-op操作。
-        const targetRange = sheet.getRange(2, 1, remapped.length, headers.length);
-        targetRange.clearDataValidations();
-        targetRange.setValues(remapped);
-        Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, remapped.length);
-      }
+      const n = _realignSheetDataByName(sheet, headerRow, headers);
+      if (n) Logger.log('fixSheet: %s 欄位順序有變動，已依欄名重新對應搬移 %s 列資料', sheetName, n);
       sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
       return 'header_and_data_realigned';
     }

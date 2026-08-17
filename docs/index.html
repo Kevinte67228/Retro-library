@@ -2928,7 +2928,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.02';
+const APP_VERSION='v08.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6528,6 +6528,15 @@ function renderSeriesBrowse(){
       ))+
     '</div>';
   }).join('');
+}
+// v02.176：從詳情頁直接跳轉到指定系列——關閉詳情頁、開啟依系列瀏覽，並帶入搜尋框
+// 篩選成這個系列，不用使用者自己再手動輸入一次系列名稱。
+function jumpToSeries(seriesName){
+  if(!seriesName)return;
+  closeDetail();
+  openSeriesBrowse();
+  var inp=$('series-search-inp');
+  if(inp){inp.value=seriesName;renderSeriesBrowse();}
 }
 function openSeriesBrowse(){
   renderSeriesBrowse();
@@ -16069,6 +16078,12 @@ function _detailValHtml(k,v,isBook2,cat){
     }else if(k==='created_at'&&v){
       // 建檔時間：舊資料可能被 Sheets 轉成 UTC ISO，統一還原為台北時間字串顯示
       valHtml=esc(fmtCreatedTPE(v));
+    }else if(k==='series'&&v){
+      // v02.176：使用者要求從詳情頁能直接跳轉到「依系列瀏覽」，不用先關掉詳情頁再從
+      // 收藏頁「⋯」選單找入口。系列名稱後面加一個小按鈕，點了關閉詳情頁、開啟系列瀏覽
+      // 並直接帶入搜尋框篩選成這個系列（沿用v02.175剛做好的搜尋框，不用另外寫一套
+      // 「定位到指定系列」的邏輯）。
+      valHtml=esc(v)+' <button onclick="event.stopPropagation();jumpToSeries(\''+_escAttr(v)+'\')" style="background:transparent;border:1px solid #ce93d8;border-radius:8px;color:#ce93d8;font-size:11px;padding:2px 8px;cursor:pointer;margin-left:4px" type="button">📚 同系列 ›</button>';
     }else{
       valHtml=esc(v);
     }
