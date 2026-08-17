@@ -2928,7 +2928,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.03';
+const APP_VERSION='v08.04';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6460,11 +6460,15 @@ function _seriesRelatedHunt(seriesName){
 // 網格瀏覽方式，只是多加系列標題分組——直接沿用既有的.gv-card/.gv-thumb/.gv-info等
 // 畫廊卡片CSS class（見renderGalleryView），系列這裡只負責分組跟標題列，卡片本身完全
 // 是同一套樣式，不再另外設計一套清單UI。
-// v02.175：系列群組可摺疊——系列一多，全部展開會讓面板拉得很長。追蹤各系列目前是否收合
-// 的狀態，預設全部展開（不改變既有習慣），使用者可以自己收合不常看的系列。
-var _seriesCollapsed={};
-function _toggleSeriesCollapse(s){
-  _seriesCollapsed[s]=!_seriesCollapsed[s];
+// v02.177：使用者反映系列一多，全部展開預設看起來太雜，要求改成預設收合，並且收合狀態
+// 用更緊湊的清單列排版（細分隔線、少留白），不要沿用原本卡片標題那種大留白樣式——那種
+// 留白是為了下面的卡片網格準備的空間，收合時沒有卡片網格，留白反而顯得鬆散。
+// 追蹤語意從「哪些系列被收合」改成「哪些系列被展開」（正向語意），這樣預設（沒有任何
+// 系列被主動點開過）就自然是全部收合，不需要另外處理「新出現的系列名稱要不要預設收合」
+// 這種初始化問題。
+var _seriesExpanded={};
+function _toggleSeriesExpand(s){
+  _seriesExpanded[s]=!_seriesExpanded[s];
   renderSeriesBrowse();
 }
 function renderSeriesBrowse(){
@@ -6484,6 +6488,20 @@ function renderSeriesBrowse(){
   }
   wrap.innerHTML=visibleNames.map(function(s){
     var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    var expanded=!!_seriesExpanded[s];
+    // v02.177：收合狀態是清單模式，不需要算排序/縮圖/尋寶比對這些只有展開時才用得到的
+    // 資料，省一點沒必要的運算——系列一多、大部分都收合著的時候差異會比較明顯
+    if(!expanded){
+      var relatedCount=_seriesRelatedHunt(s).length;
+      return '<div class="series-row" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 4px;border-bottom:1px solid #1e2a45;cursor:pointer">'+
+        '<div style="display:flex;align-items:center;gap:9px;min-width:0;flex:1">'+
+          '<span style="width:3px;height:18px;background:#ce93d8;border-radius:2px;flex-shrink:0"></span>'+
+          '<span style="font-weight:700;font-size:15.5px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s)+'</span>'+
+          '<span style="font-size:11px;color:#7986cb;flex-shrink:0">▶</span>'+
+        '</div>'+
+        '<div style="font-size:11.5px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(relatedCount?'・尋寶中 '+relatedCount:'')+'</div>'+
+      '</div>';
+    }
     // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
     // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
     items.sort(function(a,b){
@@ -6495,7 +6513,6 @@ function renderSeriesBrowse(){
       return ta-tb;
     });
     var related=_seriesRelatedHunt(s);
-    var collapsed=!!_seriesCollapsed[s];
     var cardsHtml=items.map(function(c){
       var d=c.data;
       var cat=catInternal(d.category)||'遊戲';
@@ -6517,15 +6534,13 @@ function renderSeriesBrowse(){
       related.map(function(h){return '🔍 缺：'+esc((h.data||{}).primary_name||'');}).join('<br>')+
     '</div>') : '';
     return '<div style="margin-bottom:20px">'+
-      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesCollapse(\''+_escAttr(s)+'\')">'+
+      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')">'+
         '<div class="dv2-card-title" style="font-size:18px"><span class="dv2-dot" style="background:#ce93d8;height:20px"></span>'+esc(s)+
-          '<span style="font-size:12px;color:#7986cb;margin-left:6px">'+(collapsed?'▶':'▼')+'</span></div>'+
+          '<span style="font-size:12px;color:#7986cb;margin-left:6px">▼</span></div>'+
         '<div style="font-size:11px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(related.length?'・尋寶中 '+related.length:'')+'</div>'+
       '</div>'+
-      (collapsed?'':(
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
-        missingHtml
-      ))+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
+      missingHtml+
     '</div>';
   }).join('');
 }
