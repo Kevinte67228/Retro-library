@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v07            ║
+// ║  RetroVault — Google Apps Script 後端  v08            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -805,8 +805,9 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
-    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers' || action === 'force_realign') {
-      // 寫入類 action（含維護性質的 fix_headers／force_realign）→ 驗證 app_token。
+    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers' || action === 'force_realign' || action === 'repair_pre_loan_field') {
+      // 寫入類 action（含維護性質的 fix_headers／force_realign／repair_pre_loan_field）
+      // → 驗證 app_token。
       // v53.01：改為 fail-closed —— 後端未設定 APP_TOKEN 時一律拒絕寫入，不再「未設定就放行」。
       // 使用前請確認已在「指令碼屬性」設定 APP_TOKEN，否則新增/修改/刪除/修復標題列都會被拒絕。
       const need = PropertiesService.getScriptProperties().getProperty('APP_TOKEN');
@@ -816,6 +817,8 @@ function doPost(e) {
         result = fixSheetHeaders();
       } else if (action === 'force_realign') {
         result = forceRealignAllSheetData(data.category);
+      } else if (action === 'repair_pre_loan_field') {
+        result = repairPreLoanFieldRows(data.category);
       } else {
         const type = resolveType(
           data.category || (data.row && data.row[0]),
@@ -2718,6 +2721,66 @@ const CATEGORY_SHEET_MAP = {
     [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
   ]
 };
+// v02.173：使用者實測回報「強制重新比對資料欄位」對特定舊資料（在v02.166新增loan_to／
+// loan_due欄位之前就已經存在的列）沒有效果。追查後找到更深層的根源：force_realign／
+// fixSheet都是拿「目前寫在儲存格裡的標題列文字」當依據去remap資料，但第一次失敗的執行
+// 已經把標題列文字提早改寫成含loan_to/loan_due的新順序、資料卻沒有真的搬過去，導致
+// 「標題列說的順序」已經不能準確反映這些舊資料實際的欄位排列——後續不管跑幾次force_realign，
+// 依據的參考基準本身就是錯的，等於把新順序對應回自己，什麼都沒修到。
+// 這個函式改用「已知的舊排列」（headers數常量本身在插入loan_to/loan_due前的原始順序，
+// 可以直接從目前的headers reconstruct：整份loan_to/loan_due插入前後除了這兩個新欄位，
+// 其餘欄位相對順序完全沒變）當remap依據，不信任儲存格裡可能已經被污染的標題列文字。
+// 為了不誤傷「已經是對的」資料，用一個安全檢查：loan_due是全新欄位，正常情況下要嘛是
+// 空白、要嘛是使用者填的合理日期格式，不可能出現長文字/清單/帶時分秒的完整時間戳記這種
+// 內容——只有檢查到這種明顯不像日期的內容，才判定這筆還停留在舊排列、需要修復；本來就
+// 正確的資料檢查後會維持原樣不動。
+function _reconstructPreLoanFieldHeaders(headers) {
+  return headers.filter(function(h) { return h !== 'loan_to' && h !== 'loan_due'; });
+}
+function _looksLikePlausibleLoanDue(v) {
+  if (!v && v !== 0) return true; // 空白，正常
+  if (Object.prototype.toString.call(v) === '[object Date]') return true; // Sheets把儲存格格式化成日期時，getValues()會回傳Date物件
+  const s = String(v).trim();
+  if (!s) return true;
+  // 合理的日期字串格式：YYYY-MM-DD或YYYY/MM/DD，不含時分秒
+  return /^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(s);
+}
+function repairPreLoanFieldRows(category) {
+  if (!category || !CATEGORY_SHEET_MAP[category]) {
+    return { ok: false, error: '請指定要處理的分類，可用值：' + Object.keys(CATEGORY_SHEET_MAP).join('、') };
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const results = {};
+  function repairOne(sheetName, headers) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return { status: 'not_found' };
+    const loanDueIdx = headers.indexOf('loan_due');
+    if (loanDueIdx < 0) return { status: 'no_loan_field_in_this_sheet' }; // 數位下載版沒有loan欄位
+    const oldHeaders = _reconstructPreLoanFieldHeaders(headers);
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return { status: 'no_data_rows' };
+    const data = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    let repaired = 0, checked = data.length;
+    data.forEach(function(row, i) {
+      if (_looksLikePlausibleLoanDue(row[loanDueIdx])) return; // 空白或合理日期，跳過不動
+      // 依「已知的舊排列」重新解讀這一列目前實際存在每個欄位位置的資料，對應回正確的新欄位
+      const remapped = headers.map(function(h) {
+        const oldIdx = oldHeaders.indexOf(h);
+        return oldIdx >= 0 ? row[oldIdx] : ''; // loan_to/loan_due在舊排列裡本來就不存在，正確地填空字串
+      });
+      const targetRange = sheet.getRange(2 + i, 1, 1, headers.length);
+      targetRange.clearDataValidations();
+      targetRange.setValues([remapped]);
+      repaired++;
+    });
+    return { status: 'checked_' + checked + '_repaired_' + repaired };
+  }
+  CATEGORY_SHEET_MAP[category].forEach(function(pair) {
+    results[pair[0]] = repairOne(pair[0], pair[1]);
+  });
+  Logger.log('repairPreLoanFieldRows(' + category + '): ' + JSON.stringify(results));
+  return { ok: true, category: category, results: results };
+}
 function forceRealignAllSheetData(category) {
   if (!category || !CATEGORY_SHEET_MAP[category]) {
     return { ok: false, error: '請指定要處理的分類，可用值：' + Object.keys(CATEGORY_SHEET_MAP).join('、') };

@@ -135,9 +135,8 @@ body{
 .col-menu-item svg{flex-shrink:0;color:#7986cb}
 .col-menu-item:hover svg,.col-menu-item:active svg{color:#00e5ff}
 .tbtn.on{background:#00e5ff;border-color:#00e5ff;color:#001018}
-.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.vtoggle::-webkit-scrollbar{display:none}
-.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px;flex-shrink:0}
+.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow:hidden}
+.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px}
 
 /* === Form fields === */
 .fg{margin-bottom:12px}
@@ -237,6 +236,14 @@ body{
    使用者反應多餘。改成筆數只在這一行顯示一次，按鈕本身不再帶數字。 */
 #pg-col .col-sel-count{margin:14px 16px 0;font-size:12px;color:#7986cb}
 #stats-row{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
+/* v02.179：依系列瀏覽的獨立滑動列，重用#stats同一套「overflow-x + 右側淡出遮罩」手法，
+   跟原本卡片/分類/畫廊的.vtoggle是各自獨立的兩塊，互不影響 */
+.view-chips-row{padding:8px 12px 0}
+.view-chips-scroll{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
+.view-chips-scroll.at-end{mask-image:none;-webkit-mask-image:none}
+.view-chips-scroll::-webkit-scrollbar{display:none}
+.view-chip{flex:0 0 auto;white-space:nowrap;padding:8px 14px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;color:#ce93d8;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}
+.view-chip:active{transform:scale(.96)}
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
 #stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
@@ -1769,15 +1776,6 @@ body{
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="16" rx="2"/><rect x="10" y="1" width="7" height="16" rx="2"/></svg>
                 畫廊
               </button>
-              <!-- v02.178：使用者要求把「依系列瀏覽」從「⋯」選單拉出來，跟卡片/分類/畫廊
-                   放在同一排、比照下方排序列（#sort-bar）的滑動效果。這個按鈕開啟的是獨立
-                   的系列瀏覽面板（跟setView()切換「目前檢視模式」不是同一回事），所以沒有
-                   跟其他3顆共用active高亮切換邏輯，維持原本3顆的既有編排不動，只是單純
-                   在後面多加一顆、讓整排可以橫向滑動看到。 -->
-              <button id="vbtn-series" onclick="openSeriesBrowse()" style="background:transparent;color:#7986cb" title="依系列瀏覽" type="button">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                系列
-              </button>
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
                  「大量刪除」，容易讓人誤以為多選只能刪除，不知道還能批次編輯。 -->
@@ -1817,6 +1815,17 @@ body{
               </div>
             </div>
             <input type="file" id="import-csv-input" accept=".csv" multiple style="display:none" onchange="importCsv(this)">
+          </div>
+        </div>
+        <!-- v02.179：使用者要求把「依系列瀏覽」的入口做成跟下方 #stats（405/402/3...那排）
+             同樣的左右滑動效果——不是塞進卡片/分類/畫廊那個vtoggle裡面（塞進去會擠壓
+             既有3顆按鈕的排版，v02.178那次這樣做過，使用者反映排版亂掉了）。這裡另外
+             做一個獨立的小型滑動列，重用#stats同一套「overflow-x + 右側淡出遮罩」的
+             CSS手法（.view-chips-scroll／.view-chip），跟原本的vtoggle互不干擾，也讓
+             之後如果要再加其他類似的快速入口有現成的地方放，不用再另外設計一次。 -->
+        <div class="view-chips-row">
+          <div class="view-chips-scroll" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
+            <button class="view-chip" onclick="openSeriesBrowse()" type="button">📚 依系列瀏覽</button>
           </div>
         </div>
         <div id="stats-row">
@@ -2934,7 +2943,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.05';
+const APP_VERSION='v08.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
