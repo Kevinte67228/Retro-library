@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v06            ║
+// ║  RetroVault — Google Apps Script 後端  v07            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -815,7 +815,7 @@ function doPost(e) {
       } else if (action === 'fix_headers') {
         result = fixSheetHeaders();
       } else if (action === 'force_realign') {
-        result = forceRealignAllSheetData();
+        result = forceRealignAllSheetData(data.category);
       } else {
         const type = resolveType(
           data.category || (data.row && data.row[0]),
@@ -2685,7 +2685,43 @@ function _realignSheetDataByName(sheet, headerRow, headers) {
 // 名稱重新搬移一次資料，專門用來修復上面說明的那種「標題列被改寫、資料沒真的搬」的中間
 // 狀態。這是比「修復工作表標題列」更強力、風險也稍高一點的操作（會重寫所有列的資料），
 // 只在一般修復後資料還是錯位時才需要用。
-function forceRealignAllSheetData() {
+// v02.171：使用者要求「強制重新比對資料欄位」不要一次跑32張工作表——一來擔心單次執行量
+// 太大，二來擔心「原本是對的」的分類也被連帶重新搬移一次、增加不必要的風險。改成依分類
+// 分組，呼叫時一定要指定分類，只處理該分類底下實際涉及的工作表（例如「原聲帶」底下有5張
+// 子類型表，「遊戲」只有1張），不再支援「不指定分類＝全部一起跑」這個選項。
+const CATEGORY_SHEET_MAP = {
+  '遊戲': [[GAMES_SHEET, GAME_HEADERS]],
+  '攻略': [[BOOKS_SHEET, BOOK_HEADERS]],
+  '主機': [[CONSOLE_SHEET, CONSOLE_HEADERS]],
+  '週邊': [[PERIPH_SHEET, PERIPH_HEADERS]],
+  '尋寶': [[HUNT_SHEET, HUNT_HEADERS]],
+  '數位下載版': [
+    [DIGIGAME_SHEET, DIGIGAME_HEADERS], [DIGIDLC_SHEET, DIGIDLC_HEADERS],
+    [DIGICOMIC_SHEET, DIGICOMIC_HEADERS], [DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS],
+    [DIGIGUIDE_SHEET, DIGIGUIDE_HEADERS], [DIGIMAG_SHEET, DIGIMAG_HEADERS],
+    [DIGIAUDIO_SHEET, DIGIAUDIO_HEADERS], [DIGIVIDEO_SHEET, DIGIVIDEO_HEADERS]
+  ],
+  '原聲帶': [
+    [OSTMAIN_SHEET, OSTMAIN_HEADERS], [OSTSINGLE_SHEET, OSTSINGLE_HEADERS],
+    [OSTCHAR_SHEET, OSTCHAR_HEADERS], [OSTDRAMA_SHEET, OSTDRAMA_HEADERS],
+    [OSTLIVE_SHEET, OSTLIVE_HEADERS]
+  ],
+  '動漫/美術設定集': [
+    [ANMANGA_SHEET, ANMANGA_HEADERS], [ANARTBOOK_SHEET, ANARTBOOK_HEADERS],
+    [ANSETTING_SHEET, ANSETTING_HEADERS], [ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS],
+    [ANMAG_SHEET, ANMAG_HEADERS], [ANTV_SHEET, ANTV_HEADERS],
+    [ANMOVIE_SHEET, ANMOVIE_HEADERS], [ANOTHER_SHEET, ANOTHER_HEADERS]
+  ],
+  '公仔': [
+    [FIGSCALE_SHEET, FIGSCALE_HEADERS], [FIGACTION_SHEET, FIGACTION_HEADERS],
+    [FIGNENDO_SHEET, FIGNENDO_HEADERS], [FIGPRIZE_SHEET, FIGPRIZE_HEADERS],
+    [FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS], [FIGGK_SHEET, FIGGK_HEADERS]
+  ]
+};
+function forceRealignAllSheetData(category) {
+  if (!category || !CATEGORY_SHEET_MAP[category]) {
+    return { ok: false, error: '請指定要處理的分類，可用值：' + Object.keys(CATEGORY_SHEET_MAP).join('、') };
+  }
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const results = {};
   function forceOne(sheetName, headers) {
@@ -2708,40 +2744,11 @@ function forceRealignAllSheetData() {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
     return 'realigned_' + n + '_rows';
   }
-  results.games       = forceOne(GAMES_SHEET,   GAME_HEADERS);
-  results.books       = forceOne(BOOKS_SHEET,    BOOK_HEADERS);
-  results.consoles    = forceOne(CONSOLE_SHEET,  CONSOLE_HEADERS);
-  results.peripherals = forceOne(PERIPH_SHEET,   PERIPH_HEADERS);
-  results.hunt        = forceOne(HUNT_SHEET,     HUNT_HEADERS);
-  results.digigame    = forceOne(DIGIGAME_SHEET,    DIGIGAME_HEADERS);
-  results.digidlc     = forceOne(DIGIDLC_SHEET,     DIGIDLC_HEADERS);
-  results.digicomic   = forceOne(DIGICOMIC_SHEET,   DIGICOMIC_HEADERS);
-  results.digiartbook = forceOne(DIGIARTBOOK_SHEET, DIGIARTBOOK_HEADERS);
-  results.digiguide   = forceOne(DIGIGUIDE_SHEET,   DIGIGUIDE_HEADERS);
-  results.digimag     = forceOne(DIGIMAG_SHEET,     DIGIMAG_HEADERS);
-  results.digiaudio   = forceOne(DIGIAUDIO_SHEET,   DIGIAUDIO_HEADERS);
-  results.digivideo   = forceOne(DIGIVIDEO_SHEET,   DIGIVIDEO_HEADERS);
-  results.ostmain     = forceOne(OSTMAIN_SHEET,   OSTMAIN_HEADERS);
-  results.ostsingle   = forceOne(OSTSINGLE_SHEET, OSTSINGLE_HEADERS);
-  results.ostchar     = forceOne(OSTCHAR_SHEET,   OSTCHAR_HEADERS);
-  results.ostdrama    = forceOne(OSTDRAMA_SHEET,  OSTDRAMA_HEADERS);
-  results.ostlive     = forceOne(OSTLIVE_SHEET,   OSTLIVE_HEADERS);
-  results.anmanga     = forceOne(ANMANGA_SHEET,    ANMANGA_HEADERS);
-  results.anartbook   = forceOne(ANARTBOOK_SHEET,  ANARTBOOK_HEADERS);
-  results.ansetting   = forceOne(ANSETTING_SHEET,  ANSETTING_HEADERS);
-  results.ankeyframe  = forceOne(ANKEYFRAME_SHEET, ANKEYFRAME_HEADERS);
-  results.anmag       = forceOne(ANMAG_SHEET,      ANMAG_HEADERS);
-  results.antv        = forceOne(ANTV_SHEET,       ANTV_HEADERS);
-  results.anmovie     = forceOne(ANMOVIE_SHEET,    ANMOVIE_HEADERS);
-  results.another     = forceOne(ANOTHER_SHEET,    ANOTHER_HEADERS);
-  results.figscale    = forceOne(FIGSCALE_SHEET,  FIGSCALE_HEADERS);
-  results.figaction   = forceOne(FIGACTION_SHEET, FIGACTION_HEADERS);
-  results.fignendo    = forceOne(FIGNENDO_SHEET,  FIGNENDO_HEADERS);
-  results.figprize    = forceOne(FIGPRIZE_SHEET,  FIGPRIZE_HEADERS);
-  results.figgunpla   = forceOne(FIGGUNPLA_SHEET, FIGGUNPLA_HEADERS);
-  results.figgk       = forceOne(FIGGK_SHEET,     FIGGK_HEADERS);
-  Logger.log('forceRealignAllSheetData: ' + JSON.stringify(results));
-  return { ok: true, results: results };
+  CATEGORY_SHEET_MAP[category].forEach(function(pair) {
+    results[pair[0]] = forceOne(pair[0], pair[1]);
+  });
+  Logger.log('forceRealignAllSheetData(' + category + '): ' + JSON.stringify(results));
+  return { ok: true, category: category, results: results };
 }
 function fixSheetHeaders() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();

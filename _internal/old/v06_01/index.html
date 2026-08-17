@@ -1780,8 +1780,18 @@ body{
             </button>
             <!-- ⋯⋯ 更多選單 -->
             <div style="position:relative">
-              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px" type="button">⋯</button>
+              <button class="tbtn" id="col-menu-btn" onclick="toggleColMenu()" title="更多功能" style="width:40px;height:40px;font-size:18px;letter-spacing:1px;position:relative" type="button">⋯
+                <!-- v02.166：離線佇列有待同步項目時，即使沒點開選單也能看到小紅點提示 -->
+                <span class="offline-queue-dot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#ff6e9c;border:1.5px solid #0f1525"></span>
+              </button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <button class="col-menu-item" id="offline-queue-menu-item" style="display:none;justify-content:space-between" onclick="syncOfflineQueue();closeColMenu()" type="button">
+                  <span style="display:flex;align-items:center;gap:8px">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.4-6.4-2.8 2.8M9.4 14.6l-2.8 2.8m0-10.8 2.8 2.8m5.2 5.2 2.8 2.8"/></svg>
+                    同步離線佇列
+                  </span>
+                  <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
+                </button>
                 <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
                   依系列瀏覽
@@ -1882,6 +1892,9 @@ body{
       </div>
       <div id="sort-bar"></div>
       <div id="filter-summary"></div>
+      <!-- v02.167：借出到期提醒——只在有借出中且設定了預計歸還日的項目符合條件時顯示，
+           平常完全不佔畫面空間 -->
+      <div id="loan-reminder-banner" style="display:none;margin:0 16px 10px;padding:10px 12px;border-radius:10px;background:rgba(255,110,156,.08);border:1px solid #ff6e9c;font-size:12px;color:#e8eaf6;line-height:1.6"></div>
       </div>
       <div id="glist"></div>
       <div id="shelf-view" style="display:none"></div>
@@ -2496,6 +2509,13 @@ body{
         <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
         <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
+        <!-- v02.170：使用者實測回報「修復工作表標題列」修完之後，資料還是錯位——上一次
+             失敗的執行讓標題列被改寫成新名稱、但資料因為中斷沒有真的搬過去，變成標題跟
+             資料不同步的中間狀態，這時候「修復工作表標題列」會誤判成「已經一致」而跳過
+             搬移。這顆按鈕不管標題列現況如何，都強制依欄位名稱重新搬移一次資料，用來
+             處理上面那種一般修復解決不了的情況。 -->
+        <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若「修復工作表標題列」後欄位內容看起來還是錯位（例如頁數變成日期、尺寸變成平台清單），才需要用這個；這個操作會重寫所有列的資料，執行前請先確認上面的修復已經跑過</div>
         <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
 
@@ -2622,6 +2642,8 @@ const FIELDS=[
   ['features','主要支援功能','txt','遊戲規格'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','特典/附件說明','txt','收藏狀態'],
   ['bonus_code_status','DLC狀態','sel','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
@@ -2831,6 +2853,8 @@ const BOOK_FIELDS=[
   ['barcode','ISBN/條碼','txt','編碼條碼'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','附件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
@@ -2900,7 +2924,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v03.13';
+const APP_VERSION='v06.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -2928,6 +2952,8 @@ const CONSOLE_FIELDS=[
   ['suggest_price','建議售價','price','主機資訊'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','特典/附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
@@ -3005,6 +3031,8 @@ const PERIPH_FIELDS=[
   ['release_date','發售日期','dateq','週邊資訊'],
   ['collect_status','收藏狀態','sel','收藏狀態'],
   ['completeness','配件完整度','comp','品相完整度'],
+  ['loan_to','借出對象','txt','收藏狀態'],
+  ['loan_due','預計歸還日','date','收藏狀態'],
   ['bundle','特典/附件說明','txt','收藏狀態'],
   ['buy_date','購入日期','date','收藏狀態'],
   ['buy_price','購入價格','price','收藏狀態'],
@@ -3268,6 +3296,8 @@ function _osTail(){
     ['collect_status','收藏狀態','sel','收藏狀態'],
     ['obi_status','側標狀態','sel','收藏狀態'],
     ['completeness','品項完整度','comp','品相完整度'],
+    ['loan_to','借出對象','txt','收藏狀態'],
+    ['loan_due','預計歸還日','date','收藏狀態'],
     ['storage_location','保管位置','storagesel','收藏狀態'],
     ['buy_date','購入日期','date','收藏狀態'],
     ['purchase_channel','購入管道','txt','收藏狀態'],
@@ -3397,6 +3427,8 @@ function _anTail(){
     ['collect_status','購買狀態','sel','收藏狀態'],
     ['condition','品況','sel','收藏狀態'],
     ['completeness','品項完整度','comp','品相完整度'],
+    ['loan_to','借出對象','txt','收藏狀態'],
+    ['loan_due','預計歸還日','date','收藏狀態'],
     ['storage_location','存放位置','storagesel','收藏狀態'],
     ['buy_date','購入日期','date','收藏狀態'],
     ['purchase_channel','購入管道','txt','收藏狀態'],
@@ -3558,6 +3590,8 @@ function _figTail(){
     ['box_condition','盒況','sel','收藏狀態'],
     ['condition','本體狀態','sel','收藏狀態'],
     ['completeness','品項完整度','comp','品相完整度'],
+    ['loan_to','借出對象','txt','收藏狀態'],
+    ['loan_due','預計歸還日','date','收藏狀態'],
     ['storage_location','存放／展示位置','storagesel','收藏狀態'],
     ['buy_date','購入日期','date','收藏狀態'],
     ['purchase_channel','購入管道','txt','收藏狀態'],
@@ -5302,6 +5336,27 @@ function fixHeaders(){
     }
   }).catch(function(e){noLoad();toast('錯誤：'+_friendlyError(e.message),'er');});
 }
+// v02.170：強制重新比對——不管標題列現況如何都強制依欄位名稱重新搬移一次資料，用來
+// 處理「修復工作表標題列」誤判成「已經一致」而跳過真正需要的搬移的情況（詳見後端
+// forceRealignAllSheetData()的說明）。這是會重寫所有列資料的操作，先跳確認對話框。
+function forceRealignData(){
+  if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
+  _customConfirm('確定要強制重新比對資料欄位嗎？',
+    '這會重新檢查全部 32 張工作表，把每一列的資料依欄位名稱重新搬移到正確位置並改寫。建議先確認已經跑過「修復工作表標題列」，這個還是有問題時再用。').then(function(proceed){
+    if(!proceed)return;
+    loading('強制重新比對資料欄位...');
+    shPost({action:'force_realign'}).then(function(d){
+      noLoad();
+      if(d&&d.ok){
+        var r=d.results||{};
+        toast('✓ 已完成強制重新比對，請重新同步收藏確認結果','ok',6000);
+        localforage.removeItem('gv_col').then(function(){col=[];loadCol();});
+      }else{
+        toast('強制重新比對失敗：'+(d.error||'未知'),'er',5000);
+      }
+    }).catch(function(e){noLoad();toast('錯誤：'+_friendlyError(e.message),'er');});
+  });
+}
 
 function saveCfg(){
   var okey=($('c-okey')&&$('c-okey').value||'').trim();
@@ -5400,6 +5455,93 @@ function translateSheetError(status){
   return 'Apps Script 連線異常（HTTP '+status+'），請稍後重試';
 }
 // ── fetchWithRetry：網路瞬斷時自動重試一次 ──────────────
+// v02.166：離線新增佇列——使用者實測回報常在訊號不穩的地方（二手店/駿河屋）掃描建檔，
+// doSave()原本網路失敗就直接顯示「儲存失敗」，使用者要嘛留在原地等訊號、要嘛放棄這筆
+// 資料重新輸入。改成偵測到疑似網路連線問題時，先把這筆資料存進本機佇列，不會因為訊號
+// 不好而遺失或漏建檔；連線恢復後自動嘗試補送，也可以手動觸發。
+var OFFLINE_QUEUE_KEY='gv_offline_queue';
+function _isNetworkError(e){
+  // fetch()對「完全連不上」（無網路/DNS失敗/CORS阻擋）會拋出TypeError，跟伺服器有回應
+  // 但回報邏輯錯誤（500/驗證失敗等，這些是shPost()自己throw new Error(...)）是不同性質——
+  // 只有前者適合排入離線佇列重試，後者排隊重試大機率還是會失敗，應該讓使用者看到實際
+  // 錯誤訊息，不要誤導成「之後會自動補送」。
+  // 額外比對錯誤訊息文字：不同瀏覽器對「連不上」的措辭不一樣（Chrome是"Failed to fetch"、
+  // Firefox是"NetworkError..."、Safari是"Load failed"），只看instanceof TypeError在某些
+  // 環境下可能不夠準，訊息比對當作額外的判斷依據。
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return true;
+  if(typeof TypeError!=='undefined'&&e instanceof TypeError)return true;
+  var msg=((e&&e.message)||'').toLowerCase();
+  return msg.indexOf('failed to fetch')>=0||msg.indexOf('networkerror')>=0||msg.indexOf('load failed')>=0||msg.indexOf('network request failed')>=0;
+}
+function _queueOfflineSave(payload){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
+    q=q||[];
+    payload._qid=_genUuid();
+    payload._qat=Date.now();
+    q.push(payload);
+    return localforage.setItem(OFFLINE_QUEUE_KEY,q);
+  });
+}
+function _offlineQueueCount(){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){return (q||[]).length;}).catch(function(){return 0;});
+}
+function _updateOfflineQueueBadge(){
+  _offlineQueueCount().then(function(n){
+    document.querySelectorAll('.offline-queue-dot').forEach(function(el){el.style.display=n>0?'block':'none';});
+    document.querySelectorAll('.offline-queue-badge').forEach(function(el){el.style.display=n>0?'inline-block':'none';el.textContent=n;});
+    var mi=$('offline-queue-menu-item');if(mi)mi.style.display=n>0?'flex':'none';
+  });
+}
+function syncOfflineQueue(silent){
+  return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
+    q=q||[];
+    if(!q.length){if(!silent)toast('沒有待同步的項目','',2000);return;}
+    if(!cfg.url){if(!silent)toast('請先設定試算表 URL','er');return;}
+    var remaining=[];
+    var okCount=0,failCount=0;
+    var i=0;
+    return new Promise(function(resolveAll){
+      function next(){
+        if(i>=q.length){
+          localforage.setItem(OFFLINE_QUEUE_KEY,remaining).then(function(){
+            _updateOfflineQueueBadge();
+            if(!silent||okCount){
+              toast('離線佇列同步完成：成功 '+okCount+' 筆'+(failCount?'，仍有 '+failCount+' 筆待重試':''),okCount?'ok':'',3500);
+            }
+            if(okCount){localforage.setItem('gv_col',col).catch(function(){});updateStats();filterCol();}
+            resolveAll();
+          });
+          return;
+        }
+        var item=q[i];
+        shPost({action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
+          if(res&&res.ok){
+            okCount++;
+            var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+            var savedEntry=Object.assign({},item.entrySnapshot);
+            if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+            if(res.imgs){
+              ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+              if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+            }
+            col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
+          }else{
+            failCount++;remaining.push(item); // 還是失敗，留著下次再試，不遺失資料
+          }
+        }).catch(function(){
+          failCount++;remaining.push(item); // 還是連不上，留著下次再試
+        }).finally(function(){
+          i++;next();
+        });
+      }
+      next();
+    });
+  });
+}
+// 連線恢復時自動嘗試同步一次（靜默，不打擾使用者；成功的話畫面跟徽章會自動更新）
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('online',function(){syncOfflineQueue(true);});
+}
 function fetchWithRetry(url,opts,retries){
   retries=retries||1;
   return fetch(url,opts).then(function(r){
@@ -5863,7 +6005,21 @@ function doSave(){
       showPg('col');
     }}
     else throw new Error(res.error||'未知');
-  }).catch(function(e){toast('儲存失敗，請確認網路和設定後重試','er');}).finally(function(){
+  }).catch(function(e){
+    if(_isNetworkError(e)){
+      // v02.166：疑似網路連線問題（不是伺服器回報的邏輯錯誤），先存進離線佇列，
+      // 不直接判定失敗——連線恢復後會自動補送，也可以在「⋯」選單手動觸發同步。
+      var _qPayload={row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
+      _queueOfflineSave(_qPayload).then(function(){
+        _updateOfflineQueueBadge();
+        toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
+        resetAll();
+        showPg('col');
+      });
+    }else{
+      toast('儲存失敗，請確認網路和設定後重試','er');
+    }
+  }).finally(function(){
     _saving=false;
     noLoad();
     var sb=$('save-btn');if(sb){sb.disabled=false;sb.textContent='儲存至收藏';}
@@ -6221,6 +6377,10 @@ function bulkEditSave(){
 // v02.100：依系列瀏覽——把有填「系列」欄位的收藏分組，一眼看出某系列收了幾件；同時對照
 // 「尋寶」清單，品名含有該系列名稱的項目視為「可能缺這款」。Hunt的欄位表（HUNT_HDR）本身
 // 沒有series欄位，沒辦法精確比對，用品名字串包含關係做best-effort比對，非嚴謹比對。
+function _existingSeriesNames(){
+  // v02.168：重用_seriesGroupsBuild()既有的分組邏輯取得系列名稱清單，不重新掃一次col
+  return Object.keys(_seriesGroupsBuild()).sort(function(a,b){return a.localeCompare(b);});
+}
 function _seriesGroupsBuild(){
   var groups={};
   col.forEach(function(c){
@@ -6253,7 +6413,17 @@ function renderSeriesBrowse(){
     return;
   }
   wrap.innerHTML=names.map(function(s){
-    var items=groups[s];
+    var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
+    // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
+    items.sort(function(a,b){
+      var ta=_sortTs(a.data.release_date),tb=_sortTs(b.data.release_date);
+      var aEmpty=isNaN(ta),bEmpty=isNaN(tb);
+      if(aEmpty&&bEmpty)return (a.data.primary_name||'').localeCompare(b.data.primary_name||'');
+      if(aEmpty)return 1;
+      if(bEmpty)return -1;
+      return ta-tb;
+    });
     var related=_seriesRelatedHunt(s);
     var cardsHtml=items.map(function(c){
       var d=c.data;
@@ -13295,8 +13465,13 @@ function renderFld(f){
     tag='<button type="button" class="ocr-btn" onclick="document.getElementById(\'flcam-'+k+'\').click()">📷 OCR</button>';
     extraInp='<input type="file" accept="image/*" capture="environment" id="flcam-'+k+'" style="display:none" onchange="nameFieldOCR(this,\'fld-'+k+'\',\''+_nlang+'\')">';
   }
+  // v02.168：使用者要求優化「依系列瀏覽」——原本系列欄位純手動輸入，同一系列打字方式
+  // 不一致（例如多一個空格、中英文混用）就會被分成好幾組，使用者自己也很難發現。加上
+  // datalist自動完成，輸入時提示既有收藏裡已經用過的系列名稱，從輸入源頭減少這個問題，
+  // 不強制一定要選、還是可以自由輸入新系列名稱。
+  var _seriesDatalist=k==='series'?('<datalist id="series-suggest-list">'+_existingSeriesNames().map(function(s){return '<option value="'+esc(s)+'">';}).join('')+'</datalist>'):'';
   return wrap+'<label class="fl">'+lbl+tag+'</label>'+
-    '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'" oninput="onFld(this.dataset.k,this.value)">'+extraInp+'</div>';
+    '<input id="fld-'+k+'" class="fi'+(isM?' mono':'')+'" type="text" value="'+esc(v)+'" data-k="'+(k)+'"'+(k==='series'?' list="series-suggest-list"':'')+' oninput="onFld(this.dataset.k,this.value)">'+extraInp+_seriesDatalist+'</div>';
 }
 // v54.79：橫向頁籤切換——只切換顯示/隱藏(display)，不移除DOM，確保未顯示分組的已勾選checkbox仍在文件中可被收集到
 function switchGenreTab(btn){
@@ -14975,6 +15150,7 @@ function filterCol(){
   if(currentView==='gallery')renderGalleryView();
   _updateFilterBadge();
   renderFilterSummary();
+  _renderLoanReminderBanner(); // v02.167：借出到期提醒，每次收藏頁重新整理時一併檢查
 }
 // ── 匯出目前篩選結果為 CSV（人類可讀，供保險／備份／分享）──
 // ── 收藏頁 ⋯⋯ 選單開關 ──
@@ -15196,6 +15372,35 @@ function _syncImportedRecords(list,idx,skip,total){
   }
 }
 // 解析日期為可比較的時間戳；未填、2099 佔位、無法解析 → NaN（視為空值）
+// v02.167：借出到期提醒——掃描收藏狀態為「借出中」且有填預計歸還日的項目，區分「已逾期」
+// 跟「7天內到期」兩種，只在有符合條件的項目時才顯示，平常不佔畫面空間。這個App沒有走
+// 系統推播通知（需要額外的Service Worker push訂閱＋後端推播基礎設施，超出目前範圍），
+// 改成每次進收藏頁/篩選時主動檢查並顯示，屬於「打開App就看得到」的提醒，不是主動推送。
+function _renderLoanReminderBanner(){
+  var banner=$('loan-reminder-banner');if(!banner)return;
+  var now=new Date();
+  var todayTs=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  var overdue=[],upcoming=[];
+  (col||[]).forEach(function(item){
+    var d=item.data||{};
+    if(d.collect_status!=='借出中'||!d.loan_due)return;
+    var dueTs=_sortTs(d.loan_due);
+    if(isNaN(dueTs))return;
+    var diffDays=Math.round((dueTs-todayTs)/86400000);
+    if(diffDays<0)overdue.push(d);
+    else if(diffDays<=7)upcoming.push(d);
+  });
+  if(!overdue.length&&!upcoming.length){banner.style.display='none';return;}
+  function _loanNames(list){
+    var names=list.slice(0,3).map(function(d){return d.primary_name||d.zh_name||'未命名';});
+    return esc(names.join('、'))+(list.length>3?' 等 '+list.length+' 筆':'');
+  }
+  var lines=[];
+  if(overdue.length)lines.push('<div>⚠️ 已逾期未歸還：'+_loanNames(overdue)+'</div>');
+  if(upcoming.length)lines.push('<div style="margin-top:2px">📅 7 天內到期：'+_loanNames(upcoming)+'</div>');
+  banner.innerHTML='<div style="font-weight:700;margin-bottom:4px;color:#ff6e9c">🔔 借出提醒</div>'+lines.join('');
+  banner.style.display='block';
+}
 function _sortTs(v){
   if(!v)return NaN;
   var m=String(v).match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:[ T](\d{1,2}):(\d{2}))?/);
@@ -17149,6 +17354,10 @@ function _showUpdateBanner(){
 window.onload=function(){
   loadCfg();
   registerServiceWorker();
+  // v02.166：App 啟動時檢查離線佇列——不管是上次關閉時還沒同步完，或是這次重開時網路
+  // 已經恢復，都先讓徽章顯示正確狀態，並嘗試靜默補送一次
+  _updateOfflineQueueBadge();
+  if(typeof navigator!=='undefined'&&navigator.onLine!==false)setTimeout(function(){syncOfflineQueue(true);},2500);
   // 進入 UI 還原上次記憶的分類＋平台（跨關閉記憶；無記憶則預設遊戲）
   if(typeof resetEntryStep1==='function')resetEntryStep1();
   // 版本號集中顯示

@@ -2515,7 +2515,7 @@ body{
              搬移。這顆按鈕不管標題列現況如何，都強制依欄位名稱重新搬移一次資料，用來
              處理上面那種一般修復解決不了的情況。 -->
         <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若「修復工作表標題列」後欄位內容看起來還是錯位（例如頁數變成日期、尺寸變成平台清單），才需要用這個；這個操作會重寫所有列的資料，執行前請先確認上面的修復已經跑過</div>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若「修復工作表標題列」後欄位內容看起來還是錯位（例如頁數變成日期、尺寸變成平台清單），才需要用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類</div>
         <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
 
@@ -2924,7 +2924,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v06.01';
+const APP_VERSION='v07.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5339,17 +5339,30 @@ function fixHeaders(){
 // v02.170：強制重新比對——不管標題列現況如何都強制依欄位名稱重新搬移一次資料，用來
 // 處理「修復工作表標題列」誤判成「已經一致」而跳過真正需要的搬移的情況（詳見後端
 // forceRealignAllSheetData()的說明）。這是會重寫所有列資料的操作，先跳確認對話框。
+// v02.171：使用者要求不要一次跑全部32張工作表——一來擔心單次執行量太大，二來擔心「本來
+// 就對的」分類也被連帶重新搬移一次、增加不必要的風險。改成先選要處理的分類，只針對該
+// 分類底下實際涉及的工作表重新搬移資料（例如「原聲帶」底下有5張子類型表，「遊戲」只有
+// 1張），不再支援一次全部處理。
+var FORCE_REALIGN_CATS=['遊戲','攻略','主機','週邊','尋寶','數位下載版','原聲帶','動漫/美術設定集','公仔'];
 function forceRealignData(){
   if(!cfg.url){toast('請先設定 Apps Script URL','er');return;}
-  _customConfirm('確定要強制重新比對資料欄位嗎？',
-    '這會重新檢查全部 32 張工作表，把每一列的資料依欄位名稱重新搬移到正確位置並改寫。建議先確認已經跑過「修復工作表標題列」，這個還是有問題時再用。').then(function(proceed){
+  _showActionSheet({
+    ovId:'select-sheet-ov',closeName:'closeSelectSheet',name:'強制重新比對資料欄位 · 選擇分類',
+    buttons:FORCE_REALIGN_CATS.map(function(c){
+      return {color:'#e8eaf6',label:esc(c),onclick:"_forceRealignCat('"+c+"')"};
+    })
+  });
+}
+function _forceRealignCat(cat){
+  closeSelectSheet();
+  _customConfirm('確定要強制重新比對「'+cat+'」的資料欄位嗎？',
+    '這會重新檢查「'+cat+'」底下涉及的工作表，把每一列的資料依欄位名稱重新搬移到正確位置並改寫。建議先確認已經跑過「修復工作表標題列」，這個還是有問題時再用；只會處理這個分類，不會動到其他分類的資料。').then(function(proceed){
     if(!proceed)return;
-    loading('強制重新比對資料欄位...');
-    shPost({action:'force_realign'}).then(function(d){
+    loading('強制重新比對「'+cat+'」...');
+    shPost({action:'force_realign',category:cat}).then(function(d){
       noLoad();
       if(d&&d.ok){
-        var r=d.results||{};
-        toast('✓ 已完成強制重新比對，請重新同步收藏確認結果','ok',6000);
+        toast('✓ 已完成「'+cat+'」的強制重新比對，請重新同步收藏確認結果','ok',6000);
         localforage.removeItem('gv_col').then(function(){col=[];loadCol();});
       }else{
         toast('強制重新比對失敗：'+(d.error||'未知'),'er',5000);
