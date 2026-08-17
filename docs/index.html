@@ -135,8 +135,9 @@ body{
 .col-menu-item svg{flex-shrink:0;color:#7986cb}
 .col-menu-item:hover svg,.col-menu-item:active svg{color:#00e5ff}
 .tbtn.on{background:#00e5ff;border-color:#00e5ff;color:#001018}
-.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow:hidden}
-.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px}
+.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.vtoggle::-webkit-scrollbar{display:none}
+.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px;flex-shrink:0}
 
 /* === Form fields === */
 .fg{margin-bottom:12px}
@@ -1768,6 +1769,15 @@ body{
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="16" rx="2"/><rect x="10" y="1" width="7" height="16" rx="2"/></svg>
                 畫廊
               </button>
+              <!-- v02.178：使用者要求把「依系列瀏覽」從「⋯」選單拉出來，跟卡片/分類/畫廊
+                   放在同一排、比照下方排序列（#sort-bar）的滑動效果。這個按鈕開啟的是獨立
+                   的系列瀏覽面板（跟setView()切換「目前檢視模式」不是同一回事），所以沒有
+                   跟其他3顆共用active高亮切換邏輯，維持原本3顆的既有編排不動，只是單純
+                   在後面多加一顆、讓整排可以橫向滑動看到。 -->
+              <button id="vbtn-series" onclick="openSeriesBrowse()" style="background:transparent;color:#7986cb" title="依系列瀏覽" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                系列
+              </button>
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
                  「大量刪除」，容易讓人誤以為多選只能刪除，不知道還能批次編輯。 -->
@@ -1791,10 +1801,6 @@ body{
                     同步離線佇列
                   </span>
                   <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
-                </button>
-                <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
-                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                  依系列瀏覽
                 </button>
                 <button class="col-menu-item" onclick="colRefresh();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
@@ -2928,7 +2934,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.04';
+const APP_VERSION='v08.05';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
