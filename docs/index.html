@@ -2507,6 +2507,31 @@ body{
         </div>
           </div>
         </div>
+        <!-- v02.187：使用者要求把「維護與修復工具」搬到「數位帳號清單」跟「說明・關於・
+             測試樣本」中間，原本放在儲存/匯出/匯入按鈕後面。 -->
+        <div class="sgroup" data-grp="maintenance">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('maintenance')">
+            <span>🛠️ 維護與修復工具</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
+        <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
+        <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
+        <!-- v02.173：使用者實測回報連「強制重新比對資料欄位」都對特定舊資料沒有效果——
+             追查後發現這些資料是在新增loan_to/loan_due欄位之前就已經存在的舊列，第一次
+             失敗的執行讓標題列文字提早被改寫，資料沒有真的搬過去，導致後續所有remap都是
+             拿「已經被污染、不準確」的標題列文字當依據，等於把新順序對應回自己，什麼都
+             沒修到。這顆按鈕改用「已知的舊排列」（不信任目前可能已被污染的標題列文字）
+             當依據，並且只處理有偵測到異常內容的列，比下面的「強制重新比對」更精準、
+             風險更低，建議優先試這個。 -->
+        <button class="btn bo bw bs" style="color:#66bb6a;border-color:#66bb6a;margin-bottom:8px" onclick="repairPreLoanFieldData()" type="button">🩹 修復借出欄位錯位（安全，僅動異常列）</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若「修復工作表標題列」後欄位內容看起來還是錯位，優先試這個——只會修復偵測到「借出對象/歸還日」位置內容明顯異常（例如出現平台清單、完整時間戳記）的列，正常的列完全不會被動到，比下面的「強制重新比對」風險更低</div>
+        <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若上面兩個都試過還是有問題才用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類，但會無條件重寫全部列（不像上面那個只動異常列）</div>
+        <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
+          </div>
+        </div>
         <div class="sgroup" data-grp="docabout">
           <button type="button" class="sgroup-h" onclick="toggleSGroup('docabout')">
             <span>📄 說明 · 關於 · 測試樣本</span><span class="sgroup-arr">▾</span>
@@ -2537,33 +2562,6 @@ body{
         <div style="display:flex;gap:8px;margin-bottom:16px">
           <button class="btn bo bs" style="flex:1" onclick="exportCfg()" type="button">📤 匯出設定</button>
           <button class="btn bo bs" style="flex:1" onclick="importCfg()" type="button">📥 匯入設定</button>
-        </div>
-        <!-- v02.185：使用者要求把維護/修復類工具收合分組——原本這幾個按鈕放在頁面最下面
-             永遠展開顯示，跟前面9個區塊都用可收合分組（sgroup）的風格不一致，這些是進階、
-             很少用到的工具，長期佔用畫面空間。改成跟其他區塊同一套sgroup機制，預設收合
-             （data-default不寫open），開合狀態一樣會記住。 -->
-        <div class="sgroup" data-grp="maintenance">
-          <button type="button" class="sgroup-h" onclick="toggleSGroup('maintenance')">
-            <span>🛠️ 維護與修復工具</span><span class="sgroup-arr">▾</span>
-          </button>
-          <div class="sgroup-body">
-        <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
-        <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
-        <!-- v02.173：使用者實測回報連「強制重新比對資料欄位」都對特定舊資料沒有效果——
-             追查後發現這些資料是在新增loan_to/loan_due欄位之前就已經存在的舊列，第一次
-             失敗的執行讓標題列文字提早被改寫，資料沒有真的搬過去，導致後續所有remap都是
-             拿「已經被污染、不準確」的標題列文字當依據，等於把新順序對應回自己，什麼都
-             沒修到。這顆按鈕改用「已知的舊排列」（不信任目前可能已被污染的標題列文字）
-             當依據，並且只處理有偵測到異常內容的列，比下面的「強制重新比對」更精準、
-             風險更低，建議優先試這個。 -->
-        <button class="btn bo bw bs" style="color:#66bb6a;border-color:#66bb6a;margin-bottom:8px" onclick="repairPreLoanFieldData()" type="button">🩹 修復借出欄位錯位（安全，僅動異常列）</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若「修復工作表標題列」後欄位內容看起來還是錯位，優先試這個——只會修復偵測到「借出對象/歸還日」位置內容明顯異常（例如出現平台清單、完整時間戳記）的列，正常的列完全不會被動到，比下面的「強制重新比對」風險更低</div>
-        <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若上面兩個都試過還是有問題才用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類，但會無條件重寫全部列（不像上面那個只動異常列）</div>
-        <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
-          </div>
         </div>
 
       </div>
@@ -2971,7 +2969,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.12';
+const APP_VERSION='v08.13';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
