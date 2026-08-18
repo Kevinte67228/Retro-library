@@ -135,8 +135,16 @@ body{
 .col-menu-item svg{flex-shrink:0;color:#7986cb}
 .col-menu-item:hover svg,.col-menu-item:active svg{color:#00e5ff}
 .tbtn.on{background:#00e5ff;border-color:#00e5ff;color:#001018}
-.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow:hidden}
-.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px}
+/* v02.180：使用者確認要的是「卡片/分類/畫廊/系列」四個檢視模式共用同一個切換列，
+   但原本的位置只夠放3顆——關鍵是容器本身的寬度要鎖定跟原本3顆一樣寬，不能讓容器
+   跟著4顆按鈕一起撐寬，否則旁邊的多選/⋯按鈕跟標題會被擠壓變形（上一版v02.178就是
+   犯了這個錯，容器沒鎖寬度，四顆撐開後排版跟著跑掉）。max-width鎖住容器可視寬度＝
+   原本3顆的寬度（3×56px），第4顆放得進去、但要滑動才看得到，加上跟#stats同一套
+   淡出遮罩效果提示「還有更多可以滑」。 */
+.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:168px;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 20px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 20px),transparent 100%)}
+.vtoggle.at-end{mask-image:none;-webkit-mask-image:none}
+.vtoggle::-webkit-scrollbar{display:none}
+.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px;flex-shrink:0}
 
 /* === Form fields === */
 .fg{margin-bottom:12px}
@@ -236,6 +244,10 @@ body{
    使用者反應多餘。改成筆數只在這一行顯示一次，按鈕本身不再帶數字。 */
 #pg-col .col-sel-count{margin:14px 16px 0;font-size:12px;color:#7986cb}
 #stats-row{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
+/* v02.179：依系列瀏覽的獨立滑動列，重用#stats同一套「overflow-x + 右側淡出遮罩」手法，
+   跟原本卡片/分類/畫廊的.vtoggle是各自獨立的兩塊，互不影響 */
+
+
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
 #stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
@@ -1755,7 +1767,7 @@ body{
           <div class="ht">我的收藏</div>
           <div style="display:flex;gap:8px;align-items:center">
             <!-- 視圖切換（放大版＋文字說明）-->
-            <div class="vtoggle">
+            <div class="vtoggle" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
               <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018" title="卡片模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
                 卡片
@@ -1767,6 +1779,15 @@ body{
               <button id="vbtn-gallery" onclick="setView('gallery')" style="background:transparent;color:#7986cb" title="畫廊模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="16" rx="2"/><rect x="10" y="1" width="7" height="16" rx="2"/></svg>
                 畫廊
+              </button>
+              <!-- v02.180：使用者確認要的是4個檢視模式共用同一個切換列，原本3格空間放
+                   不下，靠滑動解決——這顆開啟的是獨立的系列瀏覽面板（跟setView()切換
+                   「目前檢視模式」不是同一回事），沒有跟其他3顆共用active高亮切換邏輯，
+                   純粹多加一個直接入口，靠.vtoggle的max-width+overflow-x讓它需要滑動
+                   才看得到，不會撐寬容器影響旁邊的多選/⋯按鈕排版。 -->
+              <button id="vbtn-series" onclick="openSeriesBrowse()" style="background:transparent;color:#7986cb" title="依系列瀏覽" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                系列
               </button>
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
@@ -1791,10 +1812,6 @@ body{
                     同步離線佇列
                   </span>
                   <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
-                </button>
-                <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
-                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                  依系列瀏覽
                 </button>
                 <button class="col-menu-item" onclick="colRefresh();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
@@ -2928,7 +2945,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.02';
+const APP_VERSION='v08.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6460,11 +6477,15 @@ function _seriesRelatedHunt(seriesName){
 // 網格瀏覽方式，只是多加系列標題分組——直接沿用既有的.gv-card/.gv-thumb/.gv-info等
 // 畫廊卡片CSS class（見renderGalleryView），系列這裡只負責分組跟標題列，卡片本身完全
 // 是同一套樣式，不再另外設計一套清單UI。
-// v02.175：系列群組可摺疊——系列一多，全部展開會讓面板拉得很長。追蹤各系列目前是否收合
-// 的狀態，預設全部展開（不改變既有習慣），使用者可以自己收合不常看的系列。
-var _seriesCollapsed={};
-function _toggleSeriesCollapse(s){
-  _seriesCollapsed[s]=!_seriesCollapsed[s];
+// v02.177：使用者反映系列一多，全部展開預設看起來太雜，要求改成預設收合，並且收合狀態
+// 用更緊湊的清單列排版（細分隔線、少留白），不要沿用原本卡片標題那種大留白樣式——那種
+// 留白是為了下面的卡片網格準備的空間，收合時沒有卡片網格，留白反而顯得鬆散。
+// 追蹤語意從「哪些系列被收合」改成「哪些系列被展開」（正向語意），這樣預設（沒有任何
+// 系列被主動點開過）就自然是全部收合，不需要另外處理「新出現的系列名稱要不要預設收合」
+// 這種初始化問題。
+var _seriesExpanded={};
+function _toggleSeriesExpand(s){
+  _seriesExpanded[s]=!_seriesExpanded[s];
   renderSeriesBrowse();
 }
 function renderSeriesBrowse(){
@@ -6484,6 +6505,20 @@ function renderSeriesBrowse(){
   }
   wrap.innerHTML=visibleNames.map(function(s){
     var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    var expanded=!!_seriesExpanded[s];
+    // v02.177：收合狀態是清單模式，不需要算排序/縮圖/尋寶比對這些只有展開時才用得到的
+    // 資料，省一點沒必要的運算——系列一多、大部分都收合著的時候差異會比較明顯
+    if(!expanded){
+      var relatedCount=_seriesRelatedHunt(s).length;
+      return '<div class="series-row" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 4px;border-bottom:1px solid #1e2a45;cursor:pointer">'+
+        '<div style="display:flex;align-items:center;gap:9px;min-width:0;flex:1">'+
+          '<span style="width:3px;height:18px;background:#ce93d8;border-radius:2px;flex-shrink:0"></span>'+
+          '<span style="font-weight:700;font-size:15.5px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s)+'</span>'+
+          '<span style="font-size:11px;color:#7986cb;flex-shrink:0">▶</span>'+
+        '</div>'+
+        '<div style="font-size:11.5px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(relatedCount?'・尋寶中 '+relatedCount:'')+'</div>'+
+      '</div>';
+    }
     // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
     // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
     items.sort(function(a,b){
@@ -6495,7 +6530,6 @@ function renderSeriesBrowse(){
       return ta-tb;
     });
     var related=_seriesRelatedHunt(s);
-    var collapsed=!!_seriesCollapsed[s];
     var cardsHtml=items.map(function(c){
       var d=c.data;
       var cat=catInternal(d.category)||'遊戲';
@@ -6517,17 +6551,24 @@ function renderSeriesBrowse(){
       related.map(function(h){return '🔍 缺：'+esc((h.data||{}).primary_name||'');}).join('<br>')+
     '</div>') : '';
     return '<div style="margin-bottom:20px">'+
-      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesCollapse(\''+_escAttr(s)+'\')">'+
+      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')">'+
         '<div class="dv2-card-title" style="font-size:18px"><span class="dv2-dot" style="background:#ce93d8;height:20px"></span>'+esc(s)+
-          '<span style="font-size:12px;color:#7986cb;margin-left:6px">'+(collapsed?'▶':'▼')+'</span></div>'+
+          '<span style="font-size:12px;color:#7986cb;margin-left:6px">▼</span></div>'+
         '<div style="font-size:11px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(related.length?'・尋寶中 '+related.length:'')+'</div>'+
       '</div>'+
-      (collapsed?'':(
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
-        missingHtml
-      ))+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
+      missingHtml+
     '</div>';
   }).join('');
+}
+// v02.176：從詳情頁直接跳轉到指定系列——關閉詳情頁、開啟依系列瀏覽，並帶入搜尋框
+// 篩選成這個系列，不用使用者自己再手動輸入一次系列名稱。
+function jumpToSeries(seriesName){
+  if(!seriesName)return;
+  closeDetail();
+  openSeriesBrowse();
+  var inp=$('series-search-inp');
+  if(inp){inp.value=seriesName;renderSeriesBrowse();}
 }
 function openSeriesBrowse(){
   renderSeriesBrowse();
@@ -16069,6 +16110,12 @@ function _detailValHtml(k,v,isBook2,cat){
     }else if(k==='created_at'&&v){
       // 建檔時間：舊資料可能被 Sheets 轉成 UTC ISO，統一還原為台北時間字串顯示
       valHtml=esc(fmtCreatedTPE(v));
+    }else if(k==='series'&&v){
+      // v02.176：使用者要求從詳情頁能直接跳轉到「依系列瀏覽」，不用先關掉詳情頁再從
+      // 收藏頁「⋯」選單找入口。系列名稱後面加一個小按鈕，點了關閉詳情頁、開啟系列瀏覽
+      // 並直接帶入搜尋框篩選成這個系列（沿用v02.175剛做好的搜尋框，不用另外寫一套
+      // 「定位到指定系列」的邏輯）。
+      valHtml=esc(v)+' <button onclick="event.stopPropagation();jumpToSeries(\''+_escAttr(v)+'\')" style="background:transparent;border:1px solid #ce93d8;border-radius:8px;color:#ce93d8;font-size:11px;padding:2px 8px;cursor:pointer;margin-left:4px" type="button">📚 同系列 ›</button>';
     }else{
       valHtml=esc(v);
     }

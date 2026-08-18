@@ -2945,7 +2945,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.07';
+const APP_VERSION='v08.08';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5554,6 +5554,25 @@ function _updateOfflineQueueBadge(){
     var mi=$('offline-queue-menu-item');if(mi)mi.style.display=n>0?'flex':'none';
   });
 }
+// v02.182：離線佇列原本只涵蓋新增（action:'add'）。編輯既有項目（切換最愛/估值/主要
+// 編輯表單/批次編輯）完全沒有離線保護，網路一斷就直接失敗、修改遺失，使用者容易沒注意到
+// 「剛剛那個編輯有沒有真的存進去」。抽出這個共用helper，讓所有「更新既有項目」的儲存
+// 動作都能共用同一套「疑似網路問題就排入離線佇列、之後自動補送」的邏輯，不用在每個
+// 呼叫點各自重複實作一次。payload需要帶上action:'update'（明確標記，跟原本預設的
+// 'add'佇列項目區分開來，同步時才知道要怎麼處理）。
+function _shPostUpdateOrQueue(payload){
+  return shPost(payload).then(function(res){
+    return {ok:true,queued:false,res:res};
+  }).catch(function(e){
+    if(_isNetworkError(e)){
+      return _queueOfflineSave(payload).then(function(){
+        _updateOfflineQueueBadge();
+        return {ok:true,queued:true};
+      });
+    }
+    throw e; // 非網路問題的邏輯錯誤，維持原本丟出去讓呼叫端自己處理
+  });
+}
 function syncOfflineQueue(silent){
   return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
     q=q||[];
@@ -5576,17 +5595,26 @@ function syncOfflineQueue(silent){
           return;
         }
         var item=q[i];
-        shPost({action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
+        // v02.182：依佇列項目本身標記的action（'add'或'update'，沒有標記的舊資料一律
+        // 當成'add'處理，維持向後相容）決定同步時的行為
+        var isUpdate=item.action==='update';
+        shPost(isUpdate?{action:'update',uuid:item.uuid,rowNum:item.rowNum,row:item.row,fields:item.fields,category:item.category}:{action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
           if(res&&res.ok){
             okCount++;
-            var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
-            var savedEntry=Object.assign({},item.entrySnapshot);
-            if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
-            if(res.imgs){
-              ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
-              if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+            if(isUpdate){
+              // 更新既有項目：找到本機對應的那一筆，把儲存好的資料寫回去
+              var target=col.find(function(c){return (item.uuid&&c.data&&c.data.uuid===item.uuid)||_colKey(c)===String(item.rowNum);});
+              if(target&&item.entrySnapshot)target.data=Object.assign({},item.entrySnapshot);
+            }else{
+              var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+              var savedEntry=Object.assign({},item.entrySnapshot);
+              if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+              if(res.imgs){
+                ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+                if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+              }
+              col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
             }
-            col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
           }else{
             failCount++;remaining.push(item); // 還是失敗，留著下次再試，不遺失資料
           }
@@ -6074,7 +6102,7 @@ function doSave(){
     if(_isNetworkError(e)){
       // v02.166：疑似網路連線問題（不是伺服器回報的邏輯錯誤），先存進離線佇列，
       // 不直接判定失敗——連線恢復後會自動補送，也可以在「⋯」選單手動觸發同步。
-      var _qPayload={row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
+      var _qPayload={action:'add',row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
       _queueOfflineSave(_qPayload).then(function(){
         _updateOfflineQueueBadge();
         toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
@@ -6112,7 +6140,16 @@ function doUpdate(rowNum){
   // uuid 優先用 entry.uuid，若無則用 rowNum（uid 可能是 UUID 格式）
   var _updUuid=(entry.uuid&&entry.uuid.length>=30)?entry.uuid:
                (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
-  shPost({action:'update',uuid:_updUuid,rowNum:rowNum,row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
+  // v02.182：改用_shPostUpdateOrQueue()，網路異常時排入離線佇列而不是直接判定失敗——
+  // 原本這裡（跟其他3個「更新既有項目」的地方）完全沒有離線保護，跟doSave()已經有的
+  // 新增離線保護不對等，這次一併補齊。
+  _shPostUpdateOrQueue({action:'update',uuid:_updUuid,rowNum:rowNum,row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)}).then(function(r){
+    if(r.queued){
+      toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
+      closeDetailSilent();resetAll();showPg('col');
+      return;
+    }
+    var res=r.res;
     if(res.ok){
       var i=col.findIndex(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
       if(res.imgs){
@@ -6132,7 +6169,14 @@ function doUpdate(rowNum){
 function doDelete(rowNum){
   var _dc=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
   var _confirmName=(_dc&&_dc.data&&(_dc.data.primary_name||_dc.data.zh_name))||'這筆資料';
-  if(!confirm('⚠️ 確定要永久刪除《'+_confirmName+'》？此操作無法復原。'))return;
+  // v02.181：使用者要求刪除這種不可逆操作，改用跟App其他地方一致的非同步自訂彈窗，
+  // 不要再用原生confirm()。
+  _customConfirm('⚠️ 確定要永久刪除嗎？','《'+_confirmName+'》此操作無法復原。').then(function(proceed){
+    if(!proceed)return;
+    _doDeleteConfirmed(rowNum,_dc);
+  });
+}
+function _doDeleteConfirmed(rowNum,_dc){
   loading('刪除中...');
   var _dcat=catInternal(_dc&&_dc.data&&_dc.data.category)||'遊戲';
   // 用 _dc.uid（loadCol 計算的合法 uid）傳給 Apps Script
@@ -6194,20 +6238,23 @@ function colSelBar(){
 function colDeleteSelected(){
   if(!_colSelSet.size){toast('尚未選取','er');return;}
   var keys=Array.from(_colSelSet);
-  if(!confirm('⚠️ 確定永久刪除選取的 '+keys.length+' 筆收藏？此操作無法復原。'))return;
-  // keys 為各項的 uid（UUID 或 'type:列號'），後端 deleteMany 會自行解析、跨工作表處理
-  loading('刪除中...');
-  shPost({action:'deleteMany',keys:keys,category:'遊戲'}).then(function(res){
-    if(!res||!res.ok)throw new Error((res&&res.error)||'未知');
-    var del=new Set(keys);
-    col=col.filter(function(c){return !del.has(_colKey(c));});
-    localforage.setItem('gv_col',col).catch(function(){});
-    _colSel=false;_colSelSet.clear();updateStats();
-    colSelBar();
-    var sb=$('col-sel-btn');if(sb)sb.classList.remove('on');
-    toast('已刪除 '+(res.deleted!=null?res.deleted:keys.length)+' 筆 ✓','ok');
-    filterCol();
-  }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
+  // v02.181：跟doDelete同一次一併改用非同步自訂彈窗，取代原生confirm()
+  _customConfirm('⚠️ 確定要永久刪除嗎？','選取的 '+keys.length+' 筆收藏，此操作無法復原。').then(function(proceed){
+    if(!proceed)return;
+    // keys 為各項的 uid（UUID 或 'type:列號'），後端 deleteMany 會自行解析、跨工作表處理
+    loading('刪除中...');
+    shPost({action:'deleteMany',keys:keys,category:'遊戲'}).then(function(res){
+      if(!res||!res.ok)throw new Error((res&&res.error)||'未知');
+      var del=new Set(keys);
+      col=col.filter(function(c){return !del.has(_colKey(c));});
+      localforage.setItem('gv_col',col).catch(function(){});
+      _colSel=false;_colSelSet.clear();updateStats();
+      colSelBar();
+      var sb=$('col-sel-btn');if(sb)sb.classList.remove('on');
+      toast('已刪除 '+(res.deleted!=null?res.deleted:keys.length)+' 筆 ✓','ok');
+      filterCol();
+    }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
+  });
 }
 
 // v02.162：批次編輯改成依分類動態顯示欄位，取代原本固定寫死的5個欄位（保管位置/收藏
@@ -6407,12 +6454,12 @@ function bulkEditSave(){
     var keySet=new Set(keys);
     var items=col.filter(function(c){return keySet.has(_colKey(c));});
     if(!items.length){toast('找不到選取的項目','er');return;}
-    var i=0,okCount=0,failCount=0;
+    var i=0,okCount=0,failCount=0,queuedCount=0;
     function next(){
       if(i>=items.length){
         localforage.setItem('gv_col',col).catch(function(){});
         updateStats();filterCol();noLoad();
-        toast('批次編輯完成：成功 '+okCount+' 筆'+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4000);
+        toast('批次編輯完成：成功 '+okCount+' 筆'+(queuedCount?'，'+queuedCount+' 筆已離線儲存待補送':'')+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4500);
         colToggleSelect(); // 完成後退出選取模式，回到一般瀏覽
         return;
       }
@@ -6431,8 +6478,12 @@ function bulkEditSave(){
       var row=_rowFromFields(updated,fields);
       var rowNum=item.uid||item.rowNum;
       var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
-      shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
-        if(res&&res.ok){item.data=updated;okCount++;}else{failCount++;}
+      // v02.182：改用_shPostUpdateOrQueue()——單筆網路異常時排入離線佇列，不是直接算
+      // 這一筆失敗；批次的其他筆繼續照跑，不會因為單筆連不上就整批中斷
+      _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+        if(r.queued){queuedCount++;}
+        else if(r.res&&r.res.ok){item.data=updated;okCount++;}
+        else{failCount++;}
       }).catch(function(){failCount++;}).finally(function(){i++;next();});
     }
     next();
@@ -16378,8 +16429,14 @@ function toggleFavorite(evt,rowNum){
   var row=_rowFromFields(updated,fields);
   var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:
     (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
-  shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
-    if(!res||!res.ok)throw new Error((res&&res.error)||'更新失敗');
+  // v02.182：改用_shPostUpdateOrQueue()——網路異常時排入離線佇列，保留剛剛已經套用的
+  // 樂觀本機切換結果（不要復原），只有真正的邏輯錯誤才復原並提示失敗
+  _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+    if(r.queued){
+      toast('📡 已離線儲存，連線恢復後會自動補送','',3000);
+      return;
+    }
+    if(!r.res||!r.res.ok)throw new Error((r.res&&r.res.error)||'更新失敗');
   }).catch(function(e){
     item.data.favorite=wasOn?'Y':''; // 失敗復原
     localforage.setItem('gv_col',col).catch(function(){});
@@ -16399,7 +16456,18 @@ function marketSaveEstimate(rowNum,patch){
   var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:
     (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
   loading('寫入估值...');
-  return shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
+  // v02.182：改用_shPostUpdateOrQueue()——網路異常時排入離線佇列，本機估值資料仍然
+  // 先套用（讓使用者看到自己剛填的結果），不是直接判定失敗
+  return _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+    if(r.queued){
+      item.data=updated;
+      localforage.setItem('gv_col',col).catch(function(){});
+      updateStats();filterCol();
+      detailRow=rowNum;showDetail(rowNum,true);
+      toast('📡 已離線儲存，連線恢復後會自動補送','',4000);
+      return;
+    }
+    var res=r.res;
     if(!res||!res.ok)throw new Error((res&&res.error)||'更新失敗');
     item.data=updated;
     localforage.setItem('gv_col',col).catch(function(){});
