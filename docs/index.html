@@ -1817,6 +1817,10 @@ body{
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
                   從雲端同步
                 </button>
+                <button class="col-menu-item" onclick="openDupScan();closeColMenu()" type="button">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                  找重複項目
+                </button>
                 <button class="col-menu-item" onclick="exportCsvByType();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
                   匯出 CSV
@@ -2945,7 +2949,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.08';
+const APP_VERSION='v08.09';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6620,6 +6624,86 @@ function jumpToSeries(seriesName){
   openSeriesBrowse();
   var inp=$('series-search-inp');
   if(inp){inp.value=seriesName;renderSeriesBrowse();}
+}
+// v02.183：使用者要求新增「找重複項目」工具，掃描既有收藏庫找出可能重複的項目群組——
+// 原本的重複偵測（findDuplicate）只在新增當下比對「這一筆新資料」，沒有工具可以事後
+// 掃描整個收藏庫。這裡重用完全一樣的比對規則（條碼/編碼/序號完全相同、名稱+平台完全
+// 相同、或模糊相似度達門檻），只是改成兩兩配對掃描整個col，把彼此重複的項目分組。
+// 純粹是檢視/診斷工具，不會自動刪除或合併任何資料，讓使用者自己決定怎麼處理。
+function _isDuplicatePair(a,b){
+  var an=(a.primary_name||'').trim().toLowerCase();
+  var ap=(a.platform||'').trim().toLowerCase();
+  var abc=(''+(a.barcode||'')).trim();
+  var acc=(''+(a.code||'')).trim().toLowerCase();
+  var asn=(''+(a.serial_no||'')).trim().toLowerCase();
+  var bn=(b.primary_name||'').trim().toLowerCase();
+  var bp=(b.platform||'').trim().toLowerCase();
+  var bbc=(''+(b.barcode||'')).trim();
+  var bcc=(''+(b.code||'')).trim().toLowerCase();
+  var bsn=(''+(b.serial_no||'')).trim().toLowerCase();
+  if(abc&&bbc&&abc===bbc)return true;
+  if(acc&&bcc&&acc===bcc)return true;
+  if(asn&&bsn&&asn===bsn)return true;
+  if(an&&an===bn&&ap===bp)return true;
+  // 沒有可靠識別碼比對時才退回模糊比對，跟findDuplicate()同一套邏輯精神——平台不同
+  // 直接排除（同名但不同平台的商品很常見，不該被當成重複）
+  if(an&&bn&&ap===bp&&!abc&&!bbc&&!acc&&!bcc&&!asn&&!bsn){
+    if(_nameSimilarity(an,bn)>=_fuzzyDupThreshold())return true;
+  }
+  return false;
+}
+function _scanForDuplicates(){
+  var groups=[];
+  var assigned=new Set();
+  for(var i=0;i<col.length;i++){
+    if(assigned.has(i))continue;
+    var a=col[i].data||{};
+    var group=[col[i]];
+    for(var j=i+1;j<col.length;j++){
+      if(assigned.has(j))continue;
+      var b=col[j].data||{};
+      if(_isDuplicatePair(a,b)){group.push(col[j]);assigned.add(j);}
+    }
+    if(group.length>1){assigned.add(i);groups.push(group);}
+  }
+  return groups;
+}
+function openDupScan(){
+  loading('掃描重複項目中...');
+  // 用setTimeout讓loading畫面先渲染出來，避免大收藏庫掃描時UI卡住沒有任何回饋
+  setTimeout(function(){
+    var groups=_scanForDuplicates();
+    noLoad();
+    var wrap=$('dupscan-list');
+    if(!wrap)return;
+    if(!groups.length){
+      wrap.innerHTML='<div style="text-align:center;padding:40px 20px;color:#7986cb;font-size:13px;line-height:1.6">沒有掃到可能重複的項目 ✓<br><span style="font-size:11px">比對條碼／編碼／序號完全相同，或名稱＋平台高度相似的項目</span></div>';
+    }else{
+      wrap.innerHTML=groups.map(function(g,gi){
+        var itemsHtml=g.map(function(c){
+          var d=c.data||{};
+          var uid=c.uid||c.rowNum;
+          var name=d.primary_name||d.zh_name||d.jp_name||'（無名稱）';
+          return '<div class="gv-card" onclick="closeDupScan();showDetail(\''+_escAttr(uid)+'\')">'+
+            '<div class="gv-thumb">'+(hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':'<div>'+_catMeta(catInternal(d.category)||'遊戲',d.subtype).icon+'</div>')+'</div>'+
+            '<div class="gv-info"><div class="gv-name">'+esc(name)+'</div><div class="gv-meta">'+esc(platShort(d.platform||'')||catLabel(catInternal(d.category)))+'</div></div>'+
+          '</div>';
+        }).join('');
+        return '<div style="margin-bottom:20px">'+
+          '<div class="dv2-card-hd" style="margin-bottom:10px"><div class="dv2-card-title" style="font-size:15px"><span class="dv2-dot" style="background:#ff8a65;height:18px"></span>可能重複組 '+(gi+1)+'</div><div style="font-size:11px;color:#7986cb">'+g.length+' 筆</div></div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+itemsHtml+'</div>'+
+        '</div>';
+      }).join('');
+    }
+    var ov=$('dupscan-ov'),p=$('dupscan-panel');
+    if(ov)ov.classList.add('on');
+    if(p)p.classList.add('on');
+  },50);
+}
+function closeDupScan(){
+  var ov=$('dupscan-ov'),p=$('dupscan-panel');
+  if(ov)ov.classList.remove('on');
+  if(p)p.classList.remove('on');
 }
 function openSeriesBrowse(){
   renderSeriesBrowse();
@@ -19698,6 +19782,18 @@ function _imgToB64(src){
     <input type="text" id="series-search-inp" class="fi" placeholder="搜尋系列名稱…" oninput="renderSeriesBrowse()" style="width:100%">
   </div>
   <div id="series-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
+</div>
+<!-- 找重複項目 Modal（v02.183）：掃描整個收藏庫，用跟建檔當下重複偵測（findDuplicate）
+     完全一樣的比對規則（條碼/編碼/序號完全相同、名稱＋平台完全相同、或名稱模糊相似度
+     達門檻）找出可能重複的項目群組。純粹是檢視/診斷工具，不會自動刪除或合併任何資料，
+     點進單一項目後使用者自己決定要不要刪除/編輯。 -->
+<div id="dupscan-ov" class="sheet-ov" onclick="if(event.target===this)closeDupScan()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="dupscan-panel" class="sheet-panel" style="position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column">
+  <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
+    <div style="font-size:14px;font-weight:700;color:#e8eaf6">🔍 找重複項目</div>
+    <button onclick="closeDupScan()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
+  </div>
+  <div id="dupscan-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
 </div>
 </body>
 </html>

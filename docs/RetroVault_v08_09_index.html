@@ -135,8 +135,16 @@ body{
 .col-menu-item svg{flex-shrink:0;color:#7986cb}
 .col-menu-item:hover svg,.col-menu-item:active svg{color:#00e5ff}
 .tbtn.on{background:#00e5ff;border-color:#00e5ff;color:#001018}
-.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow:hidden}
-.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px}
+/* v02.180：使用者確認要的是「卡片/分類/畫廊/系列」四個檢視模式共用同一個切換列，
+   但原本的位置只夠放3顆——關鍵是容器本身的寬度要鎖定跟原本3顆一樣寬，不能讓容器
+   跟著4顆按鈕一起撐寬，否則旁邊的多選/⋯按鈕跟標題會被擠壓變形（上一版v02.178就是
+   犯了這個錯，容器沒鎖寬度，四顆撐開後排版跟著跑掉）。max-width鎖住容器可視寬度＝
+   原本3顆的寬度（3×56px），第4顆放得進去、但要滑動才看得到，加上跟#stats同一套
+   淡出遮罩效果提示「還有更多可以滑」。 */
+.vtoggle{display:flex;background:#0f1525;border:1px solid #1e2a45;border-radius:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;max-width:168px;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 20px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 20px),transparent 100%)}
+.vtoggle.at-end{mask-image:none;-webkit-mask-image:none}
+.vtoggle::-webkit-scrollbar{display:none}
+.vtoggle>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:56px;height:48px;border:none;cursor:pointer;transition:all .15s;font-family:inherit;font-size:9px;letter-spacing:.5px;flex-shrink:0}
 
 /* === Form fields === */
 .fg{margin-bottom:12px}
@@ -236,6 +244,10 @@ body{
    使用者反應多餘。改成筆數只在這一行顯示一次，按鈕本身不再帶數字。 */
 #pg-col .col-sel-count{margin:14px 16px 0;font-size:12px;color:#7986cb}
 #stats-row{display:flex;align-items:center;gap:8px;padding:8px 12px 6px}
+/* v02.179：依系列瀏覽的獨立滑動列，重用#stats同一套「overflow-x + 右側淡出遮罩」手法，
+   跟原本卡片/分類/畫廊的.vtoggle是各自獨立的兩塊，互不影響 */
+
+
 #sf-total{flex:0 0 auto;min-width:58px;text-align:center;cursor:pointer;padding:6px 8px;border-radius:10px;border:1px solid transparent;transition:background .15s,border-color .15s;position:relative}
 #sf-total::after{content:'';position:absolute;right:-8px;top:4px;bottom:4px;width:1px;background:#1e2a45}
 #stats{display:flex;padding:0;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex:1;min-width:0;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 28px),transparent 100%)}
@@ -1755,7 +1767,7 @@ body{
           <div class="ht">我的收藏</div>
           <div style="display:flex;gap:8px;align-items:center">
             <!-- 視圖切換（放大版＋文字說明）-->
-            <div class="vtoggle">
+            <div class="vtoggle" onscroll="this.classList.toggle('at-end',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">
               <button id="vbtn-card" onclick="setView('card')" style="background:#00e5ff;color:#001018" title="卡片模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="7" rx="2"/><rect x="10" y="1" width="7" height="7" rx="2"/><rect x="1" y="10" width="7" height="7" rx="2"/><rect x="10" y="10" width="7" height="7" rx="2"/></svg>
                 卡片
@@ -1767,6 +1779,15 @@ body{
               <button id="vbtn-gallery" onclick="setView('gallery')" style="background:transparent;color:#7986cb" title="畫廊模式" type="button">
                 <svg viewBox="0 0 18 18" width="16" height="16" fill="currentColor"><rect x="1" y="1" width="7" height="16" rx="2"/><rect x="10" y="1" width="7" height="16" rx="2"/></svg>
                 畫廊
+              </button>
+              <!-- v02.180：使用者確認要的是4個檢視模式共用同一個切換列，原本3格空間放
+                   不下，靠滑動解決——這顆開啟的是獨立的系列瀏覽面板（跟setView()切換
+                   「目前檢視模式」不是同一回事），沒有跟其他3顆共用active高亮切換邏輯，
+                   純粹多加一個直接入口，靠.vtoggle的max-width+overflow-x讓它需要滑動
+                   才看得到，不會撐寬容器影響旁邊的多選/⋯按鈕排版。 -->
+              <button id="vbtn-series" onclick="openSeriesBrowse()" style="background:transparent;color:#7986cb" title="依系列瀏覽" type="button">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                系列
               </button>
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
@@ -1792,13 +1813,13 @@ body{
                   </span>
                   <span class="offline-queue-badge" style="display:none;background:#ff6e9c;color:#0f1525;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;min-width:18px;text-align:center"></span>
                 </button>
-                <button class="col-menu-item" onclick="openSeriesBrowse();closeColMenu()" type="button">
-                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                  依系列瀏覽
-                </button>
                 <button class="col-menu-item" onclick="colRefresh();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>
                   從雲端同步
+                </button>
+                <button class="col-menu-item" onclick="openDupScan();closeColMenu()" type="button">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                  找重複項目
                 </button>
                 <button class="col-menu-item" onclick="exportCsvByType();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
@@ -2928,7 +2949,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.03';
+const APP_VERSION='v08.09';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5537,6 +5558,25 @@ function _updateOfflineQueueBadge(){
     var mi=$('offline-queue-menu-item');if(mi)mi.style.display=n>0?'flex':'none';
   });
 }
+// v02.182：離線佇列原本只涵蓋新增（action:'add'）。編輯既有項目（切換最愛/估值/主要
+// 編輯表單/批次編輯）完全沒有離線保護，網路一斷就直接失敗、修改遺失，使用者容易沒注意到
+// 「剛剛那個編輯有沒有真的存進去」。抽出這個共用helper，讓所有「更新既有項目」的儲存
+// 動作都能共用同一套「疑似網路問題就排入離線佇列、之後自動補送」的邏輯，不用在每個
+// 呼叫點各自重複實作一次。payload需要帶上action:'update'（明確標記，跟原本預設的
+// 'add'佇列項目區分開來，同步時才知道要怎麼處理）。
+function _shPostUpdateOrQueue(payload){
+  return shPost(payload).then(function(res){
+    return {ok:true,queued:false,res:res};
+  }).catch(function(e){
+    if(_isNetworkError(e)){
+      return _queueOfflineSave(payload).then(function(){
+        _updateOfflineQueueBadge();
+        return {ok:true,queued:true};
+      });
+    }
+    throw e; // 非網路問題的邏輯錯誤，維持原本丟出去讓呼叫端自己處理
+  });
+}
 function syncOfflineQueue(silent){
   return localforage.getItem(OFFLINE_QUEUE_KEY).then(function(q){
     q=q||[];
@@ -5559,17 +5599,26 @@ function syncOfflineQueue(silent){
           return;
         }
         var item=q[i];
-        shPost({action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
+        // v02.182：依佇列項目本身標記的action（'add'或'update'，沒有標記的舊資料一律
+        // 當成'add'處理，維持向後相容）決定同步時的行為
+        var isUpdate=item.action==='update';
+        shPost(isUpdate?{action:'update',uuid:item.uuid,rowNum:item.rowNum,row:item.row,fields:item.fields,category:item.category}:{action:'add',row:item.row,fields:item.fields,category:item.category}).then(function(res){
           if(res&&res.ok){
             okCount++;
-            var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
-            var savedEntry=Object.assign({},item.entrySnapshot);
-            if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
-            if(res.imgs){
-              ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
-              if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+            if(isUpdate){
+              // 更新既有項目：找到本機對應的那一筆，把儲存好的資料寫回去
+              var target=col.find(function(c){return (item.uuid&&c.data&&c.data.uuid===item.uuid)||_colKey(c)===String(item.rowNum);});
+              if(target&&item.entrySnapshot)target.data=Object.assign({},item.entrySnapshot);
+            }else{
+              var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
+              var savedEntry=Object.assign({},item.entrySnapshot);
+              if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
+              if(res.imgs){
+                ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+                if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
+              }
+              col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
             }
-            col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
           }else{
             failCount++;remaining.push(item); // 還是失敗，留著下次再試，不遺失資料
           }
@@ -6057,7 +6106,7 @@ function doSave(){
     if(_isNetworkError(e)){
       // v02.166：疑似網路連線問題（不是伺服器回報的邏輯錯誤），先存進離線佇列，
       // 不直接判定失敗——連線恢復後會自動補送，也可以在「⋯」選單手動觸發同步。
-      var _qPayload={row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
+      var _qPayload={action:'add',row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)};
       _queueOfflineSave(_qPayload).then(function(){
         _updateOfflineQueueBadge();
         toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
@@ -6095,7 +6144,16 @@ function doUpdate(rowNum){
   // uuid 優先用 entry.uuid，若無則用 rowNum（uid 可能是 UUID 格式）
   var _updUuid=(entry.uuid&&entry.uuid.length>=30)?entry.uuid:
                (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
-  shPost({action:'update',uuid:_updUuid,rowNum:rowNum,row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲'}).then(function(res){
+  // v02.182：改用_shPostUpdateOrQueue()，網路異常時排入離線佇列而不是直接判定失敗——
+  // 原本這裡（跟其他3個「更新既有項目」的地方）完全沒有離線保護，跟doSave()已經有的
+  // 新增離線保護不對等，這次一併補齊。
+  _shPostUpdateOrQueue({action:'update',uuid:_updUuid,rowNum:rowNum,row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)}).then(function(r){
+    if(r.queued){
+      toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
+      closeDetailSilent();resetAll();showPg('col');
+      return;
+    }
+    var res=r.res;
     if(res.ok){
       var i=col.findIndex(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
       if(res.imgs){
@@ -6115,7 +6173,14 @@ function doUpdate(rowNum){
 function doDelete(rowNum){
   var _dc=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
   var _confirmName=(_dc&&_dc.data&&(_dc.data.primary_name||_dc.data.zh_name))||'這筆資料';
-  if(!confirm('⚠️ 確定要永久刪除《'+_confirmName+'》？此操作無法復原。'))return;
+  // v02.181：使用者要求刪除這種不可逆操作，改用跟App其他地方一致的非同步自訂彈窗，
+  // 不要再用原生confirm()。
+  _customConfirm('⚠️ 確定要永久刪除嗎？','《'+_confirmName+'》此操作無法復原。').then(function(proceed){
+    if(!proceed)return;
+    _doDeleteConfirmed(rowNum,_dc);
+  });
+}
+function _doDeleteConfirmed(rowNum,_dc){
   loading('刪除中...');
   var _dcat=catInternal(_dc&&_dc.data&&_dc.data.category)||'遊戲';
   // 用 _dc.uid（loadCol 計算的合法 uid）傳給 Apps Script
@@ -6177,20 +6242,23 @@ function colSelBar(){
 function colDeleteSelected(){
   if(!_colSelSet.size){toast('尚未選取','er');return;}
   var keys=Array.from(_colSelSet);
-  if(!confirm('⚠️ 確定永久刪除選取的 '+keys.length+' 筆收藏？此操作無法復原。'))return;
-  // keys 為各項的 uid（UUID 或 'type:列號'），後端 deleteMany 會自行解析、跨工作表處理
-  loading('刪除中...');
-  shPost({action:'deleteMany',keys:keys,category:'遊戲'}).then(function(res){
-    if(!res||!res.ok)throw new Error((res&&res.error)||'未知');
-    var del=new Set(keys);
-    col=col.filter(function(c){return !del.has(_colKey(c));});
-    localforage.setItem('gv_col',col).catch(function(){});
-    _colSel=false;_colSelSet.clear();updateStats();
-    colSelBar();
-    var sb=$('col-sel-btn');if(sb)sb.classList.remove('on');
-    toast('已刪除 '+(res.deleted!=null?res.deleted:keys.length)+' 筆 ✓','ok');
-    filterCol();
-  }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
+  // v02.181：跟doDelete同一次一併改用非同步自訂彈窗，取代原生confirm()
+  _customConfirm('⚠️ 確定要永久刪除嗎？','選取的 '+keys.length+' 筆收藏，此操作無法復原。').then(function(proceed){
+    if(!proceed)return;
+    // keys 為各項的 uid（UUID 或 'type:列號'），後端 deleteMany 會自行解析、跨工作表處理
+    loading('刪除中...');
+    shPost({action:'deleteMany',keys:keys,category:'遊戲'}).then(function(res){
+      if(!res||!res.ok)throw new Error((res&&res.error)||'未知');
+      var del=new Set(keys);
+      col=col.filter(function(c){return !del.has(_colKey(c));});
+      localforage.setItem('gv_col',col).catch(function(){});
+      _colSel=false;_colSelSet.clear();updateStats();
+      colSelBar();
+      var sb=$('col-sel-btn');if(sb)sb.classList.remove('on');
+      toast('已刪除 '+(res.deleted!=null?res.deleted:keys.length)+' 筆 ✓','ok');
+      filterCol();
+    }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
+  });
 }
 
 // v02.162：批次編輯改成依分類動態顯示欄位，取代原本固定寫死的5個欄位（保管位置/收藏
@@ -6390,12 +6458,12 @@ function bulkEditSave(){
     var keySet=new Set(keys);
     var items=col.filter(function(c){return keySet.has(_colKey(c));});
     if(!items.length){toast('找不到選取的項目','er');return;}
-    var i=0,okCount=0,failCount=0;
+    var i=0,okCount=0,failCount=0,queuedCount=0;
     function next(){
       if(i>=items.length){
         localforage.setItem('gv_col',col).catch(function(){});
         updateStats();filterCol();noLoad();
-        toast('批次編輯完成：成功 '+okCount+' 筆'+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4000);
+        toast('批次編輯完成：成功 '+okCount+' 筆'+(queuedCount?'，'+queuedCount+' 筆已離線儲存待補送':'')+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4500);
         colToggleSelect(); // 完成後退出選取模式，回到一般瀏覽
         return;
       }
@@ -6414,8 +6482,12 @@ function bulkEditSave(){
       var row=_rowFromFields(updated,fields);
       var rowNum=item.uid||item.rowNum;
       var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
-      shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
-        if(res&&res.ok){item.data=updated;okCount++;}else{failCount++;}
+      // v02.182：改用_shPostUpdateOrQueue()——單筆網路異常時排入離線佇列，不是直接算
+      // 這一筆失敗；批次的其他筆繼續照跑，不會因為單筆連不上就整批中斷
+      _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+        if(r.queued){queuedCount++;}
+        else if(r.res&&r.res.ok){item.data=updated;okCount++;}
+        else{failCount++;}
       }).catch(function(){failCount++;}).finally(function(){i++;next();});
     }
     next();
@@ -6460,11 +6532,15 @@ function _seriesRelatedHunt(seriesName){
 // 網格瀏覽方式，只是多加系列標題分組——直接沿用既有的.gv-card/.gv-thumb/.gv-info等
 // 畫廊卡片CSS class（見renderGalleryView），系列這裡只負責分組跟標題列，卡片本身完全
 // 是同一套樣式，不再另外設計一套清單UI。
-// v02.175：系列群組可摺疊——系列一多，全部展開會讓面板拉得很長。追蹤各系列目前是否收合
-// 的狀態，預設全部展開（不改變既有習慣），使用者可以自己收合不常看的系列。
-var _seriesCollapsed={};
-function _toggleSeriesCollapse(s){
-  _seriesCollapsed[s]=!_seriesCollapsed[s];
+// v02.177：使用者反映系列一多，全部展開預設看起來太雜，要求改成預設收合，並且收合狀態
+// 用更緊湊的清單列排版（細分隔線、少留白），不要沿用原本卡片標題那種大留白樣式——那種
+// 留白是為了下面的卡片網格準備的空間，收合時沒有卡片網格，留白反而顯得鬆散。
+// 追蹤語意從「哪些系列被收合」改成「哪些系列被展開」（正向語意），這樣預設（沒有任何
+// 系列被主動點開過）就自然是全部收合，不需要另外處理「新出現的系列名稱要不要預設收合」
+// 這種初始化問題。
+var _seriesExpanded={};
+function _toggleSeriesExpand(s){
+  _seriesExpanded[s]=!_seriesExpanded[s];
   renderSeriesBrowse();
 }
 function renderSeriesBrowse(){
@@ -6484,6 +6560,20 @@ function renderSeriesBrowse(){
   }
   wrap.innerHTML=visibleNames.map(function(s){
     var items=groups[s].slice(); // v02.168：複製一份再排序，避免動到原本的groups[s]參照
+    var expanded=!!_seriesExpanded[s];
+    // v02.177：收合狀態是清單模式，不需要算排序/縮圖/尋寶比對這些只有展開時才用得到的
+    // 資料，省一點沒必要的運算——系列一多、大部分都收合著的時候差異會比較明顯
+    if(!expanded){
+      var relatedCount=_seriesRelatedHunt(s).length;
+      return '<div class="series-row" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:13px 4px;border-bottom:1px solid #1e2a45;cursor:pointer">'+
+        '<div style="display:flex;align-items:center;gap:9px;min-width:0;flex:1">'+
+          '<span style="width:3px;height:18px;background:#ce93d8;border-radius:2px;flex-shrink:0"></span>'+
+          '<span style="font-weight:700;font-size:15.5px;color:#e8eaf6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(s)+'</span>'+
+          '<span style="font-size:11px;color:#7986cb;flex-shrink:0">▶</span>'+
+        '</div>'+
+        '<div style="font-size:11.5px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(relatedCount?'・尋寶中 '+relatedCount:'')+'</div>'+
+      '</div>';
+    }
     // v02.168：使用者要求系列內項目要排序，方便一眼看出集數順序——優先依發售日排序
     // （沒有發售日或無法解析的項目排到最後），發售日相同或都缺的再依名稱排序
     items.sort(function(a,b){
@@ -6495,7 +6585,6 @@ function renderSeriesBrowse(){
       return ta-tb;
     });
     var related=_seriesRelatedHunt(s);
-    var collapsed=!!_seriesCollapsed[s];
     var cardsHtml=items.map(function(c){
       var d=c.data;
       var cat=catInternal(d.category)||'遊戲';
@@ -6517,15 +6606,13 @@ function renderSeriesBrowse(){
       related.map(function(h){return '🔍 缺：'+esc((h.data||{}).primary_name||'');}).join('<br>')+
     '</div>') : '';
     return '<div style="margin-bottom:20px">'+
-      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesCollapse(\''+_escAttr(s)+'\')">'+
+      '<div class="dv2-card-hd" style="margin-bottom:10px;cursor:pointer" onclick="_toggleSeriesExpand(\''+_escAttr(s)+'\')">'+
         '<div class="dv2-card-title" style="font-size:18px"><span class="dv2-dot" style="background:#ce93d8;height:20px"></span>'+esc(s)+
-          '<span style="font-size:12px;color:#7986cb;margin-left:6px">'+(collapsed?'▶':'▼')+'</span></div>'+
+          '<span style="font-size:12px;color:#7986cb;margin-left:6px">▼</span></div>'+
         '<div style="font-size:11px;color:#7986cb;flex-shrink:0">'+items.length+' 件'+(related.length?'・尋寶中 '+related.length:'')+'</div>'+
       '</div>'+
-      (collapsed?'':(
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
-        missingHtml
-      ))+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+cardsHtml+'</div>'+
+      missingHtml+
     '</div>';
   }).join('');
 }
@@ -6537,6 +6624,86 @@ function jumpToSeries(seriesName){
   openSeriesBrowse();
   var inp=$('series-search-inp');
   if(inp){inp.value=seriesName;renderSeriesBrowse();}
+}
+// v02.183：使用者要求新增「找重複項目」工具，掃描既有收藏庫找出可能重複的項目群組——
+// 原本的重複偵測（findDuplicate）只在新增當下比對「這一筆新資料」，沒有工具可以事後
+// 掃描整個收藏庫。這裡重用完全一樣的比對規則（條碼/編碼/序號完全相同、名稱+平台完全
+// 相同、或模糊相似度達門檻），只是改成兩兩配對掃描整個col，把彼此重複的項目分組。
+// 純粹是檢視/診斷工具，不會自動刪除或合併任何資料，讓使用者自己決定怎麼處理。
+function _isDuplicatePair(a,b){
+  var an=(a.primary_name||'').trim().toLowerCase();
+  var ap=(a.platform||'').trim().toLowerCase();
+  var abc=(''+(a.barcode||'')).trim();
+  var acc=(''+(a.code||'')).trim().toLowerCase();
+  var asn=(''+(a.serial_no||'')).trim().toLowerCase();
+  var bn=(b.primary_name||'').trim().toLowerCase();
+  var bp=(b.platform||'').trim().toLowerCase();
+  var bbc=(''+(b.barcode||'')).trim();
+  var bcc=(''+(b.code||'')).trim().toLowerCase();
+  var bsn=(''+(b.serial_no||'')).trim().toLowerCase();
+  if(abc&&bbc&&abc===bbc)return true;
+  if(acc&&bcc&&acc===bcc)return true;
+  if(asn&&bsn&&asn===bsn)return true;
+  if(an&&an===bn&&ap===bp)return true;
+  // 沒有可靠識別碼比對時才退回模糊比對，跟findDuplicate()同一套邏輯精神——平台不同
+  // 直接排除（同名但不同平台的商品很常見，不該被當成重複）
+  if(an&&bn&&ap===bp&&!abc&&!bbc&&!acc&&!bcc&&!asn&&!bsn){
+    if(_nameSimilarity(an,bn)>=_fuzzyDupThreshold())return true;
+  }
+  return false;
+}
+function _scanForDuplicates(){
+  var groups=[];
+  var assigned=new Set();
+  for(var i=0;i<col.length;i++){
+    if(assigned.has(i))continue;
+    var a=col[i].data||{};
+    var group=[col[i]];
+    for(var j=i+1;j<col.length;j++){
+      if(assigned.has(j))continue;
+      var b=col[j].data||{};
+      if(_isDuplicatePair(a,b)){group.push(col[j]);assigned.add(j);}
+    }
+    if(group.length>1){assigned.add(i);groups.push(group);}
+  }
+  return groups;
+}
+function openDupScan(){
+  loading('掃描重複項目中...');
+  // 用setTimeout讓loading畫面先渲染出來，避免大收藏庫掃描時UI卡住沒有任何回饋
+  setTimeout(function(){
+    var groups=_scanForDuplicates();
+    noLoad();
+    var wrap=$('dupscan-list');
+    if(!wrap)return;
+    if(!groups.length){
+      wrap.innerHTML='<div style="text-align:center;padding:40px 20px;color:#7986cb;font-size:13px;line-height:1.6">沒有掃到可能重複的項目 ✓<br><span style="font-size:11px">比對條碼／編碼／序號完全相同，或名稱＋平台高度相似的項目</span></div>';
+    }else{
+      wrap.innerHTML=groups.map(function(g,gi){
+        var itemsHtml=g.map(function(c){
+          var d=c.data||{};
+          var uid=c.uid||c.rowNum;
+          var name=d.primary_name||d.zh_name||d.jp_name||'（無名稱）';
+          return '<div class="gv-card" onclick="closeDupScan();showDetail(\''+_escAttr(uid)+'\')">'+
+            '<div class="gv-thumb">'+(hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':'<div>'+_catMeta(catInternal(d.category)||'遊戲',d.subtype).icon+'</div>')+'</div>'+
+            '<div class="gv-info"><div class="gv-name">'+esc(name)+'</div><div class="gv-meta">'+esc(platShort(d.platform||'')||catLabel(catInternal(d.category)))+'</div></div>'+
+          '</div>';
+        }).join('');
+        return '<div style="margin-bottom:20px">'+
+          '<div class="dv2-card-hd" style="margin-bottom:10px"><div class="dv2-card-title" style="font-size:15px"><span class="dv2-dot" style="background:#ff8a65;height:18px"></span>可能重複組 '+(gi+1)+'</div><div style="font-size:11px;color:#7986cb">'+g.length+' 筆</div></div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 2px">'+itemsHtml+'</div>'+
+        '</div>';
+      }).join('');
+    }
+    var ov=$('dupscan-ov'),p=$('dupscan-panel');
+    if(ov)ov.classList.add('on');
+    if(p)p.classList.add('on');
+  },50);
+}
+function closeDupScan(){
+  var ov=$('dupscan-ov'),p=$('dupscan-panel');
+  if(ov)ov.classList.remove('on');
+  if(p)p.classList.remove('on');
 }
 function openSeriesBrowse(){
   renderSeriesBrowse();
@@ -16346,8 +16513,14 @@ function toggleFavorite(evt,rowNum){
   var row=_rowFromFields(updated,fields);
   var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:
     (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
-  shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
-    if(!res||!res.ok)throw new Error((res&&res.error)||'更新失敗');
+  // v02.182：改用_shPostUpdateOrQueue()——網路異常時排入離線佇列，保留剛剛已經套用的
+  // 樂觀本機切換結果（不要復原），只有真正的邏輯錯誤才復原並提示失敗
+  _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+    if(r.queued){
+      toast('📡 已離線儲存，連線恢復後會自動補送','',3000);
+      return;
+    }
+    if(!r.res||!r.res.ok)throw new Error((r.res&&r.res.error)||'更新失敗');
   }).catch(function(e){
     item.data.favorite=wasOn?'Y':''; // 失敗復原
     localforage.setItem('gv_col',col).catch(function(){});
@@ -16367,7 +16540,18 @@ function marketSaveEstimate(rowNum,patch){
   var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:
     (typeof rowNum==='string'&&rowNum.length>=30&&rowNum.indexOf('-')>0?rowNum:null);
   loading('寫入估值...');
-  return shPost({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲'}).then(function(res){
+  // v02.182：改用_shPostUpdateOrQueue()——網路異常時排入離線佇列，本機估值資料仍然
+  // 先套用（讓使用者看到自己剛填的結果），不是直接判定失敗
+  return _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+    if(r.queued){
+      item.data=updated;
+      localforage.setItem('gv_col',col).catch(function(){});
+      updateStats();filterCol();
+      detailRow=rowNum;showDetail(rowNum,true);
+      toast('📡 已離線儲存，連線恢復後會自動補送','',4000);
+      return;
+    }
+    var res=r.res;
     if(!res||!res.ok)throw new Error((res&&res.error)||'更新失敗');
     item.data=updated;
     localforage.setItem('gv_col',col).catch(function(){});
@@ -19598,6 +19782,18 @@ function _imgToB64(src){
     <input type="text" id="series-search-inp" class="fi" placeholder="搜尋系列名稱…" oninput="renderSeriesBrowse()" style="width:100%">
   </div>
   <div id="series-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
+</div>
+<!-- 找重複項目 Modal（v02.183）：掃描整個收藏庫，用跟建檔當下重複偵測（findDuplicate）
+     完全一樣的比對規則（條碼/編碼/序號完全相同、名稱＋平台完全相同、或名稱模糊相似度
+     達門檻）找出可能重複的項目群組。純粹是檢視/診斷工具，不會自動刪除或合併任何資料，
+     點進單一項目後使用者自己決定要不要刪除/編輯。 -->
+<div id="dupscan-ov" class="sheet-ov" onclick="if(event.target===this)closeDupScan()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="dupscan-panel" class="sheet-panel" style="position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column">
+  <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
+    <div style="font-size:14px;font-weight:700;color:#e8eaf6">🔍 找重複項目</div>
+    <button onclick="closeDupScan()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
+  </div>
+  <div id="dupscan-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
 </div>
 </body>
 </html>
