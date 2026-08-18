@@ -2949,7 +2949,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.09';
+const APP_VERSION='v08.10';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -15394,6 +15394,7 @@ function renderFilterSheet(){
 function filterCol(){
   filtered=col.filter(function(item){return _quickPass(item)&&_facetPass(item);});
   sortFiltered();
+  _glistShown=_glistPageSize; // v02.184：篩選結果變了，分頁狀態回到第一頁，避免殘留上次展開的筆數
   renderSortChips();
   renderGlist();
   if(currentView==='shelf')renderShelf();
@@ -15899,6 +15900,12 @@ function _glistMeta(d){
   var cd=fmtCreatedTPE(d.created_at);
   return cd?'<div class="gd">🕓 建檔 '+esc(cd)+'</div>':'';
 }
+// v02.184：使用者要求大量收藏一次全部渲染的效能疑慮先記錄關注——改成分頁載入，取代
+// 一次把整個filtered塞進畫面。用「載入更多」而不是虛擬滾動，風險比較低：不改動既有的
+// 卡片HTML產生邏輯本身（.map()裡面完全沒動，只是改成只map一個切片），單純多加一層
+// 「目前顯示到第幾筆」的狀態跟一顆按鈕，就算做壞了影響範圍也只在最下面那顆按鈕，
+// 不會波及既有的卡片渲染/篩選/選取等核心邏輯。
+var _glistPageSize=60,_glistShown=_glistPageSize;
 function renderGlist(){
   var c=$('glist');
   if(!c)return;
@@ -15914,7 +15921,8 @@ function renderGlist(){
     var bc=(''+(it.data.barcode||'')).trim();
     if(bc)_bcCount[bc]=(_bcCount[bc]||0)+1;
   });
-  c.innerHTML=filtered.map(function(item){
+  var _pageItems=filtered.slice(0,_glistShown);
+  c.innerHTML=_pageItems.map(function(item){
     var d=item.data,cond=overallCond(d.category,d.completeness);
     var cat=catInternal(d.category)||'遊戲';
     var shortPlat=platShort(d.platform||'');
@@ -15961,7 +15969,14 @@ function renderGlist(){
       '</div>'+
       dateLine+
       '</div></div>';
-  }).join('');
+  }).join('')+(_glistShown<filtered.length?
+    '<div style="padding:16px 4px 8px;text-align:center">'+
+      '<button class="btn bo" style="padding:10px 24px" onclick="glistLoadMore()" type="button">載入更多（還有 '+(filtered.length-_glistShown)+' 筆）</button>'+
+    '</div>':'');
+}
+function glistLoadMore(){
+  _glistShown+=_glistPageSize;
+  renderGlist();
 }
 
 // ── Detail ──
