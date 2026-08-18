@@ -2527,6 +2527,15 @@ body{
           <button class="btn bo bs" style="flex:1" onclick="exportCfg()" type="button">📤 匯出設定</button>
           <button class="btn bo bs" style="flex:1" onclick="importCfg()" type="button">📥 匯入設定</button>
         </div>
+        <!-- v02.185：使用者要求把維護/修復類工具收合分組——原本這幾個按鈕放在頁面最下面
+             永遠展開顯示，跟前面9個區塊都用可收合分組（sgroup）的風格不一致，這些是進階、
+             很少用到的工具，長期佔用畫面空間。改成跟其他區塊同一套sgroup機制，預設收合
+             （data-default不寫open），開合狀態一樣會記住。 -->
+        <div class="sgroup" data-grp="maintenance">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('maintenance')">
+            <span>🛠️ 維護與修復工具</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
         <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
         <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
@@ -2543,6 +2552,8 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若上面兩個都試過還是有問題才用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類，但會無條件重寫全部列（不像上面那個只動異常列）</div>
         <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -2949,7 +2960,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.10';
+const APP_VERSION='v08.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5499,14 +5510,17 @@ function updateFxLive(){
   }).catch(function(){toast('匯率更新失敗，沿用目前手動值','er',4000);_btnRelease('fxLive');});
 }
 function clearAll(){
-  if(!confirm('確定清除所有設定與快取？'))return;
-  if(!_btnGuard('clearAll'))return;
-  localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
-  // 同時清空畫面上的欄位
-  ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  var md=document.getElementById('c-gmdl');if(md)md.value='gemini-3.5-flash-lite'; // v02.134：清除設定後回到目前推薦的模型，不是舊版
-  renderGlist();updateStats();toast('已清除所有設定與快取');
-  _btnRelease('clearAll');
+  // v02.185：跟刪除相關函式同一次一併改用非同步自訂彈窗，取代原生confirm()
+  _customConfirm('確定要清除所有設定與快取嗎？','這會清空本機儲存的 API 金鑰、試算表網址等設定，以及已快取的收藏資料（雲端試算表裡的資料不受影響）。').then(function(proceed){
+    if(!proceed)return;
+    if(!_btnGuard('clearAll'))return;
+    localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
+    // 同時清空畫面上的欄位
+    ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    var md=document.getElementById('c-gmdl');if(md)md.value='gemini-3.5-flash-lite'; // v02.134：清除設定後回到目前推薦的模型，不是舊版
+    renderGlist();updateStats();toast('已清除所有設定與快取');
+    _btnRelease('clearAll');
+  });
 }
 
 // ── Sheets ──
