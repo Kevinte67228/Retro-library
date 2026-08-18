@@ -2057,7 +2057,16 @@ body{
         <div class="dv2-hd-bar"></div>
       </div>
       <div style="padding:0 16px 40px">
-        <div class="stitle" style="margin-bottom:0">🎓 首次設定向導</div>
+        <!-- v02.186：使用者要求「首次設定向導」改成可收合、預設展開，讓使用者自己決定
+             要不要收起來——原本是固定不能收合的卡片，跟頁面其他區塊都用sgroup機制不
+             一致。沿用跟「必要設定」同一套data-default="open"寫法，開合狀態一樣會被
+             記住；卡片內部原本「展開詳細步驟」那顆按鈕（控制setup-guide這段詳細步驟
+             文字的顯示）維持不動，是巢狀在這個sgroup裡的另一層獨立收合，兩者互不影響。 -->
+        <div class="sgroup" data-grp="setupguide" data-default="open">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('setupguide')">
+            <span>🎓 首次設定向導</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
         <div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;line-height:1.6;color:#9fa8c8">
           <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
             <span style="flex-shrink:0">ℹ️</span>
@@ -2089,6 +2098,8 @@ body{
               <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">步驟 6：填入下方 URL 欄位</div>
               <div style="color:#9fa8c8">把複製的網址貼到下方「Google 試算表 — Apps Script URL」的輸入框，點擊「測試連線」驗證是否成功。</div>
             </div>
+          </div>
+        </div>
           </div>
         </div>
         
@@ -2960,7 +2971,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.11';
+const APP_VERSION='v08.12';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
