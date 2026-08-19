@@ -293,6 +293,7 @@ body{
 /* === Market reference links === */
 /* v40.31：改為水平捲動，容納使用者自訂市場，右側漸變陰影提示可滑動 */
 .market-ref-wrap{position:relative}
+.market-ref-wrap.cl{display:none}
 .market-ref-wrap::after{content:'';position:absolute;top:0;right:0;bottom:0;width:28px;pointer-events:none;border-radius:0 8px 8px 0;background:linear-gradient(90deg,rgba(20,27,48,0),#141b30);opacity:0;transition:opacity .2s}
 .market-ref-wrap.can-scroll::after{opacity:1}
 .market-ref-grid{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;scroll-snap-type:x proximity}
@@ -2976,7 +2977,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.18';
+const APP_VERSION='v08.19';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -16387,7 +16388,9 @@ function markScrollableRefs(root){
 }
 function _refLinks(title,sites){
   // v40.31：icon 來源可能是相對檔名（內建，需補 GH 前綴）或完整 URL / data URI（自訂市場，原樣使用）
-  return '<div class="detail-section"><div class="detail-section-title">'+esc(title)+'</div>'+
+  // v02.191：使用者要求二手估值市場參考區塊也能收合，跟其他詳情頁區塊（識別資訊/估值資訊等）
+  // 一樣加上可點擊收合的標題列，重用完全一樣的togSec()／.sc箭頭旋轉樣式，不用另外寫一套。
+  return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)">'+esc(title)+'<span class="sc op" style="margin-left:auto">▾</span></div>'+
     '<div class="market-ref-wrap"><div class="market-ref-grid">'+
     sites.map(function(s){
       var mono=esc(((s.n||'?').trim().charAt(0))||'?');

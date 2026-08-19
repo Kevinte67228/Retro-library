@@ -293,6 +293,7 @@ body{
 /* === Market reference links === */
 /* v40.31：改為水平捲動，容納使用者自訂市場，右側漸變陰影提示可滑動 */
 .market-ref-wrap{position:relative}
+.market-ref-wrap.cl{display:none}
 .market-ref-wrap::after{content:'';position:absolute;top:0;right:0;bottom:0;width:28px;pointer-events:none;border-radius:0 8px 8px 0;background:linear-gradient(90deg,rgba(20,27,48,0),#141b30);opacity:0;transition:opacity .2s}
 .market-ref-wrap.can-scroll::after{opacity:1}
 .market-ref-grid{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;scroll-snap-type:x proximity}
@@ -687,6 +688,15 @@ body{
 .detail-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
 .detail-section-grid.cl{display:none}
 .detail-section-grid .df.full{grid-column:1/-1}
+/* v02.188：詳情頁改成分頁瀏覽——分頁列比照#stats同一套「overflow-x + 右側淡出遮罩，
+   滑到底遮罩消失」手法，分頁按鈕數量依這筆商品實際有資料的分組動態決定，不是固定5個
+   都會出現。 */
+.dtabs-row{grid-column:1/-1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 10px;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%)}
+.dtabs-row.at-end{mask-image:none;-webkit-mask-image:none}
+.dtabs-row::-webkit-scrollbar{display:none}
+.dtab-btn{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:8px 6px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;color:#7986cb;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s,color .15s}
+.dtab-btn.on{background:#00e5ff22;border-color:#00e5ff;color:#00e5ff}
+.detail-tab-content{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* === Settings === */
 .stitle{font-size:11px;color:#7986cb;letter-spacing:1px;text-transform:uppercase;padding:14px 0 8px;font-family:'Rajdhani','PingFang TC',sans-serif}
@@ -2643,8 +2653,6 @@ body{
 <!-- Detail sheet -->
 <div id="dsheet">
   <div id="dov"></div>
-  <button class="dnav-float" id="dprev-float" title="上一筆" type="button">‹</button>
-  <button class="dnav-float" id="dnext-float" title="下一筆" type="button">›</button>
   <div id="dp">
     <div class="dhandle"></div>
     <div class="dhdr">
@@ -2969,7 +2977,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.13';
+const APP_VERSION='v08.19';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -16380,7 +16388,9 @@ function markScrollableRefs(root){
 }
 function _refLinks(title,sites){
   // v40.31：icon 來源可能是相對檔名（內建，需補 GH 前綴）或完整 URL / data URI（自訂市場，原樣使用）
-  return '<div class="detail-section"><div class="detail-section-title">'+esc(title)+'</div>'+
+  // v02.191：使用者要求二手估值市場參考區塊也能收合，跟其他詳情頁區塊（識別資訊/估值資訊等）
+  // 一樣加上可點擊收合的標題列，重用完全一樣的togSec()／.sc箭頭旋轉樣式，不用另外寫一套。
+  return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)">'+esc(title)+'<span class="sc op" style="margin-left:auto">▾</span></div>'+
     '<div class="market-ref-wrap"><div class="market-ref-grid">'+
     sites.map(function(s){
       var mono=esc(((s.n||'?').trim().charAt(0))||'?');
@@ -17098,6 +17108,32 @@ function detailHeroHtml(d,rowNum){
 }
 // v54.21：外層加 try-catch 包裝，詳情頁若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息
 // 並印出完整堆疊到 console，取代原本靜默失敗（畫面完全沒反應，使用者不知道發生什麼事）的狀況
+// v02.188：詳情頁改成分頁瀏覽（使用者參考類似Xbox商店App「詳細資料/功能/更多」的
+// 分頁形式提出這個需求）。全部分類加起來大約有26種不同的欄位分組名稱，這裡定義一份
+// 「分組名稱 → 分頁」的對照表，把這些分組收攏進5個固定分頁；不在對照表裡的分組
+// （理論上不該發生，但作為防呆）預設歸進「更多」，不會憑空消失不顯示。
+// v02.189：使用者實測回報5個分頁在畫面上太擠，要求收斂成4個。把原本獨立的「發行資訊」
+// 併進「基本資訊」——兩者概念上都屬於「這個商品是什麼/誰做的」這類識別性質的資訊，
+// 合併起來語意上還算合理，不會顯得牽強。
+var DETAIL_TAB_MAP={
+  '識別資訊':'basic','編碼條碼':'basic',
+  '發行資訊':'basic','發行廠商':'basic','出版資訊':'basic','商店資訊':'basic','追加內容':'basic',
+  '內容資訊':'spec','音樂資訊':'spec','遊戲規格':'spec','硬體規格':'spec','規格':'spec',
+  '主機資訊':'spec','週邊資訊':'spec','書籍資訊':'spec','模型資訊':'spec','影音資訊':'spec','版本規格':'spec',
+  '收藏狀態':'collect','估值資訊':'collect','品相完整度':'collect','運作狀態':'collect','個人記錄':'collect',
+  '圖片紀錄':'more','補充資訊':'more','關聯商品':'more','檔案資訊':'more'
+};
+var DETAIL_TABS=[
+  {id:'basic',label:'基本資訊'},
+  {id:'spec',label:'內容規格'},
+  {id:'collect',label:'收藏與估值'},
+  {id:'more',label:'更多'}
+];
+function switchDetailTab(tabId){
+  var wrap=$('dgrid');if(!wrap)return;
+  wrap.querySelectorAll('.dtab-btn').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tabId);});
+  wrap.querySelectorAll('.detail-tab-content').forEach(function(c){c.style.display=(c.dataset.tab===tabId?'grid':'none');});
+}
 function showDetail(rowNum,keepNav){
   try{
     _showDetailImpl(rowNum,keepNav);
@@ -17206,16 +17242,38 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
       sectionMap[group].push(_fld);
     }
   });
-  var sectionHtml='';
   var _dcol=gcolFor(d.category,d.subtype)||{}; // v02.19 Phase2：詳情頁區塊標題比照表單加上分類色點，沿用同一份 GCOL 色表
-  if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
-    sectionHtml+='<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>';
+  // v02.188：改成把每個區塊分派進對應的分頁，而不是直接串接成一長串
+  var _tabBuckets={};
+  function _pushToTab(tabId,html){
+    if(!_tabBuckets[tabId])_tabBuckets[tabId]=[];
+    _tabBuckets[tabId].push(html);
   }
-  sectionHtml+=marketReferenceHtml(d);
-  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).map(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
-    return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
+  if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
+    _pushToTab(DETAIL_TAB_MAP['關聯商品']||'more','<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>');
+  }
+  var _marketHtml=marketReferenceHtml(d);
+  if(_marketHtml)_pushToTab('collect',_marketHtml);
+  sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
+    var tabId=DETAIL_TAB_MAP[g]||'more'; // 防呆：不在對照表裡的分組歸進「更多」，不會憑空消失
+    _pushToTab(tabId,'<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>');
+  });
+  var _visTabs=DETAIL_TABS.filter(function(t){return _tabBuckets[t.id]&&_tabBuckets[t.id].length;});
+  var tabNavHtml=_visTabs.length>1?('<div class="dtabs-row" onscroll="this.classList.toggle(\'at-end\',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">'+_visTabs.map(function(t,i){
+    return '<button class="dtab-btn'+(i===0?' on':'')+'" data-tab="'+t.id+'" onclick="switchDetailTab(\''+t.id+'\')" type="button">'+t.label+'</button>';
+  }).join('')+'</div>'):'';
+  var tabBodyHtml=_visTabs.map(function(t,i){
+    return '<div class="detail-tab-content" data-tab="'+t.id+'" style="display:'+(i===0?'grid':'none')+'">'+_tabBuckets[t.id].join('')+'</div>';
   }).join('');
-  $('dgrid').innerHTML=html+sectionHtml;
+  $('dgrid').innerHTML=html+tabNavHtml+tabBodyHtml;
+  // v02.190：使用者實測回報分頁列右側出現一塊沒對齊的空白——追查後發現淡出遮罩效果
+  // 原本只在使用者「實際滑動」時才透過onscroll判斷要不要關閉，但如果分頁本身就已經
+  // 塞得下整排（不需要滑動，例如上一版收斂成4個分頁後常見這種情況），沒有滑動事件
+  // 會觸發，遮罩就會一直卡在開啟狀態，對著不會捲動的空白區域淡出，看起來像沒對齊的
+  // 空格。改成插入DOM後立刻主動檢查一次是否真的需要捲動，不需要就馬上關閉遮罩，
+  // 不用等使用者去滑一下才發現不需要遮罩。
+  var _dtabsRow=$('dgrid').querySelector('.dtabs-row');
+  if(_dtabsRow&&_dtabsRow.scrollWidth-_dtabsRow.clientWidth<=4)_dtabsRow.classList.add('at-end');
   markScrollableRefs($('dgrid'));
   $('dsheet').classList.add('on');
   // 開啟/關聯跳轉後，詳細頁捲回頂端（避免沿用前一筆的捲動位置而停在中段）
@@ -17238,8 +17296,12 @@ function _initDetailTouch(){
   dp.ontouchstart=function(e){
     _tx=e.touches[0].clientX;
     // v40.31：若起點在「可水平捲動」的市場參考區塊內，這次滑動讓它捲動，不觸發翻頁
+    // v02.189：使用者實測回報詳情頁分頁列（.dtabs-row，v02.188新增）的最後一個分頁點擊
+    // 會誤觸發翻頁——原因跟市場參考區塊一樣，分頁列本身也是可以左右滑動的，沒有套用
+    // 同一個保護判斷，導致點擊/滑動分頁列時被詳情頁翻頁手勢誤判成滑動翻頁。分頁列補上
+    // 同樣的排除判斷。
     _txSkip=false;
-    var g=e.target.closest&&e.target.closest('.market-ref-grid');
+    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row'));
     if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
   };
   dp.ontouchend=function(e){
