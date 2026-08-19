@@ -687,6 +687,15 @@ body{
 .detail-section-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
 .detail-section-grid.cl{display:none}
 .detail-section-grid .df.full{grid-column:1/-1}
+/* v02.188：詳情頁改成分頁瀏覽——分頁列比照#stats同一套「overflow-x + 右側淡出遮罩，
+   滑到底遮罩消失」手法，分頁按鈕數量依這筆商品實際有資料的分組動態決定，不是固定5個
+   都會出現。 */
+.dtabs-row{grid-column:1/-1;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 2px 10px;mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 0,#000 calc(100% - 24px),transparent 100%)}
+.dtabs-row.at-end{mask-image:none;-webkit-mask-image:none}
+.dtabs-row::-webkit-scrollbar{display:none}
+.dtab-btn{flex:0 0 auto;white-space:nowrap;padding:8px 14px;border-radius:10px;background:#0f1525;border:1px solid #1e2a45;color:#7986cb;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s,color .15s}
+.dtab-btn.on{background:#00e5ff22;border-color:#00e5ff;color:#00e5ff}
+.detail-tab-content{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
 /* === Settings === */
 .stitle{font-size:11px;color:#7986cb;letter-spacing:1px;text-transform:uppercase;padding:14px 0 8px;font-family:'Rajdhani','PingFang TC',sans-serif}
@@ -2057,7 +2066,16 @@ body{
         <div class="dv2-hd-bar"></div>
       </div>
       <div style="padding:0 16px 40px">
-        <div class="stitle" style="margin-bottom:0">🎓 首次設定向導</div>
+        <!-- v02.186：使用者要求「首次設定向導」改成可收合、預設展開，讓使用者自己決定
+             要不要收起來——原本是固定不能收合的卡片，跟頁面其他區塊都用sgroup機制不
+             一致。沿用跟「必要設定」同一套data-default="open"寫法，開合狀態一樣會被
+             記住；卡片內部原本「展開詳細步驟」那顆按鈕（控制setup-guide這段詳細步驟
+             文字的顯示）維持不動，是巢狀在這個sgroup裡的另一層獨立收合，兩者互不影響。 -->
+        <div class="sgroup" data-grp="setupguide" data-default="open">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('setupguide')">
+            <span>🎓 首次設定向導</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
         <div style="background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;line-height:1.6;color:#9fa8c8">
           <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
             <span style="flex-shrink:0">ℹ️</span>
@@ -2089,6 +2107,8 @@ body{
               <div style="color:#00e5ff;font-weight:700;margin-bottom:4px">步驟 6：填入下方 URL 欄位</div>
               <div style="color:#9fa8c8">把複製的網址貼到下方「Google 試算表 — Apps Script URL」的輸入框，點擊「測試連線」驗證是否成功。</div>
             </div>
+          </div>
+        </div>
           </div>
         </div>
         
@@ -2496,6 +2516,31 @@ body{
         </div>
           </div>
         </div>
+        <!-- v02.187：使用者要求把「維護與修復工具」搬到「數位帳號清單」跟「說明・關於・
+             測試樣本」中間，原本放在儲存/匯出/匯入按鈕後面。 -->
+        <div class="sgroup" data-grp="maintenance">
+          <button type="button" class="sgroup-h" onclick="toggleSGroup('maintenance')">
+            <span>🛠️ 維護與修復工具</span><span class="sgroup-arr">▾</span>
+          </button>
+          <div class="sgroup-body">
+        <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
+        <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
+        <!-- v02.173：使用者實測回報連「強制重新比對資料欄位」都對特定舊資料沒有效果——
+             追查後發現這些資料是在新增loan_to/loan_due欄位之前就已經存在的舊列，第一次
+             失敗的執行讓標題列文字提早被改寫，資料沒有真的搬過去，導致後續所有remap都是
+             拿「已經被污染、不準確」的標題列文字當依據，等於把新順序對應回自己，什麼都
+             沒修到。這顆按鈕改用「已知的舊排列」（不信任目前可能已被污染的標題列文字）
+             當依據，並且只處理有偵測到異常內容的列，比下面的「強制重新比對」更精準、
+             風險更低，建議優先試這個。 -->
+        <button class="btn bo bw bs" style="color:#66bb6a;border-color:#66bb6a;margin-bottom:8px" onclick="repairPreLoanFieldData()" type="button">🩹 修復借出欄位錯位（安全，僅動異常列）</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若「修復工作表標題列」後欄位內容看起來還是錯位，優先試這個——只會修復偵測到「借出對象/歸還日」位置內容明顯異常（例如出現平台清單、完整時間戳記）的列，正常的列完全不會被動到，比下面的「強制重新比對」風險更低</div>
+        <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若上面兩個都試過還是有問題才用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類，但會無條件重寫全部列（不像上面那個只動異常列）</div>
+        <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
+        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
+          </div>
+        </div>
         <div class="sgroup" data-grp="docabout">
           <button type="button" class="sgroup-h" onclick="toggleSGroup('docabout')">
             <span>📄 說明 · 關於 · 測試樣本</span><span class="sgroup-arr">▾</span>
@@ -2527,22 +2572,6 @@ body{
           <button class="btn bo bs" style="flex:1" onclick="exportCfg()" type="button">📤 匯出設定</button>
           <button class="btn bo bs" style="flex:1" onclick="importCfg()" type="button">📥 匯入設定</button>
         </div>
-        <button class="btn bo bw bs" style="color:#ff5252;border-color:#ff5252;margin-bottom:8px" onclick="clearAll()" type="button">🗑️ 清除設定與快取</button>
-        <button class="btn bo bw bs" style="color:#ff7043;border-color:#ff7043;margin-bottom:8px" onclick="fixHeaders()" type="button">🔧 修復工作表標題列</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若書籍顯示錯誤或 Books 工作表缺少標題列時使用</div>
-        <!-- v02.173：使用者實測回報連「強制重新比對資料欄位」都對特定舊資料沒有效果——
-             追查後發現這些資料是在新增loan_to/loan_due欄位之前就已經存在的舊列，第一次
-             失敗的執行讓標題列文字提早被改寫，資料沒有真的搬過去，導致後續所有remap都是
-             拿「已經被污染、不準確」的標題列文字當依據，等於把新順序對應回自己，什麼都
-             沒修到。這顆按鈕改用「已知的舊排列」（不信任目前可能已被污染的標題列文字）
-             當依據，並且只處理有偵測到異常內容的列，比下面的「強制重新比對」更精準、
-             風險更低，建議優先試這個。 -->
-        <button class="btn bo bw bs" style="color:#66bb6a;border-color:#66bb6a;margin-bottom:8px" onclick="repairPreLoanFieldData()" type="button">🩹 修復借出欄位錯位（安全，僅動異常列）</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:12px">若「修復工作表標題列」後欄位內容看起來還是錯位，優先試這個——只會修復偵測到「借出對象/歸還日」位置內容明顯異常（例如出現平台清單、完整時間戳記）的列，正常的列完全不會被動到，比下面的「強制重新比對」風險更低</div>
-        <button class="btn bo bw bs" style="color:#ffb300;border-color:#ffb300;margin-bottom:8px" onclick="forceRealignData()" type="button">⚠️ 強制重新比對資料欄位</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">若上面兩個都試過還是有問題才用這個；點下去會先讓你選要處理哪個分類，只會重寫該分類的資料，不會動到其他分類，但會無條件重寫全部列（不像上面那個只動異常列）</div>
-        <button class="btn bo bw bs" style="color:#26c6da;border-color:#26c6da;margin-bottom:8px" onclick="testAI()" type="button">🔬 測試 AI 連線</button>
-        <div style="font-size:11px;color:#7a8499;margin-bottom:16px">送出一張測試圖給 AI，回報模型狀態與 token 用量</div>
 
       </div>
     </div>
@@ -2949,7 +2978,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.10';
+const APP_VERSION='v08.15';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5499,14 +5528,17 @@ function updateFxLive(){
   }).catch(function(){toast('匯率更新失敗，沿用目前手動值','er',4000);_btnRelease('fxLive');});
 }
 function clearAll(){
-  if(!confirm('確定清除所有設定與快取？'))return;
-  if(!_btnGuard('clearAll'))return;
-  localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
-  // 同時清空畫面上的欄位
-  ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  var md=document.getElementById('c-gmdl');if(md)md.value='gemini-3.5-flash-lite'; // v02.134：清除設定後回到目前推薦的模型，不是舊版
-  renderGlist();updateStats();toast('已清除所有設定與快取');
-  _btnRelease('clearAll');
+  // v02.185：跟刪除相關函式同一次一併改用非同步自訂彈窗，取代原生confirm()
+  _customConfirm('確定要清除所有設定與快取嗎？','這會清空本機儲存的 API 金鑰、試算表網址等設定，以及已快取的收藏資料（雲端試算表裡的資料不受影響）。').then(function(proceed){
+    if(!proceed)return;
+    if(!_btnGuard('clearAll'))return;
+    localStorage.clear();localforage.clear().catch(function(){});col=[];cfg={};
+    // 同時清空畫面上的欄位
+    ['c-url','c-gkey','c-iid','c-isec'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+    var md=document.getElementById('c-gmdl');if(md)md.value='gemini-3.5-flash-lite'; // v02.134：清除設定後回到目前推薦的模型，不是舊版
+    renderGlist();updateStats();toast('已清除所有設定與快取');
+    _btnRelease('clearAll');
+  });
 }
 
 // ── Sheets ──
@@ -17075,6 +17107,32 @@ function detailHeroHtml(d,rowNum){
 }
 // v54.21：外層加 try-catch 包裝，詳情頁若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息
 // 並印出完整堆疊到 console，取代原本靜默失敗（畫面完全沒反應，使用者不知道發生什麼事）的狀況
+// v02.188：詳情頁改成分頁瀏覽（使用者參考類似Xbox商店App「詳細資料/功能/更多」的
+// 分頁形式提出這個需求）。全部分類加起來大約有26種不同的欄位分組名稱，這裡定義一份
+// 「分組名稱 → 分頁」的對照表，把這些分組收攏進5個固定分頁；不在對照表裡的分組
+// （理論上不該發生，但作為防呆）預設歸進「更多」，不會憑空消失不顯示。
+// v02.189：使用者實測回報5個分頁在畫面上太擠，要求收斂成4個。把原本獨立的「發行資訊」
+// 併進「基本資訊」——兩者概念上都屬於「這個商品是什麼/誰做的」這類識別性質的資訊，
+// 合併起來語意上還算合理，不會顯得牽強。
+var DETAIL_TAB_MAP={
+  '識別資訊':'basic','編碼條碼':'basic',
+  '發行資訊':'basic','發行廠商':'basic','出版資訊':'basic','商店資訊':'basic','追加內容':'basic',
+  '內容資訊':'spec','音樂資訊':'spec','遊戲規格':'spec','硬體規格':'spec','規格':'spec',
+  '主機資訊':'spec','週邊資訊':'spec','書籍資訊':'spec','模型資訊':'spec','影音資訊':'spec','版本規格':'spec',
+  '收藏狀態':'collect','估值資訊':'collect','品相完整度':'collect','運作狀態':'collect','個人記錄':'collect',
+  '圖片紀錄':'more','補充資訊':'more','關聯商品':'more','檔案資訊':'more'
+};
+var DETAIL_TABS=[
+  {id:'basic',label:'基本資訊'},
+  {id:'spec',label:'內容規格'},
+  {id:'collect',label:'收藏與估值'},
+  {id:'more',label:'更多'}
+];
+function switchDetailTab(tabId){
+  var wrap=$('dgrid');if(!wrap)return;
+  wrap.querySelectorAll('.dtab-btn').forEach(function(b){b.classList.toggle('on',b.dataset.tab===tabId);});
+  wrap.querySelectorAll('.detail-tab-content').forEach(function(c){c.style.display=(c.dataset.tab===tabId?'grid':'none');});
+}
 function showDetail(rowNum,keepNav){
   try{
     _showDetailImpl(rowNum,keepNav);
@@ -17183,16 +17241,30 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
       sectionMap[group].push(_fld);
     }
   });
-  var sectionHtml='';
   var _dcol=gcolFor(d.category,d.subtype)||{}; // v02.19 Phase2：詳情頁區塊標題比照表單加上分類色點，沿用同一份 GCOL 色表
-  if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
-    sectionHtml+='<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>';
+  // v02.188：改成把每個區塊分派進對應的分頁，而不是直接串接成一長串
+  var _tabBuckets={};
+  function _pushToTab(tabId,html){
+    if(!_tabBuckets[tabId])_tabBuckets[tabId]=[];
+    _tabBuckets[tabId].push(html);
   }
-  sectionHtml+=marketReferenceHtml(d);
-  sectionHtml+=sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).map(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
-    return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>';
+  if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
+    _pushToTab(DETAIL_TAB_MAP['關聯商品']||'more','<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>');
+  }
+  var _marketHtml=marketReferenceHtml(d);
+  if(_marketHtml)_pushToTab('collect',_marketHtml);
+  sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
+    var tabId=DETAIL_TAB_MAP[g]||'more'; // 防呆：不在對照表裡的分組歸進「更多」，不會憑空消失
+    _pushToTab(tabId,'<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol[g]||'#7986cb')+'"></span>'+esc(g)+'<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+sectionMap[g].join('')+'</div></div>');
+  });
+  var _visTabs=DETAIL_TABS.filter(function(t){return _tabBuckets[t.id]&&_tabBuckets[t.id].length;});
+  var tabNavHtml=_visTabs.length>1?('<div class="dtabs-row" onscroll="this.classList.toggle(\'at-end\',this.scrollLeft+this.clientWidth>=this.scrollWidth-4)">'+_visTabs.map(function(t,i){
+    return '<button class="dtab-btn'+(i===0?' on':'')+'" data-tab="'+t.id+'" onclick="switchDetailTab(\''+t.id+'\')" type="button">'+t.label+'</button>';
+  }).join('')+'</div>'):'';
+  var tabBodyHtml=_visTabs.map(function(t,i){
+    return '<div class="detail-tab-content" data-tab="'+t.id+'" style="display:'+(i===0?'grid':'none')+'">'+_tabBuckets[t.id].join('')+'</div>';
   }).join('');
-  $('dgrid').innerHTML=html+sectionHtml;
+  $('dgrid').innerHTML=html+tabNavHtml+tabBodyHtml;
   markScrollableRefs($('dgrid'));
   $('dsheet').classList.add('on');
   // 開啟/關聯跳轉後，詳細頁捲回頂端（避免沿用前一筆的捲動位置而停在中段）
@@ -17215,8 +17287,12 @@ function _initDetailTouch(){
   dp.ontouchstart=function(e){
     _tx=e.touches[0].clientX;
     // v40.31：若起點在「可水平捲動」的市場參考區塊內，這次滑動讓它捲動，不觸發翻頁
+    // v02.189：使用者實測回報詳情頁分頁列（.dtabs-row，v02.188新增）的最後一個分頁點擊
+    // 會誤觸發翻頁——原因跟市場參考區塊一樣，分頁列本身也是可以左右滑動的，沒有套用
+    // 同一個保護判斷，導致點擊/滑動分頁列時被詳情頁翻頁手勢誤判成滑動翻頁。分頁列補上
+    // 同樣的排除判斷。
     _txSkip=false;
-    var g=e.target.closest&&e.target.closest('.market-ref-grid');
+    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row'));
     if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
   };
   dp.ontouchend=function(e){

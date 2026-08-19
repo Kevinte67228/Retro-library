@@ -2978,7 +2978,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.15';
+const APP_VERSION='v08.16';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17265,6 +17265,14 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     return '<div class="detail-tab-content" data-tab="'+t.id+'" style="display:'+(i===0?'grid':'none')+'">'+_tabBuckets[t.id].join('')+'</div>';
   }).join('');
   $('dgrid').innerHTML=html+tabNavHtml+tabBodyHtml;
+  // v02.190：使用者實測回報分頁列右側出現一塊沒對齊的空白——追查後發現淡出遮罩效果
+  // 原本只在使用者「實際滑動」時才透過onscroll判斷要不要關閉，但如果分頁本身就已經
+  // 塞得下整排（不需要滑動，例如上一版收斂成4個分頁後常見這種情況），沒有滑動事件
+  // 會觸發，遮罩就會一直卡在開啟狀態，對著不會捲動的空白區域淡出，看起來像沒對齊的
+  // 空格。改成插入DOM後立刻主動檢查一次是否真的需要捲動，不需要就馬上關閉遮罩，
+  // 不用等使用者去滑一下才發現不需要遮罩。
+  var _dtabsRow=$('dgrid').querySelector('.dtabs-row');
+  if(_dtabsRow&&_dtabsRow.scrollWidth-_dtabsRow.clientWidth<=4)_dtabsRow.classList.add('at-end');
   markScrollableRefs($('dgrid'));
   $('dsheet').classList.add('on');
   // 開啟/關聯跳轉後，詳細頁捲回頂端（避免沿用前一筆的捲動位置而停在中段）
