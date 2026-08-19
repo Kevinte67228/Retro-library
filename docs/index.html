@@ -2978,7 +2978,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.14';
+const APP_VERSION='v08.15';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17111,18 +17111,20 @@ function detailHeroHtml(d,rowNum){
 // 分頁形式提出這個需求）。全部分類加起來大約有26種不同的欄位分組名稱，這裡定義一份
 // 「分組名稱 → 分頁」的對照表，把這些分組收攏進5個固定分頁；不在對照表裡的分組
 // （理論上不該發生，但作為防呆）預設歸進「更多」，不會憑空消失不顯示。
+// v02.189：使用者實測回報5個分頁在畫面上太擠，要求收斂成4個。把原本獨立的「發行資訊」
+// 併進「基本資訊」——兩者概念上都屬於「這個商品是什麼/誰做的」這類識別性質的資訊，
+// 合併起來語意上還算合理，不會顯得牽強。
 var DETAIL_TAB_MAP={
   '識別資訊':'basic','編碼條碼':'basic',
+  '發行資訊':'basic','發行廠商':'basic','出版資訊':'basic','商店資訊':'basic','追加內容':'basic',
   '內容資訊':'spec','音樂資訊':'spec','遊戲規格':'spec','硬體規格':'spec','規格':'spec',
   '主機資訊':'spec','週邊資訊':'spec','書籍資訊':'spec','模型資訊':'spec','影音資訊':'spec','版本規格':'spec',
-  '發行資訊':'publish','發行廠商':'publish','出版資訊':'publish','商店資訊':'publish','追加內容':'publish',
   '收藏狀態':'collect','估值資訊':'collect','品相完整度':'collect','運作狀態':'collect','個人記錄':'collect',
   '圖片紀錄':'more','補充資訊':'more','關聯商品':'more','檔案資訊':'more'
 };
 var DETAIL_TABS=[
   {id:'basic',label:'基本資訊'},
   {id:'spec',label:'內容規格'},
-  {id:'publish',label:'發行資訊'},
   {id:'collect',label:'收藏與估值'},
   {id:'more',label:'更多'}
 ];
@@ -17285,8 +17287,12 @@ function _initDetailTouch(){
   dp.ontouchstart=function(e){
     _tx=e.touches[0].clientX;
     // v40.31：若起點在「可水平捲動」的市場參考區塊內，這次滑動讓它捲動，不觸發翻頁
+    // v02.189：使用者實測回報詳情頁分頁列（.dtabs-row，v02.188新增）的最後一個分頁點擊
+    // 會誤觸發翻頁——原因跟市場參考區塊一樣，分頁列本身也是可以左右滑動的，沒有套用
+    // 同一個保護判斷，導致點擊/滑動分頁列時被詳情頁翻頁手勢誤判成滑動翻頁。分頁列補上
+    // 同樣的排除判斷。
     _txSkip=false;
-    var g=e.target.closest&&e.target.closest('.market-ref-grid');
+    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row'));
     if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
   };
   dp.ontouchend=function(e){
