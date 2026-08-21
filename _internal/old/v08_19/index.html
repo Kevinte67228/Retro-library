@@ -2977,7 +2977,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.20';
+const APP_VERSION='v08.19';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4392,28 +4392,11 @@ var _exitArmed=false, _exitTimer=null;
 
 // 找出目前最上層開啟中的覆蓋層，回傳其關閉函式（無則 null）
 function _topLayerClose(){
-  // v02.192：使用者回報_topLayerClose()只涵蓋5個彈窗，其餘（燈箱大圖、相機掃描、批次
-  // 編輯、AI說明等）沒有被涵蓋，在Android實體返回鍵情境下按返回不會關閉彈窗，而是直接
-  // 跳出「再按一次離開」甚至誤退出App。這次全面盤點目前專案裡所有彈窗/覆蓋層元素補齊，
-  // 每一項依照它實際的顯示判斷方式（'on' class 或 style.display）正確檢查。
   var L=[
     ['crop-ov','on',function(){cropCancel();}],
     ['type-picker-overlay','on',function(){cancelTypePicker();}],
     ['game-picker-overlay','on',function(){closeGamePicker();}],
     ['filter-sheet','on',function(){closeFilterSheet();}],
-    ['img-lightbox-ov','on',function(){closeImgLightbox();}],
-    ['plat-pick-ov','on',function(){closePlatPicker();}],
-    ['bulk-edit-overlay','on',function(){bulkEditClose();}],
-    ['cm-overlay','on',function(){cmCloseEditor();}],
-    ['series-ov','on',function(){closeSeriesBrowse();}],
-    ['dupscan-ov','on',function(){closeDupScan();}],
-    ['fscan-ov','on',function(){fscanClose();}],
-    ['barcode-web-ov','display',function(){closeBarcodeWebSearch();}],
-    ['cd-web-ov','display',function(){closeCdWebSearch();}],
-    ['api-guide-overlay','display',function(){closeApiGuide();}],
-    ['help-overlay','display',function(){toggleHelp();}],
-    ['col-menu-panel','display',function(){closeColMenu();}],
-    ['hunt-menu-panel','display',function(){closeHuntMenu();}],
     ['dsheet','on',function(){ if(_detailNavStack.length){detailNavBack();} else {closeDetailSilent();} }]
   ];
   for(var i=0;i<L.length;i++){
@@ -9444,21 +9427,15 @@ function testIGDB(){
 // ── Open Library ──
 function olLookup(isbn){
   var c=isbn.replace(/[-\s]/g,'');
-  // v02.193：使用者反映外部API在502/503時可能回傳HTML而非JSON，若沒有防護會在
-  // r.json()解析階段拋出SyntaxError。查證後發現：這個檔案裡直接呼叫外部API的函式
-  // 大多數都已經有.catch()兜底（例如緊鄰的openbdLookup／googleBooksLookup），唯獨
-  // 這個olLookup漏了收尾的.catch()，是真正需要補的地方——原本這個問題確實存在，只是
-  // 抓錯了函式，不是使用者原本點名的openBD。額外加上response.ok檢查，讓非2xx回應
-  // （伺服器錯誤頁）提早被攔下，不用等到JSON解析失敗才發現。
   return fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+c+'&format=json&jscmd=data',{signal:AbortSignal.timeout(6000)})
-  .then(function(r){if(!r.ok)throw new Error('http_'+r.status);return r.json();}).then(function(d){
+  .then(function(r){return r.json();}).then(function(d){
     var bk=d['ISBN:'+c];if(!bk)return null;
     var yr=(bk.publish_date||'').match(/(\d{4})/);
     return{category:'攻略',primary_name:bk.title||'',zh_name:bk.title||'',en_name:bk.title||'',
       publisher:(bk.publishers&&bk.publishers[0]&&bk.publishers[0].name)||'',
       release_date:yr?yr[1]+'/01/01':'2099/01/01',barcode:isbn,code:c,
       genre:'N/A',players:'N/A',features:'N/A',developer:'',play_status:'N/A',bundle:'攻略本',notes:'[Open Library 查詢補全]'};
-  }).catch(function(){return null;});
+  });
 }
 
 // ── Google Books（ISBN 直查，經 .gs proxy；補英文/海外攻略本）──
@@ -9494,7 +9471,7 @@ function googleBooksLookup(isbn){
 function openbdLookup(isbn){
   var c=isbn.replace(/[-\s]/g,'');
   return fetch('https://api.openbd.jp/v1/get?isbn='+c,{signal:AbortSignal.timeout(6000)})
-  .then(function(r){if(!r.ok)throw new Error('http_'+r.status);return r.json();}).then(function(d){
+  .then(function(r){return r.json();}).then(function(d){
     var sm=d&&d[0]&&d[0].summary;if(!sm||!sm.title)return null;
     var yr=(sm.pubdate||'').match(/(\d{4})/);
     var o={category:'攻略',primary_name:sm.title,zh_name:sm.title,jp_name:sm.title,

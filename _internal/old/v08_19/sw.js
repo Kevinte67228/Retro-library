@@ -1,8 +1,8 @@
-const CACHE_NAME = 'retrovault-v08-20';
+const CACHE_NAME = 'retrovault-v08-19';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './RetroVault_v08_20_index.html',
+  './RetroVault_v08_19_index.html',
   './manifest.json',
   './manual.html',
   './bg.webp'
@@ -63,16 +63,10 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
       return Promise.all(keys.map(function(key) {
-        // v02.192：使用者回報這裡原本只找'gamevault-'開頭的舊快取來刪除，但App改名後
-        // 目前的快取名稱前綴早就是'retrovault-'（見CACHE_NAME），這個判斷式從改名後就
-        // 沒更新過——結果是每次升版，舊的retrovault-vXX.XX快取永遠不會被清掉，只會一直
-        // 累積。改成同時比對兩種前綴：'retrovault-'抓的才是真正持續在累積的舊版本快取，
-        // 保留'gamevault-'判斷是為了萬一有使用者手機上還殘留改名前的極舊快取也能順便清掉。
-        // IMG_CACHE_NAME('retrovault-img-v1')不等於CACHE_NAME、但前綴確實符合'retrovault-'，
-        // 這裡額外排除它，維持圖片快取跟App版本脫鉤的既有設計（換版本不用重新下載已經
-        // 快取過的圖）。
-        if (key === CACHE_NAME || key === IMG_CACHE_NAME) return;
-        if (key.indexOf('retrovault-') === 0 || key.indexOf('gamevault-') === 0) return caches.delete(key);
+        // v02.124：IMG_CACHE_NAME('retrovault-img-v1')不是gamevault-開頭、也不等於
+        // CACHE_NAME，本來就不會被下面這行誤刪；圖片快取刻意跟應用程式版本脫鉤，換版本
+        // 不需要重新下載已經快取過的圖。
+        if (key !== CACHE_NAME && key.indexOf('gamevault-') === 0) return caches.delete(key);
       }));
     }).then(function() {
       return self.clients.claim();
