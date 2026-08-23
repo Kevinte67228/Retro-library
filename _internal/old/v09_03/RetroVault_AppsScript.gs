@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v08            ║
+// ║  RetroVault — Google Apps Script 後端  v09            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -916,6 +916,27 @@ function listAll(type) {
   return { ok: true, rows: allRows };
 }
  
+// v08 CI/CD：使用者反映多個日期欄位（不只created_at）都出現「Google Sheets自動把儲存格
+// 識別成日期型別，回讀時序列化成UTC ISO時間戳記」的問題——過去只修過created_at這一個
+// 欄位（見addRow/updateRow裡的「E1防呆」），這次推廣到全部日期型欄位。寫入時強制該欄位
+// 為純文字格式，從源頭避免Sheets自動格式化，搭配上面listSheet()的讀取時正規化，形成
+// 雙層防護。
+const DATE_TEXT_COLS = ['created_at', 'buy_date', 'resale_date', 'release_date', 'test_date', 'event_date', 'loan_due', 'market_value_updated_at'];
+function _forceTextDateCols(sheet, rowNum, headers, padded) {
+  DATE_TEXT_COLS.forEach(function(colName) {
+    const idx = headers.indexOf(colName);
+    if (idx < 0) return; // 這個分類的欄位表沒有這個日期欄位，跳過
+    const cell = sheet.getRange(rowNum, idx + 1);
+    cell.setNumberFormat('@');
+    cell.setValue(String(padded[idx] == null ? '' : padded[idx]));
+  });
+}
+function _normalizeDateCell(v, tz) {
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return Utilities.formatDate(v, tz, 'yyyy/MM/dd');
+  }
+  return v;
+}
 function listSheet(type) {
   const { sheet, headers } = getSheet(type);
   const last = sheet.getLastRow();
@@ -924,12 +945,13 @@ function listSheet(type) {
   // 防呆：實體欄數可能少於 headers（剛新增欄位、尚未執行 fixSheetHeaders）→ 夾限讀取寬度，缺欄回空字串
   const readCols = Math.min(headers.length, sheet.getMaxColumns());
   const raw = sheet.getRange(2, 1, last - 1, readCols).getValues();
+  const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(); // 迴圈外只取一次，避免逐格重複呼叫拖慢效能
   const rows = raw.map((r, i) => {
     const sheetRow = i + 2; // 實際工作表列號
     // rowNum 加上工作表前綴避免 Games/Books 衝突
     // 例如：game:3, book:2
     const obj = { rowNum: sheetRow, _type: type };
-    headers.forEach((h, j) => { obj[h] = (j < readCols ? r[j] : ''); });
+    headers.forEach((h, j) => { obj[h] = (j < readCols ? _normalizeDateCell(r[j], tz) : ''); });
     // _rowKey 用 uuid 欄位（若有），否則 fallback 到 type:row
     const uuidVal = obj['uuid'];
     // UUID 必須含'-'且長度>=30，否則是欄位錯位的舊資料
@@ -996,14 +1018,10 @@ function addRow(row, type, fields) {
   try {
     sheet.appendRow(padded);
     newRow = sheet.getLastRow();
-    // created_at 防呆（E1）：強制該格為純文字格式並以字串重寫，避免 Sheets 自動把
-    // 「YYYY/MM/DD HH:MM」判定為日期型別、回讀時序列化成 UTC ISO（建檔時間編碼亂掉的根因）
-    const _caIdx = headers.indexOf('created_at');
-    if (_caIdx >= 0) {
-      const _caCell = sheet.getRange(newRow, _caIdx + 1);
-      _caCell.setNumberFormat('@');
-      _caCell.setValue(String(padded[_caIdx]));
-    }
+    // 日期欄位防呆（推廣自原本只針對created_at的E1防呆）：強制這些欄位為純文字格式並以
+    // 字串重寫，避免 Sheets 自動把「YYYY/MM/DD」類格式判定為日期型別、回讀時序列化成
+    // UTC ISO（建檔時間編碼亂掉的根因，現在涵蓋全部日期型欄位，不只created_at）
+    _forceTextDateCols(sheet, newRow, headers, padded);
   } finally {
     lock.releaseLock();
   }
@@ -1072,13 +1090,8 @@ function updateRow(rowNum, row, type, fields) {
     oldExtraIds.forEach(function(id) { if (!newExtraIdSet[id] && (_imgUsageCount[id] || 0) <= 1) trashImg(id); });
   }
   sheet.getRange(actualRow, 1, 1, headers.length).setValues([padded]);
-  // created_at 防呆（E1）：與 addRow 一致，強制純文字避免回讀變 ISO
-  const _caIdxU = headers.indexOf('created_at');
-  if (_caIdxU >= 0) {
-    const _caCellU = sheet.getRange(actualRow, _caIdxU + 1);
-    _caCellU.setNumberFormat('@');
-    _caCellU.setValue(String(padded[_caIdxU]));
-  }
+  // 日期欄位防呆：與 addRow 一致，強制純文字避免回讀變 ISO（涵蓋全部日期型欄位）
+  _forceTextDateCols(sheet, actualRow, headers, padded);
   return { ok: true, sheetType: resolvedType, imgs: imgs };
 }
  

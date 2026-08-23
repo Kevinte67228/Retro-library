@@ -603,8 +603,9 @@ body{
 .dtitle{font-size:17px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .dplat{font-size:11px;color:#7986cb;margin-top:3px}
 .dpos{align-self:flex-start;font-size:11px;color:#7986cb;background:#0f1525;padding:3px 8px;border-radius:8px;border:1px solid #1e2a45}
-.dact{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch}
-.dact .btn{width:100%;min-height:38px;padding:8px 8px;font-size:13px}
+.dact{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.dact .btn{flex:1 1 auto;min-width:56px;min-height:38px;padding:8px 6px;font-size:13px}
+.dact .btn-icon{flex:0 0 auto;width:44px;padding:8px 0}
 .dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 #dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
@@ -2981,7 +2982,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.03';
+const APP_VERSION='v09.04';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17449,12 +17450,12 @@ function _showDetailImpl(rowNum,keepNav){
   var _isDigitalDetail=(catInternal(d.category)==='數位下載版');
 $('dact').innerHTML=
     backBtn+
-    (_isDigitalDetail?'':'<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
+    (_isDigitalDetail?'':'<button class="btn btn-icon bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
     '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')" type="button">估值</button>')+
     '<button class="btn bo bs" onclick="fillMissingFieldsForItem(\''+ rowNum +'\')" title="用AI重新查詢並補齊這筆缺漏的欄位" type="button">🧩 補齊</button>'+
     '<button class="btn bo bs" onclick="editDetail()" type="button">編輯</button>'+
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
-    '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
+    '<button class="btn btn-icon bo bs" onclick="closeDetail()" type="button">✕</button>';
   
 var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(_dh){
