@@ -603,9 +603,10 @@ body{
 .dtitle{font-size:17px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .dplat{font-size:11px;color:#7986cb;margin-top:3px}
 .dpos{align-self:flex-start;font-size:11px;color:#7986cb;background:#0f1525;padding:3px 8px;border-radius:8px;border:1px solid #1e2a45}
-.dact{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
-.dact .btn{flex:1 1 auto;min-width:56px;min-height:38px;padding:8px 6px;font-size:13px}
-.dact .btn-icon{flex:0 0 auto;width:44px;padding:8px 0}
+.dact{display:flex;gap:6px;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.dact::-webkit-scrollbar{display:none}
+.dact .btn{flex:0 0 auto;min-width:64px;min-height:38px;padding:8px 10px;font-size:13px;white-space:nowrap}
+.dact .btn-icon{flex:0 0 auto;width:44px;min-width:44px;padding:8px 0}
 .dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 #dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
@@ -2982,7 +2983,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.04';
+const APP_VERSION='v09.05';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17575,7 +17576,10 @@ function _initDetailTouch(){
     // 同一個保護判斷，導致點擊/滑動分頁列時被詳情頁翻頁手勢誤判成滑動翻頁。分頁列補上
     // 同樣的排除判斷。
     _txSkip=false;
-    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row'));
+    // v09.05：.dact這排動作按鈕（估值/補齊/編輯/刪除等）這次改成可橫向捲動，跟先前
+    // .dtabs-row／.market-ref-grid同一類「本身可滑動的區塊，容易被詳情頁翻頁手勢誤判」
+    // 的情況，主動一併排除，不要等使用者又回報一次同樣的問題。
+    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row')||e.target.closest('.dact'));
     if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
   };
   dp.ontouchend=function(e){
