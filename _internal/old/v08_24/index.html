@@ -1863,7 +1863,7 @@ body{
       <div class="col-tools">
         <div class="sw" style="margin:0;flex:1;position:relative">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#7986cb;width:16px;height:16px;pointer-events:none"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input class="si" id="col-search" type="search" placeholder="搜尋名稱、平台、條碼..." oninput="filterCol()" onsearch="filterCol()">
+          <input class="si" id="col-search" type="search" placeholder="搜尋名稱、平台、條碼..." oninput="filterCol()" onsearch="filterCol()" onkeyup="filterCol()" oncompositionend="filterCol()" onfocus="_startColSearchPoll()" onblur="_stopColSearchPoll()">
         </div>
         <button class="btn bo" style="padding:9px 12px;flex-shrink:0" title="掃條碼比對收藏" onclick="initColScan()" type="button">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="4" height="18" rx="1"/><rect x="8" y="3" width="2" height="18" rx="1"/><rect x="13" y="3" width="3" height="18" rx="1"/><rect x="19" y="3" width="3" height="18" rx="1"/></svg>
@@ -2977,7 +2977,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.19';
+const APP_VERSION='v08.24';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4392,11 +4392,28 @@ var _exitArmed=false, _exitTimer=null;
 
 // 找出目前最上層開啟中的覆蓋層，回傳其關閉函式（無則 null）
 function _topLayerClose(){
+  // v02.192：使用者回報_topLayerClose()只涵蓋5個彈窗，其餘（燈箱大圖、相機掃描、批次
+  // 編輯、AI說明等）沒有被涵蓋，在Android實體返回鍵情境下按返回不會關閉彈窗，而是直接
+  // 跳出「再按一次離開」甚至誤退出App。這次全面盤點目前專案裡所有彈窗/覆蓋層元素補齊，
+  // 每一項依照它實際的顯示判斷方式（'on' class 或 style.display）正確檢查。
   var L=[
     ['crop-ov','on',function(){cropCancel();}],
     ['type-picker-overlay','on',function(){cancelTypePicker();}],
     ['game-picker-overlay','on',function(){closeGamePicker();}],
     ['filter-sheet','on',function(){closeFilterSheet();}],
+    ['img-lightbox-ov','on',function(){closeImgLightbox();}],
+    ['plat-pick-ov','on',function(){closePlatPicker();}],
+    ['bulk-edit-overlay','on',function(){bulkEditClose();}],
+    ['cm-overlay','on',function(){cmCloseEditor();}],
+    ['series-ov','on',function(){closeSeriesBrowse();}],
+    ['dupscan-ov','on',function(){closeDupScan();}],
+    ['fscan-ov','on',function(){fscanClose();}],
+    ['barcode-web-ov','display',function(){closeBarcodeWebSearch();}],
+    ['cd-web-ov','display',function(){closeCdWebSearch();}],
+    ['api-guide-overlay','display',function(){closeApiGuide();}],
+    ['help-overlay','display',function(){toggleHelp();}],
+    ['col-menu-panel','display',function(){closeColMenu();}],
+    ['hunt-menu-panel','display',function(){closeHuntMenu();}],
     ['dsheet','on',function(){ if(_detailNavStack.length){detailNavBack();} else {closeDetailSilent();} }]
   ];
   for(var i=0;i<L.length;i++){
@@ -9427,15 +9444,21 @@ function testIGDB(){
 // ── Open Library ──
 function olLookup(isbn){
   var c=isbn.replace(/[-\s]/g,'');
+  // v02.193：使用者反映外部API在502/503時可能回傳HTML而非JSON，若沒有防護會在
+  // r.json()解析階段拋出SyntaxError。查證後發現：這個檔案裡直接呼叫外部API的函式
+  // 大多數都已經有.catch()兜底（例如緊鄰的openbdLookup／googleBooksLookup），唯獨
+  // 這個olLookup漏了收尾的.catch()，是真正需要補的地方——原本這個問題確實存在，只是
+  // 抓錯了函式，不是使用者原本點名的openBD。額外加上response.ok檢查，讓非2xx回應
+  // （伺服器錯誤頁）提早被攔下，不用等到JSON解析失敗才發現。
   return fetch('https://openlibrary.org/api/books?bibkeys=ISBN:'+c+'&format=json&jscmd=data',{signal:AbortSignal.timeout(6000)})
-  .then(function(r){return r.json();}).then(function(d){
+  .then(function(r){if(!r.ok)throw new Error('http_'+r.status);return r.json();}).then(function(d){
     var bk=d['ISBN:'+c];if(!bk)return null;
     var yr=(bk.publish_date||'').match(/(\d{4})/);
     return{category:'攻略',primary_name:bk.title||'',zh_name:bk.title||'',en_name:bk.title||'',
       publisher:(bk.publishers&&bk.publishers[0]&&bk.publishers[0].name)||'',
       release_date:yr?yr[1]+'/01/01':'2099/01/01',barcode:isbn,code:c,
       genre:'N/A',players:'N/A',features:'N/A',developer:'',play_status:'N/A',bundle:'攻略本',notes:'[Open Library 查詢補全]'};
-  });
+  }).catch(function(){return null;});
 }
 
 // ── Google Books（ISBN 直查，經 .gs proxy；補英文/海外攻略本）──
@@ -9471,7 +9494,7 @@ function googleBooksLookup(isbn){
 function openbdLookup(isbn){
   var c=isbn.replace(/[-\s]/g,'');
   return fetch('https://api.openbd.jp/v1/get?isbn='+c,{signal:AbortSignal.timeout(6000)})
-  .then(function(r){return r.json();}).then(function(d){
+  .then(function(r){if(!r.ok)throw new Error('http_'+r.status);return r.json();}).then(function(d){
     var sm=d&&d[0]&&d[0].summary;if(!sm||!sm.title)return null;
     var yr=(sm.pubdate||'').match(/(\d{4})/);
     var o={category:'攻略',primary_name:sm.title,zh_name:sm.title,jp_name:sm.title,
@@ -13244,6 +13267,7 @@ function _relSubOf(d){
 // ── 統一關聯選取器（列出全收藏、可多選、跨類別）──
 var _relPickSel=null;       // 本次選取狀態（id→1）
 var _relPickList=null;      // 可選清單快取
+var _relPickPollTimer=null;
 function openRelatedPicker(){
   if(!col||!col.length){toast('收藏庫尚無項目可關聯','er');return;}
   _relPickSel={};
@@ -13272,7 +13296,7 @@ function openRelatedPicker(){
     '<div style="padding:14px 16px;border-bottom:1px solid #1e2a45;flex-shrink:0">'+
       '<div style="width:36px;height:4px;background:#1e2a45;border-radius:2px;margin:0 auto 10px"></div>'+
       '<div style="font-size:14px;font-weight:600;color:#e8eaf6;margin-bottom:8px">選取關聯商品（可多選，跨類別）</div>'+
-      '<input id="gp-search" placeholder="搜尋名稱 / 編碼..." class="fi" style="font-size:13px;text-overflow:ellipsis;overflow:hidden" oninput="filterRelatedPicker(this.value)">'+
+      '<input id="gp-search" placeholder="搜尋名稱 / 編碼..." class="fi" style="font-size:13px;text-overflow:ellipsis;overflow:hidden" oninput="filterRelatedPicker(this.value)" onkeyup="filterRelatedPicker(this.value)" oncompositionupdate="filterRelatedPicker(this.value+(event.data||\'\'))" oncompositionend="filterRelatedPicker(this.value)">'+
     '</div>'+
     '<div id="gp-list" style="overflow-y:auto;flex:1">'+_relRows(_relPickList)+'</div>'+
     '<div style="padding:12px 16px;border-top:1px solid #1e2a45;flex-shrink:0;display:flex;gap:8px">'+
@@ -13286,6 +13310,19 @@ function openRelatedPicker(){
     var panel=overlay.firstElementChild;
     if(panel)panel.classList.add('sheet-panel','on');
   });
+  // v02.194：使用者實測回報連續兩版（onkeyup、oncompositionend）都無法解決特定裝置上
+  // 中文注音輸入法搜尋不生效的問題——這代表這台裝置上的瀏覽器/輸入法組合，可能連
+  // compositionend都沒有標準觸發，已經不是「該補哪一種DOM事件」能解決的層次。改用
+  // 完全不依賴任何特定事件的輪詢機制：每200ms主動檢查一次輸入框內容有沒有變化，
+  // 變化了就重新篩選——不管背後是哪種輸入法、哪種事件觸發時機不穩定，都保證能正確
+  // 反應。彈窗開啟時啟動，關閉時清掉，不會有背景持續耗資源的疑慮。
+  if(_relPickPollTimer)clearInterval(_relPickPollTimer);
+  var _relPickLastVal='';
+  _relPickPollTimer=setInterval(function(){
+    var inp=$('gp-search');
+    if(!inp){clearInterval(_relPickPollTimer);_relPickPollTimer=null;return;}
+    if(inp.value!==_relPickLastVal){_relPickLastVal=inp.value;filterRelatedPicker(inp.value);}
+  },200);
 }
 function _relRows(list){
   return list.slice(0,300).map(function(it){
@@ -13329,7 +13366,12 @@ function _relRemove(tok){
   onFld('related_code',toks.join(','));
   renderForm();
 }
-function closeGamePicker(){_closeSheetOv('game-picker-overlay');}
+function closeGamePicker(){
+  // v02.194：關閉時清掉輪詢計時器，避免背景殘留一個持續每200ms檢查已經不存在的
+  // #gp-search元素的計時器
+  if(_relPickPollTimer){clearInterval(_relPickPollTimer);_relPickPollTimer=null;}
+  _closeSheetOv('game-picker-overlay');
+}
 
 // ── 詳細頁關聯導航（堆疊；支援多層跳轉與返回）──
 var _detailNavStack=[];
@@ -15421,6 +15463,23 @@ function renderFilterSheet(){
     }).join('')+'</div>';
   }
   _updateFilterResult();
+}
+// v02.194：使用者實測回報連續兩版事件型修正（onkeyup、oncompositionend）都無法解決
+// 特定裝置上中文注音輸入法搜尋不生效的問題，主搜尋框也有一樣的問題（原本連onkeyup／
+// compositionend都沒加）。改用不依賴任何特定事件的輪詢機制，聚焦時才啟動、失焦時停止，
+// 避免頁面開著但沒在用搜尋框時背景持續耗資源。
+var _colSearchPollTimer=null;
+function _startColSearchPoll(){
+  if(_colSearchPollTimer)clearInterval(_colSearchPollTimer);
+  var _lastVal=(($('col-search')&&$('col-search').value)||'');
+  _colSearchPollTimer=setInterval(function(){
+    var inp=$('col-search');
+    if(!inp){clearInterval(_colSearchPollTimer);_colSearchPollTimer=null;return;}
+    if(inp.value!==_lastVal){_lastVal=inp.value;filterCol();}
+  },200);
+}
+function _stopColSearchPoll(){
+  if(_colSearchPollTimer){clearInterval(_colSearchPollTimer);_colSearchPollTimer=null;}
 }
 function filterCol(){
   filtered=col.filter(function(item){return _quickPass(item)&&_facetPass(item);});
