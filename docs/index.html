@@ -2983,7 +2983,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.05';
+const APP_VERSION='v09.06';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17451,8 +17451,6 @@ function _showDetailImpl(rowNum,keepNav){
   var _isDigitalDetail=(catInternal(d.category)==='數位下載版');
 $('dact').innerHTML=
     backBtn+
-    (_isDigitalDetail?'':'<button class="btn btn-icon bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
-    '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')" type="button">估值</button>')+
     '<button class="btn bo bs" onclick="fillMissingFieldsForItem(\''+ rowNum +'\')" title="用AI重新查詢並補齊這筆缺漏的欄位" type="button">🧩 補齊</button>'+
     '<button class="btn bo bs" onclick="editDetail()" type="button">編輯</button>'+
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
@@ -17528,6 +17526,16 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
     _pushToTab(DETAIL_TAB_MAP['關聯商品']||'more','<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>');
   }
   var _marketHtml=marketReferenceHtml(d);
+  // v09.06：使用者要求把估值邏輯說明（💡）跟估值按鈕從詳情頁最上面的動作列搬到「收藏與
+  // 估值」分頁裡（本來就是這個分頁該管的東西，搬過去後動作列縮短成4顆，不再需要滑動）。
+  // 這裡在分頁內容構建階段就要用到「是否數位下載版」判斷，比動作列渲染那段（_isDigitalDetail
+  // 變數的宣告處）更早執行，不能直接引用那個變數，改成當場重新計算同樣的判斷式。
+  if(catInternal(d.category)!=='數位下載版'){
+    _pushToTab('collect','<div style="grid-column:1/-1;display:flex;gap:8px;margin-bottom:2px">'+
+      '<button class="btn bo bs" style="flex:0 0 auto;width:44px" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
+      '<button class="btn bo bs" style="flex:1" onclick="estimateMarketValue(\''+rowNum+'\')" type="button">重新估值</button>'+
+    '</div>');
+  }
   if(_marketHtml)_pushToTab('collect',_marketHtml);
   sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
     var tabId=DETAIL_TAB_MAP[g]||'more'; // 防呆：不在對照表裡的分組歸進「更多」，不會憑空消失
