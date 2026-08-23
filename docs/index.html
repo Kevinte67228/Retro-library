@@ -603,10 +603,8 @@ body{
 .dtitle{font-size:17px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .dplat{font-size:11px;color:#7986cb;margin-top:3px}
 .dpos{align-self:flex-start;font-size:11px;color:#7986cb;background:#0f1525;padding:3px 8px;border-radius:8px;border:1px solid #1e2a45}
-.dact{display:flex;gap:6px;align-items:stretch;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.dact::-webkit-scrollbar{display:none}
-.dact .btn{flex:0 0 auto;min-width:64px;min-height:38px;padding:8px 10px;font-size:13px;white-space:nowrap}
-.dact .btn-icon{flex:0 0 auto;width:44px;min-width:44px;padding:8px 0}
+.dact{display:flex;gap:8px;align-items:stretch}
+.dact .btn{flex:1;min-height:38px;padding:8px 4px;font-size:13px}
 .dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 #dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
@@ -2983,7 +2981,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.06';
+const APP_VERSION='v09.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -16660,11 +16658,18 @@ function markScrollableRefs(root){
     })(wraps[i]);
   }
 }
-function _refLinks(title,sites){
+function _refLinks(title,sites,extraHtml){
   // v40.31：icon 來源可能是相對檔名（內建，需補 GH 前綴）或完整 URL / data URI（自訂市場，原樣使用）
   // v02.191：使用者要求二手估值市場參考區塊也能收合，跟其他詳情頁區塊（識別資訊/估值資訊等）
   // 一樣加上可點擊收合的標題列，重用完全一樣的togSec()／.sc箭頭旋轉樣式，不用另外寫一套。
-  return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)">'+esc(title)+'<span class="sc op" style="margin-left:auto">▾</span></div>'+
+  // v09.07：使用者要求把燈泡（估值邏輯說明）跟重新估值按鈕整合進這個標題列（靠右對齊、
+  // 跟收合箭頭一起收合），加上可選的extraHtml參數插在標題文字跟箭頭之間；按鈕群組本身
+  // 也用margin-left:auto把自己（連同後面的箭頭）一起推到最右邊，並在外層加
+  // event.stopPropagation()，避免點擊按鈕時事件冒泡到父層onclick="togSec(this)"、
+  // 意外把收合狀態也一起切換掉。
+  return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)">'+esc(title)+
+    (extraHtml?('<div style="margin-left:auto;display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">'+extraHtml+'</div>'):'')+
+    '<span class="sc op" style="margin-left:'+(extraHtml?'8px':'auto')+'">▾</span></div>'+
     '<div class="market-ref-wrap"><div class="market-ref-grid">'+
     sites.map(function(s){
       var mono=esc(((s.n||'?').trim().charAt(0))||'?');
@@ -16676,7 +16681,7 @@ function _refLinks(title,sites){
     }).join('')+
     '</div></div></div>';
 }
-function marketReferenceHtml(d){
+function marketReferenceHtml(d,rowNum){
   if(catInternal(d.category)==='數位下載版')return ''; // v42.16：數位版無實體轉售市場，不顯示
   var tw=marketTwQuery(d);
   var jp=marketJpQuery(d);
@@ -16714,7 +16719,10 @@ function marketReferenceHtml(d){
       return ai-bi;
     });
   }
-  return sites.length?_refLinks('二手估值市場參考',sites):'';
+  return sites.length?_refLinks('二手估值市場參考',sites,rowNum?(
+    '<button class="btn bo" style="width:40px;min-height:32px;padding:0;font-size:13px;flex-shrink:0" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
+    '<button class="btn bo" style="min-height:32px;padding:6px 12px;font-size:13px;flex-shrink:0;white-space:nowrap" onclick="estimateMarketValue(\''+rowNum+'\')" type="button">重新估值</button>'
+  ):''):'';
 }
 // v40.31：把 cfg.customMarkets 轉成可渲染的 site 物件陣列（已套入查詢字串）
 function customMarketSites(d){
@@ -17454,7 +17462,7 @@ $('dact').innerHTML=
     '<button class="btn bo bs" onclick="fillMissingFieldsForItem(\''+ rowNum +'\')" title="用AI重新查詢並補齊這筆缺漏的欄位" type="button">🧩 補齊</button>'+
     '<button class="btn bo bs" onclick="editDetail()" type="button">編輯</button>'+
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
-    '<button class="btn btn-icon bo bs" onclick="closeDetail()" type="button">✕</button>';
+    '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
   
 var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(_dh){
@@ -17525,17 +17533,10 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
     _pushToTab(DETAIL_TAB_MAP['關聯商品']||'more','<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>');
   }
-  var _marketHtml=marketReferenceHtml(d);
-  // v09.06：使用者要求把估值邏輯說明（💡）跟估值按鈕從詳情頁最上面的動作列搬到「收藏與
-  // 估值」分頁裡（本來就是這個分頁該管的東西，搬過去後動作列縮短成4顆，不再需要滑動）。
-  // 這裡在分頁內容構建階段就要用到「是否數位下載版」判斷，比動作列渲染那段（_isDigitalDetail
-  // 變數的宣告處）更早執行，不能直接引用那個變數，改成當場重新計算同樣的判斷式。
-  if(catInternal(d.category)!=='數位下載版'){
-    _pushToTab('collect','<div style="grid-column:1/-1;display:flex;gap:8px;margin-bottom:2px">'+
-      '<button class="btn bo bs" style="flex:0 0 auto;width:44px" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
-      '<button class="btn bo bs" style="flex:1" onclick="estimateMarketValue(\''+rowNum+'\')" type="button">重新估值</button>'+
-    '</div>');
-  }
+  // v09.07：v09.06把估值說明/重新估值按鈕獨立成一列放在分頁最上面，這次使用者要求改成
+  // 整合進「二手估值市場參考」的標題列本身（靠右對齊、跟著一起收合），改成直接把rowNum
+  // 傳進marketReferenceHtml()，由它內部決定要不要組出這兩顆按鈕。
+  var _marketHtml=marketReferenceHtml(d,rowNum);
   if(_marketHtml)_pushToTab('collect',_marketHtml);
   sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
     var tabId=DETAIL_TAB_MAP[g]||'more'; // 防呆：不在對照表裡的分組歸進「更多」，不會憑空消失

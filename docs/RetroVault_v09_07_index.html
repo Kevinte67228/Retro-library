@@ -603,8 +603,8 @@ body{
 .dtitle{font-size:17px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .dplat{font-size:11px;color:#7986cb;margin-top:3px}
 .dpos{align-self:flex-start;font-size:11px;color:#7986cb;background:#0f1525;padding:3px 8px;border-radius:8px;border:1px solid #1e2a45}
-.dact{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch}
-.dact .btn{width:100%;min-height:38px;padding:8px 8px;font-size:13px}
+.dact{display:flex;gap:8px;align-items:stretch}
+.dact .btn{flex:1;min-height:38px;padding:8px 4px;font-size:13px}
 .dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
 #dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
@@ -1831,6 +1831,10 @@ body{
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                   找重複項目
                 </button>
+                <button class="col-menu-item" onclick="openMissingFieldsScan();closeColMenu()" type="button">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  批次補齊缺漏欄位
+                </button>
                 <button class="col-menu-item" onclick="exportCsvByType();closeColMenu()" type="button">
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
                   匯出 CSV
@@ -2977,7 +2981,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.01';
+const APP_VERSION='v09.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4407,6 +4411,7 @@ function _topLayerClose(){
     ['cm-overlay','on',function(){cmCloseEditor();}],
     ['series-ov','on',function(){closeSeriesBrowse();}],
     ['dupscan-ov','on',function(){closeDupScan();}],
+    ['mf-ov','on',function(){closeMissingFieldsScan();}],
     ['fscan-ov','on',function(){fscanClose();}],
     ['barcode-web-ov','display',function(){closeBarcodeWebSearch();}],
     ['cd-web-ov','display',function(){closeCdWebSearch();}],
@@ -13383,6 +13388,195 @@ function _relRemove(tok){
   onFld('related_code',toks.join(','));
   renderForm();
 }
+// v09.02：使用者要求做一個工具，針對已經建檔的舊資料，重新呼叫AI補齊缺漏欄位（例如
+// 使用者反映很多筆發售日期還是缺）。重用既有的_aiSpecFor()／aiKnowledgeFill()這套單筆
+// 建檔就在用的AI補全機制，不用另外設計一套；並行執行沿用批次書背同一套_BATCH_CONCURRENCY
+// 工作池模式跟離線佇列感知的_shPostUpdateOrQueue()存檔輔助。
+var _mfItems=[]; // 掃描結果：[{item, missingKeys}]，item是col裡的原始參照
+var _mfSel={};   // 使用者勾選狀態，key是item的uid/rowNum
+var _mfRunning=false;
+function _scanMissingFields(){
+  var out=[];
+  col.forEach(function(item){
+    var d=item.data||{};
+    var spec=_aiSpecFor(d.category,d.subtype);
+    if(!spec||!spec.fields)return;
+    var keys=Object.keys(spec.fields).filter(function(k){
+      var v=d[k];
+      return v===undefined||v===null||(''+v).trim()==='';
+    });
+    if(keys.length)out.push({item:item,missingKeys:keys});
+  });
+  return out;
+}
+function openMissingFieldsScan(){
+  loading('掃描缺漏欄位中...');
+  setTimeout(function(){
+    _mfItems=_scanMissingFields();
+    _mfSel={};
+    _mfItems.forEach(function(m){_mfSel[_colKey(m.item)]=1;}); // 預設全選
+    noLoad();
+    _renderMissingFieldsPanel();
+    var ov=$('mf-ov'),p=$('mf-panel');
+    if(ov)ov.classList.add('on');
+    if(p)p.classList.add('on');
+  },50);
+}
+function closeMissingFieldsScan(){
+  if(_mfRunning){toast('補齊進行中，請等待完成','er');return;}
+  var ov=$('mf-ov'),p=$('mf-panel');
+  if(ov)ov.classList.remove('on');
+  if(p)p.classList.remove('on');
+}
+function _mfToggle(key){
+  if(_mfSel[key])delete _mfSel[key];else _mfSel[key]=1;
+  _renderMissingFieldsPanel();
+}
+function _mfToggleAll(on){
+  _mfSel={};
+  if(on)_mfItems.forEach(function(m){_mfSel[_colKey(m.item)]=1;});
+  _renderMissingFieldsPanel();
+}
+function _renderMissingFieldsPanel(){
+  var wrap=$('mf-list');if(!wrap)return;
+  var head=$('mf-head');
+  var selCount=Object.keys(_mfSel).length;
+  if(head)head.textContent=_mfItems.length?('掃描到 '+_mfItems.length+' 筆有缺漏欄位，已選 '+selCount+' 筆'):'掃描完成，目前沒有缺漏欄位的項目';
+  if(!_mfItems.length){
+    wrap.innerHTML='<div style="text-align:center;padding:40px 20px;color:#7986cb;font-size:13px">目前收藏庫裡沒有偵測到缺漏欄位的項目 ✓</div>';
+    return;
+  }
+  wrap.innerHTML=_mfItems.map(function(m){
+    var d=m.item.data||{};
+    var key=_colKey(m.item);
+    var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
+    var spec=_aiSpecFor(d.category,d.subtype);
+    var fieldLabels=m.missingKeys.map(function(k){return (spec&&spec.fields&&spec.fields[k])?k:k;}).join('、'); // 顯示欄位id，畫面空間有限不逐一轉標籤
+    var on=_mfSel[key]?1:0;
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid #1e2a45;cursor:pointer" onclick="_mfToggle(\''+_escAttr(key)+'\')">'+
+      '<div style="width:20px;height:20px;border-radius:5px;border:1.5px solid '+(on?'#00e5ff':'#2a3a5a')+';background:'+(on?'#00e5ff':'transparent')+';flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:13px;color:#0a0e1a">'+(on?'✓':'')+'</div>'+
+      '<div style="min-width:0;flex:1">'+
+        '<div style="font-size:13px;color:#e8eaf6;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(name)+'</div>'+
+        '<div style="font-size:11px;color:#ffb74d;margin-top:2px">缺：'+esc(fieldLabels)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+// v09.03：使用者要求把批次補齊缺漏欄位那套邏輯也做成單筆版本，讓詳情頁可以針對「這一筆」
+// 直接重新呼叫AI補齊，不用跑整個收藏庫的批次掃描流程。重用完全一樣的規格判斷跟「只填
+// 真正空的欄位、不覆蓋已有內容」防護，只是範圍縮小成一筆。
+function fillMissingFieldsForItem(rowNum){
+  var item=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
+  if(!item){toast('找不到此記錄，請重新整理收藏','er');return;}
+  var d=item.data||{};
+  var spec=_aiSpecFor(d.category,d.subtype);
+  if(!spec||!spec.fields){toast('這個分類目前沒有可補全的 AI 規格','er');return;}
+  var missingKeys=Object.keys(spec.fields).filter(function(k){
+    var v=d[k];
+    return v===undefined||v===null||(''+v).trim()==='';
+  });
+  if(!missingKeys.length){toast('這筆資料目前沒有缺漏欄位 ✓','ok');return;}
+  loading('AI 補齊缺漏欄位中...');
+  aiKnowledgeFill(d.primary_name,d.platform,missingKeys,d.category,d.region).then(function(ai){
+    ai=ai||{};
+    var updated=Object.assign({},d);
+    var filled=[];
+    missingKeys.forEach(function(k){
+      var cur=updated[k];
+      var stillEmpty=cur===undefined||cur===null||(''+cur).trim()==='';
+      var aiVal=ai[k];
+      if(stillEmpty&&aiVal!==undefined&&aiVal!==null&&(''+aiVal).trim()!==''){
+        updated[k]=aiVal;filled.push(k);
+      }
+    });
+    if(!filled.length){
+      toast('AI 沒有查到可補的內容','',3000);
+      return;
+    }
+    var fields=fieldsFor(updated.category,updated.subtype);
+    var row=_rowFromFields(updated,fields);
+    var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
+    return _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+      if(r.queued){
+        item.data=updated;
+        localforage.setItem('gv_col',col).catch(function(){});
+        updateStats();filterCol();
+        toast('📡 已離線儲存，補了 '+filled.length+' 個欄位，連線恢復後會自動補送','',4000);
+      }else if(r.res&&r.res.ok){
+        item.data=updated;
+        localforage.setItem('gv_col',col).catch(function(){});
+        updateStats();filterCol();
+        toast('已補齊 '+filled.length+' 個欄位 ✓','ok');
+      }else{
+        throw new Error((r.res&&r.res.error)||'更新失敗');
+      }
+    });
+  }).catch(function(e){
+    toast('補齊失敗：'+((e&&e.message)||'未知錯誤'),'er',5000);
+  }).finally(function(){
+    noLoad();
+    if(detailRow===rowNum)showDetail(rowNum,true); // 重新整理詳情頁畫面，反映剛補上的欄位
+  });
+}
+function startMissingFieldsFill(){
+  if(_mfRunning)return;
+  var selected=_mfItems.filter(function(m){return _mfSel[_colKey(m.item)];});
+  if(!selected.length){toast('尚未選取任何項目','er');return;}
+  _mfRunning=true;
+  var total=selected.length,done=0,filledCount=0,failCount=0,next=0;
+  var progEl=$('mf-progress');
+  function updateProg(){
+    if(progEl)progEl.textContent='處理中：'+done+' / '+total+'（已補 '+filledCount+' 筆，失敗 '+failCount+' 筆）';
+  }
+  updateProg();
+  var startBtn=$('mf-start-btn');if(startBtn)startBtn.disabled=true;
+  new Promise(function(resolveAll){
+    function startNext(){
+      if(next>=total)return;
+      var m=selected[next++];
+      var d=m.item.data||{};
+      aiKnowledgeFill(d.primary_name,d.platform,m.missingKeys,d.category,d.region).then(function(ai){
+        ai=ai||{};
+        var updated=Object.assign({},d);
+        var anyFilled=false;
+        m.missingKeys.forEach(function(k){
+          // 二次確認仍是空的才填（避免跟其他同時進行的操作互相覆蓋），AI給的值也要非空才採用
+          var cur=updated[k];
+          var stillEmpty=cur===undefined||cur===null||(''+cur).trim()==='';
+          var aiVal=ai[k];
+          if(stillEmpty&&aiVal!==undefined&&aiVal!==null&&(''+aiVal).trim()!==''){
+            updated[k]=aiVal;anyFilled=true;
+          }
+        });
+        if(!anyFilled){done++;updateProg();startNext();return;}
+        var fields=fieldsFor(updated.category,updated.subtype);
+        var row=_rowFromFields(updated,fields);
+        var rowNum=m.item.uid||m.item.rowNum;
+        var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
+        _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+          if(r.queued||(r.res&&r.res.ok)){m.item.data=updated;filledCount++;}
+          else{failCount++;}
+        }).catch(function(){failCount++;}).finally(function(){done++;updateProg();startNext();});
+      }).catch(function(){
+        done++;failCount++;updateProg();startNext();
+      });
+    }
+    var lanes=Math.min(_BATCH_CONCURRENCY,total);
+    for(var i=0;i<lanes;i++)startNext();
+    var checkDone=setInterval(function(){
+      if(done>=total){clearInterval(checkDone);resolveAll();}
+    },300);
+  }).then(function(){
+    _mfRunning=false;
+    localforage.setItem('gv_col',col).catch(function(){});
+    updateStats();filterCol();
+    if(startBtn)startBtn.disabled=false;
+    toast('批次補齊完成：成功補齊 '+filledCount+' 筆'+(failCount?'，失敗 '+failCount+' 筆':''),'ok',4500);
+    _mfItems=_scanMissingFields(); // 重新掃描一次，讓清單反映最新狀態
+    _mfSel={};
+    _renderMissingFieldsPanel();
+  });
+}
 function closeGamePicker(){
   // v02.194：關閉時清掉輪詢計時器，避免背景殘留一個持續每200ms檢查已經不存在的
   // #gp-search元素的計時器
@@ -16464,11 +16658,18 @@ function markScrollableRefs(root){
     })(wraps[i]);
   }
 }
-function _refLinks(title,sites){
+function _refLinks(title,sites,extraHtml){
   // v40.31：icon 來源可能是相對檔名（內建，需補 GH 前綴）或完整 URL / data URI（自訂市場，原樣使用）
   // v02.191：使用者要求二手估值市場參考區塊也能收合，跟其他詳情頁區塊（識別資訊/估值資訊等）
   // 一樣加上可點擊收合的標題列，重用完全一樣的togSec()／.sc箭頭旋轉樣式，不用另外寫一套。
-  return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)">'+esc(title)+'<span class="sc op" style="margin-left:auto">▾</span></div>'+
+  // v09.07：使用者要求把燈泡（估值邏輯說明）跟重新估值按鈕整合進這個標題列（靠右對齊、
+  // 跟收合箭頭一起收合），加上可選的extraHtml參數插在標題文字跟箭頭之間；按鈕群組本身
+  // 也用margin-left:auto把自己（連同後面的箭頭）一起推到最右邊，並在外層加
+  // event.stopPropagation()，避免點擊按鈕時事件冒泡到父層onclick="togSec(this)"、
+  // 意外把收合狀態也一起切換掉。
+  return '<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)">'+esc(title)+
+    (extraHtml?('<div style="margin-left:auto;display:flex;gap:6px;align-items:center" onclick="event.stopPropagation()">'+extraHtml+'</div>'):'')+
+    '<span class="sc op" style="margin-left:'+(extraHtml?'8px':'auto')+'">▾</span></div>'+
     '<div class="market-ref-wrap"><div class="market-ref-grid">'+
     sites.map(function(s){
       var mono=esc(((s.n||'?').trim().charAt(0))||'?');
@@ -16480,7 +16681,7 @@ function _refLinks(title,sites){
     }).join('')+
     '</div></div></div>';
 }
-function marketReferenceHtml(d){
+function marketReferenceHtml(d,rowNum){
   if(catInternal(d.category)==='數位下載版')return ''; // v42.16：數位版無實體轉售市場，不顯示
   var tw=marketTwQuery(d);
   var jp=marketJpQuery(d);
@@ -16518,7 +16719,10 @@ function marketReferenceHtml(d){
       return ai-bi;
     });
   }
-  return sites.length?_refLinks('二手估值市場參考',sites):'';
+  return sites.length?_refLinks('二手估值市場參考',sites,rowNum?(
+    '<button class="btn bo" style="width:40px;min-height:32px;padding:0;font-size:13px;flex-shrink:0" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
+    '<button class="btn bo" style="min-height:32px;padding:6px 12px;font-size:13px;flex-shrink:0;white-space:nowrap" onclick="estimateMarketValue(\''+rowNum+'\')" type="button">重新估值</button>'
+  ):''):'';
 }
 // v40.31：把 cfg.customMarkets 轉成可渲染的 site 物件陣列（已套入查詢字串）
 function customMarketSites(d){
@@ -17255,8 +17459,7 @@ function _showDetailImpl(rowNum,keepNav){
   var _isDigitalDetail=(catInternal(d.category)==='數位下載版');
 $('dact').innerHTML=
     backBtn+
-    (_isDigitalDetail?'':'<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
-    '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')" type="button">估值</button>')+
+    '<button class="btn bo bs" onclick="fillMissingFieldsForItem(\''+ rowNum +'\')" title="用AI重新查詢並補齊這筆缺漏的欄位" type="button">🧩 補齊</button>'+
     '<button class="btn bo bs" onclick="editDetail()" type="button">編輯</button>'+
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
     '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
@@ -17330,7 +17533,10 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(relBlock&&!isGroupHidden('關聯商品',d.category)){ // v02.13：關聯商品是獨立區塊（不在 sectionOrder 內），需個別套用顯示設定；v02.15 改依分類判斷
     _pushToTab(DETAIL_TAB_MAP['關聯商品']||'more','<div class="detail-section"><div class="detail-section-title" onclick="togSec(this)"><span class="dot" style="background:'+(_dcol['關聯商品']||'#7986cb')+'"></span>關聯商品<span class="sc op" style="margin-left:auto">▾</span></div><div class="detail-section-grid">'+relBlock+'</div></div>');
   }
-  var _marketHtml=marketReferenceHtml(d);
+  // v09.07：v09.06把估值說明/重新估值按鈕獨立成一列放在分頁最上面，這次使用者要求改成
+  // 整合進「二手估值市場參考」的標題列本身（靠右對齊、跟著一起收合），改成直接把rowNum
+  // 傳進marketReferenceHtml()，由它內部決定要不要組出這兩顆按鈕。
+  var _marketHtml=marketReferenceHtml(d,rowNum);
   if(_marketHtml)_pushToTab('collect',_marketHtml);
   sectionOrder.filter(function(g){return !isGroupHidden(g,d.category);}).forEach(function(g){ // v02.13：套用欄位區塊顯示設定；v02.15 改依分類判斷
     var tabId=DETAIL_TAB_MAP[g]||'more'; // 防呆：不在對照表裡的分組歸進「更多」，不會憑空消失
@@ -17379,7 +17585,10 @@ function _initDetailTouch(){
     // 同一個保護判斷，導致點擊/滑動分頁列時被詳情頁翻頁手勢誤判成滑動翻頁。分頁列補上
     // 同樣的排除判斷。
     _txSkip=false;
-    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row'));
+    // v09.05：.dact這排動作按鈕（估值/補齊/編輯/刪除等）這次改成可橫向捲動，跟先前
+    // .dtabs-row／.market-ref-grid同一類「本身可滑動的區塊，容易被詳情頁翻頁手勢誤判」
+    // 的情況，主動一併排除，不要等使用者又回報一次同樣的問題。
+    var g=e.target.closest&&(e.target.closest('.market-ref-grid')||e.target.closest('.dtabs-row')||e.target.closest('.dact'));
     if(g&&g.scrollWidth-g.clientWidth>2)_txSkip=true;
   };
   dp.ontouchend=function(e){
@@ -19974,6 +20183,27 @@ function _imgToB64(src){
     <button onclick="closeDupScan()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
   </div>
   <div id="dupscan-list" style="padding:14px 16px 32px;overflow-y:auto;flex:1"></div>
+</div>
+<!-- 批次補齊缺漏欄位 Modal（v09.02）：掃描收藏庫，用跟單筆建檔完全一樣的AI規格判斷
+     （_aiSpecFor）找出每筆缺漏哪些欄位，讓使用者勾選要處理的項目後，重用單筆建檔就在用
+     的aiKnowledgeFill()跟批次書背同一套並行工作池執行，只填補原本是空的欄位，不覆蓋
+     已經有值的內容。 -->
+<div id="mf-ov" class="sheet-ov" onclick="if(event.target===this)closeMissingFieldsScan()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:300"></div>
+<div id="mf-panel" class="sheet-panel" style="position:fixed;top:6vh;left:0;right:0;bottom:0;background:#0a0e1a;border-top:1px solid #1e2a45;border-radius:20px 20px 0 0;padding:0;z-index:301;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column">
+  <div style="position:sticky;top:0;background:#0f1525;border-bottom:1px solid #1e2a45;padding:20px 16px;display:flex;justify-content:space-between;align-items:center;z-index:10;flex-shrink:0">
+    <div style="font-size:14px;font-weight:700;color:#e8eaf6">🧩 批次補齊缺漏欄位</div>
+    <button onclick="closeMissingFieldsScan()" aria-label="關閉" style="background:#141b30;border:1.5px solid #2a3a5a;color:#e8eaf6;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0" type="button">✕</button>
+  </div>
+  <div style="padding:12px 16px 0;flex-shrink:0">
+    <div id="mf-head" style="font-size:12px;color:#7986cb;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn bo bs" style="flex:1" onclick="_mfToggleAll(true)" type="button">全選</button>
+      <button class="btn bo bs" style="flex:1" onclick="_mfToggleAll(false)" type="button">全不選</button>
+    </div>
+    <button id="mf-start-btn" class="btn bp bw" style="margin-bottom:8px" onclick="startMissingFieldsFill()" type="button">開始補齊</button>
+    <div id="mf-progress" style="font-size:11px;color:#7986cb;margin-bottom:8px;min-height:14px"></div>
+  </div>
+  <div id="mf-list" style="padding:0 16px 32px;overflow-y:auto;flex:1"></div>
 </div>
 </body>
 </html>
