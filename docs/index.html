@@ -2977,7 +2977,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v08.25';
+const APP_VERSION='v08.26';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13349,13 +13349,20 @@ function _relRows(list){
   }).join('');
 }
 function filterRelatedPicker(){
-  // v02.195：使用者實測回報連失焦都無法讓篩選套用，改成完全比照收藏頁filterCol()那套
-  // 已經確認能正常運作的模式——不透過inline handler的this.value當參數傳遞（在動態插入
-  // 的元素上，這個值的讀取時機可能跟預期不同步），改成函式內部自己重新查詢DOM讀取
-  // 當下最新的輸入框內容。
+  // v02.196：使用者截圖的除錯文字證實了value跟_relPickList都正確讀到（輪詢跟資料源都沒
+  // 問題），但畫面依然沒有變化——代表filterRelatedPicker()內部某個環節靜默失敗了。真正
+  // 根因：it.code在真實404筆資料裡，可能有欄位是數字型別（不是字串），呼叫
+  // it.code.toLowerCase()會直接拋出TypeError，導致.filter()整個中斷、list.innerHTML=
+  // 這一行根本沒有機會執行——這種例外不會有任何使用者可見的錯誤提示，只會安靜地在背景
+  // 失敗，前面幾版換再多種DOM事件都不可能解決，因為問題根本不在事件層面。加上防禦性的
+  // String()轉型，確保不管原始欄位是什麼型別都能安全比對。
   var list=$('gp-list');var inp=$('gp-search');if(!list||!_relPickList||!inp)return;
   var ql=(inp.value||'').toLowerCase();
-  var f=_relPickList.filter(function(it){return !ql||it.name.toLowerCase().indexOf(ql)>=0||(it.code&&it.code.toLowerCase().indexOf(ql)>=0);});
+  var f=_relPickList.filter(function(it){
+    var nm=String(it.name||'').toLowerCase();
+    var cd=String(it.code||'').toLowerCase();
+    return !ql||nm.indexOf(ql)>=0||cd.indexOf(ql)>=0;
+  });
   list.innerHTML=_relRows(f);
 }
 function _relToggle(el){

@@ -1,3 +1,29 @@
+## v08.26 (2026-08-22)
+
+### 變更內容
+使用者提供的除錯截圖是本次能真正定位問題的關鍵——`[除錯] value="實況野球" len=4 listLen=404`，證實輪詢正確讀到了輸入框內容、`_relPickList` 也確實有 404 筆資料，代表 `filterRelatedPicker()` 一定有被正確呼叫。這排除了先前 5 次嘗試（`onkeyup`、`compositionend`、`compositionupdate`、輪詢、參數傳遞方式）全部針對的「事件有沒有觸發」這個方向——問題根本不在這裡。
+
+真正根因：篩選邏輯裡有 `it.code&&it.code.toLowerCase()` 這段，如果收藏庫裡任何一筆資料的 `code` 或 `barcode` 欄位剛好是**數字型別**（不是字串——例如某些純數字條碼在寫入時沒有被強制轉成字串），呼叫 `.toLowerCase()` 會直接拋出 `TypeError`，導致整個 `.filter()` 中斷、`list.innerHTML=` 這一行根本沒有執行機會。這種例外不會有任何使用者可見的錯誤提示，只會安靜地在背景失敗——這正是為什麼前 5 版換再多種 DOM 事件都不可能解決：問題根本不在「觸發時機」，而是函式一旦真正執行到篩選邏輯就直接中斷。
+
+加上防禦性的 `String()` 轉型，確保不管 `name`／`code` 欄位原始型別是什麼都能安全比對。除錯文字暫時保留，等確認問題真的解決後再另外部署一版移除。
+
+### 自我檢查
+`node --check` 通過；無 U+FFFD。用 jsdom 建立實際會執行的測試環境，**先重現了舊程式碼在遇到數字型別 `code` 欄位時確實會拋出 `TypeError: it.code.toLowerCase is not a function`**，證實假設成立；再驗證修正後的版本，用同樣「`code` 欄位是數字型別」的測試資料，確認不會拋出例外、能正確篩選出符合的項目、正確排除不相關的項目。
+
+### 影響檔案
+- docs/index.html / docs/RetroVault_v08_26_index.html
+- docs/sw.js
+
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v08-25 → retrovault-v08-26
+
+### 對應備份
+- _internal/old/v08_25/
+
+
 ## v08.25 (2026-08-22)
 
 ### 變更內容
@@ -24,6 +50,8 @@
 - _internal/old/v08_24/
 
 
+
+
 ## v08.24 (2026-08-22)
 
 ### 變更內容
@@ -48,6 +76,8 @@
 
 ### 對應備份
 - _internal/old/v08_23/
+
+
 
 
 
@@ -79,34 +109,6 @@
 
 ### 對應備份
 - _internal/old/v08_22/
-
-
-
-
-
-
-## v08.22 (2026-08-22)
-
-### 變更內容
-使用者實測回報上一版（v08.21，加了 `onkeyup` 備援）用注音輸入法打「實況」還是沒反應。
-
-這次確認了真正的根源：**中文/日文這類需要「組字」的輸入法，選字過程完全在輸入法自己的介面內處理，不會對應到瀏覽器認得出的實體按鍵事件**——也就是說，用注音打字選字的過程中，可能連一次 `keyup` 都不會真正觸發，`oninput`／`onkeyup` 兩者都可能等不到。瀏覽器對這種情況有專屬的標準事件：`compositionend`——會在使用者選字、組字真正確認完成的那一刻觸發，這時候 `value` 保證是最終確認的文字。補上 `oncompositionend`，確保 CJK 輸入法組字完成後一定會重新篩選一次，不再仰賴 `keyup` 這種對組字型輸入法不可靠的事件。
-
-### 自我檢查
-`node --check` 通過；無 U+FFFD。用 jsdom 建立實際會執行的測試環境，**直接模擬使用者截圖裡的實際情境**——打「實況」搜尋收藏庫裡的「實況野球2026-2027」，完全不觸發 `input`／`keyup`（模擬組字過程中這兩個事件都沒有真正發生的情況），只透過 `compositionend` 這條路徑觸發篩選，確認能正確篩出符合的項目、排除不相關的；同時確認三個事件屬性（`oninput`／`onkeyup`／`oncompositionend`）都正確掛在搜尋框上，互為備援。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v08_22_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v08-21 → retrovault-v08-22
-
-### 對應備份
-- _internal/old/v08_21/
 
 
 
