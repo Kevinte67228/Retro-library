@@ -2981,7 +2981,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.02';
+const APP_VERSION='v09.03';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13462,6 +13462,62 @@ function _renderMissingFieldsPanel(){
     '</div>';
   }).join('');
 }
+// v09.03：使用者要求把批次補齊缺漏欄位那套邏輯也做成單筆版本，讓詳情頁可以針對「這一筆」
+// 直接重新呼叫AI補齊，不用跑整個收藏庫的批次掃描流程。重用完全一樣的規格判斷跟「只填
+// 真正空的欄位、不覆蓋已有內容」防護，只是範圍縮小成一筆。
+function fillMissingFieldsForItem(rowNum){
+  var item=col.find(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
+  if(!item){toast('找不到此記錄，請重新整理收藏','er');return;}
+  var d=item.data||{};
+  var spec=_aiSpecFor(d.category,d.subtype);
+  if(!spec||!spec.fields){toast('這個分類目前沒有可補全的 AI 規格','er');return;}
+  var missingKeys=Object.keys(spec.fields).filter(function(k){
+    var v=d[k];
+    return v===undefined||v===null||(''+v).trim()==='';
+  });
+  if(!missingKeys.length){toast('這筆資料目前沒有缺漏欄位 ✓','ok');return;}
+  loading('AI 補齊缺漏欄位中...');
+  aiKnowledgeFill(d.primary_name,d.platform,missingKeys,d.category,d.region).then(function(ai){
+    ai=ai||{};
+    var updated=Object.assign({},d);
+    var filled=[];
+    missingKeys.forEach(function(k){
+      var cur=updated[k];
+      var stillEmpty=cur===undefined||cur===null||(''+cur).trim()==='';
+      var aiVal=ai[k];
+      if(stillEmpty&&aiVal!==undefined&&aiVal!==null&&(''+aiVal).trim()!==''){
+        updated[k]=aiVal;filled.push(k);
+      }
+    });
+    if(!filled.length){
+      toast('AI 沒有查到可補的內容','',3000);
+      return;
+    }
+    var fields=fieldsFor(updated.category,updated.subtype);
+    var row=_rowFromFields(updated,fields);
+    var updUuid=(updated.uuid&&updated.uuid.length>=30)?updated.uuid:null;
+    return _shPostUpdateOrQueue({action:'update',uuid:updUuid,rowNum:rowNum,row:row,fields:_entryFields(updated),category:catInternal(updated.category)||'遊戲',entrySnapshot:Object.assign({},updated)}).then(function(r){
+      if(r.queued){
+        item.data=updated;
+        localforage.setItem('gv_col',col).catch(function(){});
+        updateStats();filterCol();
+        toast('📡 已離線儲存，補了 '+filled.length+' 個欄位，連線恢復後會自動補送','',4000);
+      }else if(r.res&&r.res.ok){
+        item.data=updated;
+        localforage.setItem('gv_col',col).catch(function(){});
+        updateStats();filterCol();
+        toast('已補齊 '+filled.length+' 個欄位 ✓','ok');
+      }else{
+        throw new Error((r.res&&r.res.error)||'更新失敗');
+      }
+    });
+  }).catch(function(e){
+    toast('補齊失敗：'+((e&&e.message)||'未知錯誤'),'er',5000);
+  }).finally(function(){
+    noLoad();
+    if(detailRow===rowNum)showDetail(rowNum,true); // 重新整理詳情頁畫面，反映剛補上的欄位
+  });
+}
 function startMissingFieldsFill(){
   if(_mfRunning)return;
   var selected=_mfItems.filter(function(m){return _mfSel[_colKey(m.item)];});
@@ -17395,6 +17451,7 @@ $('dact').innerHTML=
     backBtn+
     (_isDigitalDetail?'':'<button class="btn bo bs" onclick="marketEstimateExplain()" title="估值邏輯說明" type="button">💡</button>'+
     '<button class="btn bo bs" onclick="estimateMarketValue(\''+ rowNum +'\')" type="button">估值</button>')+
+    '<button class="btn bo bs" onclick="fillMissingFieldsForItem(\''+ rowNum +'\')" title="用AI重新查詢並補齊這筆缺漏的欄位" type="button">🧩 補齊</button>'+
     '<button class="btn bo bs" onclick="editDetail()" type="button">編輯</button>'+
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
     '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
