@@ -2983,7 +2983,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.08';
+const APP_VERSION='v10.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -13696,11 +13696,11 @@ function rotateFieldImg(k){
   var prev=document.getElementById('prev-'+k);
   var src=(typeof entry!=='undefined'&&entry&&entry[k])||(prev&&prev.src);
   if(!src){toast('目前沒有圖片可旋轉','er');return;}
-  toast('正在旋轉圖片…','ok',1000);
+  toast('正在載入並旋轉圖片…','ok',2000);
   _imgToB64(src).then(function(b64){
-    if(!b64)b64=src;
+    if(!b64){toast('圖片載入失敗，無法旋轉','er');return;}
     var img=new Image();
-    img.crossOrigin='anonymous';
+    if(b64.indexOf('data:')!==0&&b64.indexOf('blob:')!==0){img.crossOrigin='anonymous';}
     img.onload=function(){
       var c=document.createElement('canvas');
       var nw=img.naturalWidth||img.width;
@@ -13732,11 +13732,11 @@ function rotateExtraImg(idx){
   if(!Array.isArray(arr)||!arr[idx])return;
   var cur=arr[idx];
   var src=cur.img;if(!src){toast('目前沒有圖片可旋轉','er');return;}
-  toast('正在旋轉圖片…','ok',1000);
+  toast('正在載入並旋轉圖片…','ok',2000);
   _imgToB64(src).then(function(b64){
-    if(!b64)b64=src;
+    if(!b64){toast('圖片載入失敗，無法旋轉','er');return;}
     var img=new Image();
-    img.crossOrigin='anonymous';
+    if(b64.indexOf('data:')!==0&&b64.indexOf('blob:')!==0){img.crossOrigin='anonymous';}
     img.onload=function(){
       var c=document.createElement('canvas');
       var nw=img.naturalWidth||img.width;
@@ -16449,11 +16449,11 @@ function lbRotate(){
   var list=window._heroLbImages||[];
   var cur=list[_lbIndex];if(!cur)return;
   var src=cur.url||cur.raw;if(!src){toast('沒有圖片可旋轉','er');return;}
-  toast('正在旋轉圖片…','ok',1000);
+  toast('正在載入並旋轉圖片…','ok',2000);
   _imgToB64(src).then(function(b64){
-    if(!b64)b64=src;
+    if(!b64){toast('圖片載入失敗，無法旋轉','er');return;}
     var img=new Image();
-    img.crossOrigin='anonymous';
+    if(b64.indexOf('data:')!==0&&b64.indexOf('blob:')!==0){img.crossOrigin='anonymous';}
     img.onload=function(){
       var c=document.createElement('canvas');
       var nw=img.naturalWidth||img.width;
@@ -16499,6 +16499,16 @@ function lbRotate(){
               if(tImg)tImg.src=compressed;
               thumbs[_lbIndex].setAttribute('data-url',compressed);
             }
+            // 背景同步到雲端試算表與 Drive
+            if(typeof cfg!=='undefined'&&cfg&&cfg.url){
+              shPost({action:'update',rowNum:item.rowNum,uid:item.uid,category:item.data.category,fields:Object.assign({},item.data)}).then(function(res){
+                if(res&&res.imgs){
+                  if(cur.key==='extra_images'&&res.imgs.extra_images){item.data.extra_images=res.imgs.extra_images;}
+                  else if(res.imgs[cur.key]){item.data[cur.key]=res.imgs[cur.key];}
+                  localforage.setItem('gv_col',col).catch(function(){});
+                }
+              }).catch(function(){});
+            }
           }
         }
 
@@ -16519,6 +16529,10 @@ function lbRotate(){
             var hBgImg=document.querySelector('#hero-cover-main .cover-bg');
             if(hMainImg)hMainImg.src=compressed;
             if(hBgImg)hBgImg.src=compressed;
+            // 尋寶背景同步到雲端
+            if(typeof cfg!=='undefined'&&cfg&&cfg.url){
+              shPost({action:'update',rowNum:h.rowNum,uid:h.uid,category:'尋寶',fields:Object.assign({},h.data)}).catch(function(){});
+            }
           }
         }
 
@@ -20133,17 +20147,39 @@ function _huntConvertTextFill(){
     toast(n?('✓ AI 補了 '+n+' 個欄位'):'AI 沒有可補的資料','ok',4000);
   }).catch(function(e){toast('AI 補齊失敗：'+e.message,'er',5000);}).finally(noLoad);
 }
-// 圖片來源 → base64 dataURL（data: 直接用；遠端/Drive 嘗試 fetch，失敗回空字串由呼叫端略過照片辨識）
+// 圖片來源 → base64 dataURL（data: 直接用；Drive ID / 跨網域圖片透過 GAS 代理讀取；遠端 CORS 圖片直接 fetch）
 function _imgToB64(src){
   return new Promise(function(res){
     if(!src){res('');return;}
-    if((''+src).indexOf('data:')===0){res(src);return;}
-    try{
-      fetch(imgUrl(src,800)).then(function(r){return r.ok?r.blob():null;}).then(function(b){
-        if(!b){res('');return;}
-        var fr=new FileReader();fr.onload=function(){res(fr.result);};fr.onerror=function(){res('');};fr.readAsDataURL(b);
-      }).catch(function(){res('');});
-    }catch(e){res('');}
+    var s=(''+src).trim();
+    if(s.indexOf('data:')===0){res(s);return;}
+    function _fetchViaGas(){
+      if(typeof cfg!=='undefined'&&cfg&&cfg.url){
+        var fileId=s;
+        var m=s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+        if(m)fileId=m[1];
+        shGet({action:'get_img_b64',id:fileId}).then(function(r){
+          if(r&&r.ok&&r.data)res(r.data);
+          else res('');
+        }).catch(function(){res('');});
+      }else{
+        res('');
+      }
+    }
+    if(s.indexOf('http')===0&&s.indexOf('drive.google.com')===-1){
+      fetch(s,{mode:'cors'}).then(function(r){return r.ok?r.blob():null;}).then(function(b){
+        if(b){
+          var fr=new FileReader();
+          fr.onload=function(){res(fr.result);};
+          fr.onerror=function(){_fetchViaGas();};
+          fr.readAsDataURL(b);
+        }else{
+          _fetchViaGas();
+        }
+      }).catch(function(){_fetchViaGas();});
+    }else{
+      _fetchViaGas();
+    }
   });
 }
 </script>
