@@ -668,6 +668,8 @@ body{
 #img-lightbox-ov.on{display:flex}
 .lb-img-wrap{max-width:94vw;max-height:82vh;display:flex;align-items:center;justify-content:center}
 .lb-img-wrap img{max-width:94vw;max-height:82vh;object-fit:contain;border-radius:8px}
+.lb-rot{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:60px;width:38px;height:38px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#00e5ff;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9001;backdrop-filter:blur(3px);transition:transform .15s}
+.lb-rot:active{transform:scale(.92)}
 .lb-close{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;width:38px;height:38px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9001;backdrop-filter:blur(3px)}
 .lb-arrow{position:fixed;top:50%;transform:translateY(-50%);width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9001;backdrop-filter:blur(3px)}
 .lb-arrow.prev{left:8px}
@@ -2981,7 +2983,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v09.07';
+const APP_VERSION='v09.08';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -6234,6 +6236,17 @@ function doDelete(rowNum){
   });
 }
 function _doDeleteConfirmed(rowNum,_dc){
+  function _applySingleColDelete(){
+    col=col.filter(function(c){
+      return !((c.uid&&c.uid===rowNum)||(!c.uid&&c.rowNum===rowNum));
+    });
+    localforage.setItem('gv_col',col).catch(function(){});
+    updateStats();filterCol();toast('已刪除');closeDetailSilent();
+  }
+  if(!cfg.url){
+    _applySingleColDelete();
+    return;
+  }
   loading('刪除中...');
   var _dcat=catInternal(_dc&&_dc.data&&_dc.data.category)||'遊戲';
   // 用 _dc.uid（loadCol 計算的合法 uid）傳給 Apps Script
@@ -6298,18 +6311,25 @@ function colDeleteSelected(){
   // v02.181：跟doDelete同一次一併改用非同步自訂彈窗，取代原生confirm()
   _customConfirm('⚠️ 確定要永久刪除嗎？','選取的 '+keys.length+' 筆收藏，此操作無法復原。').then(function(proceed){
     if(!proceed)return;
-    // keys 為各項的 uid（UUID 或 'type:列號'），後端 deleteMany 會自行解析、跨工作表處理
-    loading('刪除中...');
-    shPost({action:'deleteMany',keys:keys,category:'遊戲'}).then(function(res){
-      if(!res||!res.ok)throw new Error((res&&res.error)||'未知');
+    function _applyColDelete(cnt){
       var del=new Set(keys);
       col=col.filter(function(c){return !del.has(_colKey(c));});
       localforage.setItem('gv_col',col).catch(function(){});
       _colSel=false;_colSelSet.clear();updateStats();
       colSelBar();
       var sb=$('col-sel-btn');if(sb)sb.classList.remove('on');
-      toast('已刪除 '+(res.deleted!=null?res.deleted:keys.length)+' 筆 ✓','ok');
+      toast('已刪除 '+(cnt!=null?cnt:keys.length)+' 筆 ✓','ok');
       filterCol();
+    }
+    if(!cfg.url){
+      _applyColDelete(keys.length);
+      return;
+    }
+    // keys 為各項的 uid（UUID 或 'type:列號'），後端 deleteMany 會自行解析、跨工作表處理
+    loading('刪除中...');
+    shPost({action:'deleteMany',keys:keys,category:'遊戲'}).then(function(res){
+      if(!res||!res.ok)throw new Error((res&&res.error)||'未知');
+      _applyColDelete(res.deleted);
     }).catch(function(e){toast('刪除失敗：'+e.message,'er');}).finally(noLoad);
   });
 }
@@ -7555,6 +7575,27 @@ function cropSetMode(mode){
     _crop.quad={tl:{x:b.x,y:b.y},tr:{x:b.x+b.w,y:b.y},br:{x:b.x+b.w,y:b.y+b.h},bl:{x:b.x,y:b.y+b.h}};
   }
   _cropDraw();
+}
+function cropRotate(){
+  var img=_crop.img;if(!img)return;
+  var c=document.createElement('canvas');
+  var nw=img.naturalWidth||img.width;
+  var nh=img.naturalHeight||img.height;
+  c.width=nh;
+  c.height=nw;
+  var ctx=c.getContext('2d');
+  ctx.translate(c.width/2,c.height/2);
+  ctx.rotate(90*Math.PI/180);
+  ctx.drawImage(img,-nw/2,-nh/2);
+  var newImg=new Image();
+  newImg.onload=function(){
+    _crop.img=newImg;
+    _crop.box=null;
+    _crop.quad=null;
+    _crop._autoDetected=false;
+    _cropLayout();
+  };
+  newImg.src=c.toDataURL('image/jpeg',0.95);
 }
 // 讀檔→開啟裁切器，回傳裁切後的 Blob（image/jpeg）。取消則 reject。
 // v02.102：改用跟批次相機取景框（openFieldScanner/_fscanFrameLabel）完全一致的
@@ -13624,6 +13665,7 @@ function onImgUpload(k,input){
         var kb=Math.round(compressed.length*0.75/1024);
         if(lbl2)lbl2.textContent='已上傳（'+kb+'KB，點擊更換）';
         var cb=document.getElementById('clr-'+k);if(cb)cb.style.display='block';
+        var act=document.getElementById('act-'+k);if(act)act.style.display='flex';
         _setImgBtnActive(k,isCam);
       },hint);
     };
@@ -13647,7 +13689,74 @@ function clearImg(k){
   var prev=document.getElementById('prev-'+k);if(prev){prev.src='';prev.style.display='none';}
   var lbl2=document.getElementById('lbl-'+k);if(lbl2)lbl2.textContent='點擊上傳圖片';
   var cb=document.getElementById('clr-'+k);if(cb)cb.style.display='none';
+  var act=document.getElementById('act-'+k);if(act)act.style.display='none';
   _setImgBtnActive(k,true); // 清除後重置高亮回預設（拍照）
+}
+function rotateFieldImg(k){
+  var prev=document.getElementById('prev-'+k);
+  var src=(typeof entry!=='undefined'&&entry&&entry[k])||(prev&&prev.src);
+  if(!src){toast('目前沒有圖片可旋轉','er');return;}
+  toast('正在旋轉圖片…','ok',1000);
+  _imgToB64(src).then(function(b64){
+    if(!b64)b64=src;
+    var img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=function(){
+      var c=document.createElement('canvas');
+      var nw=img.naturalWidth||img.width;
+      var nh=img.naturalHeight||img.height;
+      c.width=nh;
+      c.height=nw;
+      var ctx=c.getContext('2d');
+      ctx.translate(c.width/2,c.height/2);
+      ctx.rotate(90*Math.PI/180);
+      ctx.drawImage(img,-nw/2,-nh/2);
+      var maxPx=k==='spine_img'?250:1000;
+      var hint=k==='spine_img'?'spine':(k==='cover_img'?'cover':(k==='back_img'?'back':undefined));
+      compressImgNoRecrop(c.toDataURL('image/jpeg',0.92),maxPx,0.85,function(compressed){
+        onFld(k,compressed);
+        if(prev){prev.src=compressed;prev.style.display='block';}
+        var lbl2=document.getElementById('lbl-'+k);
+        var kb=Math.round(compressed.length*0.75/1024);
+        if(lbl2)lbl2.textContent='已旋轉（'+kb+'KB）';
+        var act=document.getElementById('act-'+k);if(act)act.style.display='flex';
+        toast('圖片已旋轉 90°','ok');
+      },hint);
+    };
+    img.onerror=function(){toast('圖片載入失敗，無法旋轉','er');};
+    img.src=b64;
+  }).catch(function(e){toast('旋轉失敗：'+(e&&e.message||''),'er');});
+}
+function rotateExtraImg(idx){
+  var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
+  if(!Array.isArray(arr)||!arr[idx])return;
+  var cur=arr[idx];
+  var src=cur.img;if(!src){toast('目前沒有圖片可旋轉','er');return;}
+  toast('正在旋轉圖片…','ok',1000);
+  _imgToB64(src).then(function(b64){
+    if(!b64)b64=src;
+    var img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=function(){
+      var c=document.createElement('canvas');
+      var nw=img.naturalWidth||img.width;
+      var nh=img.naturalHeight||img.height;
+      c.width=nh;
+      c.height=nw;
+      var ctx=c.getContext('2d');
+      ctx.translate(c.width/2,c.height/2);
+      ctx.rotate(90*Math.PI/180);
+      ctx.drawImage(img,-nw/2,-nh/2);
+      compressImg(c.toDataURL('image/jpeg',0.92),1000,0.85,function(compressed){
+        arr[idx].img=compressed;
+        onFld('extra_images',JSON.stringify(arr));
+        renderForm();_bindFormFocusScroll();
+        toast('自訂圖片已旋轉 90°','ok');
+      });
+    };
+    img.onerror=function(){toast('圖片載入失敗，無法旋轉','er');};
+    img.src=b64;
+  }).catch(function(e){toast('旋轉失敗：'+(e&&e.message||''),'er');});
 }
 // v47.04：自訂圖片（extra_images，最多5張，各自帶名稱）新增/移除/命名
 // v54.69：支援相簿一次選取多張圖片。單張選取維持原本互動式裁切流程（可精細調整取景範圍）；
@@ -13714,7 +13823,7 @@ function openExtraImgLightbox(idx){
   var arr=[];try{arr=JSON.parse(entry.extra_images||'[]');}catch(e){arr=[];}
   if(!Array.isArray(arr)||!arr.length)return;
   window._heroLbImages=arr.filter(function(item){return item&&hasImgVal(item.img);})
-    .map(function(item){return {url:imgUrl(item.img,1000),label:item.label||'自訂圖片'};});
+    .map(function(item,eidx){return {key:'extra_images',extraIdx:eidx,raw:item.img,url:imgUrl(item.img,1000),label:item.label||'自訂圖片'};});
   openImgLightbox(idx);
 }
 function onPriceChange(k,el){
@@ -13954,7 +14063,10 @@ function renderFld(f){
       '</div>'+
       '<div id="lbl-'+k+'" style="font-size:11px;color:#7986cb;text-align:center;margin-bottom:4px;display:'+(hasImg?'block':'none')+'">'+
         (hasImg?'已上傳':'')+'</div>'+
-      '<button id="clr-'+k+'" class="btn bo bs" style="width:100%;color:#ff5252;border-color:#ff5252;display:'+(hasImg?'block':'none')+'" data-k="'+k+'" onclick="clearImg(this.dataset.k)" type="button">✕ 移除圖片</button></div>';
+      '<div id="act-'+k+'" style="display:'+(hasImg?'flex':'none')+';gap:6px">'+
+        '<button id="rot-'+k+'" class="btn bo bs" style="flex:1;color:#00e5ff;border-color:#00e5ff" data-k="'+k+'" onclick="rotateFieldImg(this.dataset.k)" type="button">🔄 旋轉 90°</button>'+
+        '<button id="clr-'+k+'" class="btn bo bs" style="flex:1;color:#ff5252;border-color:#ff5252" data-k="'+k+'" onclick="clearImg(this.dataset.k)" type="button">✕ 移除圖片</button>'+
+      '</div></div>';
   }
   if(type==='multiimg'){
     var _exArr=[];try{_exArr=JSON.parse(v||'[]');}catch(e){_exArr=[];}
@@ -13964,7 +14076,10 @@ function renderFld(f){
       return '<div class="exti-item">'+
         '<img src="'+eurl+'" alt="" onclick="openExtraImgLightbox('+idx+')">'+
         '<input type="text" class="exti-label" placeholder="圖片名稱" value="'+esc((item&&item.label)||'')+'" oninput="onExtraImgLabel('+idx+',this.value)">'+
-        '<button type="button" onclick="removeExtraImg('+idx+')">✕ 移除</button>'+
+        '<div style="display:flex;gap:4px;margin-top:2px">'+
+          '<button type="button" style="flex:1;border-color:#00e5ff;color:#00e5ff;background:#0d1a2d" onclick="rotateExtraImg('+idx+')">🔄 旋轉</button>'+
+          '<button type="button" style="flex:1" onclick="removeExtraImg('+idx+')">✕ 移除</button>'+
+        '</div>'+
       '</div>';
     }).join('');
     var _exCanAdd=_exArr.length<5;
@@ -16330,6 +16445,98 @@ function _lbRender(){
   if(prev)prev.classList.toggle('off',_lbIndex<=0);
   if(next)next.classList.toggle('off',_lbIndex>=list.length-1);
 }
+function lbRotate(){
+  var list=window._heroLbImages||[];
+  var cur=list[_lbIndex];if(!cur)return;
+  var src=cur.url||cur.raw;if(!src){toast('沒有圖片可旋轉','er');return;}
+  toast('正在旋轉圖片…','ok',1000);
+  _imgToB64(src).then(function(b64){
+    if(!b64)b64=src;
+    var img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=function(){
+      var c=document.createElement('canvas');
+      var nw=img.naturalWidth||img.width;
+      var nh=img.naturalHeight||img.height;
+      c.width=nh;
+      c.height=nw;
+      var ctx=c.getContext('2d');
+      ctx.translate(c.width/2,c.height/2);
+      ctx.rotate(90*Math.PI/180);
+      ctx.drawImage(img,-nw/2,-nh/2);
+      var maxPx=(cur.key==='spine_img')?250:1000;
+      var hint=(cur.key==='spine_img')?'spine':((cur.key==='cover_img')?'cover':((cur.key==='back_img')?'back':undefined));
+      compressImgNoRecrop(c.toDataURL('image/jpeg',0.92),maxPx,0.85,function(compressed){
+        cur.url=compressed;
+        cur.raw=compressed;
+        var lbImg=$('lb-img');if(lbImg)lbImg.src=compressed;
+
+        if(typeof detailRow!=='undefined'&&detailRow!==null&&typeof col!=='undefined'){
+          var item=col.find(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
+          if(item&&item.data){
+            if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'){
+              item.data[cur.key]=compressed;
+            }else if(cur.key==='extra_images'&&typeof cur.extraIdx==='number'){
+              var ex=[];try{ex=JSON.parse(item.data.extra_images||'[]');}catch(_e){ex=[];}
+              if(ex[cur.extraIdx]){
+                ex[cur.extraIdx].img=compressed;
+                item.data.extra_images=JSON.stringify(ex);
+              }
+            }
+            localforage.setItem('gv_col',col).catch(function(){});
+            updateStats();
+            var mainImg=$('hero-cover-main-img');
+            var bgImg=document.querySelector('#hero-cover-main .cover-bg');
+            var gallery=$('hero-cover-gallery');
+            var activeIdx=gallery?parseInt(gallery.getAttribute('data-active-idx')||'0',10):0;
+            if(activeIdx===_lbIndex){
+              if(mainImg)mainImg.src=compressed;
+              if(bgImg)bgImg.src=compressed;
+            }
+            var thumbs=document.querySelectorAll('.vault-cover-thumb');
+            if(thumbs&&thumbs[_lbIndex]){
+              var tImg=thumbs[_lbIndex].querySelector('img');
+              if(tImg)tImg.src=compressed;
+              thumbs[_lbIndex].setAttribute('data-url',compressed);
+            }
+          }
+        }
+
+        if(typeof _huntDetailUid!=='undefined'&&_huntDetailUid!==null&&typeof hunt!=='undefined'){
+          var h=hunt.find(function(x){return x.uid===_huntDetailUid;});
+          if(h&&h.data){
+            if(cur.key==='cover_img'){
+              h.data.cover_img=compressed;
+            }else if(cur.key==='extra_images'&&typeof cur.extraIdx==='number'){
+              var hex=[];try{hex=JSON.parse(h.data.extra_images||'[]');}catch(_e){hex=[];}
+              if(hex[cur.extraIdx]){
+                hex[cur.extraIdx].img=compressed;
+                h.data.extra_images=JSON.stringify(hex);
+              }
+            }
+            localforage.setItem('gv_hunt',hunt).catch(function(){});
+            var hMainImg=$('hero-cover-main-img');
+            var hBgImg=document.querySelector('#hero-cover-main .cover-bg');
+            if(hMainImg)hMainImg.src=compressed;
+            if(hBgImg)hBgImg.src=compressed;
+          }
+        }
+
+        if(typeof entry!=='undefined'&&entry&&cur.key){
+          if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'){
+            onFld(cur.key,compressed);
+            var prev=document.getElementById('prev-'+cur.key);
+            if(prev){prev.src=compressed;prev.style.display='block';}
+          }
+        }
+
+        toast('圖片已旋轉 90° 並儲存','ok');
+      },hint);
+    };
+    img.onerror=function(){toast('圖片載入失敗，無法旋轉','er');};
+    img.src=b64;
+  }).catch(function(e){toast('旋轉失敗：'+(e&&e.message||''),'er');});
+}
 // ── #4 長按呼出動作選單（收藏卡片／書背）──
 // ── 長按手勢 + 動作選單（col / hunt 共用工廠）──────────
 // 兩列表手勢邏輯相同（500ms 長按、移動 10px 取消、長按後抑制點按），差別只在
@@ -17327,19 +17534,19 @@ function detailHeroHtml(d,rowNum){
   // 點主圖／縮圖改為彈出燈箱瀏覽（含自訂圖片），燈箱有打叉關閉與左右箭頭換圖
   var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img);
   var _imgDefs=[];
-  if(hasC)_imgDefs.push({lbl:'封面',url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
-  if(hasB)_imgDefs.push({lbl:'封底',url:imgUrl(d.back_img,300),full:imgUrl(d.back_img,1000),thumb:imgUrl(d.back_img,80)});
-  if(hasS)_imgDefs.push({lbl:'側邊',url:imgUrl(d.spine_img,300),full:imgUrl(d.spine_img,1000),thumb:imgUrl(d.spine_img,80)});
+  if(hasC)_imgDefs.push({key:'cover_img',lbl:'封面',raw:d.cover_img,url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
+  if(hasB)_imgDefs.push({key:'back_img',lbl:'封底',raw:d.back_img,url:imgUrl(d.back_img,300),full:imgUrl(d.back_img,1000),thumb:imgUrl(d.back_img,80)});
+  if(hasS)_imgDefs.push({key:'spine_img',lbl:'側邊',raw:d.spine_img,url:imgUrl(d.spine_img,300),full:imgUrl(d.spine_img,1000),thumb:imgUrl(d.spine_img,80)});
   var _extraArr=[];try{_extraArr=JSON.parse(d.extra_images||'[]');}catch(e){_extraArr=[];}
   if(Array.isArray(_extraArr)){
-    _extraArr.forEach(function(item){
+    _extraArr.forEach(function(item,eidx){
       if(item&&hasImgVal(item.img)){
-        _imgDefs.push({lbl:item.label||'自訂圖片',url:imgUrl(item.img,300),full:imgUrl(item.img,1000),thumb:imgUrl(item.img,80)});
+        _imgDefs.push({key:'extra_images',extraIdx:eidx,lbl:item.label||'自訂圖片',raw:item.img,url:imgUrl(item.img,300),full:imgUrl(item.img,1000),thumb:imgUrl(item.img,80)});
       }
     });
   }
   var _mainDef=_imgDefs[0];
-  window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
+  window._heroLbImages=_imgDefs.map(function(im){return {key:im.key,extraIdx:im.extraIdx,raw:im.raw,url:im.full,label:im.lbl};});
   var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
     '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()"':'')+' style="'+(_mainDef?'cursor:pointer':'')+'">'+
     (_mainDef?('<img class="cover-bg" src="'+_mainDef.url+'" alt="" aria-hidden="true"><img id="hero-cover-main-img" class="cover-fg" src="'+_mainDef.url+'" alt="'+esc(title)+'">'):icon)+'</div>';
@@ -19333,15 +19540,15 @@ function huntDetail(uid){
   // v54.66：圖片改用跟收藏一樣的 gallery 機制（cover_img + extra_images，最多8張），
   // 沿用既有的 hero-cover-gallery / openHeroLightbox / switchHeroCoverImg（完全通用，無需修改）
   var _imgDefs=[];
-  if(hasImgVal(d.cover_img))_imgDefs.push({lbl:'主要照片',url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
+  if(hasImgVal(d.cover_img))_imgDefs.push({key:'cover_img',lbl:'主要照片',raw:d.cover_img,url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
   var _extraArr=[];try{_extraArr=JSON.parse(d.extra_images||'[]');}catch(e){_extraArr=[];}
   if(Array.isArray(_extraArr)){
-    _extraArr.forEach(function(item){
-      if(item&&hasImgVal(item.img))_imgDefs.push({lbl:item.label||'額外照片',url:imgUrl(item.img,300),full:imgUrl(item.img,1000),thumb:imgUrl(item.img,80)});
+    _extraArr.forEach(function(item,eidx){
+      if(item&&hasImgVal(item.img))_imgDefs.push({key:'extra_images',extraIdx:eidx,lbl:item.label||'額外照片',raw:item.img,url:imgUrl(item.img,300),full:imgUrl(item.img,1000),thumb:imgUrl(item.img,80)});
     });
   }
   var _mainDef=_imgDefs[0];
-  window._heroLbImages=_imgDefs.map(function(im){return {url:im.full,label:im.lbl};});
+  window._heroLbImages=_imgDefs.map(function(im){return {key:im.key,extraIdx:im.extraIdx,raw:im.raw,url:im.full,label:im.lbl};});
   var coverHtml='<div class="vault-cover" id="hero-cover-gallery" data-active-idx="0">'+
     '<div class="vault-cover-main" id="hero-cover-main"'+(_mainDef?' onclick="openHeroLightbox()" style="cursor:pointer"':'')+'>'+
     (_mainDef?('<img class="cover-bg" src="'+_mainDef.url+'" alt="" aria-hidden="true"><img id="hero-cover-main-img" class="cover-fg" src="'+_mainDef.url+'" alt="">'):'🎮')+'</div>';
@@ -19944,6 +20151,7 @@ function _imgToB64(src){
 <div id="img-lightbox-ov" onclick="if(event.target===this)closeImgLightbox()">
   <div class="lb-img-wrap">
     <img id="lb-img" src="" alt="">
+    <div class="lb-rot" onclick="lbRotate()" title="旋轉 90°" aria-label="旋轉 90°">🔄</div>
     <div class="lb-close" onclick="closeImgLightbox()">✕</div>
     <div class="lb-arrow prev" id="lb-prev" onclick="lbNav(-1)">‹</div>
     <div class="lb-arrow next" id="lb-next" onclick="lbNav(1)">›</div>
@@ -20038,6 +20246,7 @@ function _imgToB64(src){
   <div id="crop-mode-bar">
     <button id="crop-mode-rect" class="on" onclick="cropSetMode('rect')" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg> 矩形</button>
     <button id="crop-mode-quad" onclick="cropSetMode('quad')" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M4 4l4 4M20 4l-4 4M4 20l4-4M20 20l-4-4"/><circle cx="4" cy="4" r="1.5" fill="currentColor"/><circle cx="20" cy="4" r="1.5" fill="currentColor"/><circle cx="4" cy="20" r="1.5" fill="currentColor"/><circle cx="20" cy="20" r="1.5" fill="currentColor"/></svg> 透視校正（四角）</button>
+    <button id="crop-mode-rot" onclick="cropRotate()" type="button" style="color:#00e5ff"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> 旋轉 90°</button>
   </div>
   <div id="crop-stage"><canvas id="crop-canvas"></canvas><div id="crop-framelbl"><span id="crop-framelbl-idx"></span><span id="crop-framelbl-name"></span></div></div>
   <div id="crop-bar">
