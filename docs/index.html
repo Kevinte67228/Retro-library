@@ -2983,7 +2983,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v10.01';
+const APP_VERSION='v11.01';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5906,7 +5906,7 @@ function shPost(d){
   // v02.172：使用者實測回報「強制重新比對資料欄位」失敗，錯誤是unauthorized——追查後
   // 發現這條白名單漏掉了force_realign這個動作，導致這個新增的寫入類action送出時完全
   // 沒帶app_token，後端當然會擋下來。這是新增這個action時的疏漏，補上。
-  if(d&&/^(add|update|delete|deleteMany|fix_headers|force_realign|repair_pre_loan_field)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
+  if(d&&/^(add|batchAdd|update|delete|deleteMany|fix_headers|force_realign|repair_pre_loan_field)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
   var url=fixUrl(cfg.url);
   return fetchWithRetry(url,{
     method:'POST',
@@ -16008,37 +16008,79 @@ function importCsv(input){
 // 根因：原本匯入只把資料存進本機 localforage 快取，從未呼叫後端 API 新增資料列，
 // 導致重新整理（重新從後端同步）後，這些從未真正寫入試算表的項目就會消失，看起來像整筆不見了。
 function _syncImportedRecords(list,idx,skip,total){
-  if(idx>=list.length){
+  if(!list||!list.length){
     localforage.setItem('gv_col',col).catch(function(){});
     localforage.setItem('gv_hunt',hunt).catch(function(){});
     updateStats();renderColList();
-    if(typeof renderHuntList==='function')renderHuntList(); // v54.90：尋寶頁匯入後也要重新渲染尋寶清單
+    if(typeof renderHuntList==='function')renderHuntList();
     toast('匯入完成：'+total+' 筆已同步雲端（跳過重複 '+skip+' 筆）✓','ok',4500);
     return;
   }
-  var item=list[idx],d=item.rec.data;
-  function next(){_syncImportedRecords(list,idx+1,skip,total);}
-  if(item.isHunt){
-    if(!d.hunt_status)d.hunt_status='追蹤中';
-    if(!d.sightings)d.sightings='[]';
-    var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
-    shPost({action:'add',row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
+  
+  // v11.01：優先嘗試按分類分組走 batchAdd 批次寫入（1秒內全量同步），後端若為舊版則自動優雅降級為單筆循序新增
+  var groups={};
+  list.forEach(function(item){
+    var d=item.rec.data;
+    var cat=item.isHunt?'狩獵':(catInternal(d.category)||'遊戲');
+    var sub=d.subtype||'';
+    var key=cat+'__'+sub;
+    if(!groups[key])groups[key]={cat:cat,sub:sub,isHunt:item.isHunt,items:[]};
+    groups[key].items.push(item);
+  });
+  
+  var groupKeys=Object.keys(groups);
+  function processGroup(gIdx){
+    if(gIdx>=groupKeys.length){
+      localforage.setItem('gv_col',col).catch(function(){});
+      localforage.setItem('gv_hunt',hunt).catch(function(){});
+      updateStats();renderColList();
+      if(typeof renderHuntList==='function')renderHuntList();
+      toast('匯入完成：'+total+' 筆已極速同步雲端（跳過重複 '+skip+' 筆）✓','ok',4500);
+      return;
+    }
+    var g=groups[groupKeys[gIdx]];
+    var fieldsList=g.items.map(function(it){
+      var d=it.rec.data;
+      return g.isHunt?_huntEntryFields(d):_entryFields(d);
+    });
+    shPost({action:'batchAdd',category:g.cat,fieldsList:fieldsList}).then(function(res){
       if(res&&res.ok){
-        item.rec.rowNum=res.rowNum;
-        if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}
+        if(res.uuids&&Array.isArray(res.uuids)){
+          res.uuids.forEach(function(u,ui){
+            if(u&&g.items[ui]){g.items[ui].rec.uid=u;g.items[ui].rec.data.uuid=u;}
+          });
+        }
+        processGroup(gIdx+1);
+      } else {
+        fallbackSync(g.items,0,function(){processGroup(gIdx+1);});
       }
-    }).catch(function(){}).finally(next);
-  } else {
-    var cat=catInternal(d.category)||'遊戲';
-    var fields=fieldsFor(cat,d.subtype);
-    var row=_rowFromFields(d,fields);
-    shPost({action:'add',row:row,fields:_entryFields(d),category:cat}).then(function(res){
-      if(res&&res.ok){
-        item.rec.rowNum=res.rowNum;
-        if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}
-      }
-    }).catch(function(){}).finally(next);
+    }).catch(function(){
+      fallbackSync(g.items,0,function(){processGroup(gIdx+1);});
+    });
   }
+
+  function fallbackSync(subList,sIdx,cb){
+    if(sIdx>=subList.length){if(cb)cb();return;}
+    var item=subList[sIdx],d=item.rec.data;
+    function fnNext(){fallbackSync(subList,sIdx+1,cb);}
+    if(item.isHunt){
+      if(!d.hunt_status)d.hunt_status='追蹤中';
+      if(!d.sightings)d.sightings='[]';
+      var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
+      shPost({action:'add',row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
+        if(res&&res.ok){item.rec.rowNum=res.rowNum;if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}}
+      }).catch(function(){}).finally(fnNext);
+    } else {
+      var cat=catInternal(d.category)||'遊戲';
+      var fields=fieldsFor(cat,d.subtype);
+      var row=_rowFromFields(d,fields);
+      shPost({action:'add',row:row,fields:_entryFields(d),category:cat}).then(function(res){
+        if(res&&res.ok){item.rec.rowNum=res.rowNum;if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}}
+      }).catch(function(){}).finally(fnNext);
+    }
+  }
+
+  processGroup(0);
 }
 // 解析日期為可比較的時間戳；未填、2099 佔位、無法解析 → NaN（視為空值）
 // v02.167：借出到期提醒——掃描收藏狀態為「借出中」且有填預計歸還日的項目，區分「已逾期」

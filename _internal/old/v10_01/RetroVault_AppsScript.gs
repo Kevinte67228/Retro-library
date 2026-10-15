@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v09            ║
+// ║  RetroVault — Google Apps Script 後端  v10            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -651,6 +651,27 @@ function cleanupOrphanImages() {
   return { ok: true, trashed: orphans.length, list: orphans };
 }
 
+// ── v10：取得圖片 Base64 Data URL（支援 Drive 檔案 ID 與遠端 HTTP 圖片，供前端 Canvas 旋轉/處理）────
+function getImgB64(val) {
+  if (!val) return { ok: false, error: '缺少圖片來源' };
+  try {
+    let blob;
+    if (val.indexOf('http') === 0) {
+      const r = UrlFetchApp.fetch(val, { muteHttpExceptions: true, followRedirects: true });
+      if (r.getResponseCode() !== 200) return { ok: false, error: 'HTTP ' + r.getResponseCode() };
+      blob = r.getBlob();
+    } else {
+      const file = DriveApp.getFileById(val);
+      blob = file.getBlob();
+    }
+    const contentType = blob.getContentType() || 'image/jpeg';
+    const b64 = Utilities.base64Encode(blob.getBytes());
+    return { ok: true, data: 'data:' + contentType + ';base64,' + b64 };
+  } catch (e) {
+    return { ok: false, error: '圖片讀取失敗: ' + e.message };
+  }
+}
+
 // ── v02.52：圖片健康檢查（診斷用，不會刪除或修改任何資料）─────────────────
 // 掃描所有列的 cover_img/back_img/spine_img/extra_images，對每個 Drive ID 實際去問
 // Google Drive「這個檔案現在還開得了嗎」，抓出「Sheet 裡寫著 ID、但 Drive 上有問題」的項目，
@@ -793,6 +814,9 @@ function dispatchRead(action, p) {
         break;
       case 'google_image_search':
         result = googleImageSearchProxy(p.q || '', p.gcsekey || '', p.gcxid || '', parseInt(p.num||'1'));
+        break;
+      case 'get_img_b64':
+        result = getImgB64(p.id || p.val || '');
         break;
       default:
         result = { ok: false, error: '不支援的 action: ' + action };  }

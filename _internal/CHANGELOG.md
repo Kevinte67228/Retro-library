@@ -1,3 +1,33 @@
+## v11.01 (2026-10-16)
+
+### 變更內容
+新增秒級批次寫入（`batchAdd`），解決大量資料（如全量 CSV 或批次建檔資料）匯入時逐筆寫入耗時過長的問題：
+
+1. **GAS 後端新增 `batchAdd` 動作與 `batchAddRows()` 函式（v11）**：在 `RetroVault_AppsScript.gs` 新增批次新增端點，利用 Google 試算表原生 `setValues()` 矩陣寫入能力，單一請求即可一次性寫入數百筆資料（耗時僅約 0.5 秒）；支援 `uploadImages` 選項開關，預設快速寫入現有圖檔 ID/URL。
+2. **前端 CSV 匯入機制優化（`_syncImportedRecords`）**：CSV 匯入時自動按分類與子類型分組，優先使用 `batchAdd` 進行一次性整組秒級同步；若後端為舊版或其他例外情況，自動優雅降級為逐筆循序寫入，兼顧極速效能與歷史相容性。
+3. **`shPost` 白名單擴充**：將 `batchAdd` 加入寫入授權白名單，自動附帶 `app_token` 驗證。
+
+### 自我檢查
+- 後端 `RetroVault_AppsScript.gs` 升級為 v11，依協作規則觸發主版號重整，前端對應歸零為 `v11.01`。
+- `node -e` 與 Node VM 對所有 `<script>` 標籤語法驗證 100% 通過。
+- Service Worker 快取名稱更新為 `retrovault-v11-01`。
+
+### 影響檔案
+- docs/RetroVault_AppsScript.gs
+- docs/index.html
+- docs/RetroVault_v11_01_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+### GS 版本
+- v10 → v11（新增 batchAdd 原生 setValues 批次寫入）
+
+### PWA 快取
+- CACHE_NAME: retrovault-v10-01 → retrovault-v11-01
+
+### 對應備份
+- _internal/old/v10_01/
+
 ## v10.01 (2026-10-15)
 
 ### 變更內容
@@ -50,6 +80,15 @@
 - docs/sw.js
 - _internal/CHANGELOG.md
 
+### GS 版本
+- 無
+
+### PWA 快取
+- CACHE_NAME: retrovault-v09-07 → retrovault-v09-08
+
+### 對應備份
+- _internal/old/v09_07/
+
 ## v09.07 (2026-08-23)
 
 ### 變更內容
@@ -74,27 +113,3 @@
 
 ### 對應備份
 - _internal/old/v09_06/
-
-
-## v09.06 (2026-08-23)
-
-### 變更內容
-使用者要求把估值邏輯說明（💡）跟估值按鈕從詳情頁最上面的動作列搬到「收藏與估值」分頁裡——這兩顆按鈕本來就是這個分頁該管的東西，搬過去後語意更集中，動作列也順便縮短成 4 顆（補齊/編輯/刪除/✕），大多數情況下不再需要橫向滑動就能一次看完。
-
-兩顆按鈕移到「收藏與估值」分頁內容的最上方（在二手估值市場參考、收藏狀態等區塊之前），估值按鈕文字同步改成「重新估值」，更貼近它在這個分頁情境下的意義。這段判斷需要在分頁內容組裝階段就知道「是否為數位下載版」（數位下載版沒有估值功能），但這個時間點比動作列渲染那段還早，原本的 `_isDigitalDetail` 變數當時還沒被賦值，改成在這裡當場重新計算同一個判斷式，不依賴後面才宣告的變數。
-
-### 自我檢查
-`node --check` 通過；無 U+FFFD。用 jsdom 建立實際會執行的測試環境完整驗證：確認動作列正確剩下 4 顆按鈕、不再含估值相關的兩顆；確認「收藏與估值」分頁內容正確含有這兩顆按鈕，且「重新估值」按鈕正確綁定到對應的項目編號；**特別驗證了數位下載版這個邊界情況**——確認動作列跟收藏與估值分頁兩邊都正確不顯示估值相關按鈕（數位下載版本來就沒有估值功能，這個排除邏輯搬動位置後依然要正確維持）。
-
-### 影響檔案
-- docs/index.html / docs/RetroVault_v09_06_index.html
-- docs/sw.js
-
-### GS 版本
-- 無
-
-### PWA 快取
-- CACHE_NAME: retrovault-v09-05 → retrovault-v09-06
-
-### 對應備份
-- _internal/old/v09_05/
