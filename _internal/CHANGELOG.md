@@ -33,7 +33,12 @@
    - **賽博展廳瀑布流多圖源無縫級聯（`setWaterfallImage`）**：
      - 在 `docs/cyber-museum.html` 中實作自動監聽 `onerror` 之瀑布流載入器，若主要圖源遭 ISP 阻擋或 404，在 0.1 秒內自動順序無縫切換至下一鏡像或標題畫面，消滅空白破圖。
 
-4. **版本發佈與相容性維護**：
+4. **賽博展廳特麗霓虹 CRT 與 HUD 抽屜垂直佈局優化（徹底消除遮擋交疊）**：
+   - 解決行動端螢幕下 `#crt-view` 預設垂直置中導致 CRT 電視沉在中央、下半部被底部藏品情報抽屜（`#hud-drawer`）遮擋的問題。
+   - 將 `#crt-view` 改為靠頂陳列（`align-items: flex-start; padding-top: 8px;`），消除電視機上方的多餘黑洞空白，並施加 `max-height: calc(100dvh - 280px)` 安全邊界保護。
+   - 底部 HUD 抽屜緊湊自適應優化，使電視機實機畫面與下方藏品規格清單上下完美並存，徹底消除交疊干擾。
+
+5. **版本發佈與相容性維護**：
    - 主程式與 Service Worker 升級為 `v11.12` / `retrovault-v11-12`。
    - 部署腳本 `_internal/github_deploy.py` 將 `v11_11` 納入永久保留例外清單。
 

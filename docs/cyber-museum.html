@@ -339,10 +339,11 @@ main {
 #crt-view {
   width: 100%; height: 100%;
   display: none;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
+  padding: 20px 20px 40px;
   position: relative;
+  overflow-y: auto;
 }
 
 /* 經典特麗霓虹電視機外殼 (Sony Trinitron Style) */
@@ -708,22 +709,46 @@ main {
     padding: 12px 10px 140px;
     gap: 20px;
   }
+  #crt-view {
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8px 10px 240px;
+    overflow-y: auto;
+  }
+  .crt-chassis {
+    margin-top: 4px;
+    max-height: calc(100vh - 280px);
+    max-height: calc(100dvh - 280px);
+    padding: 8px;
+    border-width: 6px;
+    border-radius: 22px;
+  }
+  .crt-info-title {
+    max-width: 50%;
+    font-size: 11px;
+  }
   #hud-drawer {
     left: 10px;
     right: 10px;
     bottom: 10px;
     width: calc(100% - 20px);
     max-width: none;
-    padding: 12px 14px;
+    padding: 10px 14px;
   }
-  .crt-chassis {
-    padding: 10px;
-    border-width: 6px;
-    border-radius: 24px;
+  .hud-grid {
+    gap: 4px;
+    margin-bottom: 8px;
   }
-  .crt-info-title {
-    max-width: 50%;
-    font-size: 11px;
+  .hud-cell {
+    padding: 4px 6px;
+  }
+  .hud-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .hud-sub {
+    font-size: 10.5px;
+    margin-bottom: 6px;
   }
 }
 </style>
