@@ -1,3 +1,44 @@
+## v11.12 (2026-10-16)
+
+### 變更內容
+依據行動端實機操作與截圖回報，徹底修復「黑曜石鑑定卡未正確顯示主題配色」、「跨網域安全性限制導致無法下載 PNG」以及「爬圖補圖多來源聚合與自動級聯降級」：
+
+1. **數位鑑定卡工坊（`docs/js/slab-generator.js` & `docs/slab-studio.html`）黑曜石主題徹底重構**：
+   - **尊榮黑曜石（Obsidian Theme）專屬視覺美學**：
+     - **底板與外框**：底色自海軍深藍昇華為深邃火山黑曜石琉璃炭黑（`#050608`），漸層自 `#1c1e26` 柔和過渡至 `#040507`；外盒壓克力內邊框由寫死全息青藍修正為高階拉絲白金鈦金屬光澤（`rgba(226, 232, 240, 0.42)`）。
+     - **四角防偽螺栓（Rivets）**：徹底解除寫死全息青藍 LED 限制，改依主題動態渲染；黑曜石主題下呈現暗鈦金螺栓環（`#181922` / `#475569`）與中央晶鑽亮白微光（`#ffffff` / `#cbd5e1`）。
+     - **認證銘牌與標籤槽**：黑曜石主題採用深黑熔岩玻璃底色，邊框使用高階拉絲白金雙重漸層（`#64748b` → `#cbd5e1` → `#ffffff` → `#475569`），認證頂標字樣由土豪金轉為純粹璀璨白金（`#f8fafc`），徹底擺脫任何非預期的全息藍邊。
+     - **底部防偽銘牌**：銘牌外框與認證字樣同步適配黑曜石白金配色（`rgba(226, 232, 240, 0.35)` / `#f8fafc`）。
+   - **工坊操作介面細緻度提升**：
+     - 主題切換按鈕依各自主題發光（奢華金金光、全息藍青光、黑曜石白金微光）。
+     - 鑑定卡外圍 3D 浮雕陰影（Box Shadow）隨選擇主題動態變換。
+
+2. **跨網域安全性限制調查與下載 PNG 徹底修復（Canvas Tainted 根治）**：
+   - **根因分析**：原本 `slab-generator.js` 載入圖片逾時僅設 2500ms，在行動端 4G/5G 遇網路抖動時，易提早觸發降級退回 `useCors = false` 載入原生圖片，導致 HTML5 Canvas 被瀏覽器標記為 **Tainted**，執行 `canvas.toDataURL()` 時拋出 `SecurityError: The operation is insecure` 錯誤。
+   - **安全同源 Blob 物件串流機制**：
+     - 引進 `loadCleanImage()` 引擎，優先透過 `fetch(url, {mode: 'cors'})` 取得圖片二進位並產生同源物件網址（`blob:URL`），從根本上防止 Canvas 被跨域污染。
+     - 延長逾時至 5500ms，並串聯 Cloudflare 全球高速快取節點 `wsrv.nl`、`images.weserv.nl` 與 `corsproxy.io` 多重代理級聯。
+   - **行動端專屬下載與分享升級**：
+     - 支援原生 Web Share API（`navigator.share({ files })`），在 iOS Safari 或 Android Chrome 上點擊「下載高畫質鑑定卡 (PNG)」可直接呼叫系統原生面板儲存至「相簿」或分享至 LINE/社群。
+     - 增設行動端長按預覽彈窗（`#save-modal`），若遇極端隱私模式瀏覽器限制，自動彈出清晰預覽圖並引導使用者長按儲存。
+
+3. **多來源開源復古圖庫聚合引擎（Multi-Source Retro Art Aggregator）**：
+   - **徹底打破單一圖庫鎖定**：
+     - 擴充 `RETRO_ART_MAP` 與 `getRetroArt()`，不再僅依賴單一 GitHub Raw 節點，聚合五大頂尖圖源：
+       1. **jsdelivr 全球 CDN 鏡像**（`cdn.jsdelivr.net/gh/libretro-thumbnails/...`）
+       2. **Libretro 官方主庫**（`raw.githubusercontent.com/...`）
+       3. **Libretro 經典懷舊標題畫面**（`Named_Titles`，100% 經典遊戲封面/標題備援）
+       4. **LaunchBox App 官方原裝圖庫**（`images.launchbox-app.com/...`）
+       5. **Cloudflare 邊緣加速快取**（`wsrv.nl/?url=...`）
+   - **賽博展廳瀑布流多圖源無縫級聯（`setWaterfallImage`）**：
+     - 在 `docs/cyber-museum.html` 中實作自動監聽 `onerror` 之瀑布流載入器，若主要圖源遭 ISP 阻擋或 404，在 0.1 秒內自動順序無縫切換至下一鏡像或標題畫面，消滅空白破圖。
+
+4. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.12` / `retrovault-v11-12`。
+   - 部署腳本 `_internal/github_deploy.py` 將 `v11_11` 納入永久保留例外清單。
+
+---
+
 ## v11.11 (2026-10-16)
 
 ### 變更內容

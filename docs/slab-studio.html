@@ -218,10 +218,45 @@ header {
   transition: all 0.15s;
 }
 .theme-btn:hover { color: #fff; border-color: var(--txt3); }
-.theme-btn.active {
-  background: rgba(212, 175, 55, 0.15);
+.theme-btn#th-gold.active {
+  background: rgba(212, 175, 55, 0.18);
   border-color: var(--gold);
   color: var(--gold);
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.25);
+}
+.theme-btn#th-holo.active {
+  background: rgba(0, 229, 255, 0.18);
+  border-color: var(--cyan);
+  color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+}
+.theme-btn#th-dark.active {
+  background: rgba(248, 250, 252, 0.14);
+  border-color: #cbd5e1;
+  color: #f8fafc;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* 儲存圖片彈窗 */
+#save-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(4, 6, 14, 0.94);
+  backdrop-filter: blur(12px);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 18px;
+}
+#save-modal.show { display: flex; }
+#save-modal-img {
+  max-width: 88vw;
+  max-height: 72vh;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.85);
+  display: block;
 }
 
 /* 操作按鈕 */
@@ -285,13 +320,13 @@ header {
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-<script src="./js/slab-generator.js?v=v11.09"></script>
+<script src="./js/slab-generator.js?v=v11.12"></script>
 </head>
 <body>
 
 <header>
   <div class="brand-area">
-    <span class="brand-badge">SLAB STUDIO v11.09</span>
+    <span class="brand-badge">SLAB STUDIO v11.12</span>
     <span class="brand-title">數位封裝鑑定卡工坊</span>
   </div>
   <div style="display:flex;gap:8px">
@@ -394,6 +429,16 @@ function setTheme(th, btn) {
   document.querySelectorAll('.theme-btn').forEach(function(el) { el.classList.remove('active'); });
   btn.classList.add('active');
   currentTheme = th;
+  var canvas = document.getElementById('slab-canvas');
+  if (canvas) {
+    if (th === 'gold') {
+      canvas.style.boxShadow = '0 20px 50px rgba(0,0,0,0.85), 0 0 38px rgba(212, 175, 55, 0.28)';
+    } else if (th === 'dark') {
+      canvas.style.boxShadow = '0 25px 60px rgba(0,0,0,0.95), 0 0 40px rgba(255, 255, 255, 0.14)';
+    } else {
+      canvas.style.boxShadow = '0 20px 50px rgba(0,0,0,0.85), 0 0 38px rgba(0, 229, 255, 0.28)';
+    }
+  }
   updateSlab();
 }
 
@@ -428,19 +473,98 @@ function onGamePicked(idx) {
   }
 }
 
-// 📸 下載 PNG
+// 📸 下載 PNG（支援原生相簿分享、Blob 下載與行動端長按預覽彈窗）
 function downloadSlabPng() {
   var canvas = document.getElementById('slab-canvas');
   var name = (currentItem ? currentItem.primary_name : 'RetroVault') + '_Slab.png';
-  try {
-    var dataUrl = canvas.toDataURL('image/png', 0.95);
-    var link = document.createElement('a');
-    link.download = name.replace(/[\\/:*?"<>|]/g, '_');
-    link.href = dataUrl;
-    link.click();
-  } catch (err) {
-    alert('由於原圖床跨網域安全性限制，請直接在上方鑑定卡上「長按儲存圖片」或截圖分享！');
+  var safeName = name.replace(/[\\/:*?"<>|]/g, '_');
+
+  function doFileDownload(blob) {
+    // 行動裝置優先使用 Web Share API (直接儲存至相簿或分享至社群)
+    if (navigator.share && navigator.canShare) {
+      try {
+        var file = new File([blob], safeName, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: 'RetroVault 珍藏鑑定卡 - ' + (currentItem ? currentItem.primary_name : ''),
+            text: 'RetroVault 數位封裝鑑定卡'
+          }).catch(function(err) {
+            if (err && err.name !== 'AbortError') {
+              downloadViaLink(blob);
+            }
+          });
+          return;
+        }
+      } catch (e) {
+        console.warn('Native share failed, fallback to direct download:', e);
+      }
+    }
+    downloadViaLink(blob);
   }
+
+  function downloadViaLink(blob) {
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.download = safeName;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+  }
+
+  if (canvas.toBlob) {
+    try {
+      canvas.toBlob(function(blob) {
+        if (blob) {
+          doFileDownload(blob);
+        } else {
+          fallbackDataUrl();
+        }
+      }, 'image/png', 0.95);
+      return;
+    } catch (e) {
+      console.warn('toBlob caught:', e);
+    }
+  }
+
+  fallbackDataUrl();
+
+  function fallbackDataUrl() {
+    try {
+      var dataUrl = canvas.toDataURL('image/png', 0.95);
+      var link = document.createElement('a');
+      link.download = safeName;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      showSaveModal(canvas);
+    }
+  }
+}
+
+function showSaveModal(canvas) {
+  var modal = document.getElementById('save-modal');
+  var img = document.getElementById('save-modal-img');
+  if (!modal || !img) {
+    alert('請直接在鑑定卡上長按或截圖儲存！');
+    return;
+  }
+  try {
+    img.src = canvas.toDataURL('image/png', 0.95);
+  } catch(e) {
+    // If canvas is still cross-origin protected
+    img.src = currentItem ? (currentItem.cover_img || './bg.webp') : './bg.webp';
+  }
+  modal.classList.add('show');
+}
+
+function closeSaveModal() {
+  var modal = document.getElementById('save-modal');
+  if (modal) modal.classList.remove('show');
 }
 
 // 🏛️ 一鍵匯出安全展覽館
@@ -593,5 +717,13 @@ window.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+<!-- 行動端長按儲存預覽彈窗 -->
+<div id="save-modal">
+  <div style="font-size:13px;font-weight:900;color:#fff;margin-bottom:10px;text-align:center">📱 長按下方鑑定卡即可「儲存至相簿」或「分享」</div>
+  <img id="save-modal-img" src="" alt="鑑定卡預覽">
+  <button onclick="closeSaveModal()" style="margin-top:16px;padding:10px 24px;border-radius:20px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:13px;font-weight:700;cursor:pointer">✕ 關閉視窗</button>
+</div>
+
 </body>
 </html>

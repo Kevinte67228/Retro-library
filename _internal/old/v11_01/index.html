@@ -1080,7 +1080,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.10</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.11</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -2579,7 +2579,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.10</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.11</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2747,6 +2747,7 @@ const FIELDS=[
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
   ['back_img','封底圖檔','imgupload','圖片紀錄'],
   ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
+  ['gameplay_img','遊戲畫面','imgupload','圖片紀錄'],
   ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
@@ -2900,7 +2901,7 @@ const DEFAULTS={
   market_value:'0',market_value_updated_at:'',market_value_source:'',market_value_confidence:'N/A',market_value_notes:'',
   market_value_currency:'',market_value_foreign_amount:'',
   resale_price:'0',resale_date:'2099/01/01',bonus_code_status:'N/A',
-  cover_img:'',back_img:'',spine_img:'',ref_link:'',developer:'',series:'',
+  cover_img:'',back_img:'',spine_img:'',gameplay_img:'',ref_link:'',developer:'',series:'',
 };
 // ── 書籍專屬欄位 ──
 const BOOK_FIELDS=[
@@ -2998,7 +2999,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.10';
+const APP_VERSION='v11.11';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3198,6 +3199,7 @@ function _digiTail(){
     ['summary','簡介','area','補充資訊'],
     ['ref_link','商店頁連結','autolink','補充資訊'],
     ['cover_img','封面圖檔','imgupload','圖片紀錄'],
+    ['gameplay_img','遊戲畫面','imgupload','圖片紀錄'],
     ['extra_images','自訂圖片','multiimg','圖片紀錄'],
     ['related_code','關聯商品','txt','關聯商品'],
     ['notes','備註','area','補充資訊'],
@@ -3215,7 +3217,7 @@ const DIGI_SHARED_SELECTS={
   purchase_method:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他'],
 };
 const DIGI_SHARED_GCOL={'識別資訊':'#00e5ff','商店資訊':'#40c4ff','檔案資訊':'#4dd0e1','發行廠商':'#ce93d8','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
-const DIGI_SHARED_DEFAULTS={collect_status:'收藏中',drm_status:'',file_storage_location:'',buy_date:'2099/01/01',buy_price:'0',store:'',purchase_method:'直接購買',release_date:'',cover_img:'',ref_link:''};
+const DIGI_SHARED_DEFAULTS={collect_status:'收藏中',drm_status:'',file_storage_location:'',buy_date:'2099/01/01',buy_price:'0',store:'',purchase_method:'直接購買',release_date:'',cover_img:'',gameplay_img:'',ref_link:''};
 
 // ── 1. 下載版遊戲 ──
 const DIGIGAME_FIELDS=_digiHead().concat([
@@ -5684,7 +5686,7 @@ function syncOfflineQueue(silent){
               var savedEntry=Object.assign({},item.entrySnapshot);
               if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
               if(res.imgs){
-                ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+                ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
                 if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
               }
               col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
@@ -5741,7 +5743,7 @@ function _capExtraImagesSize(){
   if(kept.length!==arr.length)entry.extra_images=JSON.stringify(kept);
 }
 function _compressAndSave(afterFn){
-  var imgKeys=['cover_img','back_img','spine_img'];
+  var imgKeys=['cover_img','back_img','spine_img','gameplay_img'];
   var LIMIT=49000; // Sheets 單格上限約 50000，留緩衝
   var pending=0;
   // 漸進式壓縮：畫質優先，從高到低嘗試直到符合上限
@@ -6128,7 +6130,7 @@ function doSave(){
   // 先壓縮，壓縮完才檢查是否仍超過上限（順序很重要：先壓縮再檢查）
   _compressAndSave(function(){
   // 壓縮後若仍超過 Sheets 單格上限才清空（避免整筆寫入失敗）
-  ['cover_img','back_img','spine_img'].forEach(function(k){
+  ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){
     if(entry[k]&&entry[k].length>8000000){
       toast('⚠️ '+fldName(k)+' 過大（>8MB），此圖未存','',4000);
       entry[k]='';
@@ -6148,7 +6150,7 @@ function doSave(){
     var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
     if(res.uuid&&!entry.uuid)entry.uuid=res.uuid; // 確保 entry 有 uuid
     if(res.imgs){
-      ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+      ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
       if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images; // 自訂圖片陣列同步改存 Drive ID
     }
     col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});localforage.setItem('gv_col',col).catch(function(){});updateStats();
@@ -6200,7 +6202,7 @@ function doUpdate(rowNum){
   if(_ub){_ub.disabled=true;_ub.textContent='更新中...';}
   // 先壓縮，壓縮完才檢查（順序很重要：先壓縮再檢查，避免圖片被提前清空）
   _compressAndSave(function(){
-  ['cover_img','back_img','spine_img'].forEach(function(k){
+  ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){
     if(entry[k]&&entry[k].length>8000000){
       toast('⚠️ '+fldName(k)+' 過大（>8MB），此圖未存','er',4000);
       entry[k]='';
@@ -6227,7 +6229,7 @@ function doUpdate(rowNum){
     if(res.ok){
       var i=col.findIndex(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
       if(res.imgs){
-        ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+        ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
         if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images; // 自訂圖片陣列同步改存 Drive ID
       }
       if(i>=0)col[i].data=Object.assign({},entry);
@@ -12749,7 +12751,7 @@ function batchSaveAll(){
         var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
         if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
         if(res.imgs){
-          ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+          ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
           if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
         }
         col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
@@ -12772,7 +12774,7 @@ function batchSaveAll(){
     if(!entry.created_at)entry.created_at=tpeDateTime();
     _normalizeEntryEnums();
     _compressAndSave(function(){
-      ['cover_img','back_img','spine_img'].forEach(function(k){
+      ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){
         if(entry[k]&&entry[k].length>8000000)entry[k]='';
       });
       _capExtraImagesSize();
@@ -13008,7 +13010,7 @@ function _friendlyError(msg){
 }
 function fldName(k){
   var map={
-    cover_img:'封面圖',back_img:'封底圖',spine_img:'側邊圖',
+    cover_img:'封面圖',back_img:'封底圖',spine_img:'側邊圖',gameplay_img:'遊戲畫面',
     developer:'開發商 / 作者編者',publisher:'發行商 / 出版社',model_no:'型號',
     code:'商品編碼',barcode:'條碼',serial_no:'序號'
   };
@@ -13804,9 +13806,9 @@ function renderFld(f){
   if(type==='hidden')return ''; // UUID 等隱藏欄位不渲染
   var v=(entry[k]!==undefined&&entry[k]!==null)?entry[k]:((window._CUR_DEFAULTS||DEFAULTS)[k]||'');
   // 防護：非圖片欄位若含 base64 資料，強制清空
-  if(v&&typeof v==='string'&&v.startsWith('data:image')&&k!=='cover_img'&&k!=='back_img'&&k!=='spine_img')v='';
+  if(v&&typeof v==='string'&&v.startsWith('data:image')&&k!=='cover_img'&&k!=='back_img'&&k!=='spine_img'&&k!=='gameplay_img')v='';
   // 防護：price/date 欄位若含 URL，清空（圖片欄位與參考連結不受影響，URL 是合法內容）
-  var _urlOkKeys={ref_link:1,cover_img:1,back_img:1,spine_img:1};
+  var _urlOkKeys={ref_link:1,cover_img:1,back_img:1,spine_img:1,gameplay_img:1};
   if(v&&typeof v==='string'&&v.startsWith('http')&&!_urlOkKeys[k])v='';
   // 防護：所有價格欄位只允許數字、分隔符與幣別
   if(type==='price'&&v&&!/^[\d.,\s]*(JPY|TWD|USD)?$/i.test(v))v='';
@@ -16468,7 +16470,7 @@ function lbRotate(){
         if(typeof detailRow!=='undefined'&&detailRow!==null&&typeof col!=='undefined'){
           var item=col.find(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
           if(item&&item.data){
-            if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'){
+            if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'||cur.key==='gameplay_img'){
               item.data[cur.key]=compressed;
             }else if(cur.key==='extra_images'&&typeof cur.extraIdx==='number'){
               var ex=[];try{ex=JSON.parse(item.data.extra_images||'[]');}catch(_e){ex=[];}
@@ -16531,7 +16533,7 @@ function lbRotate(){
         }
 
         if(typeof entry!=='undefined'&&entry&&cur.key){
-          if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'){
+          if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'||cur.key==='gameplay_img'){
             onFld(cur.key,compressed);
             var prev=document.getElementById('prev-'+cur.key);
             if(prev){prev.src=compressed;prev.style.display='block';}
@@ -17538,11 +17540,12 @@ function detailHeroHtml(d,rowNum){
   var sub=_cm.sub(d).filter(Boolean).join(' · ');
   // v47.04：hero 封面區不再提供快速拍照/相簿按鈕，所有圖片修改一律從「編輯」進入；
   // 點主圖／縮圖改為彈出燈箱瀏覽（含自訂圖片），燈箱有打叉關閉與左右箭頭換圖
-  var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img);
+  var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img),hasG=hasImgVal(d.gameplay_img);
   var _imgDefs=[];
   if(hasC)_imgDefs.push({key:'cover_img',lbl:'封面',raw:d.cover_img,url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
   if(hasB)_imgDefs.push({key:'back_img',lbl:'封底',raw:d.back_img,url:imgUrl(d.back_img,300),full:imgUrl(d.back_img,1000),thumb:imgUrl(d.back_img,80)});
   if(hasS)_imgDefs.push({key:'spine_img',lbl:'側邊',raw:d.spine_img,url:imgUrl(d.spine_img,300),full:imgUrl(d.spine_img,1000),thumb:imgUrl(d.spine_img,80)});
+  if(hasG)_imgDefs.push({key:'gameplay_img',lbl:'遊戲畫面',raw:d.gameplay_img,url:imgUrl(d.gameplay_img,300),full:imgUrl(d.gameplay_img,1000),thumb:imgUrl(d.gameplay_img,80)});
   var _extraArr=[];try{_extraArr=JSON.parse(d.extra_images||'[]');}catch(e){_extraArr=[];}
   if(Array.isArray(_extraArr)){
     _extraArr.forEach(function(item,eidx){
@@ -17569,6 +17572,7 @@ function detailHeroHtml(d,rowNum){
       (hasS?'&spine='+encodeURIComponent(imgUrl(d.spine_img,1000)):'');
     coverHtml+='<div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">'+
       '<a href="'+_3dUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.45);color:#00e5ff;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(0,229,255,.15);transition:all .15s"><span>🎮 3D 把玩</span></a>'+
+      '<a href="./cyber-museum.html" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(105,240,174,.15);border:1px solid rgba(105,240,174,.5);color:#69f0ae;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(105,240,174,.15);transition:all .15s"><span>📺 CRT 展廳</span></a>'+
       '<a href="./slab-studio.html?name='+encodeURIComponent(title)+'&platform='+encodeURIComponent(d.platform||cat)+'&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+'&comp='+encodeURIComponent(d.completeness||'')+'&date='+encodeURIComponent(d.release_date||'')+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#ffd700;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(212,175,55,.15);transition:all .15s"><span>💎 鑑定卡</span></a>'+
     '</div>';
   }
@@ -17715,7 +17719,7 @@ $('dact').innerHTML=
       try{var dt=new Date(v);v=dt.getFullYear()+'/'+(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0');}catch(e){}
     }
     // 圖片欄位已在上方顯示，跳過
-    if(k==='cover_img'||k==='back_img'||k==='spine_img')return;
+    if(k==='cover_img'||k==='back_img'||k==='spine_img'||k==='gameplay_img')return;
     // ⚠️ 防護：任何欄位若含 base64 圖片資料，跳過
     if(typeof v==='string'&&v.startsWith('data:image'))return;
     // 防護：價格欄位含 URL 跳過

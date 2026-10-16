@@ -74,7 +74,7 @@ const GAME_HEADERS = [
   'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'play_status','rating',
-  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
+  'summary','ref_link','cover_img','back_img','spine_img','gameplay_img','extra_images','related_code','notes','uuid','created_at',
   'storage_location','market_value','resale_price','resale_date','dlc_status','bonus_code_status',
   'voice_language','subtitle_language',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
@@ -456,7 +456,7 @@ function resolveType(category, subtype) {
 // ── Drive 圖片存放 ────────────────────────────────
 // 圖片改存 Google Drive，工作表格子只存 file ID（避免 base64 撐爆儲存與傳輸）
 const IMG_FOLDER_NAME = 'GameVault_Images';
-const IMG_COLS = ['cover_img', 'back_img', 'spine_img'];
+const IMG_COLS = ['cover_img', 'back_img', 'spine_img', 'gameplay_img'];
 // v47.04：5 張自訂圖片欄位，存成 JSON 陣列 [{label,img}]，img 可能是 base64(新上傳)或 Drive ID(已存在)，
 // 跟 IMG_COLS 的單一 base64 欄位不同格式，需要另外處理，不能塞進 IMG_COLS 迴圈
 const EXTRA_IMG_COL = 'extra_images';
