@@ -481,6 +481,18 @@ main {
   box-shadow: 0 10px 30px rgba(0,0,0,0.85);
   z-index: 2;
   filter: contrast(1.1) saturate(1.15);
+  transition: all 0.25s ease;
+}
+
+/* 特麗霓虹 4:3 實機遊戲畫面專屬像素化與光暈渲染 */
+.crt-game-fg.is-gameplay {
+  max-width: 90%;
+  max-height: 84%;
+  border-radius: 4px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  box-shadow: 0 0 35px rgba(0, 229, 255, 0.28), 0 10px 30px rgba(0,0,0,0.9);
+  filter: contrast(1.15) saturate(1.25) brightness(1.05);
 }
 
 /* 螢幕頂部復古 OSD 顯示 (On-Screen Display) */
@@ -615,15 +627,15 @@ main {
   transform: scale(1.05);
 }
 
-.btn-3d-launch {
-  flex: 1;
+.btn-crt-launch {
+  flex: 1.4;
   padding: 8px 12px;
   border-radius: 10px;
-  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(121, 134, 203, 0.25) 100%);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.9) 0%, rgba(105, 240, 174, 0.95) 100%);
   border: 1px solid var(--cyan);
-  color: #fff;
+  color: #060913;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 900;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -631,11 +643,34 @@ main {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.15s;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.45);
+}
+.btn-crt-launch:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.7);
+}
+
+.btn-3d-launch {
+  flex: 0.9;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 22, 40, 0.8);
+  border: 1px solid var(--border);
+  color: var(--txt2);
+  font-size: 11.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 .btn-3d-launch:hover {
-  background: var(--cyan);
-  color: #060913;
-  box-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
+  color: #fff;
+  border-color: var(--cyan);
+  background: rgba(0, 229, 255, 0.15);
 }
 
 /* ════════ 行動裝置窄螢幕自適應優化 ════════ */
@@ -844,8 +879,11 @@ main {
         </div>
       </div>
       <div class="hud-actions">
-        <a id="hud-3d-btn" href="#" target="_blank" class="btn-3d-launch">
-          <span>🎮 3D 擬真把玩</span>
+        <button id="hud-crt-btn" class="btn-crt-launch" onclick="launchCrtFromHud()" type="button">
+          <span>📺 特麗霓虹實機鑑賞</span>
+        </button>
+        <a id="hud-3d-btn" href="#" target="_blank" class="btn-3d-launch" title="查看 3D 外盒">
+          <span>🎮 3D 外盒</span>
         </a>
       </div>
     </div>
@@ -853,7 +891,89 @@ main {
 </div>
 
 <script>
-// ════════ 內建高品質備用展示清單（當本機尚未快取時無縫展現） ════════
+// ════════ Libretro 開源全套復古圖庫匹配器 (Auto-Art Scraper) ════════
+var RETRO_ART_MAP = {
+  // ── FC 紅白機 ──
+  '三国志': { plat: 'nes', file: 'Sangokushi (Japan)' },
+  '三国志II': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)' },
+  '三国志II 覇王の大陸': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)' },
+  '三国志 中原の覇者': { plat: 'nes', file: 'Sangokushi - Chuugen no Hasha (Japan)' },
+  'ナムクラシック': { plat: 'nes', file: 'Namco Classic (Japan)' },
+  'Namco Classic': { plat: 'nes', file: 'Namco Classic (Japan)' },
+  'スーパーマリオブラザーズ': { plat: 'nes', file: 'Super Mario Bros. (Japan, USA)' },
+  'スーパーマリオブラザーズ3': { plat: 'nes', file: 'Super Mario Bros. 3 (Japan)' },
+  '熱血高校ドッジボール部': { plat: 'nes', file: 'Nekketsu Koukou Dodgeball-bu (Japan)' },
+  'ナムコット麻雀III': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)' },
+  'ナムコット麻雀III マージャン天国': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)' },
+  'パーフェクトボウリング': { plat: 'nes', file: 'Perfect Bowling (Japan)' },
+  'パーフェクトボーリング': { plat: 'nes', file: 'Perfect Bowling (Japan)' },
+  '影の伝説': { plat: 'nes', file: 'Kage no Densetsu (Japan)' },
+  'クインティ': { plat: 'nes', file: 'Quinty (Japan)' },
+  'Quinty': { plat: 'nes', file: 'Quinty (Japan)' },
+  'ドラゴンクエスト': { plat: 'nes', file: 'Dragon Quest (Japan)' },
+  'ドラゴンクエストII': { plat: 'nes', file: 'Dragon Quest II - Akuryou no Kamigami (Japan)' },
+  'ドラゴンクエストIII': { plat: 'nes', file: 'Dragon Quest III - Soshite Densetsu e... (Japan)' },
+  'ドラゴンクエストIV': { plat: 'nes', file: 'Dragon Quest IV - Michibikareshi Monotachi (Japan)' },
+  'ファイナルファンタジー': { plat: 'nes', file: 'Final Fantasy (Japan)' },
+  'ファイナルファンタジーII': { plat: 'nes', file: 'Final Fantasy II (Japan)' },
+  'ファイナルファンタジーIII': { plat: 'nes', file: 'Final Fantasy III (Japan)' },
+  'エキサイトバイク': { plat: 'nes', file: 'Excitebike (Japan)' },
+  'ドクターマリオ': { plat: 'nes', file: 'Dr. Mario (Japan, USA)' },
+  'スターソルジャー': { plat: 'nes', file: 'Star Soldier (Japan)' },
+  'パックランド': { plat: 'nes', file: 'Pac-Land (Japan)' },
+  'バーガータイム': { plat: 'nes', file: 'BurgerTime (Japan)' },
+  'ロードファイター': { plat: 'nes', file: 'Road Fighter (Japan)' },
+  '燃えろ!!プロ野球': { plat: 'nes', file: 'Moero!! Pro Yakyuu (Japan)' },
+
+  // ── MD 世嘉五代 ──
+  'アドバンスド大戦略': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)' },
+  'アドバンスド大戦略 ～ドイツ電撃作戦～': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)' },
+  'SUPER大戦略': { plat: 'md', file: 'Super Daisenryaku (Japan)' },
+  'SUPER 大戦略': { plat: 'md', file: 'Super Daisenryaku (Japan)' },
+  '餓狼伝説': { plat: 'md', file: 'Garou Densetsu - Shukumei no Tatakai (Japan)' },
+  '餓狼伝説 (THE BATTLE OF DESTINY)': { plat: 'md', file: 'Garou Densetsu - Shukumei no Tatakai (Japan)' },
+  'ポピュラス': { plat: 'md', file: 'Populous (Japan)' },
+  'Populous': { plat: 'md', file: 'Populous (Japan)' },
+  'ソニック': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  'ソニック・ザ・ヘッジホッグ': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  'Sonic The Hedgehog': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  '斬・夜叉円舞曲': { plat: 'md', file: 'Zan Yasha Enbukyoku (Japan)' },
+  'NHK 太平記': { plat: 'md', file: 'NHK Taiga Drama - Taiheiki (Japan)' },
+  'NHK大河ドラマ 太平記': { plat: 'md', file: 'NHK Taiga Drama - Taiheiki (Japan)' },
+  'ドラゴンボールZ 武勇烈伝': { plat: 'md', file: 'Dragon Ball Z - Buyuu Retsuden (Japan)' },
+  'スーパーハングオン': { plat: 'md', file: 'Super Hang-On (Japan, USA) (En,Ja)' },
+  'ぷよぷよ': { plat: 'md', file: 'Puyo Puyo (Japan)' },
+  'コラムス': { plat: 'md', file: 'Columns (World)' },
+  'スペースハリアーII': { plat: 'md', file: 'Space Harrier II (Japan, USA) (En,Ja)' },
+  'シャイニング・フォース': { plat: 'md', file: 'Shining Force - Kamigami no Isan (Japan)' },
+  'ランドストーカー': { plat: 'md', file: 'Landstalker - Koutei no Zaihou (Japan)' },
+  'ファンタシースターII': { plat: 'md', file: 'Phantasy Star II - Kaerazaru Toki no Owari ni (Japan)' }
+};
+
+function getRetroArt(name, plat) {
+  if (!name) return { cover: '', snap: '' };
+  var clean = String(name).trim();
+  var match = RETRO_ART_MAP[clean];
+  if (!match) {
+    var keys = Object.keys(RETRO_ART_MAP);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (clean.indexOf(k) >= 0 || k.indexOf(clean) >= 0) {
+        match = RETRO_ART_MAP[k];
+        break;
+      }
+    }
+  }
+  if (!match) return { cover: '', snap: '' };
+  var repo = match.plat === 'nes' ? 'Nintendo_-_Nintendo_Entertainment_System' : 'Sega_-_Mega_Drive_-_Genesis';
+  var encFile = encodeURIComponent(match.file) + '.png';
+  return {
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile,
+    snap: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Snaps/' + encFile
+  };
+}
+
+// ════════ 內建高品質展示清單（含精選封面與實機遊戲畫面） ════════
 var DEMO_COLLECTION = [
   // FC
   {
@@ -862,6 +982,7 @@ var DEMO_COLLECTION = [
     release_date: '1988',
     developer: 'KOEI',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Sangokushi%20(Japan).png',
     back_img: 'https://images.launchbox-app.com/ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg',
     spine_img: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba8b2b849aff.jpg',
     completeness: '盒裝完整',
@@ -874,7 +995,8 @@ var DEMO_COLLECTION = [
     primary_name: '三国志II 覇王の大陸',
     release_date: '1992',
     developer: 'NAMCO',
-    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20II%20(Japan).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
     back_img: 'https://images.launchbox-app.com/f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg',
     spine_img: 'https://images.launchbox-app.com/5a038bcb-63c3-44f0-ab57-7d76c1af5c01.jpg',
     completeness: '美品',
@@ -888,6 +1010,7 @@ var DEMO_COLLECTION = [
     release_date: '1988',
     developer: 'NAMCO',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Namco%20Classic%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Namco%20Classic%20(Japan).png',
     back_img: 'https://images.launchbox-app.com/045b85dd-e230-4809-80de-9145858621ec.png',
     spine_img: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d83036382b3a.png',
     completeness: '良好',
@@ -900,7 +1023,8 @@ var DEMO_COLLECTION = [
     primary_name: 'スーパーマリオブラザーズ3',
     release_date: '1988',
     developer: 'Nintendo',
-    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Super%20Mario%20Bros.%203%20(Japan).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Super%20Mario%20Bros.%203%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Super%20Mario%20Bros.%203%20(Japan).png',
     back_img: 'https://images.launchbox-app.com/045b85dd-e230-4809-80de-914fb0f98e7d.jpg',
     spine_img: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d8329b35a399.jpg',
     completeness: '盒書齊全',
@@ -913,11 +1037,54 @@ var DEMO_COLLECTION = [
     primary_name: '熱血高校ドッジボール部',
     release_date: '1988',
     developer: 'Technos Japan',
-    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Nekketsu%20Koukou%20Dodgeball-bu%20(Japan).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Nekketsu%20Koukou%20Dodgeball-bu%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Nekketsu%20Koukou%20Dodgeball-bu%20(Japan).png',
     back_img: '',
     spine_img: '',
     completeness: '裸卡',
     market_value: '800',
+    barcode: '',
+    storage_location: '防潮箱 A2'
+  },
+  {
+    platform: 'FC',
+    primary_name: 'ナムコット麻雀III マージャン天国',
+    release_date: '1991',
+    developer: 'NAMCO',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Namcot%20Mahjong%20III%20-%20Mahjong%20Tengoku%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Namcot%20Mahjong%20III%20-%20Mahjong%20Tengoku%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '盒裝完整',
+    market_value: '950',
+    barcode: '4907892000453',
+    storage_location: '防潮箱 A2'
+  },
+  {
+    platform: 'FC',
+    primary_name: '影の伝説',
+    release_date: '1986',
+    developer: 'Taito',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Kage%20no%20Densetsu%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Kage%20no%20Densetsu%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '盒裝完整',
+    market_value: '1200',
+    barcode: '4988611860045',
+    storage_location: '防潮箱 A1'
+  },
+  {
+    platform: 'FC',
+    primary_name: 'パーフェクトボウリング',
+    release_date: '1989',
+    developer: 'Tonkin House',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Perfect%20Bowling%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Perfect%20Bowling%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '良好',
+    market_value: '700',
     barcode: '',
     storage_location: '防潮箱 A2'
   },
@@ -928,7 +1095,8 @@ var DEMO_COLLECTION = [
     primary_name: '餓狼伝説 (THE BATTLE OF DESTINY)',
     release_date: '1992',
     developer: 'SNK / Takara',
-    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
     back_img: 'https://images.launchbox-app.com/0e22f16d-cf0f-46d4-963f-3543666270b2.jpg',
     spine_img: 'https://images.launchbox-app.com/f3598c0e-5181-4950-bcb3-f495535dfd97.jpg',
     completeness: '盒裝完整',
@@ -941,7 +1109,8 @@ var DEMO_COLLECTION = [
     primary_name: 'アドバンスド大戦略 ～ドイツ電撃作戦～',
     release_date: '1991',
     developer: 'SEGA',
-    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Advanced%20Daisenryaku%20-%20Doitsu%20Dengeki%20Sakusen%20(Japan).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Advanced%20Daisenryaku%20-%20Deutsch%20Dengeki%20Sakusen%20(Japan)%20(Rev%20A).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Advanced%20Daisenryaku%20-%20Deutsch%20Dengeki%20Sakusen%20(Japan)%20(Rev%20A).png',
     back_img: 'https://images.launchbox-app.com/1ba5ca41-245a-41cf-b706-a89c894236a9.jpg',
     spine_img: 'https://images.launchbox-app.com/d906551d-4af5-402b-9cc8-3d17d3d75a61.jpg',
     completeness: '美品',
@@ -954,7 +1123,8 @@ var DEMO_COLLECTION = [
     primary_name: 'ポピュラス (Populous)',
     release_date: '1991',
     developer: 'Electronic Arts',
-    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Populous%20(Japan).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Populous%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Populous%20(Japan).png',
     back_img: 'https://images.launchbox-app.com/135f9c65-c4ca-40ce-8977-1c78bbfca99e.jpg',
     spine_img: 'https://images.launchbox-app.com/fa910a05-4094-44e2-a51f-a90a07153641.jpg',
     completeness: '普通',
@@ -967,12 +1137,69 @@ var DEMO_COLLECTION = [
     primary_name: 'ソニック・ザ・ヘッジホッグ (Sonic The Hedgehog)',
     release_date: '1991',
     developer: 'Sonic Team / SEGA',
-    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Sonic%20the%20Hedgehog%20(Japan)%20(En).png',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Sonic%20The%20Hedgehog%20(Japan,%20Europe,%20Korea)%20(En).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Sonic%20The%20Hedgehog%20(Japan,%20Europe,%20Korea)%20(En).png',
     back_img: '',
     spine_img: '',
     completeness: '盒裝完整',
     market_value: '2400',
     barcode: '4974365540081',
+    storage_location: '防潮箱 B1'
+  },
+  {
+    platform: 'MD',
+    primary_name: '斬・夜叉円舞曲',
+    release_date: '1991',
+    developer: 'Wolf Team',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Zan%20Yasha%20Enbukyoku%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Zan%20Yasha%20Enbukyoku%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '盒裝完整',
+    market_value: '1850',
+    barcode: '4988624991040',
+    storage_location: '防潮箱 B1'
+  },
+  {
+    platform: 'MD',
+    primary_name: 'SUPER大戦略',
+    release_date: '1989',
+    developer: 'SEGA',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Super%20Daisenryaku%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Super%20Daisenryaku%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '盒裝完整',
+    market_value: '1300',
+    barcode: '4974365540036',
+    storage_location: '防潮箱 B2'
+  },
+  {
+    platform: 'MD',
+    primary_name: 'NHK大河ドラマ 太平記',
+    release_date: '1992',
+    developer: 'SEGA',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/NHK%20Taiga%20Drama%20-%20Taiheiki%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/NHK%20Taiga%20Drama%20-%20Taiheiki%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '盒裝完整',
+    market_value: '1500',
+    barcode: '4974365540234',
+    storage_location: '防潮箱 B1'
+  },
+  {
+    platform: 'MD',
+    primary_name: 'ドラゴンボールZ 武勇烈伝',
+    release_date: '1994',
+    developer: 'Bandai',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Dragon%20Ball%20Z%20-%20Buyuu%20Retsuden%20(Japan).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Dragon%20Ball%20Z%20-%20Buyuu%20Retsuden%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '良好',
+    market_value: '2600',
+    barcode: '4902425424560',
     storage_location: '防潮箱 B1'
   }
 ];
@@ -1183,15 +1410,21 @@ function loadAllData() {
           platDisplay = rawPlat || '經典收藏';
         }
 
+        var rawName = d.primary_name || d.zh_name || d.jp_name || d.en_name || '未命名';
+        var art = getRetroArt(rawName, platDisplay);
+        var cover = imgUrl(d.cover_img, 800) || art.cover;
+        var gameplay = imgUrl(d.gameplay_img, 800) || art.snap;
+
         return {
           is_book: isBook,
           platform: platDisplay,
           raw_platform: rawPlat,
           category: d.category || (isBook ? '攻略' : '遊戲'),
-          primary_name: d.primary_name || d.zh_name || d.jp_name || d.en_name || '未命名',
+          primary_name: rawName,
           release_date: fmtDateDisplay(d.release_date),
           developer: d.developer || d.publisher || '',
-          cover_img: imgUrl(d.cover_img, 800),
+          cover_img: cover,
+          gameplay_img: gameplay,
           back_img: imgUrl(d.back_img, 800),
           spine_img: imgUrl(d.spine_img, 400),
           completeness: d.completeness || '',
@@ -1324,6 +1557,10 @@ function selectGame(game, triggerAnim) {
   updateCrtDisplay(game, triggerAnim);
 }
 
+function launchCrtFromHud() {
+  switchView('crt');
+}
+
 function updateCrtDisplay(game, triggerDegauss) {
   if (!game) return;
   var scr = document.getElementById('crt-screen-elem');
@@ -1337,16 +1574,26 @@ function updateCrtDisplay(game, triggerDegauss) {
     playDegaussSound();
   }
 
-  var displayImg = game.cover_img || game.spine_img || './bg.webp';
+  // 特麗霓虹 CRT 核心：優先以實機遊戲畫面 (gameplay_img) 呈現，無實機圖時退回封面 (cover_img)
+  var hasGameplay = Boolean(game.gameplay_img);
+  var displayImg = game.gameplay_img || game.cover_img || game.spine_img || './bg.webp';
   bgImg.src = displayImg;
   fgImg.src = displayImg;
+
+  if (hasGameplay) {
+    fgImg.classList.add('is-gameplay');
+  } else {
+    fgImg.classList.remove('is-gameplay');
+  }
 
   document.getElementById('crt-title').textContent = game.primary_name;
   var metaParts = [game.platform || 'RETRO'];
   if (game.developer) metaParts.push(game.developer);
   if (game.release_date) metaParts.push(game.release_date);
   document.getElementById('crt-meta').textContent = metaParts.join(' · ');
-  document.getElementById('crt-osd-channel').textContent = 'CH ' + ((game.platform || 'FC').slice(0, 3).toUpperCase()) + ' · 60FPS';
+
+  var osdMode = hasGameplay ? 'GAMEPLAY' : 'BOXART';
+  document.getElementById('crt-osd-channel').textContent = 'CH ' + ((game.platform || 'FC').slice(0, 3).toUpperCase()) + ' · ' + osdMode;
 }
 
 // ════════ 視圖切換 ════════

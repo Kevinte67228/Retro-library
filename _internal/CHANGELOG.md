@@ -1,3 +1,51 @@
+## v11.11 (2026-10-16)
+
+### 變更內容
+採納「建議 3：特麗霓虹 CRT 實機動態遊玩畫面」為展廳核心展示主軸，並加入專屬「遊戲畫面 / 實機截圖」圖檔欄位與開源圖庫全自動刮削補全：
+
+1. **全新遊戲畫面欄位（`gameplay_img`）全鏈條深度整合**：
+   - **Google Apps Script 後端（`docs/RetroVault_AppsScript.gs`）**：
+     - 在 `GAME_HEADERS` 欄位中納入 `'gameplay_img'`，置於 `'spine_img'` 之後、`'extra_images'` 之前。
+     - 納入 `IMG_COLS = ['cover_img', 'back_img', 'spine_img', 'gameplay_img']`，完整支援自動上傳至 Google Drive `GameVault_Images` 專屬資料夾、產生 File ID 並防止 base64 溢位。
+   - **PWA 主程式（`docs/index.html`）**：
+     - 收藏實體遊戲欄位清單 `FIELDS` 與數位下載版 `_digiTail()` 正式新增 `['gameplay_img', '遊戲畫面', 'imgupload', '圖片紀錄']`。
+     - 預設值 `DEFAULTS` 與 `DIGI_SHARED_DEFAULTS` 新增 `gameplay_img: ''`。
+     - 儲存壓縮流程 `_compressAndSave()`、尺寸保護檢查、離線補送佇列、批次匯入、照片旋轉 90° 與 Hero 封面縮圖輪播全數支援 `gameplay_img`。
+     - 詳情彈窗底部操作按鈕新增「📺 CRT 展廳」直達入口。
+
+2. **賽博防潮展廳（`docs/cyber-museum.html`）CRT 實機遊玩模式升級**：
+   - **特麗霓虹 CRT 像素級渲染**：
+     - 電視螢幕核心由展示包裝盒轉為優先播放「實機遊戲畫面（`gameplay_img`）」，以精準 4:3 比例、近螢幕滿版（90% 寬、84% 高）、`image-rendering: pixelated` 復古掃描線光暈呈現。
+     - 無實機截圖時智慧退回 `cover_img` 外盒展示，CRT OSD 頻道頂部動態顯示 `CH FC · GAMEPLAY` 或 `CH MD · BOXART`。
+   - **開源復古圖庫全自動刮削補全（Libretro Auto-Art Scraper）**：
+     - 內建 `RETRO_ART_MAP` 與 `getRetroArt()` 自動匹配引擎，支援 FC 紅白機與 MD 世嘉五代數十款經典遊戲（三國志系列、超級瑪利歐3、熱血高校、Namco Classic、影之傳說、餓狼傳說、德意志電擊作戰大戰略、音速小子、Populous、夜叉圓舞曲、太平記等）。
+     - 本機快取或示範資料庫加載時，若缺少外盒封面或實機遊戲畫面，自動透過 Libretro 官方 CDN 即時無縫補齊，徹底消滅展廳黑洞與空白卡匣。
+   - **HUD 抽屜視覺交互重構**：
+     - 點擊卡帶抽出時，HUD 操作區置入高對比度霓虹按鈕「📺 特麗霓虹實機鑑賞」，一鍵切換視圖並觸發消磁開機音效；3D 擬真外盒把玩降級為次要輔助功能，完美契合實體裸卡收藏家的真實情懷。
+
+3. **版本管理與發佈相容性保護**：
+   - Service Worker 快取升級為 `retrovault-v11-11`，離線清單包含快照 `RetroVault_v11_11_index.html`。
+   - 部署腳本 `_internal/github_deploy.py` 納入 `v11_10` 至 `PERMANENT_EXCEPTIONS` 與 `PROTECTED_DOCS_VERSIONS`，持續永久保護歷史關鍵基準版本。
+
+### 自我檢查
+- `docs/RetroVault_AppsScript.gs`、`docs/index.html`、`docs/cyber-museum.html`、`docs/sw.js` 語法校驗無誤。
+- Libretro CDN 資源全數實測 HTTP 200 正常連線。
+
+### 影響檔案
+- docs/RetroVault_AppsScript.gs
+- docs/index.html
+- docs/cyber-museum.html
+- docs/sw.js
+- docs/RetroVault_v11_11_index.html
+- data/RetroVault_遊戲_FC.csv
+- data/RetroVault_遊戲_MD.csv
+- data/RetroVault_GS_Games_全量匯入檔.csv
+- _internal/backup_gs_games_408.json
+- _internal/github_deploy.py
+- _internal/CHANGELOG.md
+
+---
+
 ## v11.10 (2026-10-16)
 
 ### 變更內容
