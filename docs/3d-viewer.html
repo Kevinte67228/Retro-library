@@ -392,7 +392,8 @@ var SAMPLE_GAMES = [
 var BOX_DIMENSIONS = {
   FC: { w: 3.5, h: 2.35, d: 0.58, radius: 0.03, paper: true },   // 紅白機橫式紙盒
   MD: { w: 2.8, h: 3.9,  d: 0.62, radius: 0.05, paper: false },  // MD 黑色塑膠外盒
-  SFC: { w: 2.5, h: 4.4, d: 0.68, radius: 0.03, paper: true }   // 超任直立紙盒
+  SFC: { w: 2.5, h: 4.4, d: 0.68, radius: 0.03, paper: true },   // 超任直立紙盒
+  BOOK: { w: 2.7, h: 3.9, d: 0.45, radius: 0.02, paper: true }   // 攻略本／文獻書籍
 };
 
 // ══ Three.js 全域狀態 ══
@@ -698,6 +699,11 @@ function build3DBox(game) {
 
 // 建立抽出之卡帶與托盤
 function buildInnerCartridge(plat, dim, textures, game) {
+  if (plat === 'BOOK' || (game && (game.isBook || (game.sub && (game.sub.indexOf('攻略') >= 0 || game.sub.indexOf('書籍') >= 0))))) {
+    innerTrayGroup = null;
+    cartMesh = null;
+    return;
+  }
   innerTrayGroup = new THREE.Group();
 
   var cartWidth = dim.w * 0.85;
@@ -747,6 +753,7 @@ function buildInnerCartridge(plat, dim, textures, game) {
 
 // ══ 開盒抽出動畫補間 ══
 function toggleUnbox() {
+  if (currentGame && (currentGame.platform === 'BOOK' || currentGame.isBook)) return;
   isUnboxed = !isUnboxed;
   updateUnboxUI();
 }
@@ -754,6 +761,12 @@ function toggleUnbox() {
 function updateUnboxUI() {
   var btn = document.getElementById('btn-unbox');
   var txt = document.getElementById('txt-unbox');
+  var isBook = currentGame && (currentGame.platform === 'BOOK' || currentGame.isBook || (currentGame.sub && (currentGame.sub.indexOf('攻略') >= 0 || currentGame.sub.indexOf('書籍') >= 0)));
+  if (isBook) {
+    if (btn) btn.style.display = 'none';
+    return;
+  }
+  if (btn) btn.style.display = 'flex';
   if (isUnboxed) {
     btn.classList.add('active');
     txt.textContent = '闔上';
@@ -836,7 +849,14 @@ function onSelectSample(idx) {
 
 function loadGame(game) {
   currentGame = game;
-  document.getElementById('pill-plat').textContent = (game.platform === 'FC' ? 'FAMICOM / 紅白機' : 'MEGA DRIVE / 世嘉五代') + ' · ' + (game.sub || '');
+  var plat = game.platform || 'FC';
+  var isBook = plat === 'BOOK' || game.isBook || (game.sub && (game.sub.indexOf('攻略') >= 0 || game.sub.indexOf('書籍') >= 0));
+  var platText = 'FAMICOM / 紅白機';
+  if (plat === 'MD') platText = 'MEGA DRIVE / 世嘉五代';
+  else if (isBook) platText = 'GAME GUIDE / 攻略書籍';
+  else if (plat && plat !== 'FC') platText = plat;
+
+  document.getElementById('pill-plat').textContent = platText + ' · ' + (game.sub || '');
   document.getElementById('pill-title').textContent = game.name;
   build3DBox(game);
 }
@@ -849,12 +869,15 @@ function loadInitialGame() {
   var pBack = params.get('back');
   var pSpine = params.get('spine');
   var pPlat = params.get('platform') || 'FC';
+  var pSub = params.get('sub') || pPlat;
+  var isBook = pPlat === 'BOOK' || pSub.indexOf('攻略') >= 0 || pSub.indexOf('書籍') >= 0;
 
   if (pName && pCover) {
     var customGame = {
-      platform: pPlat,
+      platform: isBook ? 'BOOK' : pPlat,
       name: pName,
-      sub: pPlat,
+      sub: pSub,
+      isBook: isBook,
       cover: pCover,
       back: pBack || pCover,
       spine: pSpine || pCover

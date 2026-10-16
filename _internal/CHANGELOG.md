@@ -1,3 +1,48 @@
+## v11.10 (2026-10-16)
+
+### 變更內容
+依據行動端實機截圖回報，徹底修復「攻略本/書籍被誤歸類至 FC 紅白機」與「估值欄位因試算表假日期顯示 18 兆天價」之問題：
+
+1. **賽博防潮展廳攻略與文獻獨立層架（`docs/cyber-museum.html`）**：
+   - **徹底修正攻略本被誤判為 FC 紅白機**：
+     - **根因定位**：原本 `loadAllData()` 在判斷平台時，若平台欄位為空（攻略本在 RetroVault 中通常無 `platform`，而是使用 `applicable_platform` 或屬於 `category="攻略"`），程式碼 `else if (!platDisplay) platDisplay = 'FC'` 強制將無平台藏品預設為 FC，導致所有攻略本全數混入紅白機層架。
+     - **新增 `isBookItem()` 多維精準辨識**：綜合判定 `category`（攻略/書籍/動漫/美術設定集/畫冊/電子書）、書籍特有欄位（`book_type`、`binding`、`page_count`、`applicable_platform`）、ISBN-13 條碼（`978`、`979` 前綴）、出版社名稱（包含出版、文庫、書店等）以及書名關鍵字（パーフェクトガイド、パーフェクトカタログ、公式ガイド、配合理論等），100% 正確識別書籍文獻。
+     - **防範平台字串模糊誤判**：修正 `isPlatformFC`，排除 SFC（超任 Super Famicom）以及非 FC 主機；修正 `isPlatformMD`，排除 SS（Saturn）與 DC（Dreamcast）。
+   - **新增獨立專屬陳列層架「📖 遊戲攻略本與設定集」**：
+     - 書籍獨立陳列，不再與 FC 卡匣擠在同一層。
+     - 新增直立書籍規格書背樣式（`.spine-item.book`，高度 180px 直立書脊規格），並配有專屬金色狀態指示燈與書籍封面降級樣式。
+     - 當無書籍藏品時，該層架自動隱藏。
+   - **修正 Google Sheets 假日期轉出「NT$ 18 兆」天價估值 Bug**：
+     - **根因定位**：Google Sheets 試算表中若儲存格為空或包含預設時間，有時會帶出 Excel/Sheets epoch 基準日期（如 `1899-12-29 16:00:00`）。原本 `fmtValuation` 僅過濾非數字字元，導致 `1899-12-29 16:00:00` 被字串拼接為數字 `18991229160000`，格式化為驚人的 `NT$ 18,991,229,160,000`。
+     - **過濾機制**：`fmtValuation` 嚴格過濾包含 `1899`、日期分隔符（`-`、`/`、`T`）或大於 5000 萬的非正常數字，安全回傳「未估值」。
+   - **HUD 抽屜副標題校正**：
+     - 書籍藏品之副標題改為顯示「攻略本（或畫冊設定集） · 出版社 · 發行日期」，徹底告別誤導性的「FC · コーエーテクモゲームス出版部」。
+
+2. **3D 擬真卡帶盒把玩書籍規格支援（`docs/3d-viewer.html`）**：
+   - 新增 `BOOK` 實體尺寸比例預設（寬 2.7, 高 3.9, 厚 0.45，紙質），忠實呈現 A5/B5 平裝/精裝攻略書籍外觀。
+   - 當藏品為攻略本或書籍時，自動隱藏「開盒」按鈕（書籍無卡帶抽出抽屜），維持模型完整。
+   - 頂部導航欄標註自動切換為「GAME GUIDE / 攻略書籍」。
+
+3. **PWA 主程式與版本發佈（`docs/index.html` & `docs/sw.js`）**：
+   - 主程式標註升級至 `v11.10`。
+   - Service Worker 快取升級為 `retrovault-v11-10`，生成快照 `RetroVault_v11_10_index.html` 並納入離線快取。
+   - 永久例外清單納入 `v11_09`，持續保護 `v11_01`, `v11_02`, `v11_07`, `v11_08`, `v11_09`。
+
+### 自我檢查
+- `docs/cyber-museum.html`、`docs/3d-viewer.html`、`docs/index.html`、`docs/sw.js` 語法檢驗完畢。
+- `_internal/deep_audit.py` 全站檢查通過。
+
+### 影響檔案
+- docs/cyber-museum.html
+- docs/3d-viewer.html
+- docs/index.html
+- docs/RetroVault_v11_10_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+- _internal/github_deploy.py
+
+---
+
 ## v11.09 (2026-10-16)
 
 ### 變更內容

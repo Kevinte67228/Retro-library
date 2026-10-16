@@ -246,6 +246,14 @@ main {
   border-right: 1px solid rgba(0,0,0,0.6);
   border-radius: 3px 3px 0 0;
 }
+/* 攻略本／文獻書籍書背規格 (直立規格，寬度約 26px，高度約 180px) */
+.spine-item.book {
+  width: 26px;
+  height: 180px;
+  border-left: 1px solid rgba(255,255,255,0.18);
+  border-right: 1px solid rgba(0,0,0,0.5);
+  border-radius: 2px 2px 0 0;
+}
 
 .spine-item img {
   width: 100%; height: 100%;
@@ -278,6 +286,10 @@ main {
 .spine-item.md .spine-fallback {
   background: linear-gradient(180deg, #1f2733 0%, #0d1117 100%);
   border-top: 2px solid var(--cyan);
+}
+.spine-item.book .spine-fallback {
+  background: linear-gradient(180deg, #bf360c 0%, #7f0000 100%);
+  border-top: 2px solid #ffb300;
 }
 
 /* 滑過抽出一半微動效 */
@@ -745,6 +757,21 @@ main {
         </div>
       </section>
 
+      <!-- 攻略書籍層 -->
+      <section class="shelf-section" id="sec-book" style="display:none">
+        <div class="shelf-header">
+          <div class="shelf-title">
+            <span class="dot" style="background:#ffb300;box-shadow:0 0 8px #ffb300"></span>
+            <span>📖 遊戲攻略本與設定集</span>
+          </div>
+          <span class="shelf-count" id="count-book">0 件</span>
+        </div>
+        <div class="shelf-bay">
+          <div class="spine-track" id="track-book"></div>
+          <div class="shelf-plank"></div>
+        </div>
+      </section>
+
       <!-- 其他收藏層 -->
       <section class="shelf-section" id="sec-other">
         <div class="shelf-header">
@@ -1068,17 +1095,45 @@ var selectedItem = null;
 var shelfData = {
   fc: [],
   md: [],
+  book: [],
   other: []
 };
 
+// 嚴謹判定是否為「書籍／攻略本／文獻」藏品
+function isBookItem(d) {
+  if (!d) return false;
+  var cat = String(d.category || '').trim();
+  if (cat === '攻略' || cat === '書籍' || cat === '動漫/美術設定集' || cat === '畫冊' || cat.indexOf('電子書') >= 0 || cat.indexOf('書') >= 0) {
+    return true;
+  }
+  if (d.book_type || d.binding || d.page_count || d.applicable_platform) {
+    return true;
+  }
+  var code = String(d.barcode || d.code || '').replace(/[^0-9]/g, '');
+  if (code.indexOf('978') === 0 || code.indexOf('979') === 0) {
+    return true;
+  }
+  var pub = String(d.publisher || d.developer || '');
+  if (pub.indexOf('出版') >= 0 || pub.indexOf('文庫') >= 0 || pub.indexOf('書店') >= 0) {
+    return true;
+  }
+  var name = String(d.primary_name || d.zh_name || d.jp_name || d.en_name || '');
+  if (name.indexOf('パーフェクトガイド') >= 0 || name.indexOf('パーフェクトカタログ') >= 0 || name.indexOf('公式ガイド') >= 0 || name.indexOf('設定資料集') >= 0 || name.indexOf('攻略本') >= 0 || name.indexOf('配合理論') >= 0) {
+    return true;
+  }
+  return false;
+}
+
 function isPlatformFC(plat) {
-  var p = (plat || '').toUpperCase();
-  return p.indexOf('FC') >= 0 || p.indexOf('FAMICOM') >= 0 || p.indexOf('NES') >= 0 || p.indexOf('紅白機') >= 0;
+  var p = (plat || '').toUpperCase().trim();
+  // 排除 SFC 超任
+  if (p.indexOf('SFC') >= 0 || p.indexOf('SUPER') >= 0 || p.indexOf('SNES') >= 0 || p.indexOf('超任') >= 0) return false;
+  return p === 'FC' || p.indexOf('FAMICOM') >= 0 || p.indexOf('NES') >= 0 || p.indexOf('紅白機') >= 0 || (/\bFC\b/).test(p);
 }
 
 function isPlatformMD(plat) {
-  var p = (plat || '').toUpperCase();
-  return p.indexOf('MD') >= 0 || p.indexOf('MEGA DRIVE') >= 0 || p.indexOf('MEGADRIVE') >= 0 || p.indexOf('GENESIS') >= 0 || p.indexOf('SEGA') >= 0 || p.indexOf('世嘉') >= 0;
+  var p = (plat || '').toUpperCase().trim();
+  return p === 'MD' || p.indexOf('MEGA DRIVE') >= 0 || p.indexOf('MEGADRIVE') >= 0 || p.indexOf('GENESIS') >= 0 || (/\bMD\b/).test(p) || (p.indexOf('SEGA') >= 0 && p.indexOf('SATURN') < 0 && p.indexOf('DREAMCAST') < 0) || p.indexOf('世嘉五代') >= 0;
 }
 
 function fmtDateDisplay(d) {
@@ -1092,9 +1147,14 @@ function fmtDateDisplay(d) {
 
 function fmtValuation(val) {
   if (val == null) return '未估值';
-  var s = String(val).replace(/[^0-9.]/g, '');
-  var num = parseFloat(s);
-  if (isNaN(num) || num <= 0) return '未估值';
+  var s = String(val).trim();
+  // 濾除 Google Sheets 試算表 1899-12-30 / 1899-12-29 假日期或時間字串誤入估值轉成 18 兆天價
+  if (s.indexOf('1899') >= 0 || s.indexOf('T') > 0 || s.split('-').length >= 3 || s.split('/').length >= 3) {
+    return '未估值';
+  }
+  var clean = s.replace(/[^0-9.]/g, '');
+  var num = parseFloat(clean);
+  if (isNaN(num) || num <= 0 || num > 50000000) return '未估值';
   return 'NT$ ' + Math.round(num).toLocaleString('en-US');
 }
 
@@ -1109,15 +1169,25 @@ function loadAllData() {
     if (cached && Array.isArray(cached) && cached.length) {
       allItems = cached.map(function(it) {
         var d = it.data || it;
-        var rawPlat = (d.platform || '').trim();
-        var platDisplay = rawPlat;
-        if (isPlatformFC(rawPlat)) platDisplay = 'FC';
-        else if (isPlatformMD(rawPlat)) platDisplay = 'MD';
-        else if (!platDisplay) platDisplay = 'FC';
+        var isBook = isBookItem(d);
+        var rawPlat = (d.platform || d.applicable_platform || '').trim();
+        var platDisplay = '';
+        if (isBook) {
+          var bookLabel = (d.category === '動漫/美術設定集' || d.category === '畫冊') ? '畫冊設定集' : '攻略本';
+          platDisplay = rawPlat ? (bookLabel + ' (' + rawPlat + ')') : bookLabel;
+        } else if (isPlatformFC(rawPlat)) {
+          platDisplay = 'FC';
+        } else if (isPlatformMD(rawPlat)) {
+          platDisplay = 'MD';
+        } else {
+          platDisplay = rawPlat || '經典收藏';
+        }
 
         return {
+          is_book: isBook,
           platform: platDisplay,
           raw_platform: rawPlat,
+          category: d.category || (isBook ? '攻略' : '遊戲'),
           primary_name: d.primary_name || d.zh_name || d.jp_name || d.en_name || '未命名',
           release_date: fmtDateDisplay(d.release_date),
           developer: d.developer || d.publisher || '',
@@ -1133,14 +1203,14 @@ function loadAllData() {
       console.log('[CyberMuseum] 成功載入本機快取藏品共 ' + allItems.length + ' 件');
     } else {
       allItems = DEMO_COLLECTION.map(function(it) {
-        return Object.assign({}, it, { release_date: fmtDateDisplay(it.release_date) });
+        return Object.assign({}, it, { release_date: fmtDateDisplay(it.release_date), is_book: isBookItem(it) });
       });
       console.log('[CyberMuseum] 無本機快取，載入精選示範藏品 ' + allItems.length + ' 件');
     }
     renderShelves();
   }).catch(function(e) {
     allItems = DEMO_COLLECTION.map(function(it) {
-      return Object.assign({}, it, { release_date: fmtDateDisplay(it.release_date) });
+      return Object.assign({}, it, { release_date: fmtDateDisplay(it.release_date), is_book: isBookItem(it) });
     });
     renderShelves();
   });
@@ -1148,16 +1218,23 @@ function loadAllData() {
 
 // 渲染防潮書背層架
 function renderShelves() {
-  shelfData.fc = allItems.filter(function(it) { return isPlatformFC(it.platform || it.raw_platform); });
-  shelfData.md = allItems.filter(function(it) { return isPlatformMD(it.platform || it.raw_platform); });
+  shelfData.book = allItems.filter(function(it) { return it.is_book; });
+  shelfData.fc = allItems.filter(function(it) { return !it.is_book && isPlatformFC(it.platform || it.raw_platform); });
+  shelfData.md = allItems.filter(function(it) { return !it.is_book && isPlatformMD(it.platform || it.raw_platform); });
   shelfData.other = allItems.filter(function(it) {
-    return shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0;
+    return shelfData.book.indexOf(it) < 0 && shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0;
   });
 
   document.getElementById('count-fc').textContent = shelfData.fc.length + ' 件';
   document.getElementById('count-md').textContent = shelfData.md.length + ' 件';
+  var cntBook = document.getElementById('count-book');
+  if (cntBook) cntBook.textContent = shelfData.book.length + ' 件';
   document.getElementById('count-other').textContent = shelfData.other.length + ' 件';
 
+  var secBook = document.getElementById('sec-book');
+  if (secBook) {
+    secBook.style.display = shelfData.book.length > 0 ? 'flex' : 'none';
+  }
   var secOther = document.getElementById('sec-other');
   if (secOther) {
     secOther.style.display = shelfData.other.length > 0 ? 'flex' : 'none';
@@ -1165,11 +1242,14 @@ function renderShelves() {
 
   renderTrack('track-fc', shelfData.fc, 'fc', 'fc');
   renderTrack('track-md', shelfData.md, 'md', 'md');
+  if (secBook) renderTrack('track-book', shelfData.book, 'book', 'book');
   renderTrack('track-other', shelfData.other, 'md', 'other');
 
   // 預設選中第一款
   if (shelfData.fc.length) {
     selectGame(shelfData.fc[0], false);
+  } else if (shelfData.book.length) {
+    selectGame(shelfData.book[0], false);
   } else if (shelfData.md.length) {
     selectGame(shelfData.md[0], false);
   } else if (allItems.length) {
@@ -1233,7 +1313,8 @@ function selectGame(game, triggerAnim) {
   // 3D 把玩連結更新
   var btn3d = document.getElementById('hud-3d-btn');
   var p3dUrl = './3d-viewer.html?name=' + encodeURIComponent(game.primary_name) +
-    '&platform=' + encodeURIComponent(game.platform) +
+    '&platform=' + encodeURIComponent(game.is_book ? 'BOOK' : game.platform) +
+    '&sub=' + encodeURIComponent(game.platform) +
     '&cover=' + encodeURIComponent(game.cover_img) +
     (game.back_img ? '&back=' + encodeURIComponent(game.back_img) : '') +
     (game.spine_img ? '&spine=' + encodeURIComponent(game.spine_img) : '');
