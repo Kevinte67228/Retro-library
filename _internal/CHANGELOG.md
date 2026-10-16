@@ -1,3 +1,28 @@
+## v11.13 (2026-10-16)
+
+### 變更內容
+依據行動端實機操作與截圖回報，徹底修復「賽博展廳特麗霓虹 CRT 與藏品詳細情報抽屜畫面交疊」以及「行動端瀏覽器 / Service Worker 快取無法即時更新」：
+
+1. **賽博展廳（`docs/cyber-museum.html`）特麗霓虹 CRT 電視機強制作業置頂（Zero Overlap Layout）**：
+   - **根因分析**：在窄螢幕行動裝置下，Flex 容器預設方向與垂直置中邏輯導致電視機本體（`.crt-chassis`）垂直落於螢幕正中央（y ≈ 420px），下半部與底部彈出的藏品詳細情報面板（`#hud-drawer`，y ≈ 480px~690px）大面積交疊，無法同時完整瀏覽電視實機與藏品規格。
+   - **版面全方位鎖定置頂（CSS & JS 雙重保險）**：
+     - `#crt-view` 全面強制施加 `flex-direction: column !important; justify-content: flex-start !important; align-items: center !important; padding: 6px 10px 0 !important; overflow: hidden !important;`。
+     - `.crt-chassis` 施加 `margin: 0 auto !important; max-height: calc(100dvh - 270px) !important; flex-shrink: 0;`，動態依可視高度智慧縮放，確保電視機底緣與下方情報抽屜頂緣維持至少 90px 以上的安全清晰留白。
+     - 在 `switchView('crt')` JavaScript 切換邏輯中，切換時即刻動態注入行內樣式，並重置 `scrollTop = 0`，徹底防範任何樣式覆蓋或捲動偏移。
+
+2. **行動端 PWA / Service Worker 快取立即失效與自動升級機制**：
+   - **根因分析**：先前 `cyber-museum.html` 為獨立視圖頁面，未內嵌 Service Worker 更新偵測機制，導致使用者在行動端 Chrome 開啟時持續命中舊版快取，呈現「一樣沒變」的快取鎖死現象。
+   - **自動更新與熱重載**：
+     - 在 `docs/cyber-museum.html` 中注入 Service Worker 註冊與 `SKIP_WAITING` 自動觸發機制，並監聽 `controllerchange` 事件，於背景新版本下載完畢後無感立即重整生效。
+     - 在 `docs/sw.js` 升級為 `retrovault-v11-13`，並於 `install` 事件中直接呼叫 `self.skipWaiting()`，消除子頁面等待主頁提示的空窗期。
+   - **頂部版本可視化標章**：在展廳頂部導航列新增霓虹薄荷綠版本標籤 `<span class="ver-badge">v11.13</span>`，無論桌面或手機端皆可一秒直觀確認當前所載入之版本狀態。
+
+3. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.13` / `retrovault-v11-13`。
+   - 部署腳本 `_internal/github_deploy.py` 將 `v11_12` 納入永久保留例外清單。
+
+---
+
 ## v11.12 (2026-10-16)
 
 ### 變更內容

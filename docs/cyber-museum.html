@@ -88,6 +88,17 @@ header {
   letter-spacing: 0.5px;
   color: #fff;
 }
+.brand .ver-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--mint);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(105, 240, 174, 0.12);
+  border: 1px solid rgba(105, 240, 174, 0.35);
+  margin-left: 2px;
+}
 
 .view-tabs {
   display: flex;
@@ -339,11 +350,12 @@ main {
 #crt-view {
   width: 100%; height: 100%;
   display: none;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 20px 20px 40px;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  padding: 10px 16px 0 !important;
   position: relative;
-  overflow-y: auto;
+  overflow: hidden !important;
 }
 
 /* 經典特麗霓虹電視機外殼 (Sony Trinitron Style) */
@@ -352,6 +364,8 @@ main {
   width: 100%;
   max-width: 680px;
   aspect-ratio: 4 / 3;
+  margin: 0 auto !important;
+  flex-shrink: 0;
   background: linear-gradient(135deg, #1c2233 0%, #101420 50%, #0a0d17 100%);
   border: 10px solid #252d42;
   border-radius: 36px;
@@ -710,30 +724,35 @@ main {
     gap: 20px;
   }
   #crt-view {
-    align-items: flex-start;
-    justify-content: center;
-    padding: 8px 10px 240px;
-    overflow-y: auto;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    padding: 6px 10px 0 !important;
+    overflow: hidden !important;
   }
   .crt-chassis {
-    margin-top: 4px;
-    max-height: calc(100vh - 280px);
-    max-height: calc(100dvh - 280px);
-    padding: 8px;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    max-height: calc(100vh - 270px) !important;
+    max-height: calc(100dvh - 270px) !important;
+    aspect-ratio: 4 / 3;
+    padding: 8px 8px 10px;
     border-width: 6px;
-    border-radius: 22px;
+    border-radius: 20px;
+    flex-shrink: 0;
   }
   .crt-info-title {
     max-width: 50%;
     font-size: 11px;
   }
   #hud-drawer {
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    width: calc(100% - 20px);
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: calc(100% - 16px);
     max-width: none;
-    padding: 10px 14px;
+    padding: 10px 12px;
   }
   .hud-grid {
     gap: 4px;
@@ -763,6 +782,7 @@ main {
         <span class="logo-badge">RETRO</span>
       </a>
       <span class="title">賽博防潮展廳</span>
+      <span class="ver-badge">v11.13</span>
     </div>
 
     <!-- 視圖切換器 -->
@@ -1775,6 +1795,11 @@ function switchView(mode) {
   } else {
     shelf.style.display = 'none';
     crt.style.display = 'flex';
+    crt.style.flexDirection = 'column';
+    crt.style.justifyContent = 'flex-start';
+    crt.style.alignItems = 'center';
+    crt.style.paddingTop = '6px';
+    crt.scrollTop = 0;
     tabShelf.classList.remove('active');
     tabCrt.classList.add('active');
     if (selectedItem) {
@@ -1801,6 +1826,36 @@ function esc(s) {
 window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
+
+// PWA Service Worker 註冊與快取自動更新機制 (v11.13)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js?v=v11.13').then(function(reg) {
+    reg.update();
+    if (reg.waiting) {
+      reg.waiting.postMessage('SKIP_WAITING');
+    }
+    reg.addEventListener('updatefound', function() {
+      var newWorker = reg.installing;
+      if (newWorker) {
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage('SKIP_WAITING');
+          }
+        });
+      }
+    });
+  }).catch(function(e) {
+    console.warn('[SW] Registration failed:', e);
+  });
+
+  var refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+}
 </script>
 </body>
 </html>
