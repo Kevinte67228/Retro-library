@@ -920,6 +920,9 @@ main {
 // 整合 Libretro (Boxarts/Snaps/Titles)、LaunchBox CDN 與多節點高速鏡像
 var RETRO_ART_MAP = {
   // ── FC 紅白機 ──
+  'キャプテン翼': { plat: 'nes', file: 'Captain Tsubasa (Japan)', lb: 'ccf0c30e-1f5e-46fe-afee-42bd7e651796.jpg' },
+  '十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
+  'ポケットザウルス 十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
   '三国志': { plat: 'nes', file: 'Sangokushi (Japan)', lb: 'ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg' },
   '三国志II': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
   '三国志II 覇王の大陸': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
@@ -1042,29 +1045,28 @@ function getRetroArt(name, plat) {
   var coverList = [];
   var snapList = [];
 
-  // 1. jsdelivr 高速全球 CDN
-  coverList.push('https://cdn.jsdelivr.net/gh/libretro-thumbnails/' + repo + '@master/Named_Boxarts/' + encFile);
-  snapList.push('https://cdn.jsdelivr.net/gh/libretro-thumbnails/' + repo + '@master/Named_Snaps/' + encFile);
-
-  // 2. GitHub Raw 官方源
+  // 1. GitHub Raw 官方高穩源
   coverList.push('https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile);
   snapList.push('https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Snaps/' + encFile);
 
-  // 3. 實機畫面備選：懷舊標題畫面 (Title Screens)
-  snapList.push('https://cdn.jsdelivr.net/gh/libretro-thumbnails/' + repo + '@master/Named_Titles/' + encFile);
-  snapList.push('https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Titles/' + encFile);
-
-  // 4. LaunchBox 官方原裝圖庫
+  // 2. LaunchBox 官方原裝圖庫
   if (match.lb) {
     var lbUrl = 'https://images.launchbox-app.com/' + match.lb;
     coverList.push(lbUrl);
-    // 封面也作為遊戲畫面的最後備選
     snapList.push(lbUrl);
   }
 
-  // 5. wsrv.nl 邊緣節點加速快取
+  // 3. wsrv.nl 全球邊緣快取加速
   coverList.push('https://wsrv.nl/?url=https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile);
   snapList.push('https://wsrv.nl/?url=https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Snaps/' + encFile);
+
+  // 4. jsdelivr 高速全球 CDN（備援）
+  coverList.push('https://cdn.jsdelivr.net/gh/libretro-thumbnails/' + repo + '@master/Named_Boxarts/' + encFile);
+  snapList.push('https://cdn.jsdelivr.net/gh/libretro-thumbnails/' + repo + '@master/Named_Snaps/' + encFile);
+
+  // 5. 實機畫面備選：懷舊標題畫面 (Title Screens)
+  snapList.push('https://cdn.jsdelivr.net/gh/libretro-thumbnails/' + repo + '@master/Named_Titles/' + encFile);
+  snapList.push('https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Titles/' + encFile);
 
   return {
     covers: coverList,
@@ -1807,9 +1809,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.16)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.17)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.16').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.17').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');
