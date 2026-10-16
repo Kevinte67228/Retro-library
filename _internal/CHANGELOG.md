@@ -1,3 +1,20 @@
+## v11.15 (2026-10-17)
+
+### 變更內容
+依據行動端實機操作與截圖回報，優化「賽博防潮展廳頂部兩大視圖晶片尺寸對等與文字防折行」：
+
+1. **賽博防潮展廳（`docs/cyber-museum.html`）頂部雙晶片等寬等高（Symmetrical Dual-Chip Layout）**：
+   - **根因分析**：在先前的實裝中，視圖切換晶片（`📚 防潮書背牆` 與 `📺 特麗霓虹 CRT`）未施加等寬屬性與文字防折行限制（`white-space: nowrap`），加上兩者字數長短不一，在手機窄螢幕下「防潮書背牆」因字串長度被折成兩行（`防潮書背` / `牆`）且寬度較窄（~90px），而「特麗霓虹 CRT」寬度較寬（~125px），兩者大小明顯不對稱。
+   - **雙晶片等寬等高對稱規格化**：
+     - `.vtab` 施加 `flex: 1 1 0; width: 108px; min-width: 100px; max-width: 116px; height: 32px; box-sizing: border-box;`，桌面端維持 `height: 34px; min-width: 130px;`。
+     - 強制加上 `white-space: nowrap;`，徹底根絕文字中途斷行落單問題。
+     - 雙晶片皆維持靠左對齊（`justify-content: flex-start; text-align: left; gap: 4px;`），圖示與文字排版工整，左右兩枚晶片寬高完全 1:1 等大對稱。
+
+2. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.15` / `retrovault-v11-15`。
+
+---
+
 ## v11.14 (2026-10-17)
 
 ### 變更內容
