@@ -1,7 +1,8 @@
-const CACHE_NAME = 'retrovault-v11-12';
+const CACHE_NAME = 'retrovault-v11-13';
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './RetroVault_v11_13_index.html',
   './RetroVault_v11_12_index.html',
   './RetroVault_v11_11_index.html',
   './RetroVault_v11_10_index.html',
@@ -61,11 +62,7 @@ self.addEventListener('install', function(event) {
       }));
     })
   );
-  // 註：這裡故意「不」呼叫 self.skipWaiting()。
-  // 讓新版本先進入 waiting 狀態，由頁面偵測到後顯示「發現新版本」提示，
-  // 使用者主動點下去才透過 postMessage 通知這裡 skipWaiting，
-  // 避免新版本背景默默接管、跟頁面當下記憶體裡的舊版邏輯不同步。
-  // （與 Taxi-Meter 專案採用同一套做法，2026-07 對齊）
+  self.skipWaiting();
 });
 
 self.addEventListener('message', function(event) {

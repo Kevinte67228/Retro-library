@@ -58,7 +58,7 @@ header {
   padding: 0 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   border-bottom: 1px solid var(--border);
   background: rgba(10, 14, 26, 0.88);
@@ -71,6 +71,7 @@ header {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 .brand .logo-badge {
   font-family: 'Press Start 2P', monospace;
@@ -88,26 +89,17 @@ header {
   letter-spacing: 0.5px;
   color: #fff;
 }
-.brand .ver-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--mint);
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(105, 240, 174, 0.12);
-  border: 1px solid rgba(105, 240, 174, 0.35);
-  margin-left: 2px;
-}
 
 .view-tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   background: rgba(15, 22, 40, 0.85);
-  padding: 3px;
+  padding: 3px 5px;
   border-radius: 20px;
   border: 1px solid var(--border);
+  margin-right: auto;
+  margin-left: 6px;
 }
 
 .vtab {
@@ -120,9 +112,11 @@ header {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: flex-start;
+  text-align: left;
+  gap: 6px;
 }
 .vtab:hover { color: var(--txt); }
 .vtab.active {
@@ -135,6 +129,8 @@ header {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .btn-round {
   width: 34px; height: 34px;
@@ -693,7 +689,8 @@ main {
   header {
     height: 50px;
     padding: 0 10px;
-    gap: 6px;
+    gap: 8px;
+    justify-content: flex-start;
   }
   .brand .title {
     display: none;
@@ -703,16 +700,22 @@ main {
     padding: 3px 6px;
   }
   .view-tabs {
-    padding: 2px;
-    gap: 2px;
+    padding: 3px;
+    gap: 3px;
+    margin-right: auto;
+    margin-left: 2px;
   }
   .vtab {
-    padding: 4px 8px;
-    font-size: 11px;
-    gap: 3px;
+    padding: 5px 10px;
+    font-size: 11.5px;
+    gap: 4px;
+    justify-content: flex-start;
+    text-align: left;
   }
   .actions {
+    margin-left: auto;
     gap: 4px;
+    flex-shrink: 0;
   }
   .btn-round {
     width: 28px;
@@ -782,7 +785,6 @@ main {
         <span class="logo-badge">RETRO</span>
       </a>
       <span class="title">賽博防潮展廳</span>
-      <span class="ver-badge">v11.13</span>
     </div>
 
     <!-- 視圖切換器 -->
@@ -1827,9 +1829,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.13)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.14)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.13').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.14').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');
