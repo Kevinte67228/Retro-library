@@ -101,6 +101,11 @@ header {
     grid-template-columns: 1fr;
   }
 }
+@media (max-width: 600px) {
+  header { padding: 10px 12px; }
+  .brand-area .brand-title { display: none; }
+  .nav-btn { padding: 5px 8px; font-size: 11px; }
+}
 
 /* 鑑定卡 3D 視角容器 (Slab Stage) */
 .stage-container {
@@ -417,10 +422,15 @@ function onGamePicked(idx) {
 function downloadSlabPng() {
   var canvas = document.getElementById('slab-canvas');
   var name = (currentItem ? currentItem.primary_name : 'RetroVault') + '_Slab.png';
-  var link = document.createElement('a');
-  link.download = name.replace(/[\\/:*?"<>|]/g, '_');
-  link.href = canvas.toDataURL('image/png', 0.95);
-  link.click();
+  try {
+    var dataUrl = canvas.toDataURL('image/png', 0.95);
+    var link = document.createElement('a');
+    link.download = name.replace(/[\\/:*?"<>|]/g, '_');
+    link.href = dataUrl;
+    link.click();
+  } catch (err) {
+    alert('由於原圖床跨網域安全性限制，請直接在上方鑑定卡上「長按儲存圖片」或截圖分享！');
+  }
 }
 
 // 🏛️ 一鍵匯出安全展覽館

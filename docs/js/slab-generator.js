@@ -242,6 +242,35 @@
   }
 
   // 中央封面保護窗
+  // 繪製封面圖本體與投影
+  function paintImage(ctx, x, y, w, h, img) {
+    var pad = 40;
+    var maxW = w - pad * 2;
+    var maxH = h - pad * 2;
+
+    var aspect = (img.width && img.height) ? (img.width / img.height) : 1;
+    var dw = maxW;
+    var dh = maxW / aspect;
+    if (dh > maxH) {
+      dh = maxH;
+      dw = maxH * aspect;
+    }
+
+    var dx = x + (w - dw) / 2;
+    var dy = y + (h - dh) / 2;
+
+    // 封面本體大投影
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetY = 16;
+    ctx.drawImage(img, dx, dy, dw, dh);
+
+    // 重置陰影並疊加透明壓克力玻璃反光
+    ctx.shadowColor = 'transparent';
+    drawGlassReflection(ctx, x, y, w, h);
+  }
+
+  // 中央封面保護窗（三重降級載入：原生CORS -> weserv代理CORS -> 原生顯示）
   function drawInnerWindow(ctx, x, y, w, h, item, callback) {
     ctx.save();
 
@@ -255,50 +284,61 @@
     roundRect(ctx, x, y, w, h, 20);
     ctx.stroke();
 
-    // 繪製藏品封面圖（帶有適度邊距與投影）
-    var imgUrl = item.cover_img;
-    if (imgUrl) {
-      var img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function() {
-        var pad = 40;
-        var maxW = w - pad * 2;
-        var maxH = h - pad * 2;
-
-        var aspect = img.width / img.height;
-        var dw = maxW;
-        var dh = maxW / aspect;
-        if (dh > maxH) {
-          dh = maxH;
-          dw = maxH * aspect;
-        }
-
-        var dx = x + (w - dw) / 2;
-        var dy = y + (h - dh) / 2;
-
-        // 封面本體大投影
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 40;
-        ctx.shadowOffsetY = 16;
-        ctx.drawImage(img, dx, dy, dw, dh);
-
-        // 重置陰影並疊加透明壓克力玻璃反光
-        ctx.shadowColor = 'transparent';
-        drawGlassReflection(ctx, x, y, w, h);
-
-        callback();
-      };
-      img.onerror = function() {
-        drawFallbackCover(ctx, x, y, w, h, item);
-        callback();
-      };
-      img.src = imgUrl;
-    } else {
+    var rawUrl = item.cover_img;
+    if (!rawUrl) {
       drawFallbackCover(ctx, x, y, w, h, item);
-      callback();
+      ctx.restore();
+      return callback();
     }
 
-    ctx.restore();
+    function tryLoad(url, useCors, onDone, onFail) {
+      var img = new Image();
+      if (useCors) img.crossOrigin = 'anonymous';
+      img.onload = function() { onDone(img); };
+      img.onerror = function() { onFail(); };
+      img.src = url;
+    }
+
+    // 1. Data URL 或 Blob URL 直接載入
+    if (rawUrl.indexOf('data:') === 0 || rawUrl.indexOf('blob:') === 0) {
+      tryLoad(rawUrl, false, function(img) {
+        paintImage(ctx, x, y, w, h, img);
+        ctx.restore();
+        callback();
+      }, function() {
+        drawFallbackCover(ctx, x, y, w, h, item);
+        ctx.restore();
+        callback();
+      });
+      return;
+    }
+
+    // 2. 外部網址：先嘗試原生帶 CORS
+    tryLoad(rawUrl, true, function(img) {
+      paintImage(ctx, x, y, w, h, img);
+      ctx.restore();
+      callback();
+    }, function() {
+      // 3. 原生 CORS 失敗時（如 LaunchBox / 外部圖床未設定 CORS 標頭），透過 weserv proxy 代理加上 Access-Control-Allow-Origin: *
+      var proxied = 'https://images.weserv.nl/?url=' + encodeURIComponent(rawUrl);
+      tryLoad(proxied, true, function(img) {
+        paintImage(ctx, x, y, w, h, img);
+        ctx.restore();
+        callback();
+      }, function() {
+        // 4. 若 proxy 仍不可用，以一般 Image (無 CORS) 繪製，保證卡面上絕對看得到封面！
+        tryLoad(rawUrl, false, function(img) {
+          paintImage(ctx, x, y, w, h, img);
+          ctx.restore();
+          callback();
+        }, function() {
+          // 5. 終極降級：文字封面
+          drawFallbackCover(ctx, x, y, w, h, item);
+          ctx.restore();
+          callback();
+        });
+      });
+    });
   }
 
   // 壓克力玻璃斜向立體反光 (Acrylic Glass Reflection)

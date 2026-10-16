@@ -1,3 +1,47 @@
+## v11.08 (2026-10-16)
+
+### 變更內容
+修復夢想計畫行動端實測回報之 UI 跑版、分類誤判與跨網域封面載入異常（依據兩張實機截圖優化）：
+
+1. **賽博防潮展廳行動端自適應與分類修復（`docs/cyber-museum.html`）**：
+   - **行動裝置窄螢幕頂部導航自適應**：新增 `@media (max-width: 600px)` 樣式，精簡 Header 高度與邊距，隱藏次要標題文字，縮小模式切換按鈕，防止按鈕垂直折行遮擋書背層架。
+   - **平台名稱模糊匹配（紅白機 FC 歸位）**：重構平台篩選器，將 `FAMICOM`、`FC`、`NES`、`紅白機` 全面納入 Famicom 判定，解決實測時 107 件紅白機卡帶誤入「其他經典收藏」的問題。
+   - **書背點擊資料映射校正**：修正 `onSpineClick()`，由每層 shelf 綁定 `shelfKey`，徹底解決點擊「其他」層時錯誤索引至 `allItems` 的 Bug。
+   - **HUD 藏品情報抽屜優化**：
+     - 新增右上角 `✕` 關閉按鈕，支援隨時收合資訊面板。
+     - 行動端改為底部全寬浮動抽屜（Bottom Sheet），並為書背牆追加 140px 底部邊距防遮擋。
+     - 解決 `NT$ NaN`：新增 `fmtValuation()` 濾除非數值文字並安全格式化為貨幣字串。
+     - 解決 ISO 原始時間：新增 `fmtDateDisplay()`，將 `2016-12-31T16:00:00.000Z` 格式化為乾淨年份/日期。
+   - **空層架自動隱藏**：當「其他經典收藏」無項目時自動隱藏該區塊。
+
+2. **數位鑑定卡工坊跨網域封面載入與行動端體驗（`docs/slab-studio.html` & `docs/js/slab-generator.js`）**：
+   - **五重降級圖片載入引擎（解決 Canvas 封面破圖）**：
+     - 第一重：原生跨網域匿名載入（CORS Anonymous）。
+     - 第二重：透過 `images.weserv.nl` 代理自動注入 `Access-Control-Allow-Origin: *` 標頭（專解 LaunchBox 與各類外連圖床限制）。
+     - 第三重：原生非 CORS 直接繪製，保證卡面 100% 呈現高解析封面。
+     - 第四重：防護下載攔截（Tainted Canvas 友善提示長按或另存）。
+     - 第五重：極致風格化文字標籤封面降級。
+   - **行動端頂部導航防換行**：微調標題與操作按鈕排版，小螢幕下維持單行整齊。
+
+3. **PWA 主程式與版本發佈（`docs/index.html` & `docs/sw.js`）**：
+   - 快取升級為 `retrovault-v11-08`，新增 `RetroVault_v11_08_index.html` 快照並納入快取。
+   - 保留基準版本 `RetroVault_v11_01_index.html`、`RetroVault_v11_02_index.html`、`RetroVault_v11_07_index.html`。
+
+### 自我檢查
+- `docs/cyber-museum.html`、`docs/slab-studio.html`、`docs/js/slab-generator.js`、`docs/index.html` 語法檢驗完畢。
+- `_internal/deep_audit.py` 全站檢查通過。
+
+### 影響檔案
+- docs/cyber-museum.html
+- docs/slab-studio.html
+- docs/js/slab-generator.js
+- docs/index.html
+- docs/RetroVault_v11_08_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+---
+
 ## v11.07 (2026-10-16)
 
 ### 變更內容

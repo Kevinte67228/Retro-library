@@ -578,6 +578,31 @@ main {
   display: flex;
   gap: 8px;
 }
+.hud-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(15, 22, 40, 0.7);
+  color: var(--txt2);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  z-index: 5;
+}
+.hud-close:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  transform: scale(1.05);
+}
+
 .btn-3d-launch {
   flex: 1;
   padding: 8px 12px;
@@ -599,6 +624,60 @@ main {
   background: var(--cyan);
   color: #060913;
   box-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
+}
+
+/* ════════ 行動裝置窄螢幕自適應優化 ════════ */
+@media (max-width: 600px) {
+  header {
+    height: 50px;
+    padding: 0 10px;
+    gap: 6px;
+  }
+  .brand .title {
+    display: none;
+  }
+  .brand .logo-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+  .view-tabs {
+    padding: 2px;
+    gap: 2px;
+  }
+  .vtab {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 3px;
+  }
+  .actions {
+    gap: 4px;
+  }
+  .btn-round {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  #shelf-view {
+    padding: 12px 10px 140px;
+    gap: 20px;
+  }
+  #hud-drawer {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    max-width: none;
+    padding: 12px 14px;
+  }
+  .crt-chassis {
+    padding: 10px;
+    border-width: 6px;
+    border-radius: 24px;
+  }
+  .crt-info-title {
+    max-width: 50%;
+    font-size: 11px;
+  }
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
@@ -716,6 +795,7 @@ main {
 
     <!-- 懸浮選中藏品詳細情報面板 -->
     <div id="hud-drawer" class="collapsed">
+      <button class="hud-close" onclick="closeHud()" title="關閉情報面板" aria-label="關閉">✕</button>
       <div class="hud-title" id="hud-title">遊戲名稱</div>
       <div class="hud-sub" id="hud-sub">FAMICOM · KOEI · 1988</div>
       <div class="hud-grid">
@@ -976,9 +1056,47 @@ function toggleAudio() {
   if (isAudioEnabled) playClickSound();
 }
 
+function closeHud() {
+  var hud = document.getElementById('hud-drawer');
+  if (hud) hud.classList.add('collapsed');
+  document.querySelectorAll('.spine-item').forEach(function(el) { el.classList.remove('active'); });
+}
+
 // ════════ 資料載入與分類整理 ════════
 var allItems = [];
 var selectedItem = null;
+var shelfData = {
+  fc: [],
+  md: [],
+  other: []
+};
+
+function isPlatformFC(plat) {
+  var p = (plat || '').toUpperCase();
+  return p.indexOf('FC') >= 0 || p.indexOf('FAMICOM') >= 0 || p.indexOf('NES') >= 0 || p.indexOf('紅白機') >= 0;
+}
+
+function isPlatformMD(plat) {
+  var p = (plat || '').toUpperCase();
+  return p.indexOf('MD') >= 0 || p.indexOf('MEGA DRIVE') >= 0 || p.indexOf('MEGADRIVE') >= 0 || p.indexOf('GENESIS') >= 0 || p.indexOf('SEGA') >= 0 || p.indexOf('世嘉') >= 0;
+}
+
+function fmtDateDisplay(d) {
+  if (!d) return '';
+  var s = String(d).trim();
+  if (s.indexOf('T') > 0) s = s.split('T')[0];
+  var parts = s.split(/[-/]/);
+  if (parts.length >= 1 && parts[0].length === 4) return parts.join('-');
+  return s;
+}
+
+function fmtValuation(val) {
+  if (val == null) return '未估值';
+  var s = String(val).replace(/[^0-9.]/g, '');
+  var num = parseFloat(s);
+  if (isNaN(num) || num <= 0) return '未估值';
+  return 'NT$ ' + Math.round(num).toLocaleString('en-US');
+}
 
 function imgUrl(v, sz) {
   if (!v || typeof v !== 'string') return '';
@@ -991,57 +1109,75 @@ function loadAllData() {
     if (cached && Array.isArray(cached) && cached.length) {
       allItems = cached.map(function(it) {
         var d = it.data || it;
+        var rawPlat = (d.platform || '').trim();
+        var platDisplay = rawPlat;
+        if (isPlatformFC(rawPlat)) platDisplay = 'FC';
+        else if (isPlatformMD(rawPlat)) platDisplay = 'MD';
+        else if (!platDisplay) platDisplay = 'FC';
+
         return {
-          platform: (d.platform || 'FC').toUpperCase(),
+          platform: platDisplay,
+          raw_platform: rawPlat,
           primary_name: d.primary_name || d.zh_name || d.jp_name || d.en_name || '未命名',
-          release_date: d.release_date || '',
+          release_date: fmtDateDisplay(d.release_date),
           developer: d.developer || d.publisher || '',
           cover_img: imgUrl(d.cover_img, 800),
           back_img: imgUrl(d.back_img, 800),
           spine_img: imgUrl(d.spine_img, 400),
           completeness: d.completeness || '',
-          market_value: d.market_value || '0',
+          market_value: d.market_value || d.price || '0',
           barcode: d.barcode || d.code || '',
           storage_location: d.storage_location || '預設位置'
         };
       });
       console.log('[CyberMuseum] 成功載入本機快取藏品共 ' + allItems.length + ' 件');
     } else {
-      allItems = DEMO_COLLECTION;
+      allItems = DEMO_COLLECTION.map(function(it) {
+        return Object.assign({}, it, { release_date: fmtDateDisplay(it.release_date) });
+      });
       console.log('[CyberMuseum] 無本機快取，載入精選示範藏品 ' + allItems.length + ' 件');
     }
     renderShelves();
   }).catch(function(e) {
-    allItems = DEMO_COLLECTION;
+    allItems = DEMO_COLLECTION.map(function(it) {
+      return Object.assign({}, it, { release_date: fmtDateDisplay(it.release_date) });
+    });
     renderShelves();
   });
 }
 
 // 渲染防潮書背層架
 function renderShelves() {
-  var fcItems = allItems.filter(function(it) { return it.platform.indexOf('FC') >= 0 || it.platform.indexOf('NES') >= 0; });
-  var mdItems = allItems.filter(function(it) { return it.platform.indexOf('MD') >= 0 || it.platform.indexOf('GENESIS') >= 0 || it.platform.indexOf('SEGA') >= 0; });
-  var otherItems = allItems.filter(function(it) {
-    return fcItems.indexOf(it) < 0 && mdItems.indexOf(it) < 0;
+  shelfData.fc = allItems.filter(function(it) { return isPlatformFC(it.platform || it.raw_platform); });
+  shelfData.md = allItems.filter(function(it) { return isPlatformMD(it.platform || it.raw_platform); });
+  shelfData.other = allItems.filter(function(it) {
+    return shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0;
   });
 
-  document.getElementById('count-fc').textContent = fcItems.length + ' 件';
-  document.getElementById('count-md').textContent = mdItems.length + ' 件';
-  document.getElementById('count-other').textContent = otherItems.length + ' 件';
+  document.getElementById('count-fc').textContent = shelfData.fc.length + ' 件';
+  document.getElementById('count-md').textContent = shelfData.md.length + ' 件';
+  document.getElementById('count-other').textContent = shelfData.other.length + ' 件';
 
-  renderTrack('track-fc', fcItems, 'fc');
-  renderTrack('track-md', mdItems, 'md');
-  renderTrack('track-other', otherItems, 'md');
+  var secOther = document.getElementById('sec-other');
+  if (secOther) {
+    secOther.style.display = shelfData.other.length > 0 ? 'flex' : 'none';
+  }
+
+  renderTrack('track-fc', shelfData.fc, 'fc', 'fc');
+  renderTrack('track-md', shelfData.md, 'md', 'md');
+  renderTrack('track-other', shelfData.other, 'md', 'other');
 
   // 預設選中第一款
-  if (fcItems.length) {
-    selectGame(fcItems[0], false);
+  if (shelfData.fc.length) {
+    selectGame(shelfData.fc[0], false);
+  } else if (shelfData.md.length) {
+    selectGame(shelfData.md[0], false);
   } else if (allItems.length) {
     selectGame(allItems[0], false);
   }
 }
 
-function renderTrack(elemId, items, platClass) {
+function renderTrack(elemId, items, platClass, shelfKey) {
   var track = document.getElementById(elemId);
   if (!items.length) {
     track.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:20px 0;">此層尚無收藏紀錄</div>';
@@ -1051,42 +1187,46 @@ function renderTrack(elemId, items, platClass) {
   track.innerHTML = items.map(function(it, idx) {
     var hasSpine = Boolean(it.spine_img);
     var contentHtml = hasSpine
-      ? '<img src="' + it.spine_img + '" alt="' + esc(it.primary_name) + '">'
+      ? '<img src="' + it.spine_img + '" alt="' + esc(it.primary_name) + '" loading="lazy">'
       : '<div class="spine-fallback">' + esc(it.primary_name) + '</div>';
 
-    return '<div class="spine-item ' + platClass + '" data-idx="' + idx + '" onclick="onSpineClick(this, \'' + elemId + '\')">' +
+    return '<div class="spine-item ' + platClass + '" data-shelf="' + shelfKey + '" data-idx="' + idx + '" onclick="onSpineClick(this)">' +
       '<div class="spine-tooltip">' + esc(it.primary_name) + '</div>' +
       contentHtml +
     '</div>';
   }).join('');
 }
 
-function onSpineClick(elem, trackId) {
+function onSpineClick(elem) {
   playSpineSlideSound();
   document.querySelectorAll('.spine-item').forEach(function(el) { el.classList.remove('active'); });
   elem.classList.add('active');
 
+  var shelfKey = elem.getAttribute('data-shelf') || 'fc';
   var idx = parseInt(elem.getAttribute('data-idx'), 10);
-  var list = (trackId === 'track-fc')
-    ? allItems.filter(function(it) { return it.platform.indexOf('FC') >= 0 || it.platform.indexOf('NES') >= 0; })
-    : (trackId === 'track-md'
-      ? allItems.filter(function(it) { return it.platform.indexOf('MD') >= 0 || it.platform.indexOf('GENESIS') >= 0; })
-      : allItems);
+  var list = shelfData[shelfKey] || allItems;
 
   var game = list[idx] || allItems[0];
   selectGame(game, true);
 }
 
 function selectGame(game, triggerAnim) {
+  if (!game) return;
   selectedItem = game;
 
   // 更新 HUD 抽屜
   var hud = document.getElementById('hud-drawer');
   hud.classList.remove('collapsed');
   document.getElementById('hud-title').textContent = game.primary_name;
-  document.getElementById('hud-sub').textContent = game.platform + (game.developer ? ' · ' + game.developer : '') + (game.release_date ? ' · ' + game.release_date : '');
+
+  var subParts = [];
+  if (game.platform) subParts.push(game.platform);
+  if (game.developer) subParts.push(game.developer);
+  if (game.release_date) subParts.push(game.release_date);
+  document.getElementById('hud-sub').textContent = subParts.join(' · ') || '經典收藏';
+
   document.getElementById('hud-comp').textContent = game.completeness || '未評級';
-  document.getElementById('hud-val').textContent = game.market_value && game.market_value !== '0' ? ('NT$ ' + Number(game.market_value).toLocaleString('en-US')) : '未估值';
+  document.getElementById('hud-val').textContent = fmtValuation(game.market_value);
   document.getElementById('hud-code').textContent = game.barcode || '無條碼';
   document.getElementById('hud-pos').textContent = game.storage_location || '未填位置';
 
@@ -1104,6 +1244,7 @@ function selectGame(game, triggerAnim) {
 }
 
 function updateCrtDisplay(game, triggerDegauss) {
+  if (!game) return;
   var scr = document.getElementById('crt-screen-elem');
   var bgImg = document.getElementById('crt-bg-img');
   var fgImg = document.getElementById('crt-fg-img');
@@ -1120,8 +1261,11 @@ function updateCrtDisplay(game, triggerDegauss) {
   fgImg.src = displayImg;
 
   document.getElementById('crt-title').textContent = game.primary_name;
-  document.getElementById('crt-meta').textContent = game.platform + ' · ' + (game.developer || 'RetroVault');
-  document.getElementById('crt-osd-channel').textContent = 'CH ' + (game.platform.slice(0, 3)) + ' · 60FPS';
+  var metaParts = [game.platform || 'RETRO'];
+  if (game.developer) metaParts.push(game.developer);
+  if (game.release_date) metaParts.push(game.release_date);
+  document.getElementById('crt-meta').textContent = metaParts.join(' · ');
+  document.getElementById('crt-osd-channel').textContent = 'CH ' + ((game.platform || 'FC').slice(0, 3).toUpperCase()) + ' · 60FPS';
 }
 
 // ════════ 視圖切換 ════════
