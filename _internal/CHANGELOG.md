@@ -1,3 +1,52 @@
+## v11.09 (2026-10-16)
+
+### 變更內容
+依據行動端真機實測截圖，徹底修復 3D 卡帶盒生成卡住與鑑定卡版面橫向破版破圖問題：
+
+1. **3D 擬真卡帶盒加載異常與行動端頂欄體驗修復（`docs/3d-viewer.html`）**：
+   - **徹底解決「正在生成 3D 擬真卡帶盒...」永久轉圈卡死問題**：
+     - 重構 `build3DBox()`，全面為 Three.js `TextureLoader.load()` 補齊 `onError` 錯誤處理回調，避免網路連線超時或 404 時加載計數未遞增卡死。
+     - 加入 1.2 秒防護熔斷計時器（Safety Timer），確保任何狀況下遮罩一律淡出退場，絕不卡屏。
+     - 內建 HTML5 Canvas 擬真卡帶盒貼圖合成引擎（`createFallbackCanvas`），當外部封面圖床斷線或防盜連阻擋時，自動程序化生成經典復古外盒、書背與條碼背蓋，無縫降級。
+     - 全面更新與校正 `SAMPLE_GAMES` 示範卡帶資料庫，替換失效或有錯字的圖床網址，並優先走 `images.weserv.nl` 進行 CORS 安全轉送。
+   - **行動裝置窄螢幕自適應排版**：新增 `@media (max-width: 600px)` 樣式，精簡導航欄按鈕、遊戲下拉選單與底部控制盤尺寸，防止換行擁擠。
+
+2. **數位鑑定卡工坊行動端橫向溢出與封面破圖修正（`docs/slab-studio.html` & `docs/js/slab-generator.js`）**：
+   - **修正 Grid 容器寬度撐爆與鑑定卡右半側截斷問題**：
+     - 將 `.workspace` 之 `grid-template-columns` 修正為 `minmax(0, 1fr) 360px`（解決 CSS Grid `minmax(auto, 1fr)` 遭內部 1080px Canvas 撐爆的預設行為）。
+     - 設定 `.stage-container` 與 `#slab-canvas` 之 `max-width: 100%` / `360px`，並加入 `box-sizing: border-box`，使整張鑑定卡完好置中顯示於手機螢幕內，完整呈現右上方 8.5 等級金牌。
+   - **封面載入逾時機制與擬真卡匣備用封面**：
+     - `tryLoad()` 限制 2.5 秒超時逾時，杜絕跨域連線永久無回應。
+     - 當圖片失效時，程序化繪製具復古卡匣插槽紋理與金色標題之完整紀念卡面，不再留黑洞。
+   - **版本號更新與緩存失效（Cache Busting）**：
+     - 更新標籤至 `SLAB STUDIO v11.09`。
+     - 引入 `<script src="./js/slab-generator.js?v=v11.09"></script>` 強制使用者手機更新腳本，解決舊版緩存造成的顯示與渲染問題。
+
+3. **賽博展廳示範數據校正（`docs/cyber-museum.html`）**：
+   - 修正 `DEMO_COLLECTION` 中錯別字之封面圖庫 URL，提升離線與示範卡帶載入成功率。
+
+4. **PWA 主程式與版本發佈（`docs/index.html` & `docs/sw.js`）**：
+   - 主程式標註升級至 `v11.09`。
+   - Service Worker 快取名稱升級為 `retrovault-v11-09`，生成快照 `RetroVault_v11_09_index.html` 並納入離線快取清單。
+   - 自動保留所有歷史快照（`v11.01`, `v11.02`, `v11.07`, `v11.08`）。
+
+### 自我檢查
+- `docs/3d-viewer.html`、`docs/slab-studio.html`、`docs/js/slab-generator.js`、`docs/cyber-museum.html`、`docs/index.html` 語法檢驗完畢。
+- `_internal/deep_audit.py` 全站檢查通過。
+
+### 影響檔案
+- docs/3d-viewer.html
+- docs/slab-studio.html
+- docs/js/slab-generator.js
+- docs/cyber-museum.html
+- docs/index.html
+- docs/RetroVault_v11_09_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+- _internal/github_deploy.py
+
+---
+
 ## v11.08 (2026-10-16)
 
 ### 變更內容

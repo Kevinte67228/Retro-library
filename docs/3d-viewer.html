@@ -227,6 +227,42 @@ html, body {
 }
 .plat-badge.fc { background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid rgba(255, 82, 82, 0.4); }
 .plat-badge.md { background: rgba(0, 229, 255, 0.2); color: var(--cyan); border: 1px solid rgba(0, 229, 255, 0.4); }
+
+@media (max-width: 600px) {
+  .top-bar {
+    top: 10px; left: 8px; right: 8px;
+    gap: 6px;
+  }
+  .btn-nav {
+    padding: 6px 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .title-pill {
+    padding: 4px 8px;
+    max-width: 36vw;
+  }
+  .title-pill .sub { font-size: 9px; letter-spacing: 0.5px; }
+  .title-pill .main { font-size: 11px; }
+  .form-select-sample {
+    padding: 6px 8px;
+    font-size: 11px;
+    max-width: 34vw;
+  }
+  .bottom-dock {
+    bottom: 12px;
+    padding: 4px 8px;
+    gap: 4px;
+    max-width: 96vw;
+  }
+  .dock-btn {
+    min-width: 48px;
+    height: 44px;
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+  .dock-btn .icon { font-size: 15px; }
+}
 </style>
 
 <!-- Three.js + OrbitControls + LocalForage -->
@@ -314,61 +350,41 @@ var SAMPLE_GAMES = [
     platform: 'FC',
     name: '三国志',
     sub: 'FAMICOM / KOEI',
-    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20(Japan).png',
-    back:  'https://images.launchbox-app.com/ab003ef9-e5c0-4eea-940c-d8c9735d5452.jpg',
-    spine: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba86e8812c3f.jpg',
-    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20(Japan).png',
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20(Japan).png',
+    back:  'https://images.launchbox-app.com/ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg',
+    spine: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba8b2b849aff.jpg',
+    cartLabel: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20(Japan).png',
     cartColor: '#8a2323' // 紅白機光榮深紅卡帶
   },
   {
     platform: 'FC',
     name: '三国志II 覇王の大陸',
     sub: 'FAMICOM / NAMCO',
-    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
-    back:  'https://images.launchbox-app.com/f56b562d-b5ff-4bc7-917d-e46114e9bda5.jpg',
-    spine: 'https://images.launchbox-app.com/5a038bcb-63c3-44f0-ab57-7d7b69c7379f.jpg',
-    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20II%20(Japan).png',
+    back:  'https://images.launchbox-app.com/f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg',
+    spine: 'https://images.launchbox-app.com/5a038bcb-63c3-44f0-ab57-7d76c1af5c01.jpg',
+    cartLabel: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20II%20(Japan).png',
     cartColor: '#1c2833' // 南夢宮黑卡帶
   },
   {
     platform: 'FC',
     name: 'ナムクラシック (Namco Classic)',
     sub: 'FAMICOM / NAMCO',
-    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Namco%20Classic%20(Japan).png',
-    back:  'https://images.launchbox-app.com/045b85dd-e230-4809-80de-914fb0f98e7d.jpg',
-    spine: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d8329b35a399.jpg',
-    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Namco%20Classic%20(Japan).png',
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Namco%20Classic%20(Japan).png',
+    back:  'https://images.launchbox-app.com/045b85dd-e230-4809-80de-9145858621ec.png',
+    spine: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d83036382b3a.png',
+    cartLabel: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Namco%20Classic%20(Japan).png',
     cartColor: '#273746'
   },
   {
     platform: 'MD',
     name: '餓狼伝説 (THE BATTLE OF DESTINY)',
     sub: 'MEGA DRIVE / SNK',
-    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
-    back:  'https://images.launchbox-app.com/0e22f16d-cf0f-46d4-963f-3543666270b2.jpg',
-    spine: 'https://images.launchbox-app.com/f3598c0e-5181-4950-bcb3-f495535dfd97.jpg',
-    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    back:  'https://images.launchbox-app.com/0e22f16d-cf0f-46d4-963f-354f0b251d5d.jpg',
+    spine: 'https://images.launchbox-app.com/f3598c0e-5181-4950-bcb3-f490063c0432.jpg',
+    cartLabel: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
     cartColor: '#111317' // MD 經典黑卡
-  },
-  {
-    platform: 'MD',
-    name: 'アドバンスド大戦略 ～ドイツ電撃作戰～',
-    sub: 'MEGA DRIVE / SEGA',
-    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Advanced%20Daisenryaku%20-%20Doitsu%20Dengeki%20Sakusen%20(Japan).png',
-    back:  'https://images.launchbox-app.com/1ba5ca41-245a-41cf-b706-a89c894236a9.jpg',
-    spine: 'https://images.launchbox-app.com/d906551d-4af5-402b-9cc8-3d17d3d75a61.jpg',
-    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Advanced%20Daisenryaku%20-%20Doitsu%20Dengeki%20Sakusen%20(Japan).png',
-    cartColor: '#17202a'
-  },
-  {
-    platform: 'MD',
-    name: 'ポピュラス (Populous)',
-    sub: 'MEGA DRIVE / EA',
-    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Populous%20(Japan).png',
-    back:  'https://images.launchbox-app.com/135f9c65-c4ca-40ce-8977-1c78bbfca99e.jpg',
-    spine: 'https://images.launchbox-app.com/fa910a05-4094-44e2-a51f-a90a07153641.jpg',
-    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Populous%20(Japan).png',
-    cartColor: '#10141a'
   }
 ];
 
@@ -480,6 +496,97 @@ function setupFloor() {
   scene.add(floor);
 }
 
+// ══ 輔助：CORS 代理與備用紋理生成 ══
+function getTextureUrl(raw) {
+  if (!raw || typeof raw !== 'string') return '';
+  if (raw.indexOf('data:') === 0 || raw.indexOf('blob:') === 0) return raw;
+  if (raw.indexOf('images.launchbox-app.com') >= 0 || raw.indexOf('drive.google.com') >= 0) {
+    return 'https://images.weserv.nl/?url=' + encodeURIComponent(raw);
+  }
+  return raw;
+}
+
+function createFallbackCanvas(type, title, plat, dev) {
+  var cvs = document.createElement('canvas');
+  var isFC = (plat === 'FC');
+  cvs.width = (type === 'spine') ? 128 : 512;
+  cvs.height = (type === 'spine') ? 512 : (isFC ? 340 : 680);
+  var ctx = cvs.getContext('2d');
+
+  if (type === 'spine') {
+    var grad = ctx.createLinearGradient(0, 0, cvs.width, 0);
+    grad.addColorStop(0, isFC ? '#7f0000' : '#111625');
+    grad.addColorStop(0.5, isFC ? '#b71c1c' : '#1a2236');
+    grad.addColorStop(1, isFC ? '#7f0000' : '#111625');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+    ctx.fillStyle = isFC ? '#ff5252' : '#00e5ff';
+    ctx.fillRect(0, 0, cvs.width, 16);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(isFC ? 'FC' : 'MD', cvs.width / 2, 40);
+
+    ctx.save();
+    ctx.translate(cvs.width / 2, cvs.height / 2);
+    ctx.rotate(Math.PI / 2);
+    ctx.font = 'bold 24px "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.textAlign = 'center';
+    var shortTitle = (title || 'RETRO GAME').slice(0, 14);
+    ctx.fillText(shortTitle, 0, 8);
+    ctx.restore();
+  } else if (type === 'back') {
+    ctx.fillStyle = isFC ? '#1a1d29' : '#0d111a';
+    ctx.fillRect(0, 0, cvs.width, cvs.height);
+    ctx.strokeStyle = isFC ? '#ff5252' : '#00e5ff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(16, 16, cvs.width - 32, cvs.height - 32);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 26px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title || '經典遊戲', cvs.width / 2, 80);
+
+    ctx.fillStyle = '#9fa8c8';
+    ctx.font = '16px monospace';
+    ctx.fillText((plat || 'FC') + ' ARCHIVAL COLLECTION', cvs.width / 2, 120);
+
+    ctx.fillStyle = '#060913';
+    ctx.fillRect(40, 150, cvs.width - 80, 180);
+    ctx.strokeStyle = '#2a3a5a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(40, 150, cvs.width - 80, 180);
+    ctx.fillStyle = '#00e5ff';
+    ctx.font = '14px monospace';
+    ctx.fillText('RETROVAULT 3D ARCHIVE', cvs.width / 2, 245);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(cvs.width / 2 - 80, cvs.height - 70, 160, 45);
+    ctx.fillStyle = '#000000';
+    for (var i = 0; i < 28; i++) {
+      if (i % 2 === 0) ctx.fillRect(cvs.width / 2 - 70 + i * 5, cvs.height - 65, 3, 35);
+    }
+  } else {
+    ctx.fillStyle = isFC ? '#991b1b' : '#0f172a';
+    ctx.fillRect(0, 0, cvs.width, cvs.height);
+    ctx.strokeStyle = isFC ? '#ef4444' : '#38bdf8';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(16, 16, cvs.width - 32, cvs.height - 32);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(title || '經典遊戲', cvs.width / 2, cvs.height / 2 - 20);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = '20px monospace';
+    ctx.fillText((plat || 'FC') + ' CARTRIDGE BOX', cvs.width / 2, cvs.height / 2 + 30);
+  }
+  return cvs;
+}
+
 // ══ 建立 3D 擬真卡帶盒與內部抽屜 ══
 function build3DBox(game) {
   if (mainBoxGroup) {
@@ -492,31 +599,58 @@ function build3DBox(game) {
   var plat = game.platform || 'FC';
   var dim = BOX_DIMENSIONS[plat] || BOX_DIMENSIONS.FC;
 
-  // 1. 建立材質
   var textureLoader = new THREE.TextureLoader();
-  var loadingManager = THREE.DefaultLoadingManager;
   var overlay = document.getElementById('loading-overlay');
   overlay.classList.remove('fade-out');
 
-  var textures = {
-    cover: textureLoader.load(game.cover, function(){ checkLoaded(); }),
-    back:  textureLoader.load(game.back, function(){ checkLoaded(); }),
-    spine: textureLoader.load(game.spine, function(){ checkLoaded(); })
-  };
-
   var loadedCount = 0;
-  function checkLoaded() {
+  var totalCount = 3;
+  var forceTimer = setTimeout(function() {
+    overlay.classList.add('fade-out');
+  }, 1200);
+
+  function markLoaded() {
     loadedCount++;
-    if (loadedCount >= 3) {
-      setTimeout(function() { overlay.classList.add('fade-out'); }, 300);
+    if (loadedCount >= totalCount) {
+      clearTimeout(forceTimer);
+      setTimeout(function() { overlay.classList.add('fade-out'); }, 200);
     }
   }
 
-  // 濾鏡最佳化
-  Object.keys(textures).forEach(function(k) {
-    textures[k].generateMipmaps = true;
-    textures[k].minFilter = THREE.LinearMipmapLinearFilter;
-  });
+  function loadTextureWithFallback(url, type) {
+    if (!url) {
+      var fbCvs = createFallbackCanvas(type, game.name, plat, game.sub);
+      var fbTex = new THREE.CanvasTexture(fbCvs);
+      fbTex.generateMipmaps = true;
+      markLoaded();
+      return fbTex;
+    }
+
+    var targetUrl = getTextureUrl(url);
+    var tex = textureLoader.load(
+      targetUrl,
+      function(t) {
+        t.generateMipmaps = true;
+        t.minFilter = THREE.LinearMipmapLinearFilter;
+        markLoaded();
+      },
+      undefined,
+      function(err) {
+        console.warn('[3DViewer] 紋理載入失敗，啟動備用程序紋理:', url);
+        var fbCvs = createFallbackCanvas(type, game.name, plat, game.sub);
+        tex.image = fbCvs;
+        tex.needsUpdate = true;
+        markLoaded();
+      }
+    );
+    return tex;
+  }
+
+  var textures = {
+    cover: loadTextureWithFallback(game.cover, 'cover'),
+    back:  loadTextureWithFallback(game.back, 'back'),
+    spine: loadTextureWithFallback(game.spine, 'spine')
+  };
 
   // 紙質/塑膠微材質屬性
   var matProps = {

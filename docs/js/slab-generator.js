@@ -270,7 +270,7 @@
     drawGlassReflection(ctx, x, y, w, h);
   }
 
-  // 中央封面保護窗（三重降級載入：原生CORS -> weserv代理CORS -> 原生顯示）
+  // 中央封面保護窗（智慧代理與五重降級引擎）
   function drawInnerWindow(ctx, x, y, w, h, item, callback) {
     ctx.save();
 
@@ -292,10 +292,32 @@
     }
 
     function tryLoad(url, useCors, onDone, onFail) {
+      if (!url) return onFail();
       var img = new Image();
+      var done = false;
+      var timer = setTimeout(function() {
+        if (!done) {
+          done = true;
+          img.src = '';
+          onFail();
+        }
+      }, 2500);
+
       if (useCors) img.crossOrigin = 'anonymous';
-      img.onload = function() { onDone(img); };
-      img.onerror = function() { onFail(); };
+      img.onload = function() {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          onDone(img);
+        }
+      };
+      img.onerror = function() {
+        if (!done) {
+          done = true;
+          clearTimeout(timer);
+          onFail();
+        }
+      };
       img.src = url;
     }
 
@@ -313,26 +335,30 @@
       return;
     }
 
-    // 2. 外部網址：先嘗試原生帶 CORS
-    tryLoad(rawUrl, true, function(img) {
+    // LaunchBox 與 Google Drive 預先走 weserv proxy 代理以快速取得 Access-Control-Allow-Origin: *
+    var needsProxyFirst = (rawUrl.indexOf('launchbox-app.com') >= 0 || rawUrl.indexOf('drive.google.com') >= 0);
+    var primaryUrl = needsProxyFirst ? ('https://images.weserv.nl/?url=' + encodeURIComponent(rawUrl)) : rawUrl;
+    var secondaryUrl = needsProxyFirst ? rawUrl : ('https://images.weserv.nl/?url=' + encodeURIComponent(rawUrl));
+
+    // 2. 優先載入 (帶 CORS)
+    tryLoad(primaryUrl, true, function(img) {
       paintImage(ctx, x, y, w, h, img);
       ctx.restore();
       callback();
     }, function() {
-      // 3. 原生 CORS 失敗時（如 LaunchBox / 外部圖床未設定 CORS 標頭），透過 weserv proxy 代理加上 Access-Control-Allow-Origin: *
-      var proxied = 'https://images.weserv.nl/?url=' + encodeURIComponent(rawUrl);
-      tryLoad(proxied, true, function(img) {
+      // 3. 次選載入 (帶 CORS)
+      tryLoad(secondaryUrl, true, function(img) {
         paintImage(ctx, x, y, w, h, img);
         ctx.restore();
         callback();
       }, function() {
-        // 4. 若 proxy 仍不可用，以一般 Image (無 CORS) 繪製，保證卡面上絕對看得到封面！
+        // 4. 原生 Image (無 CORS) 繪製，保證卡面絕對看得到畫面
         tryLoad(rawUrl, false, function(img) {
           paintImage(ctx, x, y, w, h, img);
           ctx.restore();
           callback();
         }, function() {
-          // 5. 終極降級：文字封面
+          // 5. 終極風格化典藏文字卡降級
           drawFallbackCover(ctx, x, y, w, h, item);
           ctx.restore();
           callback();
@@ -356,18 +382,34 @@
   }
 
   function drawFallbackCover(ctx, x, y, w, h, item) {
-    ctx.fillStyle = '#141b2d';
-    roundRect(ctx, x + 60, y + 60, w - 120, h - 120, 16);
+    ctx.fillStyle = '#101524';
+    roundRect(ctx, x + 40, y + 40, w - 80, h - 80, 16);
+    ctx.fill();
+
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+    roundRect(ctx, x + 40, y + 40, w - 80, h - 80, 16);
+    ctx.stroke();
+
+    // 裝飾卡匣插槽圖示
+    ctx.fillStyle = '#0a0e1a';
+    roundRect(ctx, x + 80, y + 80, w - 160, 120, 12);
     ctx.fill();
 
     ctx.fillStyle = '#00e5ff';
     ctx.textAlign = 'center';
-    ctx.font = 'bold 36px "Noto Sans TC", sans-serif';
-    ctx.fillText(item.primary_name || '經典收藏', x + w / 2, y + h / 2 - 20);
+    ctx.font = '900 40px "Noto Sans TC", sans-serif';
+    var shortTitle = item.primary_name || '經典收藏';
+    if (shortTitle.length > 12) shortTitle = shortTitle.slice(0, 11) + '...';
+    ctx.fillText(shortTitle, x + w / 2, y + h / 2 - 20);
 
-    ctx.fillStyle = '#7986cb';
-    ctx.font = '22px "JetBrains Mono", monospace';
-    ctx.fillText((item.platform || 'FC') + ' CARTRIDGE ARCHIVE', x + w / 2, y + h / 2 + 30);
+    ctx.fillStyle = '#9fa8c8';
+    ctx.font = 'bold 24px "JetBrains Mono", monospace';
+    ctx.fillText((item.platform || 'FC') + ' CARTRIDGE ARCHIVE', x + w / 2, y + h / 2 + 35);
+
+    ctx.fillStyle = '#5a6788';
+    ctx.font = '16px "JetBrains Mono", monospace';
+    ctx.fillText('RETROVAULT VERIFIED RELEASE', x + w / 2, y + h / 2 + 75);
   }
 
   // 底部防偽全息燙金條
