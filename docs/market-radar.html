@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>行情雷達與 AR 尋寶獵手 · RetroVault Radar</title>
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+:root {
+  --bg: #060913;
+  --panel: rgba(14, 20, 36, 0.88);
+  --border: rgba(42, 58, 90, 0.65);
+  --cyan: #00e5ff;
+  --mint: #69f0ae;
+  --gold: #ffd700;
+  --purple: #ce93d8;
+  --red: #ff5252;
+  --txt: #e8eaf6;
+  --txt2: #9fa8c8;
+  --txt3: #5a6788;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--txt);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  padding: 12px 20px;
+  background: rgba(10, 14, 26, 0.94);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(14px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--cyan);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+}
+.brand-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+}
+
+/* 雙分頁標籤 */
+.mode-tabs {
+  display: flex;
+  background: rgba(15, 22, 40, 0.8);
+  padding: 3px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+.mode-tab {
+  padding: 6px 16px;
+  border-radius: 13px;
+  background: transparent;
+  border: none;
+  color: var(--txt2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mode-tab:hover { color: #fff; }
+.mode-tab.active {
+  background: var(--cyan);
+  color: #060913;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.main-content {
+  flex: 1;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ════════ Tab 1：行情雷達與資產大盤 ════════ */
+#view-market {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.portfolio-banner {
+  background: linear-gradient(135deg, rgba(20, 28, 50, 0.7) 0%, rgba(10, 14, 26, 0.9) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+.banner-stat-title {
+  font-size: 11px;
+  color: var(--txt3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.banner-stat-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  margin-top: 4px;
+}
+.banner-stat-sub {
+  font-size: 11.5px;
+  color: var(--mint);
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+.chart-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.chart-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.game-select-input {
+  background: rgba(8, 12, 22, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  min-width: 220px;
+}
+
+.chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  background: rgba(6, 9, 18, 0.85);
+  border-radius: 14px;
+  border: 1px solid rgba(42, 58, 90, 0.4);
+  overflow: hidden;
+}
+#price-chart {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.quick-links-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mkt-link-btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: rgba(15, 22, 40, 0.7);
+  border: 1px solid var(--border);
+  color: var(--txt);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.mkt-link-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+/* ════════ Tab 2：實體店 AR 尋寶相機 ════════ */
+#view-ar {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.camera-viewport {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  aspect-ratio: 3 / 4;
+  background: #000;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+}
+
+#ar-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 賽博龐克 HUD 掃描瞄準標線 */
+.ar-hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.ar-reticle {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 240px; height: 180px;
+  border: 2px dashed rgba(0, 229, 255, 0.6);
+  border-radius: 14px;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+}
+.ar-reticle::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+  animation: scanMove 2s ease-in-out infinite;
+}
+@keyframes scanMove {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(178px); }
+  100% { transform: translateY(0); }
+}
+
+/* AR 即時浮動辨識標籤 */
+.ar-floating-tag {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 14, 26, 0.92);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--mint);
+  transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  pointer-events: auto;
+  max-width: 85%;
+}
+.ar-floating-tag.wishlist { border-color: var(--gold); }
+.ar-floating-tag.deal { border-color: var(--cyan); }
+
+.ar-tag-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ar-tag-badge {
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(105, 240, 174, 0.2);
+  color: var(--mint);
+}
+.ar-tag-badge.wishlist { background: rgba(255, 215, 0, 0.2); color: var(--gold); }
+.ar-tag-badge.deal { background: rgba(0, 229, 255, 0.2); color: var(--cyan); }
+
+.ar-tag-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+}
+.ar-tag-desc {
+  font-size: 11.5px;
+  color: var(--txt2);
+}
+
+.sim-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.sim-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(15, 22, 40, 0.7);
+  border: 1px solid var(--border);
+  color: var(--txt2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sim-btn:hover {
+  color: #fff;
+  border-color: var(--cyan);
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="./js/valuation-radar.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="brand-area">
+    <span class="brand-badge">RADAR v11.07</span>
+    <span class="brand-title">行情雷達與 AR 獵手</span>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-btn-market" onclick="switchMode('market')">
+      <span>📈</span>
+      <span>歷史行情走勢</span>
+    </button>
+    <button class="mode-tab" id="tab-btn-ar" onclick="switchMode('ar')">
+      <span>📷</span>
+      <span>實體店 AR 尋寶</span>
+    </button>
+  </div>
+
+  <a href="./index.html" class="mkt-link-btn" style="border-radius:8px">← 返回主程式</a>
+</header>
+
+<div class="main-content">
+  <!-- ════ Tab 1：歷史行情走勢 ════ -->
+  <div id="view-market">
+    <!-- 資產大盤儀表 -->
+    <div class="portfolio-banner">
+      <div>
+        <div class="banner-stat-title">全庫總資產估值</div>
+        <div class="banner-stat-val" id="stat-total-val">NT$ 0</div>
+        <div class="banner-stat-sub" id="stat-gain-rate">未實現漲幅 +0%</div>
+      </div>
+      <div>
+        <div class="banner-stat-title">購入總成本</div>
+        <div class="banner-stat-val" id="stat-total-cost">NT$ 0</div>
+        <div class="banner-stat-sub" style="color:var(--txt2)" id="stat-total-count">共 0 件珍藏</div>
+      </div>
+      <div>
+        <div class="banner-stat-title">增值之王 (Top Gem)</div>
+        <div class="banner-stat-val" style="font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="stat-top-gem">計算中...</div>
+        <div class="banner-stat-sub" style="color:var(--gold)" id="stat-top-gain">+0%</div>
+      </div>
+    </div>
+
+    <!-- 歷史走勢折線圖卡片 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div class="chart-title-area">
+          <div style="font-size:16px;font-weight:900;color:#fff" id="curr-game-title">藏品成交價格歷史走勢</div>
+          <div style="font-size:11.5px;color:var(--cyan);font-family:'JetBrains Mono',monospace" id="curr-game-meta">近 24 個月公開拍賣與二手成交聚合</div>
+        </div>
+
+        <select class="game-select-input" id="game-select" onchange="onGameSelected(this.value)">
+          <option value="">載入藏品中...</option>
+        </select>
+      </div>
+
+      <div class="chart-canvas-wrap">
+        <canvas id="price-chart"></canvas>
+      </div>
+
+      <!-- 快速查價跳轉連結 -->
+      <div class="quick-links-bar">
+        <span style="font-size:11.5px;color:var(--txt3);font-weight:700">即時查價快捷：</span>
+        <a id="btn-mkt-mercari" href="#" target="_blank" class="mkt-link-btn">🔍 Mercari 日拍</a>
+        <a id="btn-mkt-yahoo" href="#" target="_blank" class="mkt-link-btn">🔍 Yahoo! 拍賣</a>
+        <a id="btn-mkt-suruga" href="#" target="_blank" class="mkt-link-btn">🔍 駿河屋 Suruga-ya</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ Tab 2：實體店 AR 尋寶相機 ════ -->
+  <div id="view-ar">
+    <div style="text-align:center;max-width:500px">
+      <div style="font-size:14px;font-weight:900;color:#fff;margin-bottom:4px">實體店相機 AR 智慧比價</div>
+      <div style="font-size:11.5px;color:var(--txt3)">手機鏡頭對準實體卡帶架，自動比對您的個人收藏庫與尋寶清單</div>
+    </div>
+
+    <div class="camera-viewport">
+      <video id="ar-video" autoplay playsinline muted></video>
+
+      <!-- 瞄準器 HUD -->
+      <div class="ar-hud-overlay">
+        <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan)">
+          <span>AI VISION: READY</span>
+          <span>FPS: 60</span>
+        </div>
+
+        <div class="ar-reticle"></div>
+
+        <!-- 浮動辨識標籤（即時動態更新） -->
+        <div class="ar-floating-tag" id="ar-tag">
+          <div class="ar-tag-header">
+            <span class="ar-tag-title" id="ar-tag-name">三國志 (FC)</span>
+            <span class="ar-tag-badge" id="ar-tag-badge">已收藏</span>
+          </div>
+          <div class="ar-tag-desc" id="ar-tag-desc">你已有此款 (盒裝完整，購入價 NT$ 800)</div>
+        </div>
+
+        <div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.7);font-family:'JetBrains Mono',monospace">
+          TARGET ACQUISITION MATRIX
+        </div>
+      </div>
+    </div>
+
+    <!-- 模擬測試按鈕列（供桌機或無現成卡帶時測試） -->
+    <div class="sim-btn-row">
+      <span style="font-size:11.5px;color:var(--txt3);font-weight:700">模擬實體辨識情境：</span>
+      <button class="sim-btn" onclick="simulateScan('owned')">🟩 掃描已收藏項目</button>
+      <button class="sim-btn" onclick="simulateScan('wishlist')">🟨 掃描願望清單目標</button>
+      <button class="sim-btn" onclick="simulateScan('deal')">🟦 掃描市場破盤特價品</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var myCollection = [];
+var selectedGame = null;
+
+function switchMode(mode) {
+  var viewMarket = document.getElementById('view-market');
+  var viewAr = document.getElementById('view-ar');
+  var tabMarket = document.getElementById('tab-btn-market');
+  var tabAr = document.getElementById('tab-btn-ar');
+
+  if (mode === 'market') {
+    viewMarket.style.display = 'flex';
+    viewAr.style.display = 'none';
+    tabMarket.classList.add('active');
+    tabAr.classList.remove('active');
+    stopCamera();
+  } else {
+    viewMarket.style.display = 'none';
+    viewAr.style.display = 'flex';
+    tabMarket.classList.remove('active');
+    tabAr.classList.add('active');
+    startCamera();
+  }
+}
+
+// ════ 走勢圖繪製 ════
+function renderChart(trendData) {
+  var canvas = document.getElementById('price-chart');
+  var ctx = canvas.getContext('2d');
+  var rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * (window.devicePixelRatio || 1);
+  canvas.height = rect.height * (window.devicePixelRatio || 1);
+
+  var W = canvas.width;
+  var H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var pts = trendData.points;
+  if (!pts || !pts.length) return;
+
+  var padL = 60, padR = 40, padT = 30, padB = 40;
+  var plotW = W - padL - padR;
+  var plotH = H - padT - padB;
+
+  var minP = trendData.minPrice * 0.9;
+  var maxP = trendData.maxPrice * 1.1;
+
+  // 繪製水平網格線
+  ctx.strokeStyle = 'rgba(42, 58, 90, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#5a6788';
+  ctx.font = '11px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+
+  for (var i = 0; i <= 4; i++) {
+    var val = Math.round(minP + (maxP - minP) * (i / 4));
+    var y = padT + plotH - (plotH * (i / 4));
+    ctx.beginPath();
+    ctx.moveTo(padL, y);
+    ctx.lineTo(W - padR, y);
+    ctx.stroke();
+    ctx.fillText('NT$' + val, padL - 8, y + 4);
+  }
+
+  // 計算座標
+  var coords = pts.map(function(p, idx) {
+    var x = padL + (plotW * (idx / (pts.length - 1)));
+    var y = padT + plotH - ((p.price - minP) / (maxP - minP)) * plotH;
+    return { x: x, y: y, price: p.price, date: p.date };
+  });
+
+  // 漸層填色
+  var areaGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+  areaGrad.addColorStop(0, 'rgba(0, 229, 255, 0.35)');
+  areaGrad.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
+
+  ctx.beginPath();
+  ctx.moveTo(coords[0].x, padT + plotH);
+  coords.forEach(function(c) { ctx.lineTo(c.x, c.y); });
+  ctx.lineTo(coords[coords.length - 1].x, padT + plotH);
+  ctx.closePath();
+  ctx.fillStyle = areaGrad;
+  ctx.fill();
+
+  // 走勢主線
+  ctx.beginPath();
+  coords.forEach(function(c, idx) {
+    if (idx === 0) ctx.moveTo(c.x, c.y);
+    else ctx.lineTo(c.x, c.y);
+  });
+  ctx.strokeStyle = '#00e5ff';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = 'rgba(0, 229, 255, 0.8)';
+  ctx.shadowBlur = 12;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // 繪製資料點
+  coords.forEach(function(c, idx) {
+    if (idx % 3 === 0 || idx === coords.length - 1) {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  });
+}
+
+function onGameSelected(idx) {
+  var game = myCollection[parseInt(idx, 10)];
+  if (!game) return;
+  selectedGame = game;
+
+  document.getElementById('curr-game-title').textContent = game.primary_name + ' · 歷史行情曲線';
+  var trend = ValuationRadar.generatePriceHistory(game);
+  document.getElementById('curr-game-meta').textContent = '2年漲幅: +' + trend.growthRate + '% · 稀有指數: ' + trend.rarityRating + ' · 歷史高點: NT$ ' + trend.maxPrice;
+
+  // 更新查價連結
+  var qName = encodeURIComponent(game.primary_name);
+  document.getElementById('btn-mkt-mercari').href = 'https://jp.mercari.com/search?keyword=' + qName;
+  document.getElementById('btn-mkt-yahoo').href = 'https://auctions.yahoo.co.jp/search/search?p=' + qName;
+  document.getElementById('btn-mkt-suruga').href = 'https://www.suruga-ya.jp/search?search_word=' + qName;
+
+  renderChart(trend);
+}
+
+// ════ AR 相機與模擬 ════
+var cameraStream = null;
+function startCamera() {
+  var video = document.getElementById('ar-video');
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(function(stream) {
+        cameraStream = stream;
+        video.srcObject = stream;
+      })
+      .catch(function(err) {
+        console.log('[AR] 無法開啟實體攝影機，啟用模擬模式', err);
+      });
+  }
+}
+
+function stopCamera() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(function(track) { track.stop(); });
+    cameraStream = null;
+  }
+}
+
+function simulateScan(type) {
+  var tag = document.getElementById('ar-tag');
+  var nameEl = document.getElementById('ar-tag-name');
+  var badgeEl = document.getElementById('ar-tag-badge');
+  var descEl = document.getElementById('ar-tag-desc');
+
+  tag.className = 'ar-floating-tag';
+
+  if (type === 'owned') {
+    nameEl.textContent = '三国志 (FC 紅白機)';
+    badgeEl.textContent = '已在收藏庫中';
+    badgeEl.className = 'ar-tag-badge';
+    descEl.textContent = '你已有此藏品 (盒裝完整 · 保管於防潮箱 A1)';
+  } else if (type === 'wishlist') {
+    tag.classList.add('wishlist');
+    nameEl.textContent = '惡魔城 曉月圓舞曲 (GBA)';
+    badgeEl.textContent = '🎯 願望清單命中！';
+    badgeEl.className = 'ar-tag-badge wishlist';
+    descEl.textContent = '當前標價 4,800円 低於你設定的心理價 6,500円 (-26%)！';
+  } else {
+    tag.classList.add('deal');
+    nameEl.textContent = '幽遊白書 魔強統一戰 (MD)';
+    badgeEl.textContent = '超值破盤行情';
+    badgeEl.className = 'ar-tag-badge deal';
+    descEl.textContent = '市場均價約 NT$ 4,500，此店標價極低，推薦確認外盒正版印記入手！';
+  }
+
+  // 震動回饋
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  localforage.getItem('gv_col').then(function(cached) {
+    if (cached && Array.isArray(cached) && cached.length) {
+      myCollection = cached.map(function(it) {
+        var d = it.data || it;
+        return {
+          primary_name: d.primary_name || d.zh_name || d.jp_name || d.en_name || '未命名',
+          platform: (d.platform || 'FC').toUpperCase(),
+          completeness: d.completeness || '盒裝完整',
+          market_value: Number(d.market_value) || 1200,
+          buy_price: Number(d.buy_price) || 800
+        };
+      });
+    }
+
+    if (!myCollection.length) {
+      myCollection = [
+        { primary_name: '三国志', platform: 'FC', completeness: '盒裝完整', market_value: 1800, buy_price: 1100 },
+        { primary_name: '三国志II 覇王の大陸', platform: 'FC', completeness: '美品', market_value: 2200, buy_price: 1300 },
+        { primary_name: '餓狼伝説', platform: 'MD', completeness: '盒裝完整', market_value: 1600, buy_price: 950 },
+        { primary_name: '先進大戰略', platform: 'MD', completeness: '美品', market_value: 1900, buy_price: 1200 },
+        { primary_name: '超級瑪利歐兄弟3', platform: 'FC', completeness: '盒裝完整', market_value: 1500, buy_price: 800 }
+      ];
+    }
+
+    // 更新大盤資產統計
+    var stats = ValuationRadar.calculatePortfolioStats(myCollection);
+    document.getElementById('stat-total-val').textContent = 'NT$ ' + stats.totalMarketValue.toLocaleString();
+    document.getElementById('stat-total-cost').textContent = 'NT$ ' + stats.totalCost.toLocaleString();
+    document.getElementById('stat-total-count').textContent = '共 ' + stats.totalCount + ' 件珍藏';
+    document.getElementById('stat-gain-rate').textContent = '未實現漲幅 +' + stats.gainRate + '% (獲利 NT$ ' + stats.totalGain.toLocaleString() + ')';
+
+    if (stats.topGems.length) {
+      document.getElementById('stat-top-gem').textContent = stats.topGems[0].name;
+      document.getElementById('stat-top-gain').textContent = '漲幅 +' + stats.topGems[0].gainRate + '%';
+    }
+
+    // 填入遊戲選單
+    var sel = document.getElementById('game-select');
+    sel.innerHTML = myCollection.map(function(it, idx) {
+      return '<option value="' + idx + '">' + it.platform + ' · ' + it.primary_name + '</option>';
+    }).join('');
+
+    onGameSelected(0);
+  });
+});
+</script>
+</body>
+</html>

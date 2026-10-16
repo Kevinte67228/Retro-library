@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>極速檢索與引擎基準測試 · RetroVault Engine</title>
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+:root {
+  --bg: #070a14;
+  --panel: rgba(14, 20, 36, 0.88);
+  --border: rgba(42, 58, 90, 0.65);
+  --cyan: #00e5ff;
+  --mint: #69f0ae;
+  --purple: #ce93d8;
+  --amber: #ffb74d;
+  --red: #ff5252;
+  --txt: #e8eaf6;
+  --txt2: #9fa8c8;
+  --txt3: #5a6788;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--txt);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(105, 240, 174, 0.06) 0%, transparent 40%);
+}
+
+header {
+  padding: 16px 24px;
+  background: rgba(10, 14, 26, 0.9);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.brand-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--cyan);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+}
+.brand-title {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-link {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--txt2);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+.nav-link:hover {
+  color: var(--cyan);
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.main-wrap {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 引擎效能數據儀表 */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 4px; height: 100%;
+  background: var(--cyan);
+}
+.metric-card.mint::before { background: var(--mint); }
+.metric-card.purple::before { background: var(--purple); }
+
+.metric-label {
+  font-size: 11px;
+  color: var(--txt3);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.metric-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+  margin-top: 4px;
+}
+.metric-sub {
+  font-size: 11px;
+  color: var(--txt2);
+  margin-top: 2px;
+}
+
+/* 搜尋控制台 */
+.search-box-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon {
+  position: absolute;
+  left: 16px;
+  font-size: 18px;
+  color: var(--cyan);
+}
+.search-input {
+  width: 100%;
+  background: rgba(8, 12, 22, 0.85);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px 14px 48px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  outline: none;
+  transition: all 0.2s;
+}
+.search-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.2);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.pill {
+  padding: 6px 14px;
+  border-radius: 14px;
+  background: rgba(15, 22, 40, 0.7);
+  border: 1px solid var(--border);
+  color: var(--txt2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pill:hover { color: #fff; border-color: var(--txt3); }
+.pill.active {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.bench-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-bench {
+  padding: 7px 14px;
+  border-radius: 10px;
+  background: rgba(105, 240, 174, 0.12);
+  border: 1px solid rgba(105, 240, 174, 0.4);
+  color: var(--mint);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-bench:hover {
+  background: var(--mint);
+  color: #060913;
+  box-shadow: 0 0 12px rgba(105, 240, 174, 0.4);
+}
+
+/* 檢索結果清單 */
+.results-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.game-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.game-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--cyan);
+  box-shadow: 0 6px 20px rgba(0, 229, 255, 0.15);
+}
+
+.game-thumb {
+  width: 64px;
+  height: 84px;
+  background: #101420;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.game-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+}
+
+.game-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.game-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.game-meta {
+  font-size: 11px;
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 6px;
+}
+.game-tags {
+  display: flex;
+  gap: 6px;
+  font-size: 10.5px;
+}
+.tag-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--txt2);
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="./js/vault-sync-engine.js"></script>
+<script src="./js/vault-db.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="brand-area">
+    <span class="brand-badge">ENGINE v11.05</span>
+    <span class="brand-title">RetroVault 極速檢索基準台</span>
+  </div>
+  <div class="nav-links">
+    <a href="./cyber-museum.html" class="nav-link">📺 賽博展廳</a>
+    <a href="./3d-viewer.html" class="nav-link">🎮 3D 把玩</a>
+    <a href="./index.html" class="nav-link">← 返回主程式</a>
+  </div>
+</header>
+
+<div class="main-wrap">
+  <!-- 性能儀表 -->
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-label">檢索耗時 (Latency)</div>
+      <div class="metric-val" id="metric-latency">0.00 ms</div>
+      <div class="metric-sub" id="metric-latency-sub">⚡ 極速本地倒排索引</div>
+    </div>
+    <div class="metric-card mint">
+      <div class="metric-label">已索引筆數 (Items)</div>
+      <div class="metric-val" id="metric-items">0</div>
+      <div class="metric-sub" id="metric-items-sub">分詞詞庫建置中</div>
+    </div>
+    <div class="metric-card purple">
+      <div class="metric-label">Google Sheets 同步</div>
+      <div class="metric-val" id="metric-sync">待測</div>
+      <div class="metric-sub" id="metric-sync-sub">點擊右方按鈕進行連線測試</div>
+    </div>
+  </div>
+
+  <!-- 搜尋控制器 -->
+  <div class="search-box-card">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" placeholder="輸入關鍵字（支援中/英/日文假名平片互轉，如 mario、マリオ、三國志）..." oninput="onSearchInput()">
+    </div>
+
+    <div class="filter-bar">
+      <div class="pills" id="platform-pills">
+        <button class="pill active" onclick="setPlatformFilter('ALL', this)">全部平台</button>
+        <button class="pill" onclick="setPlatformFilter('FC', this)">FC 紅白機</button>
+        <button class="pill" onclick="setPlatformFilter('MD', this)">MD 世嘉五代</button>
+        <button class="pill" onclick="setPlatformFilter('SFC', this)">SFC 超任</button>
+      </div>
+
+      <div class="bench-actions">
+        <button class="btn-bench" onclick="runStressTest(5000)">🚀 注入 5,000 筆壓測</button>
+        <button class="btn-bench" onclick="testGoogleSync()">☁️ 測試 GAS 連線</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜尋結果 -->
+  <div class="results-container" id="results-list"></div>
+</div>
+
+<script>
+var currentFilter = {
+  platform: 'ALL'
+};
+
+function onSearchInput() {
+  var q = document.getElementById('search-input').value;
+  var res = VaultDB.search(q, currentFilter);
+
+  document.getElementById('metric-latency').textContent = res.latencyMs.toFixed(2) + ' ms';
+  document.getElementById('metric-latency-sub').textContent = res.latencyMs < 1.0 ? '⚡ 亞毫秒超極速' : '高效能索引';
+
+  renderResults(res.items);
+}
+
+function setPlatformFilter(plat, btn) {
+  document.querySelectorAll('#platform-pills .pill').forEach(function(el) { el.classList.remove('active'); });
+  btn.classList.add('active');
+  currentFilter.platform = plat;
+  onSearchInput();
+}
+
+function renderResults(items) {
+  var list = document.getElementById('results-list');
+  if (!items.length) {
+    list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--txt3);font-size:13px">查無符合藏品</div>';
+    return;
+  }
+
+  list.innerHTML = items.slice(0, 60).map(function(it) {
+    var thumb = it.cover_img
+      ? '<img src="' + it.cover_img + '" alt="">'
+      : '🎮';
+
+    var p3dUrl = './3d-viewer.html?name=' + encodeURIComponent(it.primary_name) +
+      '&platform=' + encodeURIComponent(it.platform) +
+      '&cover=' + encodeURIComponent(it.cover_img) +
+      (it.back_img ? '&back=' + encodeURIComponent(it.back_img) : '') +
+      (it.spine_img ? '&spine=' + encodeURIComponent(it.spine_img) : '');
+
+    return '<div class="game-card" onclick="window.open(\'' + p3dUrl + '\', \'_blank\')">' +
+      '<div class="game-thumb">' + thumb + '</div>' +
+      '<div class="game-info">' +
+        '<div class="game-name">' + it.primary_name + '</div>' +
+        '<div class="game-meta">' + it.platform + (it.developer ? ' · ' + it.developer : '') + (it.release_date ? ' · ' + it.release_date : '') + '</div>' +
+        '<div class="game-tags">' +
+          '<span class="tag-badge">' + (it.completeness || '未評級') + '</span>' +
+          '<span class="tag-badge" style="color:var(--mint)">' + (it.market_value ? 'NT$ ' + it.market_value : '未估值') + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// 壓測功能：注入 5,000 筆資料
+function runStressTest(count) {
+  alert('即將生成 ' + count + ' 筆模擬藏品並進行全量分詞倒排索引建置...');
+  var dataset = VaultDB.generateStressDataset(count);
+  var stats = VaultDB.buildIndex(dataset);
+
+  document.getElementById('metric-items').textContent = stats.count.toLocaleString();
+  document.getElementById('metric-items-sub').textContent = '建置耗時 ' + stats.timeMs + ' ms · ' + stats.tokenCount + ' 個詞彙索引';
+  onSearchInput();
+}
+
+// 測試 Google Apps Script 連線
+function testGoogleSync() {
+  var cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem('gv_cfg') || '{}'); } catch(e){}
+  if (!cfg.url) {
+    alert('主程式尚未設定 Google Apps Script Web App 網址，請先在 RetroVault 設定頁填入網址。');
+    return;
+  }
+
+  document.getElementById('metric-sync').textContent = '連線中...';
+  VaultSyncEngine.init({ gasUrl: cfg.url, appToken: cfg.app_token });
+  VaultSyncEngine.ping().then(function(res) {
+    document.getElementById('metric-sync').textContent = 'OK ✓';
+    document.getElementById('metric-sync-sub').textContent = res.spreadsheetName + ' (v' + res.serverVersion + ')';
+  }).catch(function(err) {
+    document.getElementById('metric-sync').textContent = '失敗 ✕';
+    document.getElementById('metric-sync-sub').textContent = err.message;
+  });
+}
+
+// 初始化：載入本地實際藏品
+window.addEventListener('DOMContentLoaded', function() {
+  localforage.getItem('gv_col').then(function(cached) {
+    var list = (cached && Array.isArray(cached) && cached.length) ? cached : [];
+    if (!list.length) {
+      // 內建示範資料
+      list = VaultDB.generateStressDataset(140);
+    }
+    var stats = VaultDB.buildIndex(list);
+    document.getElementById('metric-items').textContent = stats.count.toLocaleString();
+    document.getElementById('metric-items-sub').textContent = '建置耗時 ' + stats.timeMs + ' ms · ' + stats.tokenCount + ' 詞彙';
+    onSearchInput();
+  }).catch(function() {
+    var dummy = VaultDB.generateStressDataset(140);
+    VaultDB.buildIndex(dummy);
+    onSearchInput();
+  });
+});
+</script>
+</body>
+</html>

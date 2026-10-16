@@ -1,10 +1,20 @@
-const CACHE_NAME = 'retrovault-v11-01';
+const CACHE_NAME = 'retrovault-v11-07';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './RetroVault_v11_01_index.html',
+  './RetroVault_v11_07_index.html',
   './manifest.json',
   './manual.html',
+  './3d-viewer.html',
+  './cyber-museum.html',
+  './search-bench.html',
+  './slab-studio.html',
+  './market-radar.html',
+  './js/vault-sync-engine.js',
+  './js/vault-db.js',
+  './js/vault-worker.js',
+  './js/slab-generator.js',
+  './js/valuation-radar.js',
   './bg.webp'
 ];
 // 註：v54.71 起 bg.webp 改回本地相對路徑，納入預先快取——原本從 GitHub(raw) 跨網域載入，

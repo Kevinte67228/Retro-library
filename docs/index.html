@@ -605,8 +605,6 @@ body{
 .dpos{align-self:flex-start;font-size:11px;color:#7986cb;background:#0f1525;padding:3px 8px;border-radius:8px;border:1px solid #1e2a45}
 .dact{display:flex;gap:8px;align-items:stretch}
 .dact .btn{flex:1;min-height:38px;padding:8px 4px;font-size:13px}
-.dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
-#dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
    跟 save-bar 的浮動定位跑位問題——主觸發鈕改成跟「取消」同樣大小的晶片，直接排進 save-bar
    那一排（走一般 flex 排版，不用猜固定像素間距），只有展開後的3個子按鈕維持浮動於上方） */
@@ -627,9 +625,6 @@ body{
 #det-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 #det-barcode-fab svg{width:24px;height:24px}
 #det-fab-wrap.open #det-barcode-fab,#det-fab-wrap.open #det-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
-#dprev-float{left:8px}
-#dnext-float{right:8px}
-.dnav-float.off{opacity:.2;pointer-events:none}
 .dgrid{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .df .dfl{font-size:10px;color:#7986cb;margin-bottom:2px}
 .df .dfv{font-size:13px;word-break:break-all}
@@ -1085,7 +1080,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.02</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.07</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -1801,6 +1796,10 @@ body{
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
                 系列
               </button>
+              <a id="vbtn-museum" href="./cyber-museum.html" target="_blank" style="background:transparent;color:#00e5ff;text-decoration:none;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap" title="賽博防潮展廳 (CRT+書背牆)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                展廳
+              </a>
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
                  「大量刪除」，容易讓人誤以為多選只能刪除，不知道還能批次編輯。 -->
@@ -1818,6 +1817,22 @@ body{
                 <span class="offline-queue-dot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#ff6e9c;border:1.5px solid #0f1525"></span>
               </button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <a class="col-menu-item" href="./cyber-museum.html" target="_blank" style="color:#00e5ff;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                  賽博防潮展廳 (CRT+書背)
+                </a>
+                <a class="col-menu-item" href="./search-bench.html" target="_blank" style="color:#69f0ae;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  ⚡ 極速檢索基準台 (0.5ms)
+                </a>
+                <a class="col-menu-item" href="./slab-studio.html" target="_blank" style="color:#ffd700;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  💎 數位鑑定卡工坊 (Slab)
+                </a>
+                <a class="col-menu-item" href="./market-radar.html" target="_blank" style="color:#ffb74d;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                  📈 行情雷達與 AR 尋寶 (Radar)
+                </a>
                 <button class="col-menu-item" id="offline-queue-menu-item" style="display:none;justify-content:space-between" onclick="syncOfflineQueue();closeColMenu()" type="button">
                   <span style="display:flex;align-items:center;gap:8px">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.4-6.4-2.8 2.8M9.4 14.6l-2.8 2.8m0-10.8 2.8 2.8m5.2 5.2 2.8 2.8"/></svg>
@@ -2564,7 +2579,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v51.02</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.07</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2983,7 +2998,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.01';
+const APP_VERSION='v11.07';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -5539,7 +5554,7 @@ function saveFxFromInputs(){
 function updateFxLive(){
   if(!_btnGuard('fxLive',null,'更新中...'))return;
   toast('更新匯率中…','',1500);
-  fetch('https://open.er-api.com/v6/latest/TWD').then(function(r){return r.json();}).then(function(d){
+  fetch('https://open.er-api.com/v6/latest/TWD',{signal:(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)?AbortSignal.timeout(6000):undefined}).then(function(r){return r.json();}).then(function(d){
     if(!d||d.result!=='success'||!d.rates)throw new Error('bad');
     var jpy=d.rates.JPY,usd=d.rates.USD; // 每 1 TWD 兌外幣 → 取倒數得「1 外幣=?TWD」
     if(jpy&&$('c-fx-jpy'))$('c-fx-jpy').value=(1/jpy).toFixed(4);
@@ -10577,49 +10592,8 @@ var _scanBC='';      // 步驟一鎖定的條碼
 var _scanImg=null;   // 步驟二拍的封面圖
 var _scanImgBack=null; // v02.33（C）：選拍的封底圖（事實密集面：條碼/編號/日期/語言）
 
-// 更新步驟指示器樣式
-function scanSetStep(n){
-  [1,2,3].forEach(function(i){
-    var el=document.getElementById('step'+i+'-ind');if(!el)return;
-    var active=i===n, done=i<n;
-    el.style.background=active?'rgba(0,229,255,.15)':(done?'rgba(0,229,255,.07)':'#0f1525');
-    el.style.borderColor=active?'#00e5ff':(done?'rgba(0,229,255,.4)':'#1e2a45');
-    el.querySelector('div:last-child').style.color=active?'#00e5ff':(done?'rgba(0,229,255,.6)':'#7a8499');
-  });
-}
-
-// 條碼掃到 → 進入步驟二
-function scanGoStep2(bc){
-  function _proceed(){
-    _scanBC=bc;
-    var s1=$('scan-step1');if(s1)s1.style.display='none';
-    var s2=$('scan-step2');if(s2)s2.style.display='block';
-    // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
-    var _h2=$('scan-step2-hint');
-    if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
-    var badge=$('scan-bc-badge');
-    if(bc){
-      if(badge)badge.style.display='flex';
-      var num=$('scan-bc-num');if(num)num.textContent=bc;
-    }else{
-      if(badge)badge.style.display='none';
-    }
-    var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
-    var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
-    var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
-    _scanImg=null;
-    _scanImgBack=null; // v02.33（C）
-    scanSetStep(2);
-  }
-  if(bc){
-    confirmBarcodeDup(bc).then(function(proceed){
-      if(!proceed){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-      _proceed();
-    });
-  }else{
-    _proceed();
-  }
-}
+// 步驟指示器（單頁版已整合，保留空函式防呆）
+function scanSetStep(n){}
 
 // 步驟二：拍照 / 相簿選圖
 function scanStep2Photo(input){
@@ -11007,6 +10981,17 @@ function barScanFromBtn(){
     subtitle:'對準包裝上的 EAN / JAN / ISBN',
     openingText:'正在開啟相機...',
     detectText:'正在偵測商品條碼',
+    secondary:[
+      {label:'✏️ 手動輸入',fn:function(){
+        fscanClose();
+        var bi=$('bar-inp');
+        if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('請直接在此手動輸入條碼','ok',2500);}
+      }}
+    ],
+    fallback:function(){
+      var bi=$('bar-inp');
+      if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('無法開啟相機，請在此手動輸入條碼','er',3500);}
+    },
     resultToast:function(v){return '已帶入商品條碼：'+v;}}); // 僅回填欄位，由使用者按「查詢資料庫」
 }
 function barSearchFromInput(){
@@ -11021,6 +11006,17 @@ function comboScanFromBtn(){
     subtitle:'先掃條碼，稍後再拍封面',
     openingText:'正在開啟相機...',
     detectText:'正在偵測條碼',
+    secondary:[
+      {label:'✏️ 手動輸入',fn:function(){
+        fscanClose();
+        var bi=$('combo-bar-inp');
+        if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('請直接在此手動輸入條碼','ok',2500);}
+      }}
+    ],
+    fallback:function(){
+      var bi=$('combo-bar-inp');
+      if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('無法開啟相機，請在此手動輸入條碼','er',3500);}
+    },
     resultToast:function(v){return '已帶入條碼：'+v;}}); // 僅回填欄位
 }
 // 🤖 [AI辨識進入點] 條碼＋照片 combo 模式：條碼查資料庫 + 封面照片AI辨識並行，交叉比對
@@ -11039,54 +11035,7 @@ function comboSearchFromInput(){
   }
 }
 
-// ponytail: combo barcode scanning now uses the shared field scanner; keep old cleanup calls harmless.
 function stopComboScanner(){}
-// #1：條碼+照片的條碼步驟改用統一全螢幕取景框 overlay（含「跳過」「手動」次要鈕）
-function _comboScanLaunch(){
-  openFieldScanner({mode:'barcode',inputId:'combo-bar-inp',
-    title:'掃描條碼＋照片',
-    subtitle:'先掃條碼，稍後再拍封面',
-    openingText:'正在開啟相機...',
-    detectText:'正在偵測條碼',
-    resultToast:function(v){return '已掃到條碼：'+v;},
-    onResult:function(bc){onComboBarcode(bc);},
-    secondary:[
-      {label:'⏭ 跳過，直接拍封面',fn:function(){scanGoStep2('');}},
-      {label:'✏️ 手動輸入',fn:comboShowManual}
-    ],
-    fallback:comboShowManual});
-}
-// combo 掃到條碼後 → 進入步驟二拍封面
-function onComboBarcode(bc){
-  bc=(bc||'').trim();if(!bc)return;
-  toast('📷 條碼 '+bc,'ok',2000);
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
-  stopComboScanner();
-  scanGoStep2(bc); // 進入三步驟的步驟二
-}
-// ── 手動輸入條碼備援畫面（bar / combo 共用）──
-// 兩模式「切回相機」的手動輸入畫面結構相同，只差容器 / input id / 回呼。
-// o: { inputId, onConfirm, onBack }（皆為函式名字串，供 inline onclick / onkeydown 用）
-function buildManualBarcodeUI(o){
-  return '<div style="padding:20px;text-align:center;color:#7986cb">'+
-    '<div style="font-size:32px;margin-bottom:8px">📱</div>'+
-    '<div style="font-size:13px;margin-bottom:10px">手動輸入條碼</div>'+
-    '<input class="fi mono" id="'+o.inputId+'" type="text" inputmode="numeric" maxlength="13" placeholder="EAN-13（13碼）"'+
-    ' style="text-align:center;font-size:18px;letter-spacing:3px;margin-bottom:10px"'+
-    ' onkeydown="if(this.value&&event.key===\'Enter\'){'+o.onConfirm+'(this.value.trim())}">'+
-    '<div style="display:flex;gap:8px">'+
-    '<button class="btn bo" style="flex:1;font-size:13px" onclick="'+o.onBack+'()" type="button">📷 切回相機</button>'+
-    '<button class="btn bp" style="flex:1;font-size:13px" onclick="'+o.onConfirm+'(document.getElementById(\''+o.inputId+'\').value.trim())" type="button">確認</button>'+
-    '</div></div>';
-}
-function comboShowManual(){
-  var sw=$('scan-wrap');if(!sw)return;
-  sw.innerHTML=buildManualBarcodeUI({inputId:'mbar2',onConfirm:'onComboBarcode',onBack:'comboRestartScanner'});
-}
-function comboRestartScanner(){
-  stopComboScanner();
-  _comboScanLaunch(); // #1：改用統一全螢幕取景框
-}
 function restartScanner(){
   stopScanner();
   _barScanLaunch(); // #1：改用統一全螢幕取景框
@@ -15846,6 +15795,9 @@ function closeColMenu(){
   var p=document.getElementById('col-menu-panel');
   if(p)p.style.display='none';
 }
+// CSV 儲存格逸出處理（全域共用）
+function csvCell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+
 // ── 匯出 CSV（按「分類＋子類型」分檔，避免不同子類型的欄位混在同一檔案錯位）──
 function exportCsvByType(){
   var rows=filtered;
@@ -15861,7 +15813,7 @@ function exportCsvByType(){
   });
   var date=(new Date()).toISOString().slice(0,10);
   var totalFiles=0;
-  function cell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+  var cell=csvCell;
   function downloadOne(g){
     var typeRows=g.rows;
     var lbl=g.isHunt?'尋寶':catLabel(g.cat);
@@ -17047,10 +16999,8 @@ function marketValueDisplay(d){
   return '未填';
 }
 function marketEstimateExplain(){
-  alert([
-    '目前估值邏輯說明',
-    '',
-    '1. 依商品「區域屬性」決定幣別優先順序：日本/亞洲品 → 優先採用 JPY 樣本；美國品 → 優先採用 USD 樣本，不再單純從筆數決定，減少跺幣別樣本干擾中位數。',
+  _customAlert('目前估值邏輯說明', [
+    '1. 依商品「區域屬性」決定幣別優先順序：日本/亞洲品 → 優先採用 JPY 樣本；美國品 → 優先採用 USD 樣本，不再單純從筆數決定，減少多幣別樣本干擾中位數。',
     '2. 依語言對市場分流：日本站（樂天/Yahoo JP）只用日文名查詢；eBay 只用英文名查詢；缺對應語言名稱的市場直接略過，減少跨語言噪音。',
     '3. 標題比對包含羅馬數字⇔阿拉伯數字正規化（XVI=16）、末尾年份/版本號嚴格比對，防止前後作、不同年份版本混入樣本。',
     '4. 優先採二手/中古/used 樣本；二手樣本不足 3 筆時，回退併入全新刊登價並標註。',
@@ -17611,6 +17561,17 @@ function detailHeroHtml(d,rowNum){
       return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
     }).join('')+'</div>';
   }
+  if(hasC){
+    var _3dUrl='./3d-viewer.html?name='+encodeURIComponent(title)+
+      '&platform='+encodeURIComponent(d.platform||cat)+
+      '&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+
+      (hasB?'&back='+encodeURIComponent(imgUrl(d.back_img,1000)):'')+
+      (hasS?'&spine='+encodeURIComponent(imgUrl(d.spine_img,1000)):'');
+    coverHtml+='<div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">'+
+      '<a href="'+_3dUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.45);color:#00e5ff;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(0,229,255,.15);transition:all .15s"><span>🎮 3D 把玩</span></a>'+
+      '<a href="./slab-studio.html?name='+encodeURIComponent(title)+'&platform='+encodeURIComponent(d.platform||cat)+'&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+'&comp='+encodeURIComponent(d.completeness||'')+'&date='+encodeURIComponent(d.release_date||'')+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#ffd700;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(212,175,55,.15);transition:all .15s"><span>💎 鑑定卡</span></a>'+
+    '</div>';
+  }
   coverHtml+='</div>';
   var tags='';
   tags+=_detailTag(catLabel(cat),catColor);
@@ -17727,14 +17688,11 @@ $('dact').innerHTML=
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
     '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
   
-var _dh=$('dtitle')&&$('dtitle').parentElement;
+  var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(_dh){
     var oldPos=_dh.querySelector('.dpos');if(oldPos)oldPos.remove();
     if(posStr)$('dplat').insertAdjacentHTML('afterend',posStr);
   }
-  var prevBtn=$('dprev-float'),nextBtn=$('dnext-float');
-  if(prevBtn){prevBtn.classList.toggle('off',!_hasPrev);prevBtn.onclick=function(){if(_hasPrev)detailPrev();};}
-  if(nextBtn){nextBtn.classList.toggle('off',!_hasNext);nextBtn.onclick=function(){if(_hasNext)detailNext();};}
   var skip={category:1,uuid:1,_src:1,market_value_currency:1,market_value_foreign_amount:1,extra_images:1};  // 隱藏欄位不顯示（extra_images 是JSON陣列，有專屬圖片管理UI，不該原始顯示）
   var skipDef={collect_status:'收藏中',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',resale_price:'0',resale_date:'2099/01/01',rating:'N/A',play_status:'未遊玩',bonus_code_status:'N/A',warranty_status:'N/A'};
   var html=detailHeroHtml(d,rowNum);
@@ -18078,6 +18036,27 @@ function _customConfirm(title,message){
     document.getElementById('custom-confirm-ok').onclick=function(){cleanup(true);};
   });
 }
+function _customAlert(title,message){
+  return new Promise(function(resolve){
+    var ov=document.getElementById('custom-confirm-ov');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='custom-confirm-ov';
+      ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:24px';
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML='<div style="background:#141b30;border:1px solid #2a3a5a;border-radius:16px;padding:20px;max-width:380px;width:100%;max-height:85vh;display:flex;flex-direction:column">'+
+      '<div style="font-size:16px;font-weight:700;color:#e8eaf6;margin-bottom:12px;white-space:pre-line;line-height:1.4">'+esc(title)+'</div>'+
+      (message?'<div style="font-size:13px;color:#9fa8c8;margin-bottom:16px;white-space:pre-line;line-height:1.65;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch">'+esc(message)+'</div>':'')+
+      '<div style="display:flex;justify-content:flex-end">'+
+        '<button id="custom-alert-ok" class="btn bp bw" style="min-height:38px" type="button">我知道了</button>'+
+      '</div>'+
+    '</div>';
+    ov.style.display='flex';
+    var okBtn=document.getElementById('custom-alert-ok');
+    if(okBtn)okBtn.onclick=function(){ov.style.display='none';resolve(true);};
+  });
+}
 function confirmBarcodeDup(bc){
   var dups=checkBarcodeDup(bc);
   if(!dups.length)return Promise.resolve(true);
@@ -18286,9 +18265,6 @@ window.onload=function(){
   // 版本號集中顯示
   var _v1=document.getElementById('app-ver');if(_v1)_v1.textContent=APP_VERSION;
   var _v2=document.getElementById('app-ver2');if(_v2)_v2.textContent=APP_VERSION;
-  // 關於頁欄位/組數連動（隨 FIELDS/GROUPS 變動自動更新）
-  var _ac=document.getElementById('about-cols');if(_ac)_ac.textContent=FIELDS.length;
-  var _ag=document.getElementById('about-grps');if(_ag)_ag.textContent=GROUPS.length;
   // 返回鍵守門（瀏覽器模式有效；PWA standalone 視系統而定）
   try{history.pushState({gvGuard:true},'','');}catch(e){}
   localforage.getItem('gv_col').then(function(cached){
@@ -18518,7 +18494,7 @@ function huntFiltered(){return hunt.filter(_huntQuickPass);}
 function exportHuntCsv(){
   var rows=huntFiltered();
   if(!rows||!rows.length){toast('目前沒有可匯出的尋寶資料','er');return;}
-  function cell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+  var cell=csvCell;
   var cols=HUNT_HDR.map(function(k){return [k,k];});
   // 雙標題列：第一列內部鍵值（匯入辨識用）、第二列顯示名稱（此處尋寶欄位鍵值即為顯示，兩列相同不影響匯入）
   var lines=[

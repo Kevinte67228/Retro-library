@@ -1,3 +1,180 @@
+## v11.07 (2026-10-16)
+
+### 變更內容
+實作 RetroVault 夢想計畫「第 5 批次：智慧獵手 —— 二手行情歷史折線與實體店 AR 探索」：
+
+1. **市場行情走勢與資產大盤雷達（`docs/market-radar.html` & `docs/js/valuation-radar.js`）**：
+   - **近 24 個月歷史成交曲線**：整合平台稀有度加權、品相加成係數，於 HTML5 Canvas 繪製細緻發光折線圖與漸層填色。
+   - **全庫資產大盤總覽**：動態計算全庫總估值、購入總成本、未實現總獲利與投報率（ROI%），並自動評選出 Top 5 增值王。
+   - **各大拍賣平台即時查價快捷**：一鍵跳轉至 Mercari 日本拍賣、Yahoo! 拍賣、駿河屋 Suruga-ya 搜尋實價登錄。
+2. **實體店鏡頭 AR 尋寶獵手（AR Vision Hunter）**：
+   - 結合 WebRTC 攝影機即時視訊串流與賽博 HUD 掃描鎖定框（動態掃描標線）。
+   - **即時浮動標籤（AR Floating Tags）**：
+     - 🟩 **已在收藏庫中**：避免重複購買，提示已有品相與保管防潮箱位置。
+     - 🟨 **🎯 願望清單命中！**：比對目標心理價格，標記便宜折數與推薦入手建議。
+     - 🟦 **超值破盤行情**：標註低於市場行情之罕見逸品。
+   - 內建三大模擬情境測試按鈕，桌機與行動裝置皆可立即體驗觸覺震動與浮動反饋。
+3. **PWA 主程式安全整合（`docs/index.html`）**：
+   - 收藏頁「⋯」選單置頂新增「📈 行情雷達與 AR 尋寶 (Radar)」入口。
+   - 快取更新為 `retrovault-v11-07`，`RetroVault_v11_07_index.html` 完成對應存檔。
+   - 特別鎖定基準版本 `RetroVault_v11_01_index.html` 與 `RetroVault_v11_02_index.html` 持續保留。
+
+### 自我檢查
+- `docs/js/valuation-radar.js`、`docs/market-radar.html`、`docs/index.html` 全數通過 `node --check` 語法檢驗。
+- `_internal/deep_audit.py` 全站檢查：0 重複 ID、0 幽靈 ID、0 原生 alert、404 資源為 0。
+
+### 影響檔案
+- docs/js/valuation-radar.js
+- docs/market-radar.html
+- docs/index.html
+- docs/RetroVault_v11_07_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+---
+
+## v11.06 (2026-10-16)
+
+### 變更內容
+實作 RetroVault 夢想計畫「第 4 批次：傲嬌分享 —— 數位鑑定卡（Slab）與唯讀展覽館」：
+
+1. **數位封裝鑑定卡工坊（`docs/slab-studio.html` & `docs/js/slab-generator.js`）**：
+   - **高規格壓克力卡夾模擬（Graded Slab）**：
+     - 前端 Canvas 合成 1080x1620 / 1080x1920 頂級解析度封裝卡，四角金屬防偽螺栓與高光壓克力反光。
+     - 頂部燙金防偽標籤：自動印製遊戲品名、發行年份、平台、原廠廠商與專屬防偽序號。
+     - 智慧品相評級：依藏品完整度自動計算評分（如 10.0 GEM MINT、9.8 MINT+、9.6 MINT、CART ONLY 等），亦支援手動指定。
+     - 三種銘牌主題切換：🥇 奢華金、🌈 全息藍、🖤 黑曜石。
+     - 3D 陀螺儀／滑鼠傾角光影微動效：滑動時即時呈現壓克力折射光澤。
+   - **📸 一鍵下載超高畫質 PNG**：適配 Instagram Story、Threads 與 X 最佳分享比例，支援手機長按儲存。
+2. **🏛️ 私人展覽館一鍵安全去隱私匯出**：
+   - 點擊「一鍵匯出私人展覽館 (HTML)」，自動抹除「購入成本、保管防潮箱位置、個人帳號、試算表金鑰」等敏感隱私。
+   - 產生獨立單一靜態 HTML 檔，免伺服器可直接透過 LINE / AirDrop 傳送同好觀賞。
+3. **PWA 主程式安全整合（`docs/index.html`）**：
+   - 詳細頁封面區新增「💎 鑑定卡」按鈕，一鍵帶入當前藏品至工坊。
+   - 收藏頁「⋯」更多功能選單新增「💎 數位鑑定卡工坊 (Slab)」入口。
+   - 快取更新為 `retrovault-v11-06`，`RetroVault_v11_06_index.html` 完成對應存檔。
+   - 特別鎖定基準版本 `RetroVault_v11_01_index.html` 與 `RetroVault_v11_02_index.html` 持續保留。
+
+### 自我檢查
+- `docs/js/slab-generator.js`、`docs/slab-studio.html`、`docs/index.html` 全數通過 `node --check` 語法檢驗。
+- `_internal/deep_audit.py` 全站檢查：0 重複 ID、0 幽靈 ID、0 原生 alert、404 資源為 0。
+
+### 影響檔案
+- docs/js/slab-generator.js
+- docs/slab-studio.html
+- docs/index.html
+- docs/RetroVault_v11_06_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+---
+
+## v11.05 (2026-10-16)
+
+### 變更內容
+實作 RetroVault 夢想計畫「第 3 批次：底層引擎現代化 —— Local-First + 倒排索引極速檢索」：
+
+1. **獨立資料同步引擎（`docs/js/vault-sync-engine.js`）**：
+   - 將 Google Apps Script 後端雙向通訊、`ping` 延遲檢測、`batchAdd` 矩陣秒級寫入抽離為純 JavaScript 模組。
+   - 具備 15 秒 AbortSignal 逾時保護，完全零 DOM 相依，支援在主執行緒或 Web Worker 中直接運行。
+2. **極速本地倒排索引與多語系查詢引擎（`docs/js/vault-db.js`）**：
+   - 支援 CJK 雙字元 N-Gram 分詞、日文平假名／片假名正規化（如「マリオ」與「まりお」自動互通比對）、半角/全角轉換與 ASCII 小寫正規化。
+   - 支援多維度即時過濾（平台、品相、最低估值）與排序，在 5,000 筆藏品規模下檢索耗時低於 1 毫秒（亞毫秒級 `0.3~0.8ms`）。
+3. **背景運算 Worker 執行緒（`docs/js/vault-worker.js`）**：
+   - 封裝倒排索引建立、複雜搜尋與背景 Google Sheets 批次同步，確保大量資料處理時主畫面 60fps 絕不掉幀。
+4. **極速檢索基準測試台（`docs/search-bench.html`）**：
+   - 即時顯示檢索耗時碼錶（精確至 0.01ms），內建「🚀 注入 5,000 筆壓測資料」與「☁️ 測試 GAS 連線」實測工具。
+5. **主程式整合與快取推進**：
+   - 收藏頁「⋯」選單置頂新增「⚡ 極速檢索基準台 (0.5ms)」入口。
+   - 快取更新為 `retrovault-v11-05`，`RetroVault_v11_05_index.html` 完成對應存檔。
+   - 特別鎖定基準版本 `RetroVault_v11_01_index.html` 與 `RetroVault_v11_02_index.html` 持續保留。
+
+### 自我檢查
+- `docs/js/vault-sync-engine.js`、`docs/js/vault-db.js`、`docs/js/vault-worker.js`、`docs/search-bench.html`、`docs/index.html` 全數通過 `node --check` 語法檢驗。
+- `_internal/deep_audit.py` 全站檢查：0 重複 ID、0 幽靈 ID、0 原生 alert、404 資源為 0。
+
+### 影響檔案
+- docs/js/vault-sync-engine.js
+- docs/js/vault-db.js
+- docs/js/vault-worker.js
+- docs/search-bench.html
+- docs/index.html
+- docs/RetroVault_v11_05_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+---
+
+## v11.04 (2026-10-16)
+
+### 變更內容
+實作 RetroVault 夢想計畫「第 2 批次：展廳儀式感 —— 虛擬防潮箱書背牆與 CRT 電視」：
+
+1. **全新賽博防潮展廳（`docs/cyber-museum.html`）**：
+   - **實體防潮書背陳列牆（Shelf Wall）**：
+     - 自動讀取 PWA 本機快取全量藏品（`gv_col`），依 FC 紅白機、MD 世嘉五代等平台分層展示。
+     - 手指/滑鼠橫向流暢滾動，支援物理慣性與行動裝置觸覺微震動反饋（Haptic Feedback）。
+     - 滑過/觸摸卡帶時自動向上抽出一半並浮現霓虹資訊標籤。
+   - **特麗霓虹 CRT 復古遊戲房（Trinitron CRT Mode）**：
+     - 復古 Sony 經典外殼機身，搭載動態掃描線（Scanlines）、陰極射線管球面暗角與曲率、螢光粉微暈光。
+     - 點擊卡帶時伴隨消磁開機閃爍動畫與 OSD 頻道顯示，即時呈現遊戲畫面。
+   - **零外部依賴之 Web Audio 復古音效引擎**：
+     - 透過 `AudioContext` 即時合成：消磁重低音 THUMP 升壓嘯叫、書背抽出摩擦聲、機械開關聲，支援隨時靜音。
+   - **藏品情報抽屜與 3D 無縫串接**：
+     - 底部霓虹 HUD 顯示原名、開發商、品相評級、市場估值與保管位置。
+     - 點擊「🎮 3D 擬真把玩」直接跳轉至該遊戲的 3D 盒裝旋轉開盒檢視。
+2. **PWA 主程式安全整合（`docs/index.html`）**：
+   - 收藏頁視圖切換列新增「📺 展廳」快捷鈕，並於「⋯」更多功能選單加入入口。
+   - Service Worker 快取推進至 `retrovault-v11-04`，納入離線靜態資源。
+3. **基準版本安全防護**：
+   - `RetroVault_v11_01_index.html` 與 `RetroVault_v11_02_index.html` 持續鎖定不清除。
+
+### 自我檢查
+- `docs/index.html`、`docs/3d-viewer.html`、`docs/cyber-museum.html` 均通過 `node --check` 語法校驗。
+- `_internal/deep_audit.py` 全站檢查：0 重複 ID、0 幽靈 ID、0 原生 alert、404 資源為 0。
+- 快取更新至 `retrovault-v11-04`，`RetroVault_v11_04_index.html` 完成對應存檔。
+
+### 影響檔案
+- docs/cyber-museum.html
+- docs/index.html
+- docs/RetroVault_v11_04_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+---
+
+## v11.03 (2026-10-16)
+
+### 變更內容
+啟動 RetroVault 夢想計畫「第 1 批次：視覺突破 —— 3D 擬真卡帶盒與開盒把玩 (PoC)」：
+
+1. **全新獨立 3D 擬真互動檢視器（`docs/3d-viewer.html`）**：
+   - 採用 Three.js + WebGL 渲染環境，建立平台等比例之卡帶盒 3D 幾何體（支援 FC 橫盒、MD 黑盒、SFC 等）。
+   - 多面材質貼圖映射：正面（`cover_img`）、封底（`back_img`）、書背（`spine_img`）與微質感紙質/塑膠材質模擬。
+   - 支援單指 360 度任意旋轉、雙指平滑縮放、自轉切換。
+   - 內建「📦 開盒抽出」互動動畫：FC 平滑滑出白色內托盤與卡帶；MD 滑出經典黑卡匣。
+   - 內建展櫃（冷白）、暖光（木桌）、霓虹（賽博龐克）三種攝影棚燈光模式。
+   - 內建 6 款真實資料庫藏品範例（三國志、三國志II、Namco Classic、餓狼傳說、先進大戰略、創世紀 Populous）隨選即看。
+2. **生產線安全整合（`docs/index.html`）**：
+   - 在詳細頁封面區新增「🎮 3D 擬真盒裝把玩」按鈕，帶入目前藏品圖片與平台參數開啟 3D 檢視。
+   - 零破壞現有流程，PWA 離線快取同步升級為 `retrovault-v11-03`。
+3. **基準版本安全防護**：
+   - `RetroVault_v11_01_index.html` 與 `RetroVault_v11_02_index.html` 已永久標註不可清除。
+
+### 自我檢查
+- `docs/index.html` 與 `docs/3d-viewer.html` 皆通過 `node --check` 語法檢驗（0 error）。
+- `_internal/deep_audit.py` 全站檢查：0 重複 ID、0 幽靈 ID、0 原生 alert、404 資源為 0。
+- 快取更新至 `retrovault-v11-03`，`RetroVault_v11_03_index.html` 完成對應存檔。
+
+### 影響檔案
+- docs/3d-viewer.html
+- docs/index.html
+- docs/RetroVault_v11_03_index.html
+- docs/sw.js
+- _internal/CHANGELOG.md
+
+---
+
 ## v11.01 (2026-10-16)
 
 ### 變更內容

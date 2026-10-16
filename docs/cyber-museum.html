@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>賽博防潮箱 · 復古遊戲展廳 · RetroVault</title>
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&family=Press+Start+2P&display=swap');
+
+:root {
+  --bg: #070a14;
+  --bg2: #0c1020;
+  --panel: rgba(14, 20, 36, 0.82);
+  --border: rgba(42, 58, 90, 0.65);
+  --border-glow: rgba(0, 229, 255, 0.35);
+  --cyan: #00e5ff;
+  --mint: #69f0ae;
+  --purple: #ce93d8;
+  --amber: #ffb74d;
+  --red: #ff5252;
+  --txt: #e8eaf6;
+  --txt2: #9fa8c8;
+  --txt3: #5a6788;
+  --shelf-wood: #181c2b;
+  --shelf-edge: #232a40;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--txt);
+  user-select: none;
+}
+
+/* 主背景星空與霓虹環境光 */
+body {
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 85% 35%, rgba(206, 147, 216, 0.07) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(105, 240, 174, 0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #05070f 0%, #0a0e1c 100%);
+}
+
+#app-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%; height: 100%;
+  position: relative;
+}
+
+/* 頂部導航列 */
+header {
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10, 14, 26, 0.88);
+  backdrop-filter: blur(14px);
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand .logo-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0, 229, 255, 0.12);
+  border: 1px solid var(--border-glow);
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+.brand .title {
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+
+.view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 22, 40, 0.85);
+  padding: 3px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.vtab {
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: transparent;
+  border: none;
+  color: var(--txt2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vtab:hover { color: var(--txt); }
+.vtab.active {
+  background: var(--cyan);
+  color: #060913;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.45);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-round {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(15, 22, 40, 0.85);
+  border: 1px solid var(--border);
+  color: var(--txt2);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-round:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  transform: scale(1.05);
+}
+
+/* 主展示工作區 */
+main {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+}
+
+/* ════════ 模式 A：防潮書背陳列牆 (Shelf Wall) ════════ */
+#shelf-view {
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px 20px 40px;
+  gap: 28px;
+}
+
+.shelf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shelf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+}
+.shelf-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.shelf-title .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+}
+.shelf-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--txt3);
+}
+
+/* 木質陳列層架 */
+.shelf-bay {
+  position: relative;
+  background: linear-gradient(180deg, rgba(14, 18, 32, 0.4) 0%, rgba(10, 14, 26, 0.9) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 12px 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) inset;
+}
+
+/* 橫向滾動卡帶書背軌道 */
+.spine-track {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 14px 10px 10px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+.spine-track::-webkit-scrollbar { height: 6px; }
+.spine-track::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* 單一實體書背卡帶 */
+.spine-item {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28), filter 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.45);
+  border-radius: 2px 2px 0 0;
+  overflow: visible;
+  background: #11141e;
+}
+
+/* FC 紅白機橫向紙盒書背規格 (寬度約 24~28px，高度約 135px) */
+.spine-item.fc {
+  width: 28px;
+  height: 145px;
+  border-left: 1px solid rgba(255,255,255,0.08);
+  border-right: 1px solid rgba(0,0,0,0.4);
+}
+/* MD 世嘉黑色塑膠盒規格 (寬度約 30px，高度約 170px) */
+.spine-item.md {
+  width: 30px;
+  height: 175px;
+  border-left: 1px solid rgba(255,255,255,0.12);
+  border-right: 1px solid rgba(0,0,0,0.6);
+  border-radius: 3px 3px 0 0;
+}
+
+.spine-item img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+/* 缺書背時的精美模擬書背 */
+.spine-fallback {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 8px 0;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.spine-item.fc .spine-fallback {
+  background: linear-gradient(180deg, #b71c1c 0%, #7f0000 100%);
+  border-top: 2px solid #ff5252;
+}
+.spine-item.md .spine-fallback {
+  background: linear-gradient(180deg, #1f2733 0%, #0d1117 100%);
+  border-top: 2px solid var(--cyan);
+}
+
+/* 滑過抽出一半微動效 */
+.spine-item:hover, .spine-item.active {
+  transform: translateY(-28px) scale(1.04);
+  box-shadow: 0 14px 28px rgba(0, 229, 255, 0.35);
+  z-index: 20;
+}
+.spine-item.active {
+  outline: 2px solid var(--cyan);
+}
+
+/* 浮動標籤提示 */
+.spine-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 14, 26, 0.95);
+  border: 1px solid var(--cyan);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 30;
+}
+.spine-item:hover .spine-tooltip, .spine-item.active .spine-tooltip {
+  opacity: 1;
+}
+
+/* 實體層架木紋底座板 */
+.shelf-plank {
+  height: 12px;
+  background: linear-gradient(180deg, #2a334d 0%, #161c2b 60%, #0f131f 100%);
+  border-top: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+  border-radius: 0 0 10px 10px;
+}
+
+/* ════════ 模式 B：特麗霓虹 CRT 復古遊戲房 ════════ */
+#crt-view {
+  width: 100%; height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+/* 經典特麗霓虹電視機外殼 (Sony Trinitron Style) */
+.crt-chassis {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(135deg, #1c2233 0%, #101420 50%, #0a0d17 100%);
+  border: 10px solid #252d42;
+  border-radius: 36px;
+  box-shadow: 
+    0 20px 60px rgba(0,0,0,0.85),
+    0 0 0 2px rgba(255,255,255,0.08) inset,
+    0 0 35px rgba(0, 229, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* 電視頂部經典銘牌 */
+.crt-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px 10px;
+}
+.crt-brand-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #7986cb;
+  letter-spacing: 2px;
+}
+.crt-led {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--txt3);
+}
+.led-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ff5252;
+  box-shadow: 0 0 6px #ff5252;
+}
+.led-dot.power-on {
+  background: #69f0ae;
+  box-shadow: 0 0 8px #69f0ae;
+}
+
+/* CRT 弧形球面螢幕容器 */
+.crt-screen-bezel {
+  flex: 1;
+  background: #000;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 0 20px rgba(0,0,0,0.9) inset,
+    0 0 0 3px #181f2e;
+}
+
+/* CRT 畫面內容本體 */
+.crt-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #020408;
+  overflow: hidden;
+}
+
+/* 掃描線濾鏡 (Scanlines) */
+.crt-screen::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%);
+  background-size: 100% 4px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* 陰極射線球面暗角與反光 (Vignette & Curvature) */
+.crt-screen::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.65) 100%);
+  box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.75);
+  z-index: 11;
+  pointer-events: none;
+}
+
+/* 開機消磁閃爍效果 (Degauss flash) */
+.crt-screen.degauss-anim {
+  animation: degauss 0.6s ease-out;
+}
+@keyframes degauss {
+  0% { filter: brightness(4) contrast(2) blur(4px); transform: scale(1.05); }
+  40% { filter: brightness(1.5) contrast(1.4) blur(1px); transform: scale(0.98); }
+  100% { filter: brightness(1) contrast(1) blur(0); transform: scale(1); }
+}
+
+/* 螢幕內的遊戲展示畫面 */
+.crt-game-display {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.crt-game-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: blur(20px) brightness(0.35);
+  opacity: 0.6;
+}
+
+.crt-game-fg {
+  position: relative;
+  max-width: 55%;
+  max-height: 72%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.85);
+  z-index: 2;
+  filter: contrast(1.1) saturate(1.15);
+}
+
+/* 螢幕頂部復古 OSD 顯示 (On-Screen Display) */
+.crt-osd {
+  position: absolute;
+  top: 14px; left: 18px; right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--mint);
+  text-shadow: 0 0 6px var(--mint);
+  z-index: 15;
+}
+
+/* 螢幕下方經典遊戲資訊條 */
+.crt-info-bar {
+  position: absolute;
+  bottom: 12px; left: 16px; right: 16px;
+  background: rgba(6, 9, 18, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-radius: 8px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 15;
+  backdrop-filter: blur(8px);
+}
+.crt-info-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+.crt-info-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--cyan);
+}
+
+/* 底部右下資訊與操作抽屜 (HUD Drawer) */
+#hud-drawer {
+  position: absolute;
+  right: 20px; bottom: 20px;
+  width: 320px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+  z-index: 45;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+#hud-drawer.collapsed {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hud-title {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hud-sub {
+  font-size: 11px;
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 10px;
+}
+.hud-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.hud-cell {
+  background: rgba(10, 14, 26, 0.6);
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(42, 58, 90, 0.4);
+}
+.hud-label {
+  font-size: 10px;
+  color: var(--txt3);
+}
+.hud-val {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--txt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hud-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-3d-launch {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(121, 134, 203, 0.25) 100%);
+  border: 1px solid var(--cyan);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-3d-launch:hover {
+  background: var(--cyan);
+  color: #060913;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.5);
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+</head>
+<body>
+
+<div id="app-wrap">
+  <header>
+    <div class="brand">
+      <a href="./index.html" style="text-decoration:none">
+        <span class="logo-badge">RETRO</span>
+      </a>
+      <span class="title">賽博防潮展廳</span>
+    </div>
+
+    <!-- 視圖切換器 -->
+    <div class="view-tabs">
+      <button class="vtab active" id="tab-shelf" onclick="switchView('shelf')">
+        <span>📚</span>
+        <span>防潮書背牆</span>
+      </button>
+      <button class="vtab" id="tab-crt" onclick="switchView('crt')">
+        <span>📺</span>
+        <span>特麗霓虹 CRT</span>
+      </button>
+    </div>
+
+    <div class="actions">
+      <button class="btn-round" id="btn-audio" onclick="toggleAudio()" title="音效切換">🔊</button>
+      <button class="btn-round" onclick="toggleFullscreen()" title="全螢幕">⛶</button>
+      <a href="./index.html" class="btn-round" title="返回主頁" style="text-decoration:none">✕</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- ════ 模式 A：防潮書背陳列牆 ════ -->
+    <div id="shelf-view">
+      <!-- FC 層 -->
+      <section class="shelf-section" id="sec-fc">
+        <div class="shelf-header">
+          <div class="shelf-title">
+            <span class="dot" style="background:#ff5252;box-shadow:0 0 8px #ff5252"></span>
+            <span>FAMICOM 紅白機</span>
+          </div>
+          <span class="shelf-count" id="count-fc">0 件</span>
+        </div>
+        <div class="shelf-bay">
+          <div class="spine-track" id="track-fc"></div>
+          <div class="shelf-plank"></div>
+        </div>
+      </section>
+
+      <!-- MD 層 -->
+      <section class="shelf-section" id="sec-md">
+        <div class="shelf-header">
+          <div class="shelf-title">
+            <span class="dot" style="background:var(--cyan);box-shadow:0 0 8px var(--cyan)"></span>
+            <span>MEGA DRIVE 世嘉五代</span>
+          </div>
+          <span class="shelf-count" id="count-md">0 件</span>
+        </div>
+        <div class="shelf-bay">
+          <div class="spine-track" id="track-md"></div>
+          <div class="shelf-plank"></div>
+        </div>
+      </section>
+
+      <!-- 其他收藏層 -->
+      <section class="shelf-section" id="sec-other">
+        <div class="shelf-header">
+          <div class="shelf-title">
+            <span class="dot" style="background:var(--mint);box-shadow:0 0 8px var(--mint)"></span>
+            <span>其他經典收藏</span>
+          </div>
+          <span class="shelf-count" id="count-other">0 件</span>
+        </div>
+        <div class="shelf-bay">
+          <div class="spine-track" id="track-other"></div>
+          <div class="shelf-plank"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ════ 模式 B：特麗霓虹 CRT 復古遊戲房 ════ -->
+    <div id="crt-view">
+      <div class="crt-chassis">
+        <div class="crt-badge-row">
+          <span class="crt-brand-text">SONY Trinitron</span>
+          <div class="crt-led">
+            <span>POWER</span>
+            <span class="led-dot power-on" id="crt-led-dot"></span>
+          </div>
+        </div>
+
+        <div class="crt-screen-bezel">
+          <div class="crt-screen degauss-anim" id="crt-screen-elem">
+            <div class="crt-osd">
+              <span id="crt-osd-channel">CH 03 · VIDEO</span>
+              <span id="crt-osd-stereo">STEREO 60Hz</span>
+            </div>
+
+            <div class="crt-game-display">
+              <img class="crt-game-bg" id="crt-bg-img" src="" alt="">
+              <img class="crt-game-fg" id="crt-fg-img" src="" alt="">
+            </div>
+
+            <div class="crt-info-bar">
+              <div class="crt-info-title" id="crt-title">請選擇一款遊戲</div>
+              <div class="crt-info-meta" id="crt-meta">RetroVault Cyber Museum</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 懸浮選中藏品詳細情報面板 -->
+    <div id="hud-drawer" class="collapsed">
+      <div class="hud-title" id="hud-title">遊戲名稱</div>
+      <div class="hud-sub" id="hud-sub">FAMICOM · KOEI · 1988</div>
+      <div class="hud-grid">
+        <div class="hud-cell">
+          <div class="hud-label">品相完整度</div>
+          <div class="hud-val" id="hud-comp">盒裝完整</div>
+        </div>
+        <div class="hud-cell">
+          <div class="hud-label">市場估值</div>
+          <div class="hud-val" id="hud-val">NT$ 1,200</div>
+        </div>
+        <div class="hud-cell">
+          <div class="hud-label">條碼 / 編號</div>
+          <div class="hud-val" id="hud-code">4988615...</div>
+        </div>
+        <div class="hud-cell">
+          <div class="hud-label">保管位置</div>
+          <div class="hud-val" id="hud-pos">防潮箱 A1</div>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <a id="hud-3d-btn" href="#" target="_blank" class="btn-3d-launch">
+          <span>🎮 3D 擬真把玩</span>
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ════════ 內建高品質備用展示清單（當本機尚未快取時無縫展現） ════════
+var DEMO_COLLECTION = [
+  // FC
+  {
+    platform: 'FC',
+    primary_name: '三国志',
+    release_date: '1988',
+    developer: 'KOEI',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/ab003ef9-e5c0-4eea-940c-d8c9735d5452.jpg',
+    spine_img: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba86e8812c3f.jpg',
+    completeness: '盒裝完整',
+    market_value: '1800',
+    barcode: '4988615000577',
+    storage_location: '防潮箱 A1'
+  },
+  {
+    platform: 'FC',
+    primary_name: '三国志II 覇王の大陸',
+    release_date: '1992',
+    developer: 'NAMCO',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/f56b562d-b5ff-4bc7-917d-e46114e9bda5.jpg',
+    spine_img: 'https://images.launchbox-app.com/5a038bcb-63c3-44f0-ab57-7d7b69c7379f.jpg',
+    completeness: '美品',
+    market_value: '2200',
+    barcode: '4907892000569',
+    storage_location: '防潮箱 A1'
+  },
+  {
+    platform: 'FC',
+    primary_name: 'ナムクラシック (Namco Classic)',
+    release_date: '1988',
+    developer: 'NAMCO',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Namco%20Classic%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/045b85dd-e230-4809-80de-914fb0f98e7d.jpg',
+    spine_img: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d8329b35a399.jpg',
+    completeness: '良好',
+    market_value: '650',
+    barcode: '4907892000354',
+    storage_location: '防潮箱 A2'
+  },
+  {
+    platform: 'FC',
+    primary_name: 'スーパーマリオブラザーズ3',
+    release_date: '1988',
+    developer: 'Nintendo',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Super%20Mario%20Bros.%203%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/045b85dd-e230-4809-80de-914fb0f98e7d.jpg',
+    spine_img: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d8329b35a399.jpg',
+    completeness: '盒書齊全',
+    market_value: '1500',
+    barcode: '4902370832044',
+    storage_location: '防潮箱 A1'
+  },
+  {
+    platform: 'FC',
+    primary_name: '熱血高校ドッジボール部',
+    release_date: '1988',
+    developer: 'Technos Japan',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Nekketsu%20Koukou%20Dodgeball-bu%20(Japan).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '裸卡',
+    market_value: '800',
+    barcode: '',
+    storage_location: '防潮箱 A2'
+  },
+
+  // MD
+  {
+    platform: 'MD',
+    primary_name: '餓狼伝説 (THE BATTLE OF DESTINY)',
+    release_date: '1992',
+    developer: 'SNK / Takara',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/0e22f16d-cf0f-46d4-963f-3543666270b2.jpg',
+    spine_img: 'https://images.launchbox-app.com/f3598c0e-5181-4950-bcb3-f495535dfd97.jpg',
+    completeness: '盒裝完整',
+    market_value: '1600',
+    barcode: '4904880132331',
+    storage_location: '防潮箱 B1'
+  },
+  {
+    platform: 'MD',
+    primary_name: 'アドバンスド大戦略 ～ドイツ電撃作戦～',
+    release_date: '1991',
+    developer: 'SEGA',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Advanced%20Daisenryaku%20-%20Doitsu%20Dengeki%20Sakusen%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/1ba5ca41-245a-41cf-b706-a89c894236a9.jpg',
+    spine_img: 'https://images.launchbox-app.com/d906551d-4af5-402b-9cc8-3d17d3d75a61.jpg',
+    completeness: '美品',
+    market_value: '1900',
+    barcode: '4974365540135',
+    storage_location: '防潮箱 B1'
+  },
+  {
+    platform: 'MD',
+    primary_name: 'ポピュラス (Populous)',
+    release_date: '1991',
+    developer: 'Electronic Arts',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Populous%20(Japan).png',
+    back_img: 'https://images.launchbox-app.com/135f9c65-c4ca-40ce-8977-1c78bbfca99e.jpg',
+    spine_img: 'https://images.launchbox-app.com/fa910a05-4094-44e2-a51f-a90a07153641.jpg',
+    completeness: '普通',
+    market_value: '750',
+    barcode: '4988602559074',
+    storage_location: '防潮箱 B2'
+  },
+  {
+    platform: 'MD',
+    primary_name: 'ソニック・ザ・ヘッジホッグ (Sonic The Hedgehog)',
+    release_date: '1991',
+    developer: 'Sonic Team / SEGA',
+    cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Sonic%20the%20Hedgehog%20(Japan)%20(En).png',
+    back_img: '',
+    spine_img: '',
+    completeness: '盒裝完整',
+    market_value: '2400',
+    barcode: '4974365540081',
+    storage_location: '防潮箱 B1'
+  }
+];
+
+// ════════ 零外部依賴的 Web Audio 復古音效引擎 ════════
+var audioCtx = null;
+var isAudioEnabled = true;
+
+function initAudio() {
+  if (!audioCtx) {
+    var AudioClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioClass) audioCtx = new AudioClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+// 經典 CRT 消磁開機音效 (THUMP + 升壓嘯叫)
+function playDegaussSound() {
+  if (!isAudioEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+
+  var now = audioCtx.currentTime;
+  // 低頻 Thump 重擊震動
+  var osc = audioCtx.createOscillator();
+  var gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(80, now);
+  osc.frequency.exponentialRampToValueAtTime(30, now + 0.45);
+
+  gain.gain.setValueAtTime(0.7, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.5);
+
+  // 高頻電容升壓
+  var oscHigh = audioCtx.createOscillator();
+  var gainHigh = audioCtx.createGain();
+  oscHigh.type = 'sine';
+  oscHigh.frequency.setValueAtTime(14000, now + 0.1);
+  oscHigh.frequency.exponentialRampToValueAtTime(8000, now + 0.6);
+
+  gainHigh.gain.setValueAtTime(0.05, now + 0.1);
+  gainHigh.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+
+  oscHigh.connect(gainHigh);
+  gainHigh.connect(audioCtx.destination);
+  oscHigh.start(now + 0.1);
+  oscHigh.stop(now + 0.6);
+}
+
+// 抽出卡帶書背摩擦聲 (Click + Friction)
+function playSpineSlideSound() {
+  if (!isAudioEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+
+  var now = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(650, now);
+  osc.frequency.exponentialRampToValueAtTime(250, now + 0.09);
+
+  gain.gain.setValueAtTime(0.25, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.09);
+
+  // 觸覺震動 (行動裝置支援時)
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+
+// 機械開關音
+function playClickSound() {
+  if (!isAudioEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+
+  var now = audioCtx.currentTime;
+  var osc = audioCtx.createOscillator();
+  var gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(1100, now);
+  osc.frequency.setValueAtTime(800, now + 0.02);
+
+  gain.gain.setValueAtTime(0.12, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 0.05);
+}
+
+function toggleAudio() {
+  isAudioEnabled = !isAudioEnabled;
+  var btn = document.getElementById('btn-audio');
+  btn.textContent = isAudioEnabled ? '🔊' : '🔇';
+  if (isAudioEnabled) playClickSound();
+}
+
+// ════════ 資料載入與分類整理 ════════
+var allItems = [];
+var selectedItem = null;
+
+function imgUrl(v, sz) {
+  if (!v || typeof v !== 'string') return '';
+  if (v.indexOf('data:') === 0 || v.indexOf('http') === 0) return v;
+  return 'https://drive.google.com/thumbnail?id=' + v + '&sz=w' + (sz || 600);
+}
+
+function loadAllData() {
+  localforage.getItem('gv_col').then(function(cached) {
+    if (cached && Array.isArray(cached) && cached.length) {
+      allItems = cached.map(function(it) {
+        var d = it.data || it;
+        return {
+          platform: (d.platform || 'FC').toUpperCase(),
+          primary_name: d.primary_name || d.zh_name || d.jp_name || d.en_name || '未命名',
+          release_date: d.release_date || '',
+          developer: d.developer || d.publisher || '',
+          cover_img: imgUrl(d.cover_img, 800),
+          back_img: imgUrl(d.back_img, 800),
+          spine_img: imgUrl(d.spine_img, 400),
+          completeness: d.completeness || '',
+          market_value: d.market_value || '0',
+          barcode: d.barcode || d.code || '',
+          storage_location: d.storage_location || '預設位置'
+        };
+      });
+      console.log('[CyberMuseum] 成功載入本機快取藏品共 ' + allItems.length + ' 件');
+    } else {
+      allItems = DEMO_COLLECTION;
+      console.log('[CyberMuseum] 無本機快取，載入精選示範藏品 ' + allItems.length + ' 件');
+    }
+    renderShelves();
+  }).catch(function(e) {
+    allItems = DEMO_COLLECTION;
+    renderShelves();
+  });
+}
+
+// 渲染防潮書背層架
+function renderShelves() {
+  var fcItems = allItems.filter(function(it) { return it.platform.indexOf('FC') >= 0 || it.platform.indexOf('NES') >= 0; });
+  var mdItems = allItems.filter(function(it) { return it.platform.indexOf('MD') >= 0 || it.platform.indexOf('GENESIS') >= 0 || it.platform.indexOf('SEGA') >= 0; });
+  var otherItems = allItems.filter(function(it) {
+    return fcItems.indexOf(it) < 0 && mdItems.indexOf(it) < 0;
+  });
+
+  document.getElementById('count-fc').textContent = fcItems.length + ' 件';
+  document.getElementById('count-md').textContent = mdItems.length + ' 件';
+  document.getElementById('count-other').textContent = otherItems.length + ' 件';
+
+  renderTrack('track-fc', fcItems, 'fc');
+  renderTrack('track-md', mdItems, 'md');
+  renderTrack('track-other', otherItems, 'md');
+
+  // 預設選中第一款
+  if (fcItems.length) {
+    selectGame(fcItems[0], false);
+  } else if (allItems.length) {
+    selectGame(allItems[0], false);
+  }
+}
+
+function renderTrack(elemId, items, platClass) {
+  var track = document.getElementById(elemId);
+  if (!items.length) {
+    track.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:20px 0;">此層尚無收藏紀錄</div>';
+    return;
+  }
+
+  track.innerHTML = items.map(function(it, idx) {
+    var hasSpine = Boolean(it.spine_img);
+    var contentHtml = hasSpine
+      ? '<img src="' + it.spine_img + '" alt="' + esc(it.primary_name) + '">'
+      : '<div class="spine-fallback">' + esc(it.primary_name) + '</div>';
+
+    return '<div class="spine-item ' + platClass + '" data-idx="' + idx + '" onclick="onSpineClick(this, \'' + elemId + '\')">' +
+      '<div class="spine-tooltip">' + esc(it.primary_name) + '</div>' +
+      contentHtml +
+    '</div>';
+  }).join('');
+}
+
+function onSpineClick(elem, trackId) {
+  playSpineSlideSound();
+  document.querySelectorAll('.spine-item').forEach(function(el) { el.classList.remove('active'); });
+  elem.classList.add('active');
+
+  var idx = parseInt(elem.getAttribute('data-idx'), 10);
+  var list = (trackId === 'track-fc')
+    ? allItems.filter(function(it) { return it.platform.indexOf('FC') >= 0 || it.platform.indexOf('NES') >= 0; })
+    : (trackId === 'track-md'
+      ? allItems.filter(function(it) { return it.platform.indexOf('MD') >= 0 || it.platform.indexOf('GENESIS') >= 0; })
+      : allItems);
+
+  var game = list[idx] || allItems[0];
+  selectGame(game, true);
+}
+
+function selectGame(game, triggerAnim) {
+  selectedItem = game;
+
+  // 更新 HUD 抽屜
+  var hud = document.getElementById('hud-drawer');
+  hud.classList.remove('collapsed');
+  document.getElementById('hud-title').textContent = game.primary_name;
+  document.getElementById('hud-sub').textContent = game.platform + (game.developer ? ' · ' + game.developer : '') + (game.release_date ? ' · ' + game.release_date : '');
+  document.getElementById('hud-comp').textContent = game.completeness || '未評級';
+  document.getElementById('hud-val').textContent = game.market_value && game.market_value !== '0' ? ('NT$ ' + Number(game.market_value).toLocaleString('en-US')) : '未估值';
+  document.getElementById('hud-code').textContent = game.barcode || '無條碼';
+  document.getElementById('hud-pos').textContent = game.storage_location || '未填位置';
+
+  // 3D 把玩連結更新
+  var btn3d = document.getElementById('hud-3d-btn');
+  var p3dUrl = './3d-viewer.html?name=' + encodeURIComponent(game.primary_name) +
+    '&platform=' + encodeURIComponent(game.platform) +
+    '&cover=' + encodeURIComponent(game.cover_img) +
+    (game.back_img ? '&back=' + encodeURIComponent(game.back_img) : '') +
+    (game.spine_img ? '&spine=' + encodeURIComponent(game.spine_img) : '');
+  btn3d.href = p3dUrl;
+
+  // 更新 CRT 螢幕顯示
+  updateCrtDisplay(game, triggerAnim);
+}
+
+function updateCrtDisplay(game, triggerDegauss) {
+  var scr = document.getElementById('crt-screen-elem');
+  var bgImg = document.getElementById('crt-bg-img');
+  var fgImg = document.getElementById('crt-fg-img');
+
+  if (triggerDegauss) {
+    scr.classList.remove('degauss-anim');
+    void scr.offsetWidth; // 強制重繪以重啟動畫
+    scr.classList.add('degauss-anim');
+    playDegaussSound();
+  }
+
+  var displayImg = game.cover_img || game.spine_img || './bg.webp';
+  bgImg.src = displayImg;
+  fgImg.src = displayImg;
+
+  document.getElementById('crt-title').textContent = game.primary_name;
+  document.getElementById('crt-meta').textContent = game.platform + ' · ' + (game.developer || 'RetroVault');
+  document.getElementById('crt-osd-channel').textContent = 'CH ' + (game.platform.slice(0, 3)) + ' · 60FPS';
+}
+
+// ════════ 視圖切換 ════════
+function switchView(mode) {
+  playClickSound();
+  var shelf = document.getElementById('shelf-view');
+  var crt = document.getElementById('crt-view');
+  var tabShelf = document.getElementById('tab-shelf');
+  var tabCrt = document.getElementById('tab-crt');
+
+  if (mode === 'shelf') {
+    shelf.style.display = 'flex';
+    crt.style.display = 'none';
+    tabShelf.classList.add('active');
+    tabCrt.classList.remove('active');
+  } else {
+    shelf.style.display = 'none';
+    crt.style.display = 'flex';
+    tabShelf.classList.remove('active');
+    tabCrt.classList.add('active');
+    if (selectedItem) {
+      updateCrtDisplay(selectedItem, true);
+    }
+  }
+}
+
+function toggleFullscreen() {
+  playClickSound();
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(function(){});
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+  }
+}
+
+function esc(s) {
+  return (s == null ? '' : String(s)).replace(/[&<>"']/g, function(c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  loadAllData();
+});
+</script>
+</body>
+</html>

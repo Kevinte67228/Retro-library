@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>3D 擬真卡帶盒 · RetroVault</title>
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+
+:root {
+  --bg: #060913;
+  --panel: rgba(15, 21, 37, 0.78);
+  --border: rgba(42, 58, 90, 0.65);
+  --cyan: #00e5ff;
+  --mint: #69f0ae;
+  --purple: #ce93d8;
+  --txt: #e8eaf6;
+  --txt2: #9fa8c8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--txt);
+  user-select: none;
+}
+
+#canvas-container {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  touch-action: none;
+  background: radial-gradient(circle at 50% 38%, rgba(20, 30, 60, 0.5) 0%, rgba(6, 9, 19, 0.95) 75%);
+}
+
+/* 頂部導航列 */
+.top-bar {
+  position: absolute;
+  top: 16px; left: 16px; right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.top-bar > * { pointer-events: auto; }
+
+.btn-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--txt);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.btn-nav:hover, .btn-nav:active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  transform: translateY(-1px);
+}
+
+.title-pill {
+  padding: 8px 18px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  text-align: center;
+  max-width: 50vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.title-pill .sub {
+  font-size: 10.5px;
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 1.5px;
+}
+.title-pill .main {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 底部操作面板 */
+.bottom-dock {
+  position: absolute;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.55);
+  z-index: 50;
+  max-width: 92vw;
+  overflow-x: auto;
+}
+
+.dock-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 56px;
+  height: 48px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: transparent;
+  border: none;
+  color: var(--txt2);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dock-btn .icon { font-size: 17px; }
+.dock-btn:hover { color: var(--txt); background: rgba(255,255,255,0.06); }
+.dock-btn.active {
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.12);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25) inset;
+}
+
+.dock-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+  margin: 0 2px;
+}
+
+/* 遊戲選擇清單選單 */
+.game-selector {
+  background: rgba(10, 14, 26, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--txt);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  max-width: 160px;
+}
+
+/* 手勢引導提示 */
+.gesture-hint {
+  position: absolute;
+  top: 76px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: rgba(159, 168, 200, 0.85);
+  background: rgba(15, 21, 37, 0.65);
+  padding: 4px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(42, 58, 90, 0.4);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+  animation: fadeInOut 4s forwards;
+  z-index: 40;
+}
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -6px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  75% { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
+
+/* 讀取指示器 */
+#loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 19, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 99;
+  transition: opacity 0.4s ease;
+}
+#loading-overlay.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.spinner {
+  width: 44px; height: 44px;
+  border: 3px solid rgba(0, 229, 255, 0.2);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 平台角標 */
+.plat-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  margin-right: 4px;
+}
+.plat-badge.fc { background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid rgba(255, 82, 82, 0.4); }
+.plat-badge.md { background: rgba(0, 229, 255, 0.2); color: var(--cyan); border: 1px solid rgba(0, 229, 255, 0.4); }
+</style>
+
+<!-- Three.js + OrbitControls + LocalForage -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+</head>
+<body>
+
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--cyan);letter-spacing:1px">正在生成 3D 擬真卡帶盒...</div>
+</div>
+
+<div class="top-bar">
+  <a href="./index.html" class="btn-nav">
+    <span>← 返回 RetroVault</span>
+  </a>
+
+  <div class="title-pill">
+    <div class="sub" id="pill-plat">FAMICOM / FC</div>
+    <div class="main" id="pill-title">載入中...</div>
+  </div>
+
+  <select class="game-selector" id="sample-select" onchange="onSelectSample(this.value)">
+    <optgroup label="── 精選 3D 實體範例 ──">
+      <option value="0">FC · 三國志</option>
+      <option value="1">FC · 三國志II 霸王之大陸</option>
+      <option value="2">FC · 南夢宮經典 Namco Classic</option>
+      <option value="3">MD · 餓狼傳說</option>
+      <option value="4">MD · 先進大戰略 (德軍電擊作戰)</option>
+      <option value="5">MD · 創世紀 Populous</option>
+    </optgroup>
+  </select>
+</div>
+
+<div class="gesture-hint">👆 單指拖曳 360° 旋轉 · 雙指縮放 · 點擊開盒</div>
+
+<div id="canvas-container"></div>
+
+<!-- 底部多功能操控列 -->
+<div class="bottom-dock">
+  <button class="dock-btn" id="btn-unbox" onclick="toggleUnbox()" type="button">
+    <span class="icon">📦</span>
+    <span id="txt-unbox">開盒</span>
+  </button>
+  
+  <button class="dock-btn active" id="btn-autorotate" onclick="toggleAutoRotate()" type="button">
+    <span class="icon">🔄</span>
+    <span>自轉</span>
+  </button>
+
+  <div class="dock-divider"></div>
+
+  <button class="dock-btn" id="btn-front" onclick="resetView('front')" type="button">
+    <span class="icon">🖼️</span>
+    <span>正面</span>
+  </button>
+  <button class="dock-btn" id="btn-spine" onclick="resetView('spine')" type="button">
+    <span class="icon">📑</span>
+    <span>書背</span>
+  </button>
+  <button class="dock-btn" id="btn-back" onclick="resetView('back')" type="button">
+    <span class="icon">📋</span>
+    <span>封底</span>
+  </button>
+
+  <div class="dock-divider"></div>
+
+  <button class="dock-btn" id="btn-lighting" onclick="cycleLighting()" type="button">
+    <span class="icon">💡</span>
+    <span id="txt-light">展櫃</span>
+  </button>
+  
+  <button class="dock-btn" onclick="toggleFullscreen()" type="button">
+    <span class="icon">⛶</span>
+    <span>全螢幕</span>
+  </button>
+</div>
+
+<script>
+// ══ 精選展示資料集（取自資料庫真實 CDN 圖片）══
+var SAMPLE_GAMES = [
+  {
+    platform: 'FC',
+    name: '三国志',
+    sub: 'FAMICOM / KOEI',
+    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20(Japan).png',
+    back:  'https://images.launchbox-app.com/ab003ef9-e5c0-4eea-940c-d8c9735d5452.jpg',
+    spine: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba86e8812c3f.jpg',
+    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20(Japan).png',
+    cartColor: '#8a2323' // 紅白機光榮深紅卡帶
+  },
+  {
+    platform: 'FC',
+    name: '三国志II 覇王の大陸',
+    sub: 'FAMICOM / NAMCO',
+    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
+    back:  'https://images.launchbox-app.com/f56b562d-b5ff-4bc7-917d-e46114e9bda5.jpg',
+    spine: 'https://images.launchbox-app.com/5a038bcb-63c3-44f0-ab57-7d7b69c7379f.jpg',
+    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
+    cartColor: '#1c2833' // 南夢宮黑卡帶
+  },
+  {
+    platform: 'FC',
+    name: 'ナムクラシック (Namco Classic)',
+    sub: 'FAMICOM / NAMCO',
+    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Namco%20Classic%20(Japan).png',
+    back:  'https://images.launchbox-app.com/045b85dd-e230-4809-80de-914fb0f98e7d.jpg',
+    spine: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d8329b35a399.jpg',
+    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Namco%20Classic%20(Japan).png',
+    cartColor: '#273746'
+  },
+  {
+    platform: 'MD',
+    name: '餓狼伝説 (THE BATTLE OF DESTINY)',
+    sub: 'MEGA DRIVE / SNK',
+    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    back:  'https://images.launchbox-app.com/0e22f16d-cf0f-46d4-963f-3543666270b2.jpg',
+    spine: 'https://images.launchbox-app.com/f3598c0e-5181-4950-bcb3-f495535dfd97.jpg',
+    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
+    cartColor: '#111317' // MD 經典黑卡
+  },
+  {
+    platform: 'MD',
+    name: 'アドバンスド大戦略 ～ドイツ電撃作戰～',
+    sub: 'MEGA DRIVE / SEGA',
+    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Advanced%20Daisenryaku%20-%20Doitsu%20Dengeki%20Sakusen%20(Japan).png',
+    back:  'https://images.launchbox-app.com/1ba5ca41-245a-41cf-b706-a89c894236a9.jpg',
+    spine: 'https://images.launchbox-app.com/d906551d-4af5-402b-9cc8-3d17d3d75a61.jpg',
+    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Advanced%20Daisenryaku%20-%20Doitsu%20Dengeki%20Sakusen%20(Japan).png',
+    cartColor: '#17202a'
+  },
+  {
+    platform: 'MD',
+    name: 'ポピュラス (Populous)',
+    sub: 'MEGA DRIVE / EA',
+    cover: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Populous%20(Japan).png',
+    back:  'https://images.launchbox-app.com/135f9c65-c4ca-40ce-8977-1c78bbfca99e.jpg',
+    spine: 'https://images.launchbox-app.com/fa910a05-4094-44e2-a51f-a90a07153641.jpg',
+    cartLabel: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/Named_Boxarts/Populous%20(Japan).png',
+    cartColor: '#10141a'
+  }
+];
+
+// ══ 實體比例參數 ══
+var BOX_DIMENSIONS = {
+  FC: { w: 3.5, h: 2.35, d: 0.58, radius: 0.03, paper: true },   // 紅白機橫式紙盒
+  MD: { w: 2.8, h: 3.9,  d: 0.62, radius: 0.05, paper: false },  // MD 黑色塑膠外盒
+  SFC: { w: 2.5, h: 4.4, d: 0.68, radius: 0.03, paper: true }   // 超任直立紙盒
+};
+
+// ══ Three.js 全域狀態 ══
+var scene, camera, renderer, controls;
+var mainBoxGroup, outerBoxMesh, innerTrayGroup, cartMesh;
+var isUnboxed = false;
+var unboxProgress = 0; // 0=闔上, 1=完全抽出
+var isAutoRotating = true;
+var currentLightMode = 0; // 0=展櫃, 1=暖光, 2=霓虹
+var lights = {};
+var currentGame = null;
+
+function initThree() {
+  var container = document.getElementById('canvas-container');
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+
+  // 場景
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x060913, 0.05);
+
+  // 相機（35度視角，最自然的產品透視）
+  camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 100);
+  camera.position.set(0, 0.8, 8.5);
+
+  // 渲染器
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  container.appendChild(renderer.domElement);
+
+  // 軌道控制器（平滑阻尼）
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.maxDistance = 14;
+  controls.minDistance = 3.5;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 1.2;
+  controls.target.set(0, 0, 0);
+
+  // 使用者觸控時暫停自動旋轉
+  controls.addEventListener('start', function() {
+    isAutoRotating = false;
+    controls.autoRotate = false;
+    document.getElementById('btn-autorotate').classList.remove('active');
+  });
+
+  // 建立燈光
+  setupLighting();
+
+  // 建立地面微反射與陰影接收平面
+  setupFloor();
+
+  // 視窗縮放自適應
+  window.addEventListener('resize', onWindowResize);
+
+  // 載入遊戲或預設範例
+  loadInitialGame();
+
+  // 啟動渲染迴圈
+  animate();
+}
+
+function setupLighting() {
+  // 環境光
+  lights.ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(lights.ambient);
+
+  // 主聚光燈（右上方）
+  lights.main = new THREE.DirectionalLight(0xfff5ea, 1.8);
+  lights.main.position.set(5, 7, 6);
+  lights.main.castShadow = true;
+  lights.main.shadow.mapSize.width = 1024;
+  lights.main.shadow.mapSize.height = 1024;
+  lights.main.shadow.bias = -0.0005;
+  scene.add(lights.main);
+
+  // 邊緣輪廓燈（左後方，讓卡帶盒邊緣立體反光）
+  lights.rim = new THREE.DirectionalLight(0x00e5ff, 1.2);
+  lights.rim.position.set(-6, 4, -5);
+  scene.add(lights.rim);
+
+  // 底部微弱補光
+  lights.bounce = new THREE.DirectionalLight(0x69f0ae, 0.4);
+  lights.bounce.position.set(0, -5, 2);
+  scene.add(lights.bounce);
+}
+
+function setupFloor() {
+  var floorGeo = new THREE.PlaneGeometry(30, 30);
+  var floorMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+  var floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = -2.2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+}
+
+// ══ 建立 3D 擬真卡帶盒與內部抽屜 ══
+function build3DBox(game) {
+  if (mainBoxGroup) {
+    scene.remove(mainBoxGroup);
+  }
+
+  mainBoxGroup = new THREE.Group();
+  scene.add(mainBoxGroup);
+
+  var plat = game.platform || 'FC';
+  var dim = BOX_DIMENSIONS[plat] || BOX_DIMENSIONS.FC;
+
+  // 1. 建立材質
+  var textureLoader = new THREE.TextureLoader();
+  var loadingManager = THREE.DefaultLoadingManager;
+  var overlay = document.getElementById('loading-overlay');
+  overlay.classList.remove('fade-out');
+
+  var textures = {
+    cover: textureLoader.load(game.cover, function(){ checkLoaded(); }),
+    back:  textureLoader.load(game.back, function(){ checkLoaded(); }),
+    spine: textureLoader.load(game.spine, function(){ checkLoaded(); })
+  };
+
+  var loadedCount = 0;
+  function checkLoaded() {
+    loadedCount++;
+    if (loadedCount >= 3) {
+      setTimeout(function() { overlay.classList.add('fade-out'); }, 300);
+    }
+  }
+
+  // 濾鏡最佳化
+  Object.keys(textures).forEach(function(k) {
+    textures[k].generateMipmaps = true;
+    textures[k].minFilter = THREE.LinearMipmapLinearFilter;
+  });
+
+  // 紙質/塑膠微材質屬性
+  var matProps = {
+    roughness: dim.paper ? 0.45 : 0.28,
+    metalness: dim.paper ? 0.03 : 0.12,
+    clearcoat: dim.paper ? 0.1 : 0.4,
+    clearcoatRoughness: 0.2
+  };
+
+  // 生成側邊/頂部素色紙紋材質（取自書背色調）
+  var sideMat = new THREE.MeshStandardMaterial(Object.assign({
+    map: textures.spine
+  }, matProps));
+
+  var edgeMat = new THREE.MeshStandardMaterial(Object.assign({
+    color: dim.paper ? 0xddddcc : 0x111317
+  }, matProps));
+
+  // 6 個面的材質順序：[X+, X-, Y+, Y-, Z+, Z-]
+  // [書背側, 對側, 頂部, 底部, 正面, 封底]
+  var boxMaterials = [
+    sideMat,                                      // X+ 右側 (書背)
+    edgeMat,                                      // X- 左側
+    edgeMat,                                      // Y+ 上蓋
+    edgeMat,                                      // Y- 底蓋
+    new THREE.MeshStandardMaterial(Object.assign({ map: textures.cover }, matProps)), // Z+ 正面
+    new THREE.MeshStandardMaterial(Object.assign({ map: textures.back  }, matProps))  // Z- 封底
+  ];
+
+  // 外盒幾何體
+  var outerGeo = new THREE.BoxGeometry(dim.w, dim.h, dim.d);
+  outerBoxMesh = new THREE.Mesh(outerGeo, boxMaterials);
+  outerBoxMesh.castShadow = true;
+  outerBoxMesh.receiveShadow = true;
+  mainBoxGroup.add(outerBoxMesh);
+
+  // 2. 建立「開盒抽出」的內部物件（內塑膠內襯 + 實體卡匣）
+  buildInnerCartridge(plat, dim, textures, game);
+
+  // 重設開盒狀態
+  isUnboxed = false;
+  unboxProgress = 0;
+  updateUnboxUI();
+}
+
+// 建立抽出之卡帶與托盤
+function buildInnerCartridge(plat, dim, textures, game) {
+  innerTrayGroup = new THREE.Group();
+
+  var cartWidth = dim.w * 0.85;
+  var cartHeight = dim.h * 0.75;
+  var cartDepth = dim.d * 0.65;
+
+  // 卡帶外殼（經典紅白機卡帶或 MD 黑色卡帶）
+  var cartColor = game.cartColor ? parseInt(game.cartColor.replace('#',''), 16) : (plat === 'FC' ? 0x8a2323 : 0x14181f);
+  var cartGeo = new THREE.BoxGeometry(cartWidth, cartHeight, cartDepth);
+  
+  // 卡帶正面貼紙
+  var cartLabelMat = new THREE.MeshStandardMaterial({
+    map: textures.cover,
+    roughness: 0.35,
+    metalness: 0.05
+  });
+  var cartBodyMat = new THREE.MeshStandardMaterial({
+    color: cartColor,
+    roughness: 0.55,
+    metalness: 0.05
+  });
+
+  var cartMaterials = [
+    cartBodyMat, cartBodyMat, cartBodyMat,
+    new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 }), // 底部金手指金屬接點縫隙
+    cartLabelMat, // 卡帶封面標籤
+    cartBodyMat
+  ];
+
+  cartMesh = new THREE.Mesh(cartGeo, cartMaterials);
+  cartMesh.castShadow = true;
+  innerTrayGroup.add(cartMesh);
+
+  // 如果是 FC，補上標誌性的白色內托盤
+  if (plat === 'FC') {
+    var trayGeo = new THREE.BoxGeometry(dim.w * 0.94, dim.h * 0.94, dim.d * 0.85);
+    var trayMat = new THREE.MeshStandardMaterial({ color: 0xf5f5fa, roughness: 0.65, metalness: 0.0 });
+    var trayMesh = new THREE.Mesh(trayGeo, trayMat);
+    trayMesh.position.z = -0.05;
+    innerTrayGroup.add(trayMesh);
+  }
+
+  // 初始藏在外盒內部
+  innerTrayGroup.position.set(0, 0, 0);
+  mainBoxGroup.add(innerTrayGroup);
+}
+
+// ══ 開盒抽出動畫補間 ══
+function toggleUnbox() {
+  isUnboxed = !isUnboxed;
+  updateUnboxUI();
+}
+
+function updateUnboxUI() {
+  var btn = document.getElementById('btn-unbox');
+  var txt = document.getElementById('txt-unbox');
+  if (isUnboxed) {
+    btn.classList.add('active');
+    txt.textContent = '闔上';
+  } else {
+    btn.classList.remove('active');
+    txt.textContent = '開盒';
+  }
+}
+
+// ══ 燈光風格切換 ══
+function cycleLighting() {
+  currentLightMode = (currentLightMode + 1) % 3;
+  var txt = document.getElementById('txt-light');
+  if (currentLightMode === 0) {
+    txt.textContent = '展櫃';
+    lights.ambient.color.setHex(0xffffff);
+    lights.ambient.intensity = 0.7;
+    lights.main.color.setHex(0xfff5ea);
+    lights.main.intensity = 1.8;
+    lights.rim.color.setHex(0x00e5ff);
+    lights.rim.intensity = 1.2;
+  } else if (currentLightMode === 1) {
+    txt.textContent = '暖光';
+    lights.ambient.color.setHex(0xffecd2);
+    lights.ambient.intensity = 0.85;
+    lights.main.color.setHex(0xffb74d);
+    lights.main.intensity = 2.0;
+    lights.rim.color.setHex(0xffe0b2);
+    lights.rim.intensity = 0.7;
+  } else {
+    txt.textContent = '霓虹';
+    lights.ambient.color.setHex(0x2a164d);
+    lights.ambient.intensity = 0.6;
+    lights.main.color.setHex(0xff2a85);
+    lights.main.intensity = 2.4;
+    lights.rim.color.setHex(0x00e5ff);
+    lights.rim.intensity = 2.0;
+  }
+}
+
+// ══ 自動旋轉切換 ══
+function toggleAutoRotate() {
+  isAutoRotating = !isAutoRotating;
+  controls.autoRotate = isAutoRotating;
+  document.getElementById('btn-autorotate').classList.toggle('active', isAutoRotating);
+}
+
+// ══ 視角重設 ══
+function resetView(face) {
+  isAutoRotating = false;
+  controls.autoRotate = false;
+  document.getElementById('btn-autorotate').classList.remove('active');
+
+  var dist = 8.5;
+  if (face === 'front') {
+    camera.position.set(0, 0, dist);
+  } else if (face === 'back') {
+    camera.position.set(0, 0, -dist);
+  } else if (face === 'spine') {
+    camera.position.set(dist, 0, 0);
+  }
+  controls.target.set(0, 0, 0);
+  controls.update();
+}
+
+// ══ 全螢幕 ══
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(function(){});
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+  }
+}
+
+// ══ 範例切換 ══
+function onSelectSample(idx) {
+  var game = SAMPLE_GAMES[parseInt(idx, 10)] || SAMPLE_GAMES[0];
+  loadGame(game);
+}
+
+function loadGame(game) {
+  currentGame = game;
+  document.getElementById('pill-plat').textContent = (game.platform === 'FC' ? 'FAMICOM / 紅白機' : 'MEGA DRIVE / 世嘉五代') + ' · ' + (game.sub || '');
+  document.getElementById('pill-title').textContent = game.name;
+  build3DBox(game);
+}
+
+// ══ 初始化檢查 URL 參數或快取 ══
+function loadInitialGame() {
+  var params = new URLSearchParams(window.location.search);
+  var pName = params.get('name');
+  var pCover = params.get('cover');
+  var pBack = params.get('back');
+  var pSpine = params.get('spine');
+  var pPlat = params.get('platform') || 'FC';
+
+  if (pName && pCover) {
+    var customGame = {
+      platform: pPlat,
+      name: pName,
+      sub: pPlat,
+      cover: pCover,
+      back: pBack || pCover,
+      spine: pSpine || pCover
+    };
+    loadGame(customGame);
+  } else {
+    // 預設載入第 0 款（三國志）
+    loadGame(SAMPLE_GAMES[0]);
+  }
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ══ 動畫迴圈 ══
+function animate() {
+  requestAnimationFrame(animate);
+
+  // 控制器平滑更新
+  controls.update();
+
+  // 開盒動畫線性平滑插值 (Lerp)
+  var targetUnbox = isUnboxed ? 1 : 0;
+  unboxProgress += (targetUnbox - unboxProgress) * 0.08;
+
+  if (innerTrayGroup && currentGame) {
+    var dim = BOX_DIMENSIONS[currentGame.platform] || BOX_DIMENSIONS.FC;
+    // 盒蓋/外盒微微向左傾，卡帶向右上方滑出
+    if (currentGame.platform === 'FC') {
+      innerTrayGroup.position.x = unboxProgress * (dim.w * 0.88);
+      innerTrayGroup.position.y = unboxProgress * (dim.h * 0.25);
+      innerTrayGroup.rotation.z = -unboxProgress * 0.12;
+    } else {
+      // MD 經典黑盒：卡帶向上方抽出
+      innerTrayGroup.position.y = unboxProgress * (dim.h * 0.72);
+      innerTrayGroup.position.z = unboxProgress * 0.35;
+      innerTrayGroup.rotation.x = -unboxProgress * 0.18;
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('DOMContentLoaded', initThree);
+</script>
+</body>
+</html>
