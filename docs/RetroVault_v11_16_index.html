@@ -628,8 +628,14 @@ body{
 .dgrid{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .df .dfl{font-size:10px;color:#7986cb;margin-bottom:2px}
 .df .dfv{font-size:13px;word-break:break-all}
-.df.full{grid-column:1/-1}
-.vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
+.vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.vault-hero-body{display:flex;gap:12px;align-items:flex-start;width:100%}
+.vault-hero-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:2px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
+.vault-chip-btn{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:14px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .15s}
+.vault-chip-btn:hover{transform:translateY(-1px);filter:brightness(1.15)}
+.vault-chip-btn.chip-3d{background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.45);color:#00e5ff;box-shadow:0 0 10px rgba(0,229,255,.15)}
+.vault-chip-btn.chip-crt{background:rgba(105,240,174,.15);border:1px solid rgba(105,240,174,.5);color:#69f0ae;box-shadow:0 0 10px rgba(105,240,174,.15)}
+.vault-chip-btn.chip-slab{background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#ffd700;box-shadow:0 0 10px rgba(212,175,55,.15)}
 .vault-cover{width:172px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
 /* v02.127：使用者實測回報長條形封面（例如橫向裁切的書背貼紙照）在固定方框顯示很怪——
    原本object-fit:cover會把超出方框的部分直接裁掉，長條圖左右兩側（甚至角色主體）會被
@@ -1080,7 +1086,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.13</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.16</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -2579,7 +2585,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.13</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.16</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2999,7 +3005,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.13';
+const APP_VERSION='v11.16';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -17564,19 +17570,20 @@ function detailHeroHtml(d,rowNum){
       return '<div class="vault-cover-thumb'+(i===0?' on':'')+'" data-idx="'+i+'" data-url="'+im.url+'" onclick="switchHeroCoverImg(this)" title="'+esc(im.lbl)+'"><img src="'+im.thumb+'" alt="'+esc(im.lbl)+'"></div>';
     }).join('')+'</div>';
   }
+  coverHtml+='</div>';
+  var actionsHtml='';
   if(hasC){
     var _3dUrl='./3d-viewer.html?name='+encodeURIComponent(title)+
       '&platform='+encodeURIComponent(d.platform||cat)+
       '&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+
       (hasB?'&back='+encodeURIComponent(imgUrl(d.back_img,1000)):'')+
       (hasS?'&spine='+encodeURIComponent(imgUrl(d.spine_img,1000)):'');
-    coverHtml+='<div style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">'+
-      '<a href="'+_3dUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.45);color:#00e5ff;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(0,229,255,.15);transition:all .15s"><span>🎮 3D 把玩</span></a>'+
-      '<a href="./cyber-museum.html" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(105,240,174,.15);border:1px solid rgba(105,240,174,.5);color:#69f0ae;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(105,240,174,.15);transition:all .15s"><span>📺 CRT 展廳</span></a>'+
-      '<a href="./slab-studio.html?name='+encodeURIComponent(title)+'&platform='+encodeURIComponent(d.platform||cat)+'&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+'&comp='+encodeURIComponent(d.completeness||'')+'&date='+encodeURIComponent(d.release_date||'')+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:16px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#ffd700;font-size:11.5px;font-weight:700;text-decoration:none;box-shadow:0 0 10px rgba(212,175,55,.15);transition:all .15s"><span>💎 鑑定卡</span></a>'+
+    actionsHtml='<div class="vault-hero-actions">'+
+      '<a href="'+_3dUrl+'" target="_blank" class="vault-chip-btn chip-3d"><span>🎮 3D 把玩</span></a>'+
+      '<a href="./cyber-museum.html" target="_blank" class="vault-chip-btn chip-crt"><span>📺 CRT 展廳</span></a>'+
+      '<a href="./slab-studio.html?name='+encodeURIComponent(title)+'&platform='+encodeURIComponent(d.platform||cat)+'&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+'&comp='+encodeURIComponent(d.completeness||'')+'&date='+encodeURIComponent(d.release_date||'')+'" target="_blank" class="vault-chip-btn chip-slab"><span>💎 鑑定卡</span></a>'+
     '</div>';
   }
-  coverHtml+='</div>';
   var tags='';
   tags+=_detailTag(catLabel(cat),catColor);
   var collectStatus=d.collect_status||'收藏中';
@@ -17607,13 +17614,16 @@ function detailHeroHtml(d,rowNum){
       _detailKpi('估值',value,'#ffcc02',marketConfidenceText(d));
   }
   return '<div class="vault-hero">'+
-    coverHtml+
-    '<div class="vault-main">'+
-      '<div class="vault-name">'+esc(title)+'</div>'+
-      '<div class="vault-sub">'+esc(sub||'—')+'</div>'+
-      '<div class="vault-tags">'+tags+'</div>'+
-      '<div class="vault-kpis">'+kpisHtml+'</div>'+
+    '<div class="vault-hero-body">'+
+      coverHtml+
+      '<div class="vault-main">'+
+        '<div class="vault-name">'+esc(title)+'</div>'+
+        '<div class="vault-sub">'+esc(sub||'—')+'</div>'+
+        '<div class="vault-tags">'+tags+'</div>'+
+        '<div class="vault-kpis">'+kpisHtml+'</div>'+
+      '</div>'+
     '</div>'+
+    actionsHtml+
   '</div>';
 }
 // v54.21：外層加 try-catch 包裝，詳情頁若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息

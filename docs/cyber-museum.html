@@ -58,36 +58,13 @@ header {
   padding: 0 16px;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid var(--border);
   background: rgba(10, 14, 26, 0.88);
   backdrop-filter: blur(14px);
   z-index: 50;
   flex-shrink: 0;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.brand .logo-badge {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 11px;
-  color: var(--cyan);
-  padding: 4px 8px;
-  border-radius: 6px;
-  background: rgba(0, 229, 255, 0.12);
-  border: 1px solid var(--border-glow);
-  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
-}
-.brand .title {
-  font-size: 14px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  color: #fff;
 }
 
 .view-tabs {
@@ -98,8 +75,6 @@ header {
   padding: 3px 5px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  margin-right: auto;
-  margin-left: 6px;
 }
 
 .vtab {
@@ -695,32 +670,27 @@ main {
     height: 50px;
     padding: 0 10px;
     gap: 8px;
-    justify-content: flex-start;
-  }
-  .brand .title {
-    display: none;
-  }
-  .brand .logo-badge {
-    font-size: 10px;
-    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   .view-tabs {
     padding: 3px;
     gap: 4px;
-    margin-right: auto;
-    margin-left: 2px;
+    margin: 0;
     display: flex;
     align-items: center;
   }
   .vtab {
     flex: 1 1 0;
-    width: 108px;
-    min-width: 100px;
-    max-width: 116px;
-    height: 32px;
-    padding: 4px 8px;
-    font-size: 11px;
-    gap: 4px;
+    width: 120px;
+    min-width: 112px;
+    max-width: 132px;
+    height: 34px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+    gap: 5px;
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
@@ -729,7 +699,6 @@ main {
     box-sizing: border-box;
   }
   .actions {
-    margin-left: auto;
     gap: 4px;
     flex-shrink: 0;
   }
@@ -796,13 +765,6 @@ main {
 
 <div id="app-wrap">
   <header>
-    <div class="brand">
-      <a href="./index.html" style="text-decoration:none">
-        <span class="logo-badge">RETRO</span>
-      </a>
-      <span class="title">賽博防潮展廳</span>
-    </div>
-
     <!-- 視圖切換器 -->
     <div class="view-tabs">
       <button class="vtab active" id="tab-shelf" onclick="switchView('shelf')">
@@ -1845,9 +1807,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.15)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.16)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.15').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.16').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');
