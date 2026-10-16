@@ -966,6 +966,22 @@ var RETRO_ART_MAP = {
   'バーガータイム': { plat: 'nes', file: 'BurgerTime (Japan)' },
   'ロードファイター': { plat: 'nes', file: 'Road Fighter (Japan)' },
   '燃えろ!!プロ野球': { plat: 'nes', file: 'Moero!! Pro Yakyuu (Japan)' },
+  '4人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  '４人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  'ぎゅわんぶらあ自己中心派': { plat: 'nes', file: 'Gambler Jiko Chuushinha (Japan)' },
+  'ぎゅわんぶらあ自己中心派2': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'ぎゅわんぶらあ自己中心派2 激闘！東京マージャンランド編': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'タイトドライバー': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトドライバー 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'Taito Grand Prix': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'ガチャポン戦士2': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'SDガンダムワールド ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'キングコング2': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトンパンチ': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトン': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
 
   // ── MD 世嘉五代 ──
   'アドバンスド大戦略': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)', lb: '1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg' },
@@ -1809,9 +1825,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.17)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.18)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.17').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.18').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');

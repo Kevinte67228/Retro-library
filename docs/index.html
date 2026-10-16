@@ -1086,7 +1086,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.17</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.18</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -2585,7 +2585,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.17</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.18</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -3005,7 +3005,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.17';
+const APP_VERSION='v11.18';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4552,14 +4552,17 @@ function toast(m,t,d,pos){
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
-// 圖片來源轉換：data: 直接用（剛拍的預覽）；http 原樣；其餘視為 Drive 檔案 ID → 組縮圖網址
+// 圖片來源轉換：data: 直接用（剛拍的預覽）；http 原樣（自動將不穩定 jsDelivr 轉換為高穩之 GitHub Raw）；其餘視為 Drive 檔案 ID → 組縮圖網址
 function imgUrl(v,sz){
   if(!v||typeof v!=='string')return '';
+  if(v.indexOf('cdn.jsdelivr.net/gh/libretro-thumbnails/')>=0){
+    v=v.replace('cdn.jsdelivr.net/gh/libretro-thumbnails/','raw.githubusercontent.com/libretro-thumbnails/').replace('@master/','/master/');
+  }
   if(v.indexOf('data:')===0||v.indexOf('http')===0)return v;
   return 'https://drive.google.com/thumbnail?id='+v+'&sz=w'+(sz||400);
 }
 // 是否有圖（data: 或 Drive ID 皆算）
-function hasImgVal(v){return !!(v&&typeof v==='string'&&v.length>0);}
+function hasImgVal(v){return !!(v&&typeof v==='string'&&v.trim().length>0);}
 
 // 經典復古遊戲封面自動補齊映射表（當收藏記錄未上傳封面時的自動高品質備援）
 var RETRO_ART_MAP = {
@@ -4610,6 +4613,22 @@ var RETRO_ART_MAP = {
   'バーガータイム': { plat: 'nes', file: 'BurgerTime (Japan)' },
   'ロードファイター': { plat: 'nes', file: 'Road Fighter (Japan)' },
   '燃えろ!!プロ野球': { plat: 'nes', file: 'Moero!! Pro Yakyuu (Japan)' },
+  '4人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  '４人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  'ぎゅわんぶらあ自己中心派': { plat: 'nes', file: 'Gambler Jiko Chuushinha (Japan)' },
+  'ぎゅわんぶらあ自己中心派2': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'ぎゅわんぶらあ自己中心派2 激闘！東京マージャンランド編': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'タイトドライバー': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトドライバー 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'Taito Grand Prix': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'ガチャポン戦士2': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'SDガンダムワールド ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'キングコング2': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトンパンチ': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトン': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
 
   // ── MD 世嘉五代 ──
   'アドバンスド大戦略': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)', lb: '1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg' },
@@ -15457,7 +15476,7 @@ function renderGalleryView(){
     var uid=item.uid||item.rowNum;
     var _cov=resolveItemCover(d,320);
     var thumb=_cov?
-      '<img src="'+_cov+'" alt="" loading="lazy">':
+      '<img src="'+_cov+'" alt="" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div>'+_icon+'</div>\';">':
       '<div>'+_icon+'</div>';
     var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
     var _isSel=_colSel&&_colSelSet.has(String(uid));

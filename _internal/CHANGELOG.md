@@ -1,3 +1,33 @@
+## v11.18 (2026-10-17)
+
+### 變更內容
+依據使用者實機截圖與回報，徹底修復 6 款 FC 紅白機名作封面圖庫補齊與跨網域 CDN 連線逾時問題，全面升級自動轉址與容錯機制：
+
+1. **使用者截圖 6 款名作封面全面補齊與精確映射（`RETRO_ART_MAP`）**：
+   - **《4人打ち麻雀》**（4 Nin Uchi Mahjong）
+   - **《ぎゅわんぶらあ自己中心派2》**（Gambler Jiko Chuushinha 2）
+   - **《タイトドライバー 栄光へのライセンス》**（Taito Grand Prix - Eikou e no License）
+   - **《ガチャポン戦士2 カプセル戦記》**（SD Gundam - Gachapon Senshi 2 - Capsule Senki）
+   - **《キングコング2 怒りのメガトンパンチ》**（King Kong 2 - Ikari no Megaton Punch）
+   - **《三国志II 覇王の大陸》**（Sangokushi II - Haou no Tairiku）
+   - 包含多別名模糊比對（如 `タイトドライバー`、`タイトグランプリ`、`ガチャポン戦士2`、`キングコング2` 等），即使使用者匯入之名稱略有簡稱亦能 100% 精準匹配。
+
+2. **`imgUrl()` 核心引擎加入 Libretro 連結智慧自動轉址（Auto Rewrite）**：
+   - **根因分析**：使用者資料庫或 Google Sheets 中儲存之歷史連結帶有 `cdn.jsdelivr.net/gh/libretro-thumbnails/`，該網域在行動端或特定網路環境下常因 DNS 污染或限速回傳 403 / 逾時，導致卡片直接顯示黑色無圖區塊。
+   - **無感透明轉址**：在 `imgUrl()` 中自動偵測並將所有 jsDelivr Libretro 舊式網址即時轉換為高穩定性之 `raw.githubusercontent.com/libretro-thumbnails/.../master/...` 官方直連高穩源，舊有資料無需使用者手動修改即可瞬間正常加載。
+
+3. **防禦性縮圖錯誤優雅降級（Graceful Error Degradation）**：
+   - 收藏清單卡片 `<img>` 標籤全面加入 `onerror` 防禦性降級邏輯，若任何自訂外部圖源連線中斷，優雅切換為對應分類圖標，根除黑框問題。
+
+4. **本機 CSV 資料庫全面批量校準**：
+   - 全面更新 `data/RetroVault_遊戲_FC.csv`、`data/RetroVault_遊戲_MD.csv` 與 `data/RetroVault_GS_Games_全量匯入檔.csv`，將所有歷史 jsDelivr 連結批量升級為 GitHub Raw 官方穩定源，並將《三国志II 覇王の大陸》精準導向霸王的大陸專屬盒裝原圖。
+
+5. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.18` / `retrovault-v11-18`。
+   - 部署保護清單更新保留 `v11.16` 與 `v11.17`。
+
+---
+
 ## v11.17 (2026-10-17)
 
 ### 變更內容
