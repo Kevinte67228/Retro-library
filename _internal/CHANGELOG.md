@@ -1,3 +1,34 @@
+## v11.26 (2026-10-17)
+
+### 變更內容
+依據使用者指示「把SFC的兩個復刻板封面替換，另外所有的圖片都應該嚴格配合發售地區，不光只有封面. 我們現在有一些遊戲，封面是日本。封底是美版，沒有吻合，如果真的無法匹配請從網路上去搜尋，不要自行帶入錯誤的圖檔。把協作規範加入這一點」完成全庫深度校正：
+
+1. **SFC 兩款光榮復刻版彩盒更換 (SFC Reprints)**：
+   - `[SFC] SHVC-TK-1`《復刻版 提督の決断》：替換為使用者提供之正統「復刻版 名作シリーズ」外盒封面 (`sfc_teitoku_reprint_jp_front.png`)，封底配置純正光榮日版包裝 (`sfc_teitoku_jp_back.jpg`)。
+   - `[SFC] SHVC-8L-1`《復刻版 SUPER 三國志II》：替換為使用者提供之正統「復刻版 名作シリーズ」外盒封面 (`sfc_super_sangokushi2_reprint_jp_front.png`) 與日版正統封底 (`sfc_super_sangokushi2_reprint_jp_back.png`，條碼 T4988615006487)。
+
+2. **全平台發售地區嚴格一致性校正 (Strict Region Alignment Audit)**：
+   - 全庫 366 款遊戲深度排查，徹底清除 11 款 SFC 歷史誤用之美版 SNES 橫式黑底條紋盒（帶有 "SNS P..."、"FOR SALE IN USA ONLY"、ESRB 分級標籤）與非官方偽造 Fanart 盒繪：
+     - `SHVC-TK`《提督の決断》：移除美版 P.T.O. 封底，換上正統日版光榮外盒封底 (`sfc_teitoku_jp_back.jpg`)。
+     - `SHVC-FM`《ファイアーエムブレム 紋章の謎》：移除錯誤歐法 Fanart 盒繪，替換為 Internet Archive 1600DPI 官方日版原裝彩盒封底 (`sfc_fe_monshou_jp_back.jpg`)。
+     - `SHVC-B3IJ-JPN`《ファイアーエムブレム 聖戦の系譜》：移除錯誤美版 Fanart 盒繪，替換為 Internet Archive 1600DPI 官方日版原裝彩盒封底 (`sfc_fe_seisen_jp_back.jpg`)。
+     - `SHVC-P-AB7J`《Bahamut Lagoon》：移除錯誤美版 Fanart 盒繪，替換為史克威爾官方日版原裝彩盒封底 (`sfc_bahamut_lagoon_jp_back.jpg`)。
+     - `SHVC-BF`《ブレス オブ ファイア 竜の戦士》：移除錯誤美版 Breath of Fire II 封底，替換為卡普空官方日版原裝彩盒封底 (`sfc_breath_of_fire_jp_back.jpg`)。
+     - `SHVC-IC`《SPACE INVADERS The Original Game》：移除美版 Space Invaders 封底，替換為太東官方日版原裝彩盒封底 (`sfc_space_invaders_jp_back.jpg`)。
+     - `SHVC-NZ`《SUPER 信長の野望 全国版》：移除美版 Nobunaga 封底，替換為光榮官方日版原裝彩盒封底 (`sfc_nobunaga_zenkoku_jp_back.jpg`)。
+     - `SHVC-QG`《項劉記》：移除美版 Rise of the Phoenix 封底，替換為光榮官方日版原裝彩盒封底 (`sfc_kouryuuki_jp_back.jpg`)。
+     - `SHVC-P-ATEJ`《提督の決断II》& `SHVC-IZ`《SUPER 信長の野望 武将風雲録》：依寧缺毋濫原則，移除錯誤美版 P.T.O. II 與美版 Nobunaga 封底，暫時留空（""）維護資料純潔度。
+   - `[FC] HFC-M2`：修正標題錯誤（由 PC-Engine 的《桃太郎活劇》修正為正確的紅白機名作《桃太郎電鉄》）。
+
+3. **協作規範增訂 (Collaboration Guidelines Updated)**：
+   - 於 `.agents/rules/asset-region-integrity-rules.md`、`.agents/skills/retrovault-asset-pipeline/SKILL.md` 與 `_internal/AI_協作規範.md` 正式確立【發售地區圖資嚴格一致性準則】與【寧缺毋濫原則】。
+
+4. **全端同步與發布**：
+   - 前端版本遞增至 `v11.26` / `retrovault-v11-26`。
+   - 本地 CSV、XLSX、Google Sheet 全面同步生效。
+
+---
+
 ## v11.25 (2026-10-17)
 
 ### 變更內容

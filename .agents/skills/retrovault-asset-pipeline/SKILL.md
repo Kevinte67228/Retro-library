@@ -168,3 +168,15 @@ $env:GH_TOKEN="<token>"; python .agents/skills/retrovault-asset-pipeline/scripts
 # 5. 一鍵執行全流程 (爬取 -> 資料庫同步 -> GitHub 上傳)
 $env:GH_TOKEN="<token>"; python .agents/skills/retrovault-asset-pipeline/scripts/asset_pipeline.py --all
 ```
+
+---
+
+## 關鍵守則：發售地區圖資嚴格一致性準則 (Strict Region Alignment)
+
+1. **全景圖資嚴格匹配地區**：
+   - 不光只有封面 (cover)，封底 (back)、書脊 (spine)、卡匣 (cart) 與實機截圖 (gameplay) 所有關聯圖檔均必須嚴格吻合發售地區（Region）。
+   - 若發售地區為日本，外盒及封底一律必須採用純正日版原裝彩盒，嚴禁混入美版（左側銀條、ESRB "E/K-A"、US SNES 橫式黑底條紋包裝、美版發行商 Logo、FOR SALE IN USA/CANADA ONLY）或歐版與非官方 Fanart 臆造圖檔。
+2. **寧缺毋濫原則**：
+   - 若經過深度搜尋確認網路上無官方正統日版真實掃描檔，**該欄位（如 back_img 或 spine_img）必須嚴格保持留空（""）**。
+   - **嚴禁自行帶入錯誤版本或非官方偽造圖檔**。
+

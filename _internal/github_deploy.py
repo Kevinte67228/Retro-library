@@ -43,9 +43,20 @@ from gh_batch import _req, _retry, get_branch_head, build_path_index, batch_comm
 MAX_OLD = 5  # 一般備份最多保留幾個（5 版輪替）
 
 # 永久保留的備份版號清單，清理輪替時一律跳過。
-# 目前為空；v02_17（大改版「統一整個程式碼渲染函式」前的基準版本）已於大改版 Phase 1-4 完成、
-# 使用者 2026-07-25 確認後解除永久保留，恢復正常 5 版輪替。若之後使用者要求把某版標記永久保留，在此加入版號字串。
-PERMANENT_EXCEPTIONS = []
+PERMANENT_EXCEPTIONS = ['v11_01', 'v11_02']
+
+# 永久保留的 docs/ 基準版本 HTML，部署新版時不刪除
+PROTECTED_DOCS_VERSIONS = {
+    'docs/RetroVault_v11_01_index.html',
+    'docs/RetroVault_v11_02_index.html',
+    'docs/RetroVault_v11_20_index.html',
+    'docs/RetroVault_v11_21_index.html',
+    'docs/RetroVault_v11_22_index.html',
+    'docs/RetroVault_v11_23_index.html',
+    'docs/RetroVault_v11_24_index.html',
+    'docs/RetroVault_v11_25_index.html',
+    'docs/RetroVault_v11_26_index.html'
+}
 
 # 備份時要複製的 docs/ 核心檔案
 BACKUP_FILES = [
@@ -64,6 +75,16 @@ DEPLOY_FILES = {
     'sw.js':                            'docs/sw.js',
     'manifest.json':                    'docs/manifest.json',
     'RetroVault_AppsScript.gs':         'docs/RetroVault_AppsScript.gs',
+    '3d-viewer.html':                   'docs/3d-viewer.html',
+    'cyber-museum.html':                'docs/cyber-museum.html',
+    'search-bench.html':                'docs/search-bench.html',
+    'slab-studio.html':                 'docs/slab-studio.html',
+    'market-radar.html':                'docs/market-radar.html',
+    'js/vault-sync-engine.js':          'docs/js/vault-sync-engine.js',
+    'js/vault-db.js':                   'docs/js/vault-db.js',
+    'js/vault-worker.js':               'docs/js/vault-worker.js',
+    'js/slab-generator.js':             'docs/js/slab-generator.js',
+    'js/valuation-radar.js':            'docs/js/valuation-radar.js',
 }
 
 
@@ -82,15 +103,18 @@ def _ver_num_key(d):
 
 
 def get_current_version(path_index):
-    """從目前 tree 裡的 RetroVault_vXX_YY_index.html 檔名推斷目前版號
-    （v02.30 起改名；v02.29 以前是 GameVault_vXX_YY_index.html，向下相容判斷）"""
+    """從目前 tree 裡的 RetroVault_vXX_YY_index.html 檔名推斷最新目前版號"""
+    versions = []
     for path in path_index:
         if path.startswith('docs/RetroVault_v') and path.endswith('_index.html'):
             name = path.split('/')[-1]
-            return name.replace('RetroVault_', '').replace('_index.html', '')
-        if path.startswith('docs/GameVault_v') and path.endswith('_index.html'):
+            versions.append(name.replace('RetroVault_', '').replace('_index.html', ''))
+        elif path.startswith('docs/GameVault_v') and path.endswith('_index.html'):
             name = path.split('/')[-1]
-            return name.replace('GameVault_', '').replace('_index.html', '')
+            versions.append(name.replace('GameVault_', '').replace('_index.html', ''))
+    if versions:
+        versions.sort(key=_ver_num_key)
+        return versions[-1]
     return None
 
 
@@ -160,16 +184,22 @@ def deploy(new_ver, local_dir, changelog_path=None):
                 (path.startswith('docs/RetroVault_v') or path.startswith('docs/GameVault_v'))
                 and path.endswith('_index.html')
             )
-            if is_ver_html and path != f'docs/RetroVault_{new_ver}_index.html':
+            if is_ver_html and path != f'docs/RetroVault_{new_ver}_index.html' and path not in PROTECTED_DOCS_VERSIONS:
                 deletes.append(path)
                 print(f'  將移除舊版本HTML: {path}')
 
-    # 併入 CHANGELOG.md（若有提供）：跟 docs/ 部署包在同一次 commit，
+    # 併入 CHANGELOG.md 與實施藍圖（若有提供）：跟 docs/ 部署包在同一次 commit，
     # 避免額外一次 push 觸發 GitHub Pages 的自動建置管線、跟前一次部署 push 時間太近而互相干擾。
     if changelog_path and os.path.exists(changelog_path):
         with open(changelog_path, 'rb') as f:
             adds['_internal/CHANGELOG.md'] = f.read()
         print('  併入 CHANGELOG.md（同一次 commit）')
+
+    blueprint_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'RetroVault_夢想計畫_批次修改實施藍圖.md')
+    if os.path.exists(blueprint_path):
+        with open(blueprint_path, 'rb') as f:
+            adds['_internal/RetroVault_夢想計畫_批次修改實施藍圖.md'] = f.read()
+        print('  併入 實施藍圖.md（同一次 commit）')
 
     if not adds and not copies and not deletes:
         print('沒有任何異動，中止。')
