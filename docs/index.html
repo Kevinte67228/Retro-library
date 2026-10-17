@@ -446,6 +446,8 @@ body{
   display:flex;align-items:center;justify-content:center; /* v02.128：cover-fg改用contain後需要flex置中，不然圖片會貼左上角 */
 }
 .shelf-cover:active{border-color:#00e5ff}
+@keyframes itemEditGlow{0%{box-shadow:0 0 0 3px #00e5ff,0 0 16px rgba(0,229,255,.6)}60%{box-shadow:0 0 0 3px #00e5ff,0 0 12px rgba(0,229,255,.4)}100%{box-shadow:none}}
+.item-edit-glow{animation:itemEditGlow 2s ease-out forwards!important;border-color:#00e5ff!important}
 /* v02.128：舊的 .shelf-cover img{...} 全稱規則已移除——裡面的img現在一律帶cover-bg／
    cover-fg class，用上面新增的通用規則控制，不再需要這條規則（留著的話因為.shelf-cover img
    選擇器優先權比單一class規則高，會蓋掉新規則，讓修正失效）。 */
@@ -1086,7 +1088,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.26</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.27</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -2585,7 +2587,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.26</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.27</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -3005,7 +3007,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.26';
+const APP_VERSION='v11.27';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4460,7 +4462,13 @@ function gvGoBack(){
   if(close){close();_pushGuard();return true;}
   var fs=$('form-sec');
   if(fs&&fs.style.display==='block'){
-    _pushGuard();showPg('col');
+    _pushGuard();
+    if(typeof _lastEditedColItemKey!=='undefined'&&_lastEditedColItemKey){
+      _restoreColPosition(_lastEditedColItemKey,_lastEditedColScrollY);
+      _lastEditedColItemKey=null;
+    }else{
+      showPg('col');
+    }
     toast('建檔內容保留中，回「建檔」分頁可繼續','',3000);
     return true;
   }
@@ -6443,7 +6451,7 @@ function doUpdate(rowNum){
   _shPostUpdateOrQueue({action:'update',uuid:_updUuid,rowNum:rowNum,row:row,fields:_entryFields(entry),category:catInternal(entry.category)||'遊戲',entrySnapshot:Object.assign({},entry)}).then(function(r){
     if(r.queued){
       toast('📡 網路連線異常，已先存在本機，連線恢復後會自動補送','',4500);
-      closeDetailSilent();resetAll();showPg('col');
+      _restoreColPosition(rowNum);
       return;
     }
     var res=r.res;
@@ -6455,7 +6463,7 @@ function doUpdate(rowNum){
       }
       if(i>=0)col[i].data=Object.assign({},entry);
       localforage.setItem('gv_col',col).catch(function(){});
-      updateStats();filterCol();toast('已更新 ✓','ok');closeDetailSilent();resetAll();showPg('col');
+      updateStats();toast('已更新 ✓','ok');_restoreColPosition(rowNum);
     }else throw new Error(res.error||'未知');
   }).catch(function(e){toast('更新失敗，請確認網路和設定後重試','er');}).finally(function(){
     noLoad();
@@ -15546,7 +15554,7 @@ function renderGalleryView(){
       '<div>'+_icon+'</div>';
     var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
     var _isSel=_colSel&&_colSelSet.has(String(uid));
-    return '<div class="gv-card'+(_isSel?' sel':'')+'" '+_colPressAttr(uid)+'>'+
+    return '<div class="gv-card'+(_isSel?' sel':'')+'" data-col-key="'+_escAttr(uid)+'" id="col-item-'+_escAttr(uid)+'" '+_colPressAttr(uid)+'>'+
       (_colSel?'<div class="gv-sel-mark" style="color:'+(_isSel?'#ff6e9c':'#e8eaf6')+'">'+(_isSel?'☑':'☐')+'</div>':
         '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(uid)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>')+
       '<div class="gv-thumb">'+thumb+'</div>'+
@@ -15619,8 +15627,8 @@ function renderShelf(){
       var thumb=coverImg
         ?'<img class="cover-bg" src="'+coverImg+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+coverImg+'" alt="'+esc(shortTitle)+'" loading="lazy">'
         :'<div class="shelf-cover-default" style="background:'+color+'">'+esc(shortTitle)+'</div>';
-      return '<div style="flex-shrink:0">'+
-        '<div class="shelf-cover" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
+      return '<div class="shelf-item-wrap" data-col-key="'+_escAttr(item.uid||item.rowNum)+'" id="col-item-'+_escAttr(item.uid||item.rowNum)+'" style="flex-shrink:0">'+
+        '<div class="shelf-cover" data-col-key="'+_escAttr(item.uid||item.rowNum)+'" '+_colPressAttr(item.uid||item.rowNum)+' title="'+esc(title)+'">'+
           thumb+sold+
         '</div>'+
         '<div class="shelf-title">'+esc(shortTitle)+'</div>'+
@@ -16596,7 +16604,7 @@ function renderGlist(){
     var catBadge=_cardBadges(d,cond,_bcCount,midParts);
     var dateLine=_glistMeta(d);
     var _isSel=_colSel&&_colSelSet.has(String(item.uid||item.rowNum)); // v02.18 Phase1：選中狀態改用 class（原本是 inline box-shadow 字串）
-    return'<div class="gc'+(_isSel?' sel':'')+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
+    return'<div class="gc'+(_isSel?' sel':'')+'" data-col-key="'+_escAttr(item.uid||item.rowNum)+'" id="col-item-'+_escAttr(item.uid||item.rowNum)+'" '+_colPressAttr(item.uid||item.rowNum)+'>'+
       '<div class="gfav" onclick="toggleFavorite(event,\''+_escAttr(item.uid||item.rowNum)+'\')">'+(d.favorite==='Y'?'❤️':'🤍')+'</div>'+
       (_colSel?'<div style="flex-shrink:0;align-self:center;font-size:24px;line-height:1;color:'+((_colSelSet.has(String(item.uid||item.rowNum)))?'#ff6e9c':'#5c6b8a')+'">'+((_colSelSet.has(String(item.uid||item.rowNum)))?'☑':'☐')+'</div>':'')+
       thumb+
@@ -18093,16 +18101,88 @@ function detailNext(){
   showDetail(L[idx+1].uid||L[idx+1].rowNum);
   _detailNavRelease();
 }
+
+var _lastEditedColItemKey=null;
+var _lastEditedColScrollY=0;
+
+function _findColItemEl(key){
+  if(key===null||key===undefined||key==='')return null;
+  var k=String(key);
+  var el=document.getElementById('col-item-'+k);
+  if(el)return el;
+  var all=document.querySelectorAll('[data-col-key]');
+  for(var i=0;i<all.length;i++){
+    if(all[i].getAttribute('data-col-key')===k)return all[i];
+  }
+  if(Array.isArray(col)){
+    var match=col.find(function(c){return (c.uid&&c.uid===key)||c.rowNum===key||String(c.uid)===k||String(c.rowNum)===k;});
+    if(match){
+      var altKey=String(match.uid||match.rowNum);
+      if(altKey!==k){
+        el=document.getElementById('col-item-'+altKey);
+        if(el)return el;
+        for(var j=0;j<all.length;j++){
+          if(all[j].getAttribute('data-col-key')===altKey)return all[j];
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function _highlightTargetItem(el){
+  if(!el)return;
+  var target=el.classList.contains('shelf-item-wrap')?(el.querySelector('.shelf-cover')||el):el;
+  target.classList.remove('item-edit-glow');
+  void target.offsetWidth;
+  target.classList.add('item-edit-glow');
+  setTimeout(function(){target.classList.remove('item-edit-glow');},2200);
+}
+
+function _restoreColPosition(targetKey,fallbackScrollY){
+  var key=(targetKey!==undefined&&targetKey!==null)?targetKey:_lastEditedColItemKey;
+  var sy=(typeof fallbackScrollY==='number')?fallbackScrollY:_lastEditedColScrollY;
+  closeDetailSilent();
+  resetAll();
+  showPg('col',true);
+  if(key&&currentView==='list'&&Array.isArray(filtered)){
+    var tIdx=filtered.findIndex(function(it){
+      return (it.uid&&it.uid===key)||it.rowNum===key||String(it.uid||it.rowNum)===String(key);
+    });
+    if(tIdx>=0&&tIdx>=_glistShown){
+      _glistShown=Math.ceil((tIdx+1)/_glistPageSize)*_glistPageSize;
+      renderGlist();
+    }
+  }
+  function _doScroll(){
+    var pg=$('pg-col');
+    var el=_findColItemEl(key);
+    if(el&&typeof el.scrollIntoView==='function'){
+      el.scrollIntoView({behavior:'auto',block:'center',inline:'center'});
+      _highlightTargetItem(el);
+      return true;
+    }else if(pg&&typeof sy==='number'&&sy>0){
+      pg.scrollTop=sy;
+      return true;
+    }
+    return false;
+  }
+  requestAnimationFrame(function(){
+    _doScroll();
+    setTimeout(_doScroll,80);
+    setTimeout(_doScroll,220);
+  });
+}
+
 function editDetail(){
   if(!detailRow)return;
   var item=col.find(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
   if(!item){toast('找不到此記錄，請重新整理收藏','er');return;}
   var rn=detailRow;
-  // v02.107：從收藏頁進來編輯時，記住當下收藏頁的捲動位置——按「取消」要能回到收藏頁
-  // 原本的位置，而不是留在建檔頁（editDetail 會 showPg('scan') 切到建檔頁，但 resetAll()
-  // 只負責把建檔頁重設成乾淨狀態、不會切回收藏頁，所以取消後會停在建檔頁）。
   var _colPg=$('pg-col');
   var _backScrollY=_colPg?_colPg.scrollTop:0;
+  _lastEditedColItemKey=item.uid||item.rowNum||rn;
+  _lastEditedColScrollY=_backScrollY;
   // 複製資料到 entry（含來源標記）
   entry=Object.assign({},item.data);
   if(item.data._src)entry._src=Object.assign({},item.data._src);
@@ -18124,10 +18204,8 @@ function editDetail(){
   renderForm();
   var btn=$('save-btn');
   if(btn){btn.disabled=false;btn.textContent='更新記錄';btn.onclick=function(){doUpdate(rn);};}
-  // v02.107：比照上面 save-btn 的做法，取消鈕在編輯模式下也改綁專用處理；
-  // resetAll() 內會把兩顆按鈕都還原成建檔模式的預設行為，不會殘留到下一次建檔。
   var cbtn=$('form-cancel-btn');
-  if(cbtn)cbtn.onclick=function(){cancelFormBackTo('col','pg-col',_backScrollY);};
+  if(cbtn)cbtn.onclick=function(){_restoreColPosition(rn,_backScrollY);};
   // v02.56：條碼/品名查詢等FAB群組從詳情頁搬到編輯表單頁，只在編輯既有記錄時顯示
   var fw=$('det-fab-wrap');if(fw)fw.classList.add('show');
   setTimeout(_positionDetFabWrap,0); // 等這一輪渲染完成、save-bar確實有正確尺寸後再量測
@@ -18135,13 +18213,11 @@ function editDetail(){
 }
 $('dov').addEventListener('click',closeDetail);
 
-// v02.107：編輯既有收藏記錄時按「取消」——捨棄這次編輯、切回原本的頁面，並還原進入編輯前
-// 的捲動位置。先 resetAll() 把建檔頁重設乾淨（同時會還原取消/儲存鈕的預設行為），再切頁；
-// 捲動位置要等切頁後、該頁真的顯示出來才設得進去，所以放在 setTimeout 裡。
-// v02.108：抽成通用版本（原本叫 cancelEditBackToCol，寫死只能回收藏頁）——尋寶頁「已買到，
-// 轉入收藏」（huntBuyConfirm）也會切到建檔頁共用同一份表單，取消時同樣會卡在建檔頁回不去
-// 尋寶頁，是一模一樣的成因，改成通用版本讓兩處共用同一套邏輯，不要各自維護一份。
-function cancelFormBackTo(pageName,scrollContainerId,scrollY){
+function cancelFormBackTo(pageName,scrollContainerId,scrollY,targetKey){
+  if(pageName==='col'){
+    _restoreColPosition(targetKey||_lastEditedColItemKey,scrollY);
+    return;
+  }
   resetAll();
   showPg(pageName);
   setTimeout(function(){
@@ -18151,7 +18227,7 @@ function cancelFormBackTo(pageName,scrollContainerId,scrollY){
 }
 
 // ── Tabs ──
-function showPg(name){
+function showPg(name,keepSort){
   // #5：離開收藏頁時退出批次選取，避免動作列殘留覆蓋其他頁
   if(typeof _colSel!=='undefined'&&_colSel&&name!=='col'){_colSel=false;_colSelSet.clear();colSelBar();var _csbtn=$('col-sel-btn');if(_csbtn)_csbtn.classList.remove('on');}
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
@@ -18177,7 +18253,9 @@ function showPg(name){
     }
   }
   if(name==='col'){
-    sortKey=SORT_DEFAULT.key;sortDesc=SORT_DEFAULT.desc; // 每次進入收藏頁重設為預設排序
+    if(!keepSort){
+      sortKey=SORT_DEFAULT.key;sortDesc=SORT_DEFAULT.desc; // 每次進入收藏頁重設為預設排序
+    }
     if(col.length){
       filterCol();
     }else{

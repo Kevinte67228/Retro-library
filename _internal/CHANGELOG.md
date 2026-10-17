@@ -1,3 +1,27 @@
+## v11.27 (2026-10-17)
+
+### 變更內容
+依據使用者指示「修改PWA這個編輯畫面，在完成編輯時停留在原本所選ITEM的位置，不要跳回首行」優化收藏編輯體驗與錨點定位機制：
+
+1. **編輯完成錨點精準定位 (Edit Finish Position Anchor)**：
+   - 解決先前在收藏頁點擊任一項目進入詳細編輯畫面（`editDetail`）後，點選「更新記錄」（`doUpdate`）或「取消」返回收藏清單時，因頁面切換與清單重繪導致捲動位置歸零、直接跳回最頂部首行的問題。
+   - 建立全域編輯錨點與還原機制 `_restoreColPosition(targetKey, fallbackScrollY)`：
+     - 在使用者開啟編輯時記錄目標項目 Key（`uid` 或 `rowNum`）與當前清單之捲動高度（`scrollTop`）。
+     - 完成更新或取消返回時，自動還原至使用者原本自選的排序與篩選條件（避免 `showPg('col')` 強制重設成預設排序）。
+     - 透過 `requestAnimationFrame` 與延遲雙重計時器，優先尋找目標項目的 DOM 元素，執行 `scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' })`；若元素暫時不在可見範圍內則回退精確 `scrollTop`，徹底告別「跳回第 1 行」。
+2. **跨檢視模式全面支援與卡片分頁自動展開**：
+   - 「分類書架」（`shelf-view`）：在橫向滾動書架 row 與縱向頁面容器間實現雙軸精準對位，書架內部自動橫向捲動定位至該封面。
+   - 「卡片清單」（`glist`）：若編輯項目索引超出目前每頁筆數限制，自動計算並擴展 `_glistShown` 重新渲染，確保項目必定出現在 DOM 中並能平滑對齊視圖中央。
+   - 「畫廊模式」（`gallery-view`）：全項目配置 `data-col-key` 與 `id="col-item-..."`，支援網格置中對位。
+3. **編輯完成視覺微光回饋 (Cyberpunk Neon Edit Glow)**：
+   - 新增 `@keyframes itemEditGlow` 與 `.item-edit-glow` 霓虹青色微光動畫，返回收藏頁時剛編輯完成的目標項目會短暫呈現柔和青藍外框發光（2 秒後自動平滑淡出），提供明確直覺的視覺引導。
+4. **Android 實體/手勢返回鍵防護 (Hardware Back Gesture Protection)**：
+   - 於 `gvGoBack()` 中整合判斷，若使用者在編輯表單中觸發手機硬體返回鍵或邊緣側滑返回，同樣套用 `_restoreColPosition` 定位至原本項目，杜絕手勢返回時跳回首行的異常。
+5. **版本升級與離線快取同步**：
+   - 前端版本號遞增至 `v11.27` / `retrovault-v11-27`，備份並發布 `docs/RetroVault_v11_27_index.html`。
+
+---
+
 ## v11.26 (2026-10-17)
 
 ### 變更內容
