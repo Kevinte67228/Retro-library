@@ -1,3 +1,40 @@
+## v11.28 (2026-10-17)
+
+### 變更內容
+依據使用者回報「檢查一下crt展廳，現在會亂跳」進行賽博防潮展廳與特麗霓虹 CRT 模式全方位深度檢測與穩定度重構：
+
+1. **消除 Service Worker 衝突與暴力重整循環 (Infinite Reload Loop Elimination)**：
+   - 解決先前展廳內硬編碼之舊版 Service Worker（`v11.21`）與主程式（`v11.28`）快取版本衝突，觸發 `controllerchange -> window.location.reload()` 無限刷新循環導致開機消磁動畫、音效與畫面反覆重開閃爍的元兇問題。
+   - 對齊 `sw.js?v=v11.28`，完全移除自動 `SKIP_WAITING` 與重整迴圈，確保展廳開啟流暢無干擾。
+
+2. **PWA 主程式藏品直達 CRT 模式精準定位 (Direct URL Navigation & Target Anchoring)**：
+   - 修正先前主頁詳情頁「📺 CRT 展廳」未帶參數導致進入展廳後強制重設跳回首款 FC 遊戲（キャプテン翼）的問題。
+   - 解析 URL 參數（`?mode=crt&name=...&uid=...`），自動精準匹配目標遊戲、選中卡帶書背並直接啟動特麗霓虹視圖。
+
+3. **觸控滑動防誤觸機制 (Touch Scroll False-Click Protection)**：
+   - 書背層架加入觸控位移偵測（`_touchMoved`，位移閾值 10px）。在手機端左右滑動瀏覽書背時，徹底阻絕手指滑動後的假 click 誤觸，杜絕卡帶沿途瘋狂抽拔跳動與背景連續消磁音效。
+   - 限制 `:hover` 抽取動畫僅在具備滑鼠指針設備（`@media (hover: hover)`）生效，避免觸控裝置上的 sticky hover 懸浮抽搐。
+
+4. **記憶體 Image 預載瀑布流與請求防競態 (Offscreen Waterfall Preload & Race Protection)**：
+   - 重構特麗霓虹螢幕圖源切換邏輯，改採非同步記憶體 `new Image()` 預載。圖檔完全就緒後才渲染至 DOM，徹底根絕圖片載入過程中的空白閃爍、尺寸突變（90% 與 55% 忽大忽小抖動）。
+   - 實作請求序列號（`_crtDisplayReqId`），防止快速切台或快速點選時舊請求之後發先至覆蓋新畫面。
+
+5. **CRT 電視實體切台與多維導航 (Trinitron TV Channel Switching & Controls)**：
+   - 電視機銘牌處配置復古風格的 `[◀ CH-]` 與 `[CH+ ▶]` 實體切台按鈕，可於 CRT 畫面下連續切換上一台/下一台遊戲，並自動同步書背牆高亮與自動居中滾動。
+   - 支援鍵盤方向鍵（`ArrowLeft` / `ArrowRight`、`A` / `D`）與手機 CRT 螢幕左右滑動觸控手勢直接切台。
+   - 資訊列新增 `[ℹ 情報]` 按鈕，進入 CRT 模式時預設自動收合底端 HUD 抽屜以保持純淨全螢幕電視視野，隨時可按鈕切換展開。
+
+6. **SUPER FAMICOM 超任專屬獨立層架 (SFC Dedicated Shelf Section)**：
+   - 於防潮陳列牆新增 `SUPER FAMICOM 超任` 獨立分區，配置藍青色專屬光暈與 SFC 紙盒書背樣式，解決全庫 177 款 SFC 遊戲混入其他分類及黑色卡匣外觀錯置問題。
+
+7. **行動端視窗尺寸自適應優化 (Responsive Layout Shifting Fix)**：
+   - 電視機外殼改採 `width: min(100%, calc((100dvh - 150px) * 4 / 3)); aspect-ratio: 4 / 3` 動態自適應計算，徹底消除行動裝置網址列縮放時引發的寬高衝突與跳動。
+
+8. **版本升級與發布**：
+   - 應用版本號遞增至 `v11.28` / `retrovault-v11-28`，備份並生成 `docs/RetroVault_v11_28_index.html`。
+
+---
+
 ## v11.27 (2026-10-17)
 
 ### 變更內容

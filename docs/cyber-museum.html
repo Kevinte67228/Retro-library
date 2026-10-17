@@ -218,6 +218,14 @@ main {
   background: #11141e;
 }
 
+/* SFC 超任紙盒書背規格 (寬度約 30px，高度約 180px) */
+.spine-item.sfc {
+  width: 30px;
+  height: 180px;
+  border-left: 1px solid rgba(255,255,255,0.16);
+  border-right: 1px solid rgba(0,0,0,0.55);
+  border-radius: 2px 2px 0 0;
+}
 /* FC 紅白機橫向紙盒書背規格 (寬度約 24~28px，高度約 135px) */
 .spine-item.fc {
   width: 28px;
@@ -266,6 +274,10 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.spine-item.sfc .spine-fallback {
+  background: linear-gradient(180deg, #102a45 0%, #08182b 100%);
+  border-top: 2px solid #29b6f6;
+}
 .spine-item.fc .spine-fallback {
   background: linear-gradient(180deg, #b71c1c 0%, #7f0000 100%);
   border-top: 2px solid #ff5252;
@@ -279,14 +291,25 @@ main {
   border-top: 2px solid #ffb300;
 }
 
-/* 滑過抽出一半微動效 */
-.spine-item:hover, .spine-item.active {
-  transform: translateY(-28px) scale(1.04);
-  box-shadow: 0 14px 28px rgba(0, 229, 255, 0.35);
-  z-index: 20;
+/* 滑動與點選抽出動效：滑鼠 hover 僅在支援 hover 裝置生效，觸控設備避免假 hover 殘留 */
+@media (hover: hover) and (pointer: fine) {
+  .spine-item:hover {
+    transform: translateY(-28px) scale(1.04);
+    box-shadow: 0 14px 28px rgba(0, 229, 255, 0.35);
+    z-index: 20;
+  }
+  .spine-item:hover .spine-tooltip {
+    opacity: 1;
+  }
 }
 .spine-item.active {
+  transform: translateY(-28px) scale(1.04);
+  box-shadow: 0 14px 28px rgba(0, 229, 255, 0.45);
+  z-index: 20;
   outline: 2px solid var(--cyan);
+}
+.spine-item.active .spine-tooltip {
+  opacity: 1;
 }
 
 /* 浮動標籤提示 */
@@ -308,9 +331,6 @@ main {
   opacity: 0;
   transition: opacity 0.15s;
   z-index: 30;
-}
-.spine-item:hover .spine-tooltip, .spine-item.active .spine-tooltip {
-  opacity: 1;
 }
 
 /* 實體層架木紋底座板 */
@@ -337,7 +357,7 @@ main {
 /* 經典特麗霓虹電視機外殼 (Sony Trinitron Style) */
 .crt-chassis {
   position: relative;
-  width: 100%;
+  width: min(100%, calc((100dvh - 140px) * 4 / 3));
   max-width: 680px;
   aspect-ratio: 4 / 3;
   margin: 0 auto !important;
@@ -351,22 +371,52 @@ main {
     0 0 35px rgba(0, 229, 255, 0.12);
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 14px;
   overflow: hidden;
 }
 
-/* 電視頂部經典銘牌 */
+/* 電視頂部經典銘牌與實體切台鍵 */
 .crt-badge-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px 10px;
+  padding: 0 8px 8px;
+  gap: 8px;
 }
 .crt-brand-text {
   font-family: 'Press Start 2P', monospace;
   font-size: 9px;
   color: #7986cb;
   letter-spacing: 2px;
+}
+.crt-channel-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.crt-btn-ch {
+  background: linear-gradient(180deg, #232c42 0%, #121824 100%);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-radius: 6px;
+  color: var(--txt);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.crt-btn-ch:hover {
+  background: var(--cyan);
+  color: #060913;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
+  transform: translateY(-1px);
+}
+.crt-btn-ch:active {
+  transform: translateY(1px);
 }
 .crt-led {
   display: flex;
@@ -521,12 +571,29 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 60%;
+  max-width: 55%;
 }
 .crt-info-meta {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
   color: var(--cyan);
+}
+.crt-hud-toggle-btn {
+  background: rgba(0, 229, 255, 0.15);
+  border: 1px solid var(--cyan);
+  border-radius: 6px;
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.crt-hud-toggle-btn:hover {
+  background: var(--cyan);
+  color: #060913;
 }
 
 /* 底部右下資訊與操作抽屜 (HUD Drawer) */
@@ -715,15 +782,13 @@ main {
     flex-direction: column !important;
     justify-content: flex-start !important;
     align-items: center !important;
-    padding: 6px 10px 0 !important;
+    padding: 6px 8px 0 !important;
     overflow: hidden !important;
   }
   .crt-chassis {
     margin: 0 auto !important;
-    width: 100% !important;
+    width: min(100%, calc((100dvh - 150px) * 4 / 3)) !important;
     max-width: 440px !important;
-    max-height: calc(100vh - 270px) !important;
-    max-height: calc(100dvh - 270px) !important;
     aspect-ratio: 4 / 3;
     padding: 8px 8px 10px;
     border-width: 6px;
@@ -731,7 +796,7 @@ main {
     flex-shrink: 0;
   }
   .crt-info-title {
-    max-width: 50%;
+    max-width: 45%;
     font-size: 11px;
   }
   #hud-drawer {
@@ -787,6 +852,21 @@ main {
   <main>
     <!-- ════ 模式 A：防潮書背陳列牆 ════ -->
     <div id="shelf-view">
+      <!-- SFC 超任層 -->
+      <section class="shelf-section" id="sec-sfc" style="display:none">
+        <div class="shelf-header">
+          <div class="shelf-title">
+            <span class="dot" style="background:#29b6f6;box-shadow:0 0 8px #29b6f6"></span>
+            <span>SUPER FAMICOM 超任</span>
+          </div>
+          <span class="shelf-count" id="count-sfc">0 件</span>
+        </div>
+        <div class="shelf-bay">
+          <div class="spine-track" id="track-sfc"></div>
+          <div class="shelf-plank"></div>
+        </div>
+      </section>
+
       <!-- FC 層 -->
       <section class="shelf-section" id="sec-fc">
         <div class="shelf-header">
@@ -853,6 +933,10 @@ main {
       <div class="crt-chassis">
         <div class="crt-badge-row">
           <span class="crt-brand-text">SONY Trinitron</span>
+          <div class="crt-channel-controls">
+            <button type="button" class="crt-btn-ch" onclick="crtPrevGame()" title="上一台 (◀ / A / 左滑)">◀ CH-</button>
+            <button type="button" class="crt-btn-ch" onclick="crtNextGame()" title="下一台 (▶ / D / 右滑)">CH+ ▶</button>
+          </div>
           <div class="crt-led">
             <span>POWER</span>
             <span class="led-dot power-on" id="crt-led-dot"></span>
@@ -874,6 +958,7 @@ main {
             <div class="crt-info-bar">
               <div class="crt-info-title" id="crt-title">請選擇一款遊戲</div>
               <div class="crt-info-meta" id="crt-meta">RetroVault Cyber Museum</div>
+              <button type="button" class="crt-hud-toggle-btn" onclick="toggleHud()" title="切換情報抽屜">ℹ 情報</button>
             </div>
           </div>
         </div>
@@ -1482,10 +1567,22 @@ function closeHud() {
   document.querySelectorAll('.spine-item').forEach(function(el) { el.classList.remove('active'); });
 }
 
+function toggleHud() {
+  playClickSound();
+  var hud = document.getElementById('hud-drawer');
+  if (!hud) return;
+  if (hud.classList.contains('collapsed')) {
+    hud.classList.remove('collapsed');
+  } else {
+    hud.classList.add('collapsed');
+  }
+}
+
 // ════════ 資料載入與分類整理 ════════
 var allItems = [];
 var selectedItem = null;
 var shelfData = {
+  sfc: [],
   fc: [],
   md: [],
   book: [],
@@ -1515,6 +1612,11 @@ function isBookItem(d) {
     return true;
   }
   return false;
+}
+
+function isPlatformSFC(plat) {
+  var p = (plat || '').toUpperCase().trim();
+  return p === 'SFC' || p.indexOf('SUPER FAMICOM') >= 0 || p.indexOf('SNES') >= 0 || p.indexOf('SUPER NINTENDO') >= 0 || p.indexOf('超任') >= 0 || (/\bSFC\b/).test(p);
 }
 
 function isPlatformFC(plat) {
@@ -1577,6 +1679,8 @@ function loadAllData() {
         if (isBook) {
           var bookLabel = (d.category === '動漫/美術設定集' || d.category === '畫冊') ? '畫冊設定集' : '攻略本';
           platDisplay = rawPlat ? (bookLabel + ' (' + rawPlat + ')') : bookLabel;
+        } else if (isPlatformSFC(rawPlat)) {
+          platDisplay = 'SFC';
         } else if (isPlatformFC(rawPlat)) {
           platDisplay = 'FC';
         } else if (isPlatformMD(rawPlat)) {
@@ -1649,21 +1753,58 @@ function loadAllData() {
   });
 }
 
+// ════════ URL 參數解析與手勢防誤觸 ════════
+var _urlParams = new URLSearchParams(window.location.search);
+var _initialMode = _urlParams.get('mode') || 'shelf';
+var _initialName = _urlParams.get('name') || '';
+var _initialUid = _urlParams.get('uid') || '';
+var _initialPlat = _urlParams.get('platform') || '';
+
+// 觸控位移偵測（防止手指滑動書背軌道時誤觸點擊而導致項目連續亂跳）
+var _touchStartX = 0;
+var _touchStartY = 0;
+var _touchMoved = false;
+
+document.addEventListener('touchstart', function(e) {
+  if (e.touches && e.touches.length) {
+    _touchStartX = e.touches[0].clientX;
+    _touchStartY = e.touches[0].clientY;
+    _touchMoved = false;
+  }
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+  if (e.touches && e.touches.length) {
+    var dx = Math.abs(e.touches[0].clientX - _touchStartX);
+    var dy = Math.abs(e.touches[0].clientY - _touchStartY);
+    if (dx > 10 || dy > 10) {
+      _touchMoved = true;
+    }
+  }
+}, { passive: true });
+
 // 渲染防潮書背層架
 function renderShelves() {
   shelfData.book = allItems.filter(function(it) { return it.is_book; });
+  shelfData.sfc = allItems.filter(function(it) { return !it.is_book && isPlatformSFC(it.platform || it.raw_platform); });
   shelfData.fc = allItems.filter(function(it) { return !it.is_book && isPlatformFC(it.platform || it.raw_platform); });
   shelfData.md = allItems.filter(function(it) { return !it.is_book && isPlatformMD(it.platform || it.raw_platform); });
   shelfData.other = allItems.filter(function(it) {
-    return shelfData.book.indexOf(it) < 0 && shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0;
+    return shelfData.book.indexOf(it) < 0 && shelfData.sfc.indexOf(it) < 0 && shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0;
   });
 
+  var cntSfc = document.getElementById('count-sfc');
+  if (cntSfc) cntSfc.textContent = shelfData.sfc.length + ' 件';
   document.getElementById('count-fc').textContent = shelfData.fc.length + ' 件';
   document.getElementById('count-md').textContent = shelfData.md.length + ' 件';
   var cntBook = document.getElementById('count-book');
   if (cntBook) cntBook.textContent = shelfData.book.length + ' 件';
   document.getElementById('count-other').textContent = shelfData.other.length + ' 件';
 
+  var secSfc = document.getElementById('sec-sfc');
+  if (secSfc) {
+    secSfc.style.display = shelfData.sfc.length > 0 ? 'flex' : 'none';
+  }
   var secBook = document.getElementById('sec-book');
   if (secBook) {
     secBook.style.display = shelfData.book.length > 0 ? 'flex' : 'none';
@@ -1673,13 +1814,28 @@ function renderShelves() {
     secOther.style.display = shelfData.other.length > 0 ? 'flex' : 'none';
   }
 
+  if (secSfc) renderTrack('track-sfc', shelfData.sfc, 'sfc', 'sfc');
   renderTrack('track-fc', shelfData.fc, 'fc', 'fc');
   renderTrack('track-md', shelfData.md, 'md', 'md');
   if (secBook) renderTrack('track-book', shelfData.book, 'book', 'book');
   renderTrack('track-other', shelfData.other, 'md', 'other');
 
-  // 預設選中第一款
-  if (shelfData.fc.length) {
+  // 依據 URL 參數精準定位目標藏品
+  var targetItem = null;
+  if (_initialName || _initialUid) {
+    targetItem = allItems.find(function(it) {
+      if (_initialUid && (it.barcode === _initialUid || it.uuid === _initialUid)) return true;
+      if (_initialName && (it.primary_name === _initialName || it.primary_name.toLowerCase() === _initialName.toLowerCase())) return true;
+      return false;
+    });
+  }
+
+  if (targetItem) {
+    selectGame(targetItem, false);
+    syncSpineActive(targetItem);
+  } else if (shelfData.sfc.length) {
+    selectGame(shelfData.sfc[0], false);
+  } else if (shelfData.fc.length) {
     selectGame(shelfData.fc[0], false);
   } else if (shelfData.book.length) {
     selectGame(shelfData.book[0], false);
@@ -1687,6 +1843,13 @@ function renderShelves() {
     selectGame(shelfData.md[0], false);
   } else if (allItems.length) {
     selectGame(allItems[0], false);
+  }
+
+  // 若帶有 mode=crt 參數，直達特麗霓虹視圖並收合抽屜
+  if (_initialMode === 'crt') {
+    switchView('crt');
+    var hud = document.getElementById('hud-drawer');
+    if (hud) hud.classList.add('collapsed');
   }
 }
 
@@ -1703,7 +1866,7 @@ function renderTrack(elemId, items, platClass, shelfKey) {
       ? '<img src="' + it.spine_img + '" alt="' + esc(it.primary_name) + '" loading="lazy">'
       : '<div class="spine-fallback">' + esc(it.primary_name) + '</div>';
 
-    return '<div class="spine-item ' + platClass + '" data-shelf="' + shelfKey + '" data-idx="' + idx + '" onclick="onSpineClick(this)">' +
+    return '<div class="spine-item ' + platClass + '" data-shelf="' + shelfKey + '" data-idx="' + idx + '" data-name="' + esc(it.primary_name) + '" onclick="onSpineClick(this)">' +
       '<div class="spine-tooltip">' + esc(it.primary_name) + '</div>' +
       contentHtml +
     '</div>';
@@ -1711,6 +1874,10 @@ function renderTrack(elemId, items, platClass, shelfKey) {
 }
 
 function onSpineClick(elem) {
+  if (_touchMoved) {
+    _touchMoved = false;
+    return;
+  }
   playSpineSlideSound();
   document.querySelectorAll('.spine-item').forEach(function(el) { el.classList.remove('active'); });
   elem.classList.add('active');
@@ -1723,13 +1890,31 @@ function onSpineClick(elem) {
   selectGame(game, true);
 }
 
+function syncSpineActive(game) {
+  if (!game) return;
+  document.querySelectorAll('.spine-item').forEach(function(el) { el.classList.remove('active'); });
+  var targetEl = document.querySelector('.spine-item[data-name="' + CSS.escape(game.primary_name) + '"]');
+  if (targetEl) {
+    targetEl.classList.add('active');
+    try {
+      targetEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    } catch (e) {}
+  }
+}
+
 function selectGame(game, triggerAnim) {
   if (!game) return;
   selectedItem = game;
 
-  // 更新 HUD 抽屜
+  // 更新 HUD 抽屜資訊
   var hud = document.getElementById('hud-drawer');
-  hud.classList.remove('collapsed');
+  var crt = document.getElementById('crt-view');
+  var isCrt = (crt && crt.style.display !== 'none');
+  // 在書背模式下自動展開抽屜；在 CRT 視圖下預設保持收合，避免遮蔽電視畫面
+  if (!isCrt) {
+    hud.classList.remove('collapsed');
+  }
+
   document.getElementById('hud-title').textContent = game.primary_name;
 
   var subParts = [];
@@ -1761,34 +1946,37 @@ function launchCrtFromHud() {
   switchView('crt');
 }
 
-// 瀑布流多圖源自動級聯載入器：任一圖庫失敗或404時自動無縫嘗試下一圖源
-function setWaterfallImage(imgElem, urlList, onFinalFail) {
+// ════════ 非同步記憶體圖片預載瀑布流 (消除 DOM 尺寸跳動與閃爍) ════════
+var _crtDisplayReqId = 0;
+
+function preloadWaterfall(urlList, onSuccess, onFail) {
   var list = (urlList || []).filter(Boolean);
   if (!list.length) {
-    if (onFinalFail) onFinalFail();
+    if (onFail) onFail();
     return;
   }
   var idx = 0;
   function tryNext() {
     if (idx >= list.length) {
-      if (onFinalFail) onFinalFail();
+      if (onFail) onFail();
       return;
     }
     var currentUrl = list[idx++];
-    imgElem.onerror = function() {
-      console.warn('[ArtCascade] 圖源載入失敗，瀑布級聯切換下一開源圖源:', currentUrl);
+    var testImg = new Image();
+    testImg.onload = function() {
+      onSuccess(currentUrl);
+    };
+    testImg.onerror = function() {
       tryNext();
     };
-    imgElem.onload = function() {
-      imgElem.onerror = null;
-    };
-    imgElem.src = currentUrl;
+    testImg.src = currentUrl;
   }
   tryNext();
 }
 
 function updateCrtDisplay(game, triggerDegauss) {
   if (!game) return;
+  var myReqId = ++_crtDisplayReqId;
   var scr = document.getElementById('crt-screen-elem');
   var bgImg = document.getElementById('crt-bg-img');
   var fgImg = document.getElementById('crt-fg-img');
@@ -1800,27 +1988,34 @@ function updateCrtDisplay(game, triggerDegauss) {
     playDegaussSound();
   }
 
-  // 特麗霓虹 CRT 核心：優先以實機遊戲畫面 (gameplay_urls) 瀑布流呈現，若無實機圖則自動以封面 (cover_urls) 備援
   var gameplayCandidates = (game.gameplay_urls && game.gameplay_urls.length) ? game.gameplay_urls : (game.gameplay_img ? [game.gameplay_img] : []);
   var coverCandidates = (game.cover_urls && game.cover_urls.length) ? game.cover_urls : (game.cover_img ? [game.cover_img] : []);
 
-  var allCandidates = gameplayCandidates.concat(coverCandidates);
-  if (game.spine_img) allCandidates.push(game.spine_img);
-  allCandidates.push('./bg.webp');
-
-  var hasGameplay = gameplayCandidates.length > 0;
-  if (hasGameplay) {
+  // 記憶體預載瀑布流：優先嘗試實機截圖，若無或失敗則平滑退回盒裝封面，絕不引發 DOM 圖片撕裂跳動
+  preloadWaterfall(gameplayCandidates, function(goodUrl) {
+    if (myReqId !== _crtDisplayReqId) return;
+    fgImg.src = goodUrl;
     fgImg.classList.add('is-gameplay');
-  } else {
-    fgImg.classList.remove('is-gameplay');
-  }
-
-  setWaterfallImage(fgImg, allCandidates, function() {
-    fgImg.src = './bg.webp';
-    fgImg.classList.remove('is-gameplay');
-  });
-  setWaterfallImage(bgImg, allCandidates, function() {
-    bgImg.src = './bg.webp';
+    bgImg.src = goodUrl;
+    var chLabel = (game.platform || 'FC').slice(0, 3).toUpperCase();
+    document.getElementById('crt-osd-channel').textContent = 'CH ' + chLabel + ' · GAMEPLAY';
+  }, function() {
+    preloadWaterfall(coverCandidates, function(goodUrl) {
+      if (myReqId !== _crtDisplayReqId) return;
+      fgImg.src = goodUrl;
+      fgImg.classList.remove('is-gameplay');
+      bgImg.src = goodUrl;
+      var chLabel = (game.platform || 'FC').slice(0, 3).toUpperCase();
+      document.getElementById('crt-osd-channel').textContent = 'CH ' + chLabel + ' · BOXART';
+    }, function() {
+      if (myReqId !== _crtDisplayReqId) return;
+      var fb = game.spine_img || './bg.webp';
+      fgImg.src = fb;
+      fgImg.classList.remove('is-gameplay');
+      bgImg.src = fb;
+      var chLabel = (game.platform || 'FC').slice(0, 3).toUpperCase();
+      document.getElementById('crt-osd-channel').textContent = 'CH ' + chLabel + ' · STANDBY';
+    });
   });
 
   document.getElementById('crt-title').textContent = game.primary_name;
@@ -1828,9 +2023,27 @@ function updateCrtDisplay(game, triggerDegauss) {
   if (game.developer) metaParts.push(game.developer);
   if (game.release_date) metaParts.push(game.release_date);
   document.getElementById('crt-meta').textContent = metaParts.join(' · ');
+}
 
-  var osdMode = hasGameplay ? 'GAMEPLAY' : 'BOXART';
-  document.getElementById('crt-osd-channel').textContent = 'CH ' + ((game.platform || 'FC').slice(0, 3).toUpperCase()) + ' · ' + osdMode;
+// ════════ CRT 電視頻道切換 (◀ CH- / CH+ ▶) ════════
+function crtPrevGame() {
+  if (!allItems || !allItems.length) return;
+  playClickSound();
+  var curIdx = allItems.indexOf(selectedItem);
+  if (curIdx < 0) curIdx = 0;
+  var prevIdx = (curIdx - 1 + allItems.length) % allItems.length;
+  selectGame(allItems[prevIdx], true);
+  syncSpineActive(allItems[prevIdx]);
+}
+
+function crtNextGame() {
+  if (!allItems || !allItems.length) return;
+  playClickSound();
+  var curIdx = allItems.indexOf(selectedItem);
+  if (curIdx < 0) curIdx = 0;
+  var nextIdx = (curIdx + 1) % allItems.length;
+  selectGame(allItems[nextIdx], true);
+  syncSpineActive(allItems[nextIdx]);
 }
 
 // ════════ 視圖切換 ════════
@@ -1877,37 +2090,51 @@ function esc(s) {
   });
 }
 
-window.addEventListener('DOMContentLoaded', function() {
-  loadAllData();
+// 鍵盤切台與快捷鍵支援
+window.addEventListener('keydown', function(e) {
+  var crt = document.getElementById('crt-view');
+  if (crt && crt.style.display !== 'none') {
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      crtPrevGame();
+    } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      crtNextGame();
+    }
+  }
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.21)
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.21').then(function(reg) {
-    reg.update();
-    if (reg.waiting) {
-      reg.waiting.postMessage('SKIP_WAITING');
-    }
-    reg.addEventListener('updatefound', function() {
-      var newWorker = reg.installing;
-      if (newWorker) {
-        newWorker.addEventListener('statechange', function() {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            newWorker.postMessage('SKIP_WAITING');
-          }
-        });
+// CRT 電視螢幕滑動手勢切台
+var _crtTouchStartX = 0;
+var _crtTouchStartY = 0;
+window.addEventListener('DOMContentLoaded', function() {
+  loadAllData();
+  var crtView = document.getElementById('crt-view');
+  if (crtView) {
+    crtView.addEventListener('touchstart', function(e) {
+      if (e.touches && e.touches.length) {
+        _crtTouchStartX = e.touches[0].clientX;
+        _crtTouchStartY = e.touches[0].clientY;
       }
-    });
-  }).catch(function(e) {
-    console.warn('[SW] Registration failed:', e);
-  });
+    }, { passive: true });
+    crtView.addEventListener('touchend', function(e) {
+      if (e.changedTouches && e.changedTouches.length) {
+        var dx = e.changedTouches[0].clientX - _crtTouchStartX;
+        var dy = Math.abs(e.changedTouches[0].clientY - _crtTouchStartY);
+        if (Math.abs(dx) > 40 && dy < 60) {
+          if (dx > 0) {
+            crtPrevGame();
+          } else {
+            crtNextGame();
+          }
+        }
+      }
+    }, { passive: true });
+  }
+});
 
-  var refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
+// PWA Service Worker 註冊 (對齊主程式 v11.28，移除暴力 reload 迴圈)
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js?v=v11.28').catch(function(e) {
+    console.warn('[SW] Registration failed:', e);
   });
 }
 </script>
