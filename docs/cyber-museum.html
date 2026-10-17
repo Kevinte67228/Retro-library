@@ -1028,7 +1028,34 @@ var RETRO_ART_MAP = {
   '忍者武雷伝説': { plat: 'md', file: 'Ninja Burai Densetsu (Japan)', lb: '4001be79-73b1-492e-ac12-d048cf2e2479.jpg' },
   '乱世の覇者': { plat: 'md', file: 'Ransei no Hasha (Japan)', lb: '6758ce4f-4237-4cd0-8d8c-1d2692abe90d.jpg' },
   'ドラゴンボールZ 武勇烈伝': { plat: 'md', file: 'Dragon Ball Z - Buyuu Retsuden (Japan)', lb: '13e8968e-2ade-48db-84eb-75aabfb0b401.jpg' },
-  'スーパーハングオン': { plat: 'md', file: 'Super Hang-On (Japan, USA) (En,Ja)', lb: '44d711df-cb04-465d-ad74-95d54afdf269.jpg' }
+  'スーパーハングオン': { plat: 'md', file: 'Super Hang-On (Japan, USA) (En,Ja)', lb: '44d711df-cb04-465d-ad74-95d54afdf269.jpg' },
+  // ── GB Game Boy ──
+  'ポケットモンスター 赤': { plat: 'gb', file: 'Pocket Monsters - Aka (Japan) (Rev 1) (SGB Enhanced)' },
+  'ポケットモンスター 緑': { plat: 'gb', file: 'Pocket Monsters - Midori (Japan) (SGB Enhanced)' },
+  'スーパーマリオランド': { plat: 'gb', file: 'Super Mario Land (Japan)', lb: '594bae23-7af0-43de-802d-d08cbf16d3cb.jpg' },
+  'テトリス': { plat: 'gb', file: 'Tetris (Japan) (En)' },
+  'サ・ガ2 秘宝伝説': { plat: 'gb', file: 'Sa-Ga 2 - Hihou Densetsu (Japan)' },
+  'サ・ガ3 時空の覇者 完結編': { plat: 'gb', file: 'Sa-Ga 3 - Jikuu no Hasha (Japan)' },
+  '魔界塔士 Sa・Ga': { plat: 'gb', file: 'Makai Toushi Sa-Ga (Japan)' },
+  'R-TYPE': { plat: 'gb', file: 'R-Type (Japan)' },
+  '天地を喰らう': { plat: 'gb', file: 'Tenchi o Kurau (Japan)' },
+  // ── GG Sega Game Gear ──
+  'ソニックドリフト2': { plat: 'gg', file: 'Sonic Drift 2 (Japan, USA)', lb: '70146136-de2d-44a6-837d-02fbfa73ae47.jpg' },
+  'ソニック＆テイルス': { plat: 'gg', file: 'Sonic _ Tails 2 (Japan) (En)' },
+  'バーチャファイターMINI': { plat: 'gg', file: 'Virtua Fighter Mini (Japan)' },
+  'イチダントアールGG': { plat: 'gg', file: 'Puzzle _ Action - Ichidanto-R (Japan)' },
+  'ワールドダービー': { plat: 'gg', file: 'World Derby (Japan)' },
+  // ── GBA Game Boy Advance ──
+  'FINAL FANTASY TACTICS ADVANCE': { plat: 'gba', file: 'Final Fantasy Tactics Advance (Japan)' },
+  'テイルズ オブ ザ ワールド なりきりダンジョン2': { plat: 'gba', file: 'Tales of the World - Narikiri Dungeon 2 (Japan)' },
+  'ファミコンミニ01 スーパーマリオブラザーズ': { plat: 'gba', file: 'Famicom Mini 01 - Super Mario Bros. (Japan) (En) (Rev 1)' },
+  'メイド イン ワリオ': { plat: 'gba', file: 'Made in Wario (Japan)' },
+  '黄金の太陽 開かれし封印': { plat: 'gba', file: 'Ougon no Taiyou - Hirakareshi Fuuin (Japan)' },
+  '伝説のスタフィー': { plat: 'gba', file: 'Densetsu no Stafy (Japan)' },
+  '伝説のスタフィー3': { plat: 'gba', file: 'Densetsu no Stafy 3 (Japan)' },
+  'くるくるくるりん': { plat: 'gba', file: 'Kurukuru Kururin (Japan)' },
+  'Tactics Ogre 外伝 The Knight of Lodis': { plat: 'gba', file: 'Tactics Ogre Gaiden - The Knight of Lodis (Japan)' },
+  'マジカルバケーション': { plat: 'gba', file: 'Magical Vacation (Japan)' }
 };
 
 /**
@@ -1057,7 +1084,15 @@ function getRetroArt(name, plat) {
   }
   if (!match) return { covers: [], snaps: [], cover: '', snap: '' };
 
-  var repo = match.plat === 'nes' ? 'Nintendo_-_Nintendo_Entertainment_System' : 'Sega_-_Mega_Drive_-_Genesis';
+  var repoMap = {
+    'nes': 'Nintendo_-_Nintendo_Entertainment_System',
+    'sfc': 'Nintendo_-_Super_Nintendo_Entertainment_System',
+    'md': 'Sega_-_Mega_Drive_-_Genesis',
+    'gb': 'Nintendo_-_Game_Boy',
+    'gg': 'Sega_-_Game_Gear',
+    'gba': 'Nintendo_-_Game_Boy_Advance'
+  };
+  var repo = repoMap[match.plat] || 'Nintendo_-_Nintendo_Entertainment_System';
   var encFile = encodeURIComponent(match.file) + '.png';
 
   var coverList = [];
