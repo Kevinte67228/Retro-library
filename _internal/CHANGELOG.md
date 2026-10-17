@@ -1,3 +1,28 @@
+## v11.20 (2026-10-17)
+
+### 變更內容
+依據使用者實機截圖回報，徹底修正《三国志II 覇王の大陸》誤植為光榮《三國志II》之圖庫問題，全面正本清源校準為南夢宮官方正版圖資：
+
+1. **《三国志II 覇王の大陸》圖資正本清源與精確分流**：
+   - **根因分析**：Libretro 開源縮圖庫中，`Named_Boxarts/Sangokushi II - Haou no Tairiku (Japan).png` 被上游社群誤植為光榮（KOEI）之《三國志II》油畫風封面，導致系統比對時載入了錯誤的光榮版封面與背脊。
+   - **全面校準為南夢宮官方原版圖資**：
+     - 正確封面（`cover_img`）：改採 Libretro 官方 Namcot 原版盒裝 `Sangokushi 2 - Haou no Tairiku (1992-06-10)(Namco)(JP).png`。
+     - 正確封底（`back_img`）：改採 LaunchBox 官方南夢宮專屬封底 `da74e1cf-0ed1-4d29-830f-26d652c86ce2.png`。
+     - 正確側脊（`spine_img`）：改採 LaunchBox 官方南夢宮專屬側邊書脊 `16a9b646-6264-48f5-bc9f-abc90bea4788.jpg`。
+     - 正確遊戲截圖（`gameplay_img`）：改採南夢宮原版遊戲截圖 `Sangokushi 2 - Haou no Tairiku (1992-06-10)(Namco)(JP).png`。
+     - 3D 展廳卡匣貼紙（`cartLabel`）：改採南夢宮黑卡帶專屬正面貼標 `b726bc98-08bb-46f7-9f7e-244c74457ee2.jpg`。
+   - **全面同步更新全庫檔案**：
+     - 主程式 `docs/index.html` 之自動補齊映射表 `RETRO_ART_MAP`（精準分流光榮《三国志II》與南夢宮《三国志II 覇王の大陸》／《覇王の大陸》）。
+     - 賽博防潮展廳 `docs/cyber-museum.html` 之 `RETRO_ART_MAP` 與展示樣本集合 `DEMO_COLLECTION`。
+     - 3D 展廳 `docs/3d-viewer.html` 之範例清單 `SAMPLE_GAMES`。
+     - 本機資料庫 `data/RetroVault_遊戲_FC.csv` 與全量匯入檔 `RetroVault_GS_Games_全量匯入檔.csv`、`RetroVault_GS_Games_全量匯入檔.xlsx`。
+
+2. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.20` / `retrovault-v11-20`。
+   - 部署保護清單更新保留 `v11.18` 與 `v11.19`。
+
+---
+
 ## v11.19 (2026-10-17)
 
 ### 變更內容

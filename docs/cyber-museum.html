@@ -924,8 +924,9 @@ var RETRO_ART_MAP = {
   '十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
   'ポケットザウルス 十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
   '三国志': { plat: 'nes', file: 'Sangokushi (Japan)', lb: 'ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg' },
-  '三国志II': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
-  '三国志II 覇王の大陸': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
+  '三国志II': { plat: 'nes', file: 'Sangokushi II (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
+  '三国志II 覇王の大陸': { plat: 'nes', file: 'Sangokushi 2 - Haou no Tairiku (1992-06-10)(Namco)(JP)', lb: 'a6e950df-59bc-41e1-b06c-dcaf092a9cde.jpg' },
+  '覇王の大陸': { plat: 'nes', file: 'Sangokushi 2 - Haou no Tairiku (1992-06-10)(Namco)(JP)', lb: 'a6e950df-59bc-41e1-b06c-dcaf092a9cde.jpg' },
   '三国志 中原の覇者': { plat: 'nes', file: 'Sangokushi - Chuugen no Hasha (Japan)' },
   'ナムクラシック': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
   'Namco Classic': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
@@ -1114,10 +1115,10 @@ var DEMO_COLLECTION = [
     primary_name: '三国志II 覇王の大陸',
     release_date: '1992',
     developer: 'NAMCO',
-    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
-    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Sangokushi%20II%20-%20Haou%20no%20Tairiku%20(Japan).png',
-    back_img: 'https://images.launchbox-app.com/f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg',
-    spine_img: 'https://images.launchbox-app.com/5a038bcb-63c3-44f0-ab57-7d76c1af5c01.jpg',
+    cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%202%20-%20Haou%20no%20Tairiku%20(1992-06-10)(Namco)(JP).png',
+    gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Sangokushi%202%20-%20Haou%20no%20Tairiku%20(1992-06-10)(Namco)(JP).png',
+    back_img: 'https://images.launchbox-app.com/da74e1cf-0ed1-4d29-830f-26d652c86ce2.png',
+    spine_img: 'https://images.launchbox-app.com/16a9b646-6264-48f5-bc9f-abc90bea4788.jpg',
     completeness: '美品',
     market_value: '2200',
     barcode: '4907892000569',
@@ -1828,9 +1829,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.19)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.20)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.19').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.20').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');
