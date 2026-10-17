@@ -4583,7 +4583,7 @@ var RETRO_ART_MAP = {
   '三国志 中原の覇者': { plat: 'nes', file: 'Sangokushi - Chuugen no Hasha (Japan)' },
   'ナムクラシック': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
   'Namco Classic': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
-  'スーパーマリオブラザーズ': { plat: 'nes', file: 'Super Mario Bros. (Japan, USA)' },
+  'スーパーマリオブラザーズ': { plat: 'nes', file: 'Super Mario Bros. (Japan, USA)', lb: 'fc_super_mario_bros_jp_front.jpg' },
   'スーパーマリオブラザーズ3': { plat: 'nes', file: 'Super Mario Bros. 3 (Japan)', lb: '0b53dbdc-230d-41fb-b391-db28b5001603.jpg' },
   '熱血高校ドッジボール部': { plat: 'nes', file: 'Nekketsu Koukou Dodgeball-bu (Japan)' },
   'ナムコット麻雀III': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
@@ -4613,8 +4613,9 @@ var RETRO_ART_MAP = {
   'ファイナルファンタジー': { plat: 'nes', file: 'Final Fantasy (Japan)' },
   'ファイナルファンタジーII': { plat: 'nes', file: 'Final Fantasy II (Japan)' },
   'ファイナルファンタジーIII': { plat: 'nes', file: 'Final Fantasy III (Japan)' },
-  'エキサイトバイク': { plat: 'nes', file: 'Excitebike (Japan)' },
-  'ドクターマリオ': { plat: 'nes', file: 'Dr. Mario (Japan, USA)' },
+  'エキサイトバイク': { plat: 'nes', file: 'Excitebike (Japan)', lb: 'fc_excitebike_jp_front.jpg' },
+  'ドクターマリオ': { plat: 'nes', file: 'Dr. Mario (Japan, USA)', lb: 'fc_dr_mario_jp_front.png' },
+  'アーバンチャンピオン': { plat: 'nes', file: 'Urban Champion (World)', lb: 'fc_urban_champion_jp_front.jpg' },
   'スターソルジャー': { plat: 'nes', file: 'Star Soldier (Japan)' },
   'パックランド': { plat: 'nes', file: 'Pac-Land (Japan)' },
   'バーガータイム': { plat: 'nes', file: 'BurgerTime (Japan)' },
@@ -4701,7 +4702,7 @@ function getRetroArt(name, plat) {
   var repo = match.plat === 'nes' ? 'Nintendo_-_Nintendo_Entertainment_System' : 'Sega_-_Mega_Drive_-_Genesis';
   var encFile = encodeURIComponent(match.file) + '.png';
   return {
-    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile,
+    cover: match.lb ? ('https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/' + match.lb) : ('https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile),
     lb: match.lb ? ('https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/' + match.lb) : '',
     snap: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Snaps/' + encFile
   };
@@ -4713,7 +4714,7 @@ function resolveItemCover(d, sz) {
   if (hasImgVal(d.cover_img)) return imgUrl(d.cover_img, sz || 320);
   var rawName = d.primary_name || d.zh_name || d.jp_name || d.en_name || '';
   var art = getRetroArt(rawName, d.platform || '');
-  if (art && art.cover) return art.cover;
+  if (art) return art.lb || art.cover || '';
   return '';
 }
 
