@@ -11,7 +11,8 @@
 | `收藏.xlsx` | 原始多工作表 Excel | 使用者本機的主收藏總表（包含各平台分頁：FC、MD、SS、PCE、3DO、PS5 等）。 |
 | `RetroVault_遊戲_FC.csv` | 前端雙標題 CSV | Famicom（FC）共 107 款完整版遊戲資料，包含最新爬取之外盒背面圖（`back_img`）與書脊圖（`spine_img`）。 |
 | `RetroVault_遊戲_MD.csv` | 前端雙標題 CSV | Sega Mega Drive（MD）共 33 款完整版遊戲資料，外盒背面圖 100% 齊全。 |
-| `RetroVault_GS_Games_全量匯入檔.xlsx` | Google 試算表對齊 Excel | 將 FC+MD 共 140 款遊戲嚴格按照 Google Apps Script 後端 `GAME_HEADERS` 56 欄對齊之檔案，供人工核對或直接貼上。 |
+| `RetroVault_遊戲_SFC.csv` | 前端雙標題 CSV | Super Famicom（SFC）共 177 款完整版遊戲資料，封面與實機截圖 100% 齊全，包含最新爬取之背盒圖（`back_img`）與書脊圖（`spine_img`）。 |
+| `RetroVault_GS_Games_全量匯入檔.xlsx` | Google 試算表對齊 Excel | 將 FC+MD+SFC 共 317 款遊戲嚴格按照 Google Apps Script 後端 `GAME_HEADERS` 57 欄對齊之檔案，供人工核對或直接匯入。 |
 | `RetroVault_GS_Games_全量匯入檔.csv` | Google 試算表對齊 CSV | 與上述 Excel 相同內容之 UTF-8 BOM CSV 格式。 |
 
 ---
