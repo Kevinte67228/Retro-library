@@ -2,7 +2,7 @@
 
 > 這份文件是給**接手這個專案的新 AI 助手**看的快速上手指南，目的是讓你在開始協作前，花 5 分鐘就能掌握「這是什麼專案、東西在哪裡、開發時要注意什麼」。詳細規則以 `GameVault_協作規則.md`、`GameVault_部署架構說明.md` 為準，這份文件是入口，不是取代它們。
 
-最後更新：2026-08-09（對應版本 前端 v03.13／GAS v03）
+最後更新：2026-10-16（對應版本 前端 v11.01／GAS v11）
 
 ---
 
@@ -27,11 +27,13 @@ RetroVault 是一個給電玩/動漫收藏玩家用的個人資料庫 PWA（單�
 | 協作規則、版本編號規則、部署流程 SOP、已知踩坑 | `_internal/GameVault_協作規則.md`（**最重要，每次對話都要重新抓最新版**） |
 | 部署架構細節（GitHub API 用法、GAS CI/CD 運作原理） | `_internal/GameVault_部署架構說明.md` |
 | 版本更新記錄（最近 4 筆） | `_internal/CHANGELOG.md` |
+| 收藏實體資料（原始總表、各平台 CSV、GS 對齊檔） | `data/`（專案根目錄保持乾淨，所有資料統一收管於此） |
+| 自建圖資鏡像庫存（具備 CORS 授權） | `docs/cdn/`（235 筆以上封底、側脊高解析圖檔，原生支援 CORS） |
 | 前端原始碼 | `docs/index.html`（單一檔案，~1MB，所有 HTML/CSS/JS 都在裡面） |
 | 後端原始碼 | `docs/RetroVault_AppsScript.gs` |
 | 使用手冊（給終端使用者看） | `docs/manual.html` |
 | 專案對外說明（GitHub 訪客會看到的） | repo 根目錄 `README.md`（入口）＋ `docs/README.md`（完整版） |
-| 部署腳本 | `_internal/github_deploy.py`、`_internal/gh_batch.py` |
+| 部署腳本與圖資管線 | `_internal/github_deploy.py`、`_internal/gh_batch.py`、`.agents/skills/retrovault-asset-pipeline/` |
 
 ## 技術架構（30 秒版本）
 
@@ -64,12 +66,16 @@ RetroVault 是一個給電玩/動漫收藏玩家用的個人資料庫 PWA（單�
 4. **`URL.createObjectURL()` 用完要記得 `revokeObjectURL()`**——圖片辨識的縮圖預覽曾經漏了這個，長時間使用會緩慢洩漏記憶體（v03.05 修過）。
 5. **GAS 邏輯異動要主動判斷是不是「實質變更」**，加 `LockService`這種「感覺只是加個保護」的異動也算數，要觸發版號重整規則，不要等部署完才想起來。
 6. **批次相關的全域 `entry` 變數是共用情境物件**——`_batchResolveAll()`／`batchSaveAll()` 平行處理時，準備階段（碰到全域 `entry`）必須維持循序執行，只有真正耗時的網路請求才平行化，否則多個項目會互相搶用同一個全域變數、資料互相覆蓋。
+7. **外部圖資缺少 CORS 標頭會導致「圖片無法旋轉」（Tainted Canvas）**：App 內建「🔄 旋轉 90°」會把圖片繪入 HTML5 `<canvas>`，如果圖片來自未開啟 CORS 標頭的外部 CDN（如 LaunchBox `images.launchbox-app.com`），呼叫 `canvas.toDataURL()` 會拋出 `SecurityError`。解決方案：所有外部圖資一律爬取備份到 `docs/cdn/`，透過 GitHub Raw（自帶 `Access-Control-Allow-Origin: *`）發布，並在前端 `imgUrl` / `_imgToB64` 加入自動轉址攔截。
+8. **實體資料庫修改時，CSV 與 XLSX 必須同步更新**：更新 `data/*.csv` 後，必須用 `openpyxl` 同步重新生成 `RetroVault_GS_Games_全量匯入檔.xlsx`，不可只改其一。
+9. **部署流程包含雙 Commit**：部署包含 1) 主程式 `github_deploy.py` 推送 `docs/` 與 `CHANGELOG.md`；2) `batch_commit` 推送 `data/` 資料庫。
 
 ## 目前已知但還沒處理的事項（供你評估要不要繼續）
 
 - **⚠️ Apps Script 部署網址可能在手冊截圖裡部分曝光**——`docs/Photo/0004.jpg` 這張截圖看得到網址開頭 `https://script.google.com/macros/s/AKfycb...`（被輸入框截斷，沒看到完整版）。因為部署設定是「存取權＝所有人」，網址本身就是唯一的存取控制手段。當時建議使用者要嘛逐張檢查全部 `docs/Photo/` 截圖有沒有完整曝光、要嘛乾脆重新產生一個新部署換掉網址比較保險——**這件事截至目前沒有確認使用者是否已經處理**，如果使用者又提到這個話題，先確認狀態再繼續。
 - **拍照辨識（`buildSYS`）跟 AI 補全（`aiKnowledgeFill`）用的是兩份不完全同步的欄位模板**——例如 `bonus_code_status` 只在 `AI_CAT_SPEC` 裡有列，`_SYS_GAME` 手調提示詞沒提到，代表純拍照辨識不會主動判斷 DLC 狀態，但事後觸發 AI 補全卻會。這不是 bug，是兩套機制天生的設計差異，但如果之後要讓兩邊完全同步，是一個可以做的優化方向。
-- **v02.109 稽核提到的 14 個死掉的 DOM id**——當時記錄「還沒清理」，這次對話沒有再處理，如果要做通用性的程式碼清潔可以考慮撿回來看。
+- **✅ v11.02 代碼全面體檢完成**——已全數清理舊版遺留的 14 個幽靈 DOM ID（包含 3 步驟掃描精靈殘餘邏輯），修復 CSS 註解黏連選擇器 bug、全域統一 `csvCell()` 逸出函式、將原生 `alert` 升級為 PWA 深色自訂彈窗 `_customAlert()`、並為所有第三方匯率/API 補上 AbortSignal 超時保護。
+- **🔒 特別鎖定基準版本（暫時標註不可清除）**：`RetroVault_v11_01_index.html`（batchAdd與全量匯入里程碑）與 `RetroVault_v11_02_index.html`（全方位代碼健康化基準），使用者特別指定**暫時標註不清除**，任何自動化清理程序皆不可刪除此二檔案。
 - **圖片欄位在不同畫面用了 7 種以上不同尺寸參數**（80/150/300/500/800/1000px 等）——之前評估過統一/精簡尺寸能減少快取碎片化，但風險較高（要逐一確認每個畫面實際需要多大的圖），暫緩。
 
 ## 開發時的工作方式（這個專案已經建立起來的協作習慣）

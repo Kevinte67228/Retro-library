@@ -1,6 +1,6 @@
 # GameVault 協作規則
 
-最後更新：2026-07-26（清除已無作用的 netlify.toml；修正部署架構說明.md 裡該檔案的路徑錯誤）
+最後更新：2026-10-17（加入圖資同步、自建鏡像 docs/cdn、本地資料庫備份與 GitHub 部署 SOP，修復 CORS 圖片旋轉限制）
 
 這份文件記錄 GameVault 的協作方式與部署規則，每次修改、產版、部署或整理檔案時依照這裡的規則處理。
 
@@ -212,9 +212,9 @@ GAS 端有專屬的 `processExtraImages()`／`extractExtraImageIds()` 處理陣�
 - 同一支 `screenScraperProxy()` 函式裡的 `'User-Agent': 'GameVault/2.0 (Google Apps Script)'`：跟上面 softname 屬於同一個 API 呼叫的一部分，保守起見一併保留不動。
 - 若之後要動這 4 處，務必先確認 Google Drive 資料夾遷移／ScreenScraper 開發者帳號更名都處理好，再回頭改程式碼，不要單獨改字串。
 
-**當前版本狀態（2026-08-09，v02→v03 版號重整後）：**
-- GS 後端：`v03`
-- HTML 前端：`v03.01`
+**當前版本狀態（2026-10-16，v10→v11 版號重整後）：**
+- GS 後端：`v11`
+- HTML 前端：`v11.01`
 - GitHub repo：`Kevinte67228/Retro-library`
 - GitHub Pages：`https://kevinte67228.github.io/Retro-library/`（從 `docs/` 資料夾部署，2026-07-26 確認）
 - GAS 後端：GitHub Actions 自動部署（詳見「GAS 後端 CI/CD 自動部署」章節），不再需要手動貼到 Apps Script 編輯器
@@ -251,25 +251,58 @@ Retro-library/
 │   └── icons/
 │       ├── icon-*.png/webp
 │       └── mkt-*.webp/jpg
+├── data/                    ← 收藏資料目錄（私有資料統一收管，保持根目錄乾淨）
+│   ├── README.md            ← data 目錄用途與各平台資料命名規範說明
+│   ├── 收藏.xlsx            ← 使用者本機原始收藏大表（各平台工作表）
+│   ├── RetroVault_遊戲_FC.csv ← Famicom (FC) 107 款完整版雙標題 CSV（含外盒背面與書脊圖）
+│   ├── RetroVault_遊戲_MD.csv ← Mega Drive (MD) 33 款完整版雙標題 CSV（含外盒背面與書脊圖）
+│   ├── RetroVault_GS_Games_全量匯入檔.xlsx ← 與 GAS 後端 GAME_HEADERS 56 欄對齊之備查檔
+│   └── RetroVault_GS_Games_全量匯入檔.csv  ← 與上述相同內容之 UTF-8 BOM CSV 檔
 ├── ~~netlify.toml~~          ← 舊 Netlify 時代殘留設定檔，已於 2026-07-26 確認無作用後刪除
 └── _internal/                ← 不部署（私有，GitHub Pages 完全不碰）
     ├── CHANGELOG.md        ← 版本更新記錄（最近 4 筆）
+    ├── FIELD_MAPPING.md    ← 試算表欄位對照規範
     ├── GameVault_協作規則.md
     ├── GameVault_部署架構說明.md
+    ├── AI_交接手冊.md
+    ├── backup_gs_games_408.json ← 🛡️ 舊試算表 408 筆資料安全備份快照
     ├── gh_batch.py          ← Git Data API 批次操作 helper（不含 token）
     ├── github_deploy.py    ← 自動部署腳本（呼叫 gh_batch.py，不含 token）
     └── old/                ← 版本備份（最近 5 個一般版，僅一般 vXX.YY 正式版；子版號/debug 版不備份；永久保留例外見上方「永久備份例外」）
-        ├── v01_02/         ← （範例：v01.01 發布重置後累積的第一批一般備份，5 版輪替）
-        ├── v01_03/
-        ├── v01_04/
-        ├── v01_05/
-        └── v01_06/
+        ├── v09_07/
+        ├── v09_08/
+        └── v10_01/
 ```
 
 **重要：**
 - `docs/` 只放對外公開的 PWA 部署檔案（2026-07-21 由 `GameVault/` 搬遷過來，改用 GitHub Pages 的「Deploy from a branch → main → /docs」機制，取代 Netlify）。
+- `data/` 專門收管使用者收藏總表、各主機平台爬蟲結果、CSV 匯出檔與全量試算表對齊檔。**專案根目錄必須保持乾淨，嚴禁隨意在根目錄放置資料檔案**。
 - `_internal/` 不在 GitHub Pages 發布範圍內，任何備份和內部文件都不公開。
 - Token 絕對不進 repo，每次由使用者提供。
+
+---
+
+## 資料管理與生命週期規範（data/ 與暫存檔案清理）
+
+### 1. 資料檔案集中收管原則（`data/`）
+* **集中管理**：所有使用者收藏總表（如 `收藏.xlsx`）、平台爬蟲抓取/提取資料、雙標題匯出/匯入 CSV、Google 試算表對齊全量檔，一律統一存放於 `data/` 目錄。
+* **未來擴充平台命名慣例**：未來若新增其他主機平台（如 SFC, PCE, SS, PS1~PS5, Switch 等）之資料，必須存放在 `data/` 目錄，命名統一遵循：
+  * 前端雙標題格式：`RetroVault_遊戲_<平台簡稱>.csv`（例如 `RetroVault_遊戲_SFC.csv`）。
+  * 試算表欄位對齊檔：`RetroVault_GS_<分類>_全量匯入檔.<xlsx/csv>`。
+
+### 2. 臨時檔案生命週期與清理規則（AI 開發自律規範）
+* **任務完成即刻清理原則**：在執行爬蟲、除錯排查、單次資料轉換或功能測試時，產生的臨時腳本（如 `fetch_*.py`、`test_*.py`、`inspect_*.py`、`check_*.py`、`dedup_*.py`、`*.png`、`__pycache__` 等）：
+  * **當主要任務驗證通過或資料成功入庫後，AI 必須主動清理所有一次性中繼檔案**，不得遺留在 `_internal/` 或根目錄造成專案檔案膨脹。
+* **永久保留白名單（清理時不可誤刪）**：
+  * 規範與文件：`AI_交接手冊.md`、`CHANGELOG.md`、`FIELD_MAPPING.md`、`GameVault_協作規則.md`、`GameVault_部署架構說明.md`、所有 `.skill` 文件。
+  * 部署工具：`gh_batch.py`、`github_deploy.py`。
+  * 版本封存：`_internal/old/`。
+  * 雲端備份檔：`_internal/backup_gs_*.json`（清理或重置試算表前之全量快照，供日後資料復原用）。
+  * 🔒 **特別鎖定基準版本（暫時標註不可清除）**：`docs/RetroVault_v11_01_index.html` 與 `docs/RetroVault_v11_02_index.html` 為全量匯入、batchAdd 與全面代碼檢驗重構的關鍵里程碑，在後續產版、自動部署清理舊版本 HTML 時**嚴禁刪除**，作為夢想計畫與任何回溯測試的絕對基準。
+
+### 3. 試算表大量寫入規範（`batchAdd` 優先原則）
+* **秒級批次寫入**：GAS 後端自 v11 起原生支援 `batchAdd` 動作（利用 Google Sheets 原生 `setValues()` 矩陣批次寫入）。
+* **禁止逐筆排隊**：未來針對大量（10 筆以上）的新增、匯入或批次寫入作業，**嚴禁使用單筆 `addRow` 循序寫入**（避免因圖片海外下載與行鎖導致逾時），一律呼叫 `batchAdd` 進行秒級全量寫入。
 
 ---
 
@@ -293,7 +326,7 @@ Retro-library/
 - `manifest.json`
 - `RetroVault_AppsScript.gs`（有更新時）
 
-並刪除舊的版本 HTML（`RetroVault_vXX_YY-1_index.html`）。子版號/debug 版因不產生新版本 HTML，故也不執行此刪除步驟。
+並刪除舊的版本 HTML（`RetroVault_vXX_YY-1_index.html`；⚠️**注意：已特別鎖定保護的 `RetroVault_v11_01_index.html` 與 `RetroVault_v11_02_index.html` 絕對不可刪除**）。子版號/debug 版因不產生新版本 HTML，故也不執行此刪除步驟。
 
 **4. 更新 CHANGELOG（併入同一次 commit，不要另外 push）**
 在 `_internal/CHANGELOG.md` 頂端插入新版記錄，超過 4 筆則刪最舊。子版號（`vXX.YYaN`）與 debug 版（`vXX.YYd`）用一行條列簡記即可，不需完整四段格式。
@@ -496,6 +529,38 @@ const STATIC_ASSETS = [
 - **PWA 快取**：確認 `CACHE_NAME` 已遞增，`STATIC_ASSETS` 路徑存在。
 - **中文邏輯測試**：一律用 Unicode escape 或從 UTF-8 檔案讀入。
 - **UI 欄位**：靜態 source check，確認 key/label 存在或已移除。
+
+---
+
+## 圖資同步、本地資料庫備份與 GitHub 建檔部署 SOP（Asset Pipeline）
+
+每次需要補齊遊戲封面、封底、側邊書脊或新增外部圖資時，必須依照下列完整的標準作業程序（SOP）執行，並可調用 `.agents/skills/retrovault-asset-pipeline/` 專用 Skill：
+
+### 1. 為什麼不能直接使用外部 CDN 連結？（CORS 與旋轉限制）
+- **核心限制**：App 內建「🔄 旋轉 90°」（`lbRotate`、`rotateFieldImg`）會把圖片繪入 HTML5 `<canvas>` 進行轉繪並匯出 Base64 保存。
+- **外部圖床痛點**：LaunchBox 等外部 CDN 伺服器（`images.launchbox-app.com`）缺少 `Access-Control-Allow-Origin: *` 回應標頭。前端瀏覽器抓取該圖繪入 Canvas 後，會觸發**受污染畫布（Tainted Canvas）**，在呼叫 `canvas.toDataURL()` 導出時被瀏覽器阻擋並拋出 `SecurityError`，導致圖片無法旋轉。
+- **自建鏡像解法**：GitHub Raw 官方源（`raw.githubusercontent.com`）具備原生 `Access-Control-Allow-Origin: *`。所有外部圖資必須**下載爬取存檔至 `docs/cdn/<filename>`** 並推送到 GitHub 倉庫，透過 GitHub Raw 提供無阻礙的高速 CORS 圖源。
+
+### 2. 六大步驟標準作業程序 (SOP)
+1. **外部圖資爬取（Crawl）**：
+   - 使用多執行緒爬取外部圖資至本地 `docs/cdn/<uuid>.<ext>`，驗證 HTTP 200 且檔案大小 > 0 bytes。
+   - 可調用：`python .agents/skills/retrovault-asset-pipeline/scripts/asset_pipeline.py --crawl`
+2. **Git Blobs 並行上傳與鏡像發布（Upload）**：
+   - 透過 `gh_batch.py` 的 `create_blob` 多執行緒併發建立 Git Blob。
+   - 封裝成單一 Git Tree 並產生 atomic commit 推送至 `main` 分支。
+   - 發布標準格式：`https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/<filename>`。
+3. **本地實體資料庫連動（Data Sync）**：
+   - 批次更新 `data/RetroVault_遊戲_FC.csv`、`data/RetroVault_遊戲_MD.csv`、`data/RetroVault_GS_Games_全量匯入檔.csv`。
+   - **強制要求**：更新 CSV 後，必須使用 `openpyxl` 將最新 CSV 重新全量生成 `data/RetroVault_GS_Games_全量匯入檔.xlsx`（57 欄位完整結構），維持 CSV 與 XLSX 雙向一致，嚴禁只改其一。
+4. **前端核心引擎自動轉址防禦（Auto Rewrite）**：
+   - 在 `docs/index.html` 的 `imgUrl(v)` 與 `_imgToB64(src)`，以及 `docs/cyber-museum.html` 的 `imgUrl(v)` 注入轉址攔截器，即使使用者的 Google 試算表中有歷史 LaunchBox 網址，執行時也會自動轉向自建 CDN，確保旋轉與載入 100% 成功。
+5. **版本遞增與合規審計（Audit）**：
+   - 遞增版本號（`#app-ver`、`#app-ver2`、`APP_VERSION`）與 PWA Service Worker `CACHE_NAME`（`retrovault-vXX-YY`）。
+   - 執行 `python _internal/deep_audit.py`，確認資產路徑、ID 唯一性、版號一致性全數綠燈通過。
+6. **雙 Commit 原子部署（Deploy & Push）**：
+   - 更新 `_internal/CHANGELOG.md`。
+   - Commit 1：`python _internal/github_deploy.py vXX_YY docs _internal/CHANGELOG.md`（部署 docs 與觸發 GitHub Pages）。
+   - Commit 2：使用 `gh_batch.batch_commit` 推送 `data/` 實體資料庫更新。
 
 ---
 
