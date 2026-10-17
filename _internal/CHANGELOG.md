@@ -1,3 +1,25 @@
+## v11.21 (2026-10-17)
+
+### 變更內容
+依據使用者要求，將全庫所有外部 CDN（LaunchBox 等無 CORS 標頭、導致無法直接旋轉之圖資）全量重爬存檔至本庫，全面自建鏡像並解除旋轉限制：
+
+1. **外部 CDN 圖資全庫重爬、自建庫存與徹底解決圖片無法旋轉問題**：
+   - **根因分析**：LaunchBox 外部 CDN 伺服器（`images.launchbox-app.com`）未設定 `Access-Control-Allow-Origin` 標頭，前端瀏覽器執行「🔄 旋轉 90°」時，因 CORS 安全性限制無法直接下載圖片像素，且繪入 Canvas 時觸發受污染畫布（Tainted Canvas）拋出 `SecurityError`，導致部分封底與側脊「無法旋轉」。
+   - **全量 235 張外部圖資重新爬取並常駐自建**：
+     - 將全庫所有 FC/MD 封底、書脊與 3D 展廳圖資全量多執行緒爬取（共 235 個圖檔，約 6.49 MB），統一收錄至本儲存庫之 `docs/cdn/` 目錄中，並以 Git Blob 批次原子提交至 GitHub `main` 分支。
+     - 透過 GitHub Raw（`https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/`）官方源發布，原生具備 `Access-Control-Allow-Origin: *` 授權，所有圖檔在燈箱與表單中均可 100% 自由旋轉 90° 並儲存。
+   - **核心引擎 `imgUrl()` 與 `_imgToB64()` 智慧轉址攔截**：
+     - 自動在執行時將所有歷史儲存之 `images.launchbox-app.com` 及 `gamesdb-images.launchbox.gg` 外部連結無縫轉址至本庫 GitHub Raw 高穩源，即便使用者試算表中存有歷史網址亦能無感享有自建圖庫與旋轉功能。
+   - **本機資料庫與所有頁面全面校正升級**：
+     - 全面更新 `RetroVault_遊戲_FC.csv`、`RetroVault_遊戲_MD.csv`、`RetroVault_GS_Games_全量匯入檔.csv` 與重新全量生成 `RetroVault_GS_Games_全量匯入檔.xlsx`。
+     - 同步更新 `docs/cyber-museum.html`（一併修正 8 筆展示樣本之舊版 UUID 錯字）與 `docs/3d-viewer.html`。
+
+2. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.21` / `retrovault-v11-21`。
+   - 部署保護清單更新保留 `v11.19` 與 `v11.20`。
+
+---
+
 ## v11.20 (2026-10-17)
 
 ### 變更內容

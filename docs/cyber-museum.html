@@ -931,7 +931,7 @@ var RETRO_ART_MAP = {
   'ナムクラシック': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
   'Namco Classic': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
   'スーパーマリオブラザーズ': { plat: 'nes', file: 'Super Mario Bros. (Japan, USA)' },
-  'スーパーマリオブラザーズ3': { plat: 'nes', file: 'Super Mario Bros. 3 (Japan)', lb: '045b85dd-e230-4809-80de-914fb0f98e7d.jpg' },
+  'スーパーマリオブラザーズ3': { plat: 'nes', file: 'Super Mario Bros. 3 (Japan)', lb: '0b53dbdc-230d-41fb-b391-db28b5001603.jpg' },
   '熱血高校ドッジボール部': { plat: 'nes', file: 'Nekketsu Koukou Dodgeball-bu (Japan)' },
   'ナムコット麻雀III': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
   'ナムコット麻雀III マージャン天国': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
@@ -1068,7 +1068,7 @@ function getRetroArt(name, plat) {
 
   // 2. LaunchBox 官方原裝圖庫
   if (match.lb) {
-    var lbUrl = 'https://images.launchbox-app.com/' + match.lb;
+    var lbUrl = 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/' + match.lb;
     coverList.push(lbUrl);
     snapList.push(lbUrl);
   }
@@ -1103,8 +1103,8 @@ var DEMO_COLLECTION = [
     developer: 'KOEI',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%20(Japan).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Sangokushi%20(Japan).png',
-    back_img: 'https://images.launchbox-app.com/ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg',
-    spine_img: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba8b2b849aff.jpg',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/95c5c000-460d-469d-943a-ba8b2b849aff.jpg',
     completeness: '盒裝完整',
     market_value: '1800',
     barcode: '4988615000577',
@@ -1117,8 +1117,8 @@ var DEMO_COLLECTION = [
     developer: 'NAMCO',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Sangokushi%202%20-%20Haou%20no%20Tairiku%20(1992-06-10)(Namco)(JP).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Sangokushi%202%20-%20Haou%20no%20Tairiku%20(1992-06-10)(Namco)(JP).png',
-    back_img: 'https://images.launchbox-app.com/da74e1cf-0ed1-4d29-830f-26d652c86ce2.png',
-    spine_img: 'https://images.launchbox-app.com/16a9b646-6264-48f5-bc9f-abc90bea4788.jpg',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/da74e1cf-0ed1-4d29-830f-26d652c86ce2.png',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/16a9b646-6264-48f5-bc9f-abc90bea4788.jpg',
     completeness: '美品',
     market_value: '2200',
     barcode: '4907892000569',
@@ -1131,8 +1131,8 @@ var DEMO_COLLECTION = [
     developer: 'NAMCO',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Namco%20Classic%20(Japan).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Namco%20Classic%20(Japan).png',
-    back_img: 'https://images.launchbox-app.com/045b85dd-e230-4809-80de-9145858621ec.png',
-    spine_img: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d83036382b3a.png',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/045b85dd-e230-4809-80de-9145858621ec.png',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/d6dfb20b-429c-4830-8c92-d83036382b3a.png',
     completeness: '良好',
     market_value: '650',
     barcode: '4907892000354',
@@ -1145,8 +1145,8 @@ var DEMO_COLLECTION = [
     developer: 'Nintendo',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Boxarts/Super%20Mario%20Bros.%203%20(Japan).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/master/Named_Snaps/Super%20Mario%20Bros.%203%20(Japan).png',
-    back_img: 'https://images.launchbox-app.com/045b85dd-e230-4809-80de-914fb0f98e7d.jpg',
-    spine_img: 'https://images.launchbox-app.com/d6dfb20b-429c-4830-8c92-d8329b35a399.jpg',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/0b53dbdc-230d-41fb-b391-db28b5001603.jpg',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/d6dfb20b-429c-4830-8c92-d83036382b3a.png',
     completeness: '盒書齊全',
     market_value: '1500',
     barcode: '4902370832044',
@@ -1217,8 +1217,8 @@ var DEMO_COLLECTION = [
     developer: 'SNK / Takara',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Garou%20Densetsu%20-%20Shukumei%20no%20Tatakai%20(Japan).png',
-    back_img: 'https://images.launchbox-app.com/0e22f16d-cf0f-46d4-963f-3543666270b2.jpg',
-    spine_img: 'https://images.launchbox-app.com/f3598c0e-5181-4950-bcb3-f495535dfd97.jpg',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/0e22f16d-cf0f-46d4-963f-354f0b251d5d.jpg',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/f3598c0e-5181-4950-bcb3-f490063c0432.jpg',
     completeness: '盒裝完整',
     market_value: '1600',
     barcode: '4904880132331',
@@ -1231,8 +1231,8 @@ var DEMO_COLLECTION = [
     developer: 'SEGA',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Advanced%20Daisenryaku%20-%20Deutsch%20Dengeki%20Sakusen%20(Japan)%20(Rev%20A).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Advanced%20Daisenryaku%20-%20Deutsch%20Dengeki%20Sakusen%20(Japan)%20(Rev%20A).png',
-    back_img: 'https://images.launchbox-app.com/1ba5ca41-245a-41cf-b706-a89c894236a9.jpg',
-    spine_img: 'https://images.launchbox-app.com/d906551d-4af5-402b-9cc8-3d17d3d75a61.jpg',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/d906551d-4af5-402b-9cc8-3d13ede6777c.jpg',
     completeness: '美品',
     market_value: '1900',
     barcode: '4974365540135',
@@ -1245,8 +1245,8 @@ var DEMO_COLLECTION = [
     developer: 'Electronic Arts',
     cover_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Boxarts/Populous%20(Japan).png',
     gameplay_img: 'https://raw.githubusercontent.com/libretro-thumbnails/Sega_-_Mega_Drive_-_Genesis/master/Named_Snaps/Populous%20(Japan).png',
-    back_img: 'https://images.launchbox-app.com/135f9c65-c4ca-40ce-8977-1c78bbfca99e.jpg',
-    spine_img: 'https://images.launchbox-app.com/fa910a05-4094-44e2-a51f-a90a07153641.jpg',
+    back_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/135f9c65-c4ca-40ce-8977-1c71b8d3dbda.jpg',
+    spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/fa910a05-4094-44e2-a51f-a90abb795069.jpg',
     completeness: '普通',
     market_value: '750',
     barcode: '4988602559074',
@@ -1509,6 +1509,12 @@ function imgUrl(v, sz) {
   if (!v || typeof v !== 'string') return '';
   if (v.indexOf('cdn.jsdelivr.net/gh/libretro-thumbnails/') >= 0) {
     v = v.replace('cdn.jsdelivr.net/gh/libretro-thumbnails/', 'raw.githubusercontent.com/libretro-thumbnails/').replace('@master/', '/master/');
+  }
+  if (v.indexOf('images.launchbox-app.com/') >= 0) {
+    v = v.replace('https://images.launchbox-app.com/', 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/');
+  }
+  if (v.indexOf('gamesdb-images.launchbox.gg/') >= 0) {
+    v = v.replace('https://gamesdb-images.launchbox.gg/', 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/');
   }
   if (v.indexOf('data:') === 0 || v.indexOf('http') === 0) return v;
   return 'https://drive.google.com/thumbnail?id=' + v + '&sz=w' + (sz || 600);
@@ -1829,9 +1835,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.20)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.21)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.20').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.21').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');

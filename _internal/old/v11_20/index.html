@@ -1086,7 +1086,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.15</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.20</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -2585,7 +2585,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.15</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.20</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -3005,7 +3005,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.15';
+const APP_VERSION='v11.20';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4552,14 +4552,164 @@ function toast(m,t,d,pos){
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
-// 圖片來源轉換：data: 直接用（剛拍的預覽）；http 原樣；其餘視為 Drive 檔案 ID → 組縮圖網址
+// 圖片來源轉換：data: 直接用（剛拍的預覽）；http 原樣（自動將不穩定 jsDelivr 轉換為高穩之 GitHub Raw）；其餘視為 Drive 檔案 ID → 組縮圖網址
 function imgUrl(v,sz){
   if(!v||typeof v!=='string')return '';
+  if(v.indexOf('cdn.jsdelivr.net/gh/libretro-thumbnails/')>=0){
+    v=v.replace('cdn.jsdelivr.net/gh/libretro-thumbnails/','raw.githubusercontent.com/libretro-thumbnails/').replace('@master/','/master/');
+  }
   if(v.indexOf('data:')===0||v.indexOf('http')===0)return v;
   return 'https://drive.google.com/thumbnail?id='+v+'&sz=w'+(sz||400);
 }
 // 是否有圖（data: 或 Drive ID 皆算）
-function hasImgVal(v){return !!(v&&typeof v==='string'&&v.length>0);}
+function hasImgVal(v){return !!(v&&typeof v==='string'&&v.trim().length>0);}
+
+// 經典復古遊戲封面自動補齊映射表（當收藏記錄未上傳封面時的自動高品質備援）
+var RETRO_ART_MAP = {
+  // ── FC 紅白機 ──
+  'キャプテン翼': { plat: 'nes', file: 'Captain Tsubasa (Japan)', lb: 'ccf0c30e-1f5e-46fe-afee-42bd7e651796.jpg' },
+  '十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
+  'ポケットザウルス 十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
+  '三国志': { plat: 'nes', file: 'Sangokushi (Japan)', lb: 'ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg' },
+  '三国志II': { plat: 'nes', file: 'Sangokushi II (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
+  '三国志II 覇王の大陸': { plat: 'nes', file: 'Sangokushi 2 - Haou no Tairiku (1992-06-10)(Namco)(JP)', lb: 'a6e950df-59bc-41e1-b06c-dcaf092a9cde.jpg' },
+  '覇王の大陸': { plat: 'nes', file: 'Sangokushi 2 - Haou no Tairiku (1992-06-10)(Namco)(JP)', lb: 'a6e950df-59bc-41e1-b06c-dcaf092a9cde.jpg' },
+  '三国志 中原の覇者': { plat: 'nes', file: 'Sangokushi - Chuugen no Hasha (Japan)' },
+  'ナムクラシック': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
+  'Namco Classic': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
+  'スーパーマリオブラザーズ': { plat: 'nes', file: 'Super Mario Bros. (Japan, USA)' },
+  'スーパーマリオブラザーズ3': { plat: 'nes', file: 'Super Mario Bros. 3 (Japan)', lb: '045b85dd-e230-4809-80de-914fb0f98e7d.jpg' },
+  '熱血高校ドッジボール部': { plat: 'nes', file: 'Nekketsu Koukou Dodgeball-bu (Japan)' },
+  'ナムコット麻雀III': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
+  'ナムコット麻雀III マージャン天国': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
+  'パーフェクトボウリング': { plat: 'nes', file: 'Perfect Bowling (Japan)' },
+  'パーフェクトボーリング': { plat: 'nes', file: 'Perfect Bowling (Japan)' },
+  '影の伝説': { plat: 'nes', file: 'Kage no Densetsu (Japan)' },
+  'クインティ': { plat: 'nes', file: 'Quinty (Japan)', lb: '5ed1e558-92d2-4baa-8946-28ea843da344.png' },
+  'Quinty': { plat: 'nes', file: 'Quinty (Japan)', lb: '5ed1e558-92d2-4baa-8946-28ea843da344.png' },
+  'さんまの名探偵': { plat: 'nes', file: 'Sanma no Meitantei (Japan)', lb: '9d83bee8-4ba8-4bb8-be82-3115eebfe2fd.jpg' },
+  'ファミリースタジアム 開幕版': { plat: 'nes', file: 'Pro Yakyuu - Family Stadium (Japan)', lb: '93d0753b-cf8c-4c5e-9996-7c9b1020bb22.jpg' },
+  'ファミリースタジアム\'88年度版': { plat: 'nes', file: 'Pro Yakyuu - Family Stadium \'88 (Japan)', lb: 'f2bd9be0-5908-4ddc-810b-3d995f018fec.jpg' },
+  'ファミスタ\'89 開幕版': { plat: 'nes', file: 'Famista \'89 - Kaimaku Ban!! (Japan)', lb: '8fb46976-74f0-4d66-bcfe-d8ec79631729.jpg' },
+  'ファミスタ\'90': { plat: 'nes', file: 'Famista \'90 (Japan)', lb: '93240dc8-6979-432c-ab21-ed2bb3280412.jpg' },
+  'ファミスタ\'91': { plat: 'nes', file: 'Famista \'91 (Japan)', lb: 'a3c1d6b7-ebd5-49da-8802-695130dccdfc.png' },
+  'ファミスタ\'92': { plat: 'nes', file: 'Famista \'92 (Japan)', lb: '7140acbc-d4c1-448f-979e-31a945d6bd26.png' },
+  'ファミスタ\'93': { plat: 'nes', file: 'Famista \'93 (Japan)', lb: 'ad489cf3-805b-4951-aa3d-6a32327d9bbb.jpg' },
+  'ファミリーマージャンII 上海への道': { plat: 'nes', file: 'Family Mahjong II - Shanghai e no Michi (Japan)', lb: 'adc2bf8e-b37f-4173-9122-4d60a7267536.jpg' },
+  'ファミリーサーキット': { plat: 'nes', file: 'Family Circuit (Japan)', lb: '0efd3afd-d7c6-462e-9c39-7b3a003a9174.jpg' },
+  'ファミリーサーキット\'91': { plat: 'nes', file: 'Family Circuit \'91 (Japan) (En)', lb: '1bb937b7-6502-4205-8c30-5ac4b4432f76.png' },
+  'ファミリージョッキー': { plat: 'nes', file: 'Family Jockey (Japan)', lb: 'e8ed2803-8d68-4314-8427-b4072ca1dc2f.jpg' },
+  'サイドポケット': { plat: 'nes', file: 'Side Pocket (Japan)', lb: 'b3f5d510-586a-47c7-8d66-ac25cd3a2d1e.jpg' },
+  'ドラゴンクエスト': { plat: 'nes', file: 'Dragon Quest (Japan)' },
+  'ドラゴンクエストII': { plat: 'nes', file: 'Dragon Quest II - Akuryou no Kamigami (Japan)' },
+  'ドラゴンクエストIII': { plat: 'nes', file: 'Dragon Quest III - Soshite Densetsu e... (Japan)' },
+  'ドラゴンクエストIV': { plat: 'nes', file: 'Dragon Quest IV - Michibikareshi Monotachi (Japan)' },
+  'ファイナルファンタジー': { plat: 'nes', file: 'Final Fantasy (Japan)' },
+  'ファイナルファンタジーII': { plat: 'nes', file: 'Final Fantasy II (Japan)' },
+  'ファイナルファンタジーIII': { plat: 'nes', file: 'Final Fantasy III (Japan)' },
+  'エキサイトバイク': { plat: 'nes', file: 'Excitebike (Japan)' },
+  'ドクターマリオ': { plat: 'nes', file: 'Dr. Mario (Japan, USA)' },
+  'スターソルジャー': { plat: 'nes', file: 'Star Soldier (Japan)' },
+  'パックランド': { plat: 'nes', file: 'Pac-Land (Japan)' },
+  'バーガータイム': { plat: 'nes', file: 'BurgerTime (Japan)' },
+  'ロードファイター': { plat: 'nes', file: 'Road Fighter (Japan)' },
+  '燃えろ!!プロ野球': { plat: 'nes', file: 'Moero!! Pro Yakyuu (Japan)' },
+  '4人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  '４人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  'ぎゅわんぶらあ自己中心派': { plat: 'nes', file: 'Gambler Jiko Chuushinha (Japan)' },
+  'ぎゅわんぶらあ自己中心派2': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'ぎゅわんぶらあ自己中心派2 激闘！東京マージャンランド編': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'タイトドライバー': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトドライバー 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'Taito Grand Prix': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'ガチャポン戦士2': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'SDガンダムワールド ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'キングコング2': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトンパンチ': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトン': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+
+  // ── MD 世嘉五代 ──
+  'アドバンスド大戦略': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)', lb: '1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg' },
+  'アドバンスド大戦略 ～ドイツ電撃作戦～': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)', lb: '1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg' },
+  'SUPER大戦略': { plat: 'md', file: 'Super Daisenryaku (Japan)', lb: 'df447208-c066-4795-b328-e1a2d1672ddf.jpg' },
+  'SUPER 大戦略': { plat: 'md', file: 'Super Daisenryaku (Japan)', lb: 'df447208-c066-4795-b328-e1a2d1672ddf.jpg' },
+  '餓狼伝説': { plat: 'md', file: 'Garou Densetsu - Shukumei no Tatakai (Japan)', lb: '0e22f16d-cf0f-46d4-963f-354f0b251d5d.jpg' },
+  '餓狼伝説 (THE BATTLE OF DESTINY)': { plat: 'md', file: 'Garou Densetsu - Shukumei no Tatakai (Japan)', lb: '0e22f16d-cf0f-46d4-963f-354f0b251d5d.jpg' },
+  'ポピュラス': { plat: 'md', file: 'Populous (Japan)', lb: '135f9c65-c4ca-40ce-8977-1c71b8d3dbda.jpg' },
+  'Populous': { plat: 'md', file: 'Populous (Japan)', lb: '135f9c65-c4ca-40ce-8977-1c71b8d3dbda.jpg' },
+  'ソニック': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  'ソニック・ザ・ヘッジホッグ': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  'Sonic The Hedgehog': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  '斬・夜叉円舞曲': { plat: 'md', file: 'Zan Yasha Enbukyoku (Japan)', lb: 'a14f85ff-8469-4d54-a687-e5de8eac08fc.jpg' },
+  '三國志列伝 乱世の英雄たち': { plat: 'md', file: 'Sangokushi Retsuden - Ransei no Eiyuutachi (Japan)', lb: 'f4c1b249-8f77-4816-9cf4-c2d98ec8b422.jpg' },
+  'NHK 太平記': { plat: 'md', file: 'NHK Taiga Drama - Taiheiki (Japan)', lb: '8e8ffa12-06ac-465f-9e01-8c03d76e7e3c.jpg' },
+  'NHK大河ドラマ 太平記': { plat: 'md', file: 'NHK Taiga Drama - Taiheiki (Japan)', lb: '8e8ffa12-06ac-465f-9e01-8c03d76e7e3c.jpg' },
+  'アイルトン・セナ スーパーモナコGP II': { plat: 'md', file: 'Ayrton Senna\'s Super Monaco GP II (Japan)', lb: '83ee826e-1b58-4f00-bc40-de2996623b88.jpg' },
+  'VERMILION (ヴァーミリオン)': { plat: 'md', file: 'Vermilion (Japan)', lb: '81fc5962-ce73-41aa-b194-7f8205f3fd5b.jpg' },
+  'スーパーリーグ': { plat: 'md', file: 'Super League (Japan)', lb: 'a94bdd9b-644f-4e53-8695-48be8ef5498d.jpg' },
+  'スペースハリアーII': { plat: 'md', file: 'Space Harrier II (Japan, USA) (En,Ja)', lb: 'a159692a-373d-4f50-84c3-9392cd2745f4.jpg' },
+  'バハムート戦記': { plat: 'md', file: 'Bahamut Senki (Japan)', lb: '2d00bcf3-f3d7-46f3-8a6c-c94f0d804f3c.jpg' },
+  'サンダープロレスリング列伝': { plat: 'md', file: 'Thunder Pro Wrestling Retsuden (Japan)', lb: '95339a61-19ae-4ca6-aa8e-d26e945a5274.jpg' },
+  'SORCERIAN (ソーサリアン)': { plat: 'md', file: 'Sorcerian (Japan)', lb: 'cffe7614-fdba-4d79-8782-f0fa79a998b9.jpg' },
+  'NEW 3D GOLF SIMULATION 遥かなるオーガスタ': { plat: 'md', file: 'New 3D Golf Simulation - Harukanaru Augusta (Japan)', lb: '77109dd0-7bda-4665-ac48-95fbfca9eaed.jpg' },
+  'ファイナル・ブロー': { plat: 'md', file: 'Final Blow (Japan) (En)', lb: 'ae5c73b6-87d4-4917-9815-976df7556c55.jpg' },
+  'コラムス': { plat: 'md', file: 'Columns (Japan) (En)', lb: '329264aa-6487-4b1a-ac61-c8a8ec4bb512.jpg' },
+  'ぷよぷよ': { plat: 'md', file: 'Puyo Puyo (Japan)', lb: '3b0fc2f7-42fc-4a4e-8498-99893577233e.jpg' },
+  'ジョー モンタナ フットボール': { plat: 'md', file: 'Joe Montana Football (Japan)', lb: '8aa5f09c-84c2-463b-9489-43e707619e9d.jpg' },
+  'プロストライカー': { plat: 'md', file: 'J. League Pro Striker (Japan)', lb: 'f9b8b096-53c5-4b29-a6aa-8e019adc5bf0.jpg' },
+  'キューティー鈴木の リングサイドエンジェル': { plat: 'md', file: 'Cutie Suzuki no Ringside Angel (Japan)', lb: 'b84c7752-25d2-4f0c-8a12-e4a66a4a3c2c.jpg' },
+  '修羅の門': { plat: 'md', file: 'Shura no Mon (Japan)', lb: '59b92211-e167-4332-bb2b-af73deffa91e.jpg' },
+  'シャイニング・フォースII 古えの封印': { plat: 'md', file: 'Shining Force II - Inishie no Fuuin (Japan)', lb: '8edb1afd-228a-40b9-b582-c196037a9c85.jpg' },
+  'シャイニング・フォース ～神々の遺産～': { plat: 'md', file: 'Shining Force - Kamigami no Isan (Japan)', lb: 'be157676-8227-4455-81d4-f6e023992c8b.jpg' },
+  'シャイニング＆ザ・ダクネス': { plat: 'md', file: 'Shining in the Darkness (Japan)', lb: '09be0ea7-c232-4391-b48c-4653b633b427.jpg' },
+  'ランドストーカー ～皇帝の財宝～': { plat: 'md', file: 'Landstalker - Koutei no Zaihou (Japan)', lb: 'ab1a4c23-df55-47d5-9a09-3af22835683a.jpg' },
+  'ランドストーカー': { plat: 'md', file: 'Landstalker - Koutei no Zaihou (Japan)', lb: 'ab1a4c23-df55-47d5-9a09-3af22835683a.jpg' },
+  '時の継承者 ファンタシースターIII': { plat: 'md', file: 'Phantasy Star III - Toki no Keishousha (Japan)', lb: 'b17eefce-1f26-46c0-8f1d-25e974bfc5a6.jpg' },
+  'ファンタシースターII 還らざる時の終わりに': { plat: 'md', file: 'Phantasy Star II - Kaerazaru Toki no Owari ni (Japan)', lb: 'fbad7ca7-277b-4d36-992f-7b7e30e6a403.jpg' },
+  'ファンタシースターII': { plat: 'md', file: 'Phantasy Star II - Kaerazaru Toki no Owari ni (Japan)', lb: 'fbad7ca7-277b-4d36-992f-7b7e30e6a403.jpg' },
+  'ファンタシースター ～千年紀の終りに～': { plat: 'md', file: 'Phantasy Star - Sennenki no Owari ni (Japan)', lb: '71343a42-76e3-4fa3-aa10-68f3664ca3ec.jpg' },
+  '忍者武雷伝説': { plat: 'md', file: 'Ninja Burai Densetsu (Japan)', lb: '4001be79-73b1-492e-ac12-d048cf2e2479.jpg' },
+  '乱世の覇者': { plat: 'md', file: 'Ransei no Hasha (Japan)', lb: '6758ce4f-4237-4cd0-8d8c-1d2692abe90d.jpg' },
+  'ドラゴンボールZ 武勇烈伝': { plat: 'md', file: 'Dragon Ball Z - Buyuu Retsuden (Japan)', lb: '13e8968e-2ade-48db-84eb-75aabfb0b401.jpg' },
+  'スーパーハングオン': { plat: 'md', file: 'Super Hang-On (Japan, USA) (En,Ja)', lb: '44d711df-cb04-465d-ad74-95d54afdf269.jpg' }
+};
+
+function getRetroArt(name, plat) {
+  var clean = String(name || '').trim();
+  if (!clean) return null;
+  var match = RETRO_ART_MAP[clean];
+  if (!match) {
+    var keys = Object.keys(RETRO_ART_MAP);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (clean.indexOf(k) >= 0 || k.indexOf(clean) >= 0) {
+        match = RETRO_ART_MAP[k];
+        break;
+      }
+    }
+  }
+  if (!match) return null;
+  var repo = match.plat === 'nes' ? 'Nintendo_-_Nintendo_Entertainment_System' : 'Sega_-_Mega_Drive_-_Genesis';
+  var encFile = encodeURIComponent(match.file) + '.png';
+  return {
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile,
+    lb: match.lb ? ('https://images.launchbox-app.com/' + match.lb) : '',
+    snap: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Snaps/' + encFile
+  };
+}
+
+// 自動回傳有效封面縮圖（用戶自訂優先，未填時自動透過開源復古圖庫補全）
+function resolveItemCover(d, sz) {
+  if (!d) return '';
+  if (hasImgVal(d.cover_img)) return imgUrl(d.cover_img, sz || 320);
+  var rawName = d.primary_name || d.zh_name || d.jp_name || d.en_name || '';
+  var art = getRetroArt(rawName, d.platform || '');
+  if (art && art.cover) return art.cover;
+  return '';
+}
 
 // ── Config ──
 // ═══ API 申請指南資料 ═══
@@ -6686,8 +6836,9 @@ function renderSeriesBrowse(){
       var cat=catInternal(d.category)||'遊戲';
       var _icon=_catMeta(cat,d.subtype).icon;
       var uid=c.uid||c.rowNum;
-      var thumb=hasImgVal(d.cover_img)?
-        '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+      var _cov=resolveItemCover(d,320);
+      var thumb=_cov?
+        '<img src="'+_cov+'" alt="" loading="lazy">':
         '<div>'+_icon+'</div>';
       var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
       return '<div class="gv-card" onclick="closeSeriesBrowse();filterCol();showDetail(\''+_escAttr(uid)+'\')">'+
@@ -14902,7 +15053,8 @@ function renderDash(){
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
     // v02.92\uff1a\u4f7f\u7528\u8005\u5be6\u6e2c\u56de\u5831\u5e0c\u671b\u300c\u6700\u8fd1\u5165\u624b\u300d\u4e5f\u80fd\u770b\u5230\u5c01\u9762\u7e2e\u5716\uff0c\u4e0d\u53ea\u662f\u5206\u985e emoji\u3002\u6cbf\u7528\u8207\u6536\u85cf\u5217\u8868\uff08renderColList\uff09\u76f8\u540c\u7684 hasImgVal/imgUrl \u5224\u65b7\uff0c有封面照就顯示縮圖，沒有才退回原本的分類 icon。
-    var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':ico;
+    var _cov=resolveItemCover(d,80);
+    var thumb=_cov?'<img src="'+_cov+'" alt="" loading="lazy">':ico;
     return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
       '<div class="dv2-ri-ic">'+thumb+'</div>'+
       '<div style="flex:1;min-width:0">'+
@@ -15323,8 +15475,9 @@ function renderGalleryView(){
     var cat=catInternal(d.category)||'遊戲';
     var _icon=_catMeta(cat,d.subtype).icon;
     var uid=item.uid||item.rowNum;
-    var thumb=hasImgVal(d.cover_img)?
-      '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+    var _cov=resolveItemCover(d,320);
+    var thumb=_cov?
+      '<img src="'+_cov+'" alt="" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div>'+_icon+'</div>\';">':
       '<div>'+_icon+'</div>';
     var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
     var _isSel=_colSel&&_colSelSet.has(String(uid));
@@ -16347,9 +16500,10 @@ function renderGlist(){
     var cat=catInternal(d.category)||'遊戲';
     var shortPlat=platShort(d.platform||'');
     var _icon=_catMeta(cat,d.subtype).icon;
-    // 縮圖：優先 cover_img，否則 emoji
-    var thumb=hasImgVal(d.cover_img)?
-      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt="" loading="lazy"></div>':
+    // 縮圖：優先 cover_img，否則開源圖庫自動備援，最後退回 emoji
+    var _cov=resolveItemCover(d,150);
+    var thumb=_cov?
+      '<div class="gc-thumb"><img class="cover-bg" src="'+_cov+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+_cov+'" alt="" loading="lazy"></div>':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
@@ -17547,8 +17701,10 @@ function detailHeroHtml(d,rowNum){
   // v47.04：hero 封面區不再提供快速拍照/相簿按鈕，所有圖片修改一律從「編輯」進入；
   // 點主圖／縮圖改為彈出燈箱瀏覽（含自訂圖片），燈箱有打叉關閉與左右箭頭換圖
   var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img),hasG=hasImgVal(d.gameplay_img);
+  var _autoCov=!hasC?resolveItemCover(d,300):'';
   var _imgDefs=[];
   if(hasC)_imgDefs.push({key:'cover_img',lbl:'封面',raw:d.cover_img,url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
+  else if(_autoCov)_imgDefs.push({key:'cover_img',lbl:'官方封面（自動補齊）',raw:_autoCov,url:_autoCov,full:_autoCov,thumb:_autoCov});
   if(hasB)_imgDefs.push({key:'back_img',lbl:'封底',raw:d.back_img,url:imgUrl(d.back_img,300),full:imgUrl(d.back_img,1000),thumb:imgUrl(d.back_img,80)});
   if(hasS)_imgDefs.push({key:'spine_img',lbl:'側邊',raw:d.spine_img,url:imgUrl(d.spine_img,300),full:imgUrl(d.spine_img,1000),thumb:imgUrl(d.spine_img,80)});
   if(hasG)_imgDefs.push({key:'gameplay_img',lbl:'遊戲畫面',raw:d.gameplay_img,url:imgUrl(d.gameplay_img,300),full:imgUrl(d.gameplay_img,1000),thumb:imgUrl(d.gameplay_img,80)});
@@ -17572,7 +17728,8 @@ function detailHeroHtml(d,rowNum){
   }
   coverHtml+='</div>';
   var actionsHtml='';
-  if(hasC){
+  var effectiveCover=hasC?imgUrl(d.cover_img,1000):_autoCov;
+  if(effectiveCover){
     var _3dUrl='./3d-viewer.html?name='+encodeURIComponent(title)+
       '&platform='+encodeURIComponent(d.platform||cat)+
       '&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+

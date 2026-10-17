@@ -242,7 +242,7 @@
           barcode: '49' + String(10000000000 + i).slice(0, 11),
           storage_location: '防潮箱 ' + String.fromCharCode(65 + (i % 6)) + (i % 4 + 1),
           cover_img: 'https://cdn.jsdelivr.net/gh/libretro-thumbnails/Nintendo_-_Nintendo_Entertainment_System/Named_Boxarts/Super%20Mario%20Bros.%20(World).png',
-          spine_img: 'https://images.launchbox-app.com/95c5c000-460d-469d-943a-ba86e8812c3f.jpg'
+          spine_img: 'https://raw.githubusercontent.com/Kevinte67228/Retro-library/main/docs/cdn/95c5c000-460d-469d-943a-ba8b2b849aff.jpg'
         });
       }
       return dummy;
