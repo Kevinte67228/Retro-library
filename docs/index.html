@@ -1088,7 +1088,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.30</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.31</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -1767,7 +1767,7 @@ body{
           </div>
           <div id="save-bar">
             <button class="btn bo" id="form-cancel-btn" style="padding:10px 16px;flex-shrink:0;color:#7986cb" onclick="resetAll()" type="button">取消</button>
-            <button class="btn bp bw" id="save-btn" onclick="doSave()" type="button" style="flex:1;min-width:0">儲存至收藏</button>
+            <button class="btn bp bw" id="save-btn" onclick="handleSaveBtnClick()" type="button" style="flex:1;min-width:0">儲存至收藏</button>
             <button class="btn bo" id="det-fab-main" onclick="toggleDetFab()" aria-label="更多功能" type="button" style="display:none;flex-shrink:0;padding:10px 14px">•••</button>
           </div>
         </div>
@@ -2587,7 +2587,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.30</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.31</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -3007,7 +3007,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v11.30';
+const APP_VERSION='v11.31';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -4395,7 +4395,7 @@ function buildSYS(){return _buildSYSForCat(_selectedType);}
 // 🤖🤖🤖 ═══ AI 辨識區塊 END（1/2）═══ 🤖🤖🤖
 
 // ── State ──
-var cfg={}, entry={}, edited=new Set(), col=[], filtered=[], activeF='all', detailRow=null;
+var cfg={}, entry={}, edited=new Set(), col=[], filtered=[], activeF='all', detailRow=null, _editingRowKey=null;
 var _region='jp'; // 商品區域（v23.03）：jp/asia/us/other；持久化進 cfg；影響 API 路由與 AI prompt
 // ── 排序 ── desc=該依據第一次點選時的預設方向（true=降冪）
 var SORT_FIELDS=[
@@ -6317,11 +6317,32 @@ function colRefresh(){
   loadCol(false,true);
 }
 var _saving=false;
-function doSave(){
-  // v02.52：防護——不管 save-btn.onclick 有沒有被其他背景流程（如資料庫比對的 loading 狀態
-  // 管理）意外重置回 doSave，只要人還在批次項目編輯模式（_batchEditIndex 不是 null），
-  // 一律轉向「存回這一筆批次項目、返回清單」，不會真的寫入試算表，也不會跳出整個批次流程。
+function handleSaveBtnClick(){
   if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchApplyItemEdit();return;}
+  var _existItemKey=_editingRowKey;
+  if(!_existItemKey&&typeof entry!=='undefined'&&entry&&entry.uuid){
+    var _existInCol=col.find(function(c){return (c.uid&&c.uid===entry.uuid)||(c.data&&c.data.uuid===entry.uuid);});
+    if(_existInCol)_existItemKey=_existInCol.uid||_existInCol.rowNum;
+  }
+  if(_existItemKey){
+    doUpdate(_existItemKey);
+  }else{
+    doSave();
+  }
+}
+function doSave(){
+  if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchApplyItemEdit();return;}
+  // 🛡️ 編輯守衛：若當前處於既有項目編輯模式，或 entry.uuid 已存在於收藏中，自動轉向 doUpdate，防止重複新增多出一筆！
+  var _existItemKey=_editingRowKey;
+  if(!_existItemKey&&typeof entry!=='undefined'&&entry&&entry.uuid){
+    var _existInCol=col.find(function(c){return (c.uid&&c.uid===entry.uuid)||(c.data&&c.data.uuid===entry.uuid);});
+    if(_existInCol)_existItemKey=_existInCol.uid||_existInCol.rowNum;
+  }
+  if(_existItemKey){
+    console.warn('[doSave Guard] 偵測到既有項目編輯模式（key='+_existItemKey+'），自動轉向 doUpdate()，避免重複多出一筆！');
+    doUpdate(_existItemKey);
+    return;
+  }
   if(!cfg.url){toast('請先設定試算表 URL','er');showPg('cfg');return;}
   if(_saving)return; // 防連點（用旗標，不依賴按鈕狀態）
   if(!entry||!entry.primary_name){
@@ -6466,6 +6487,7 @@ function doUpdate(rowNum){
       updateStats();toast('已更新 ✓','ok');_restoreColPosition(rowNum);
     }else throw new Error(res.error||'未知');
   }).catch(function(e){toast('更新失敗，請確認網路和設定後重試','er');}).finally(function(){
+    _editingRowKey=null;
     noLoad();
     var sb=$('save-btn');if(sb){sb.disabled=false;}
   });
@@ -13110,7 +13132,13 @@ function showForm(src){
   noLoad(); // 關閉可能殘留的 loading 遮罩
   if(typeof _saving!=='undefined')_saving=false; // 重設儲存旗標
   var _fsb=$('save-btn');
-  if(_fsb&&src.indexOf('編輯')<0){_fsb.disabled=false;_fsb.textContent='儲存至收藏';_fsb.onclick=doSave;}
+  if(_fsb&&src.indexOf('編輯')<0){
+    if(typeof _editingRowKey==='undefined'||!_editingRowKey){
+      _fsb.disabled=false;_fsb.textContent='儲存至收藏';_fsb.onclick=handleSaveBtnClick;
+    }else{
+      _fsb.disabled=false;_fsb.textContent='更新記錄';_fsb.onclick=handleSaveBtnClick;
+    }
+  }
   // 虛擬鍵盤遮擋防護：輸入框 focus 時自動捲到可視範圍
   _bindFormFocusScroll();
   // 依 category 切換欄位；若舊資料缺 category，從專屬欄位反推
@@ -18182,6 +18210,7 @@ function editDetail(){
   var item=col.find(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
   if(!item){toast('找不到此記錄，請重新整理收藏','er');return;}
   var rn=detailRow;
+  _editingRowKey=rn;
   var _colPg=$('pg-col');
   var _backScrollY=_colPg?_colPg.scrollTop:0;
   _lastEditedColItemKey=item.uid||item.rowNum||rn;
@@ -18487,7 +18516,7 @@ function resetAll(){
   if(typeof _batchEditIndex!=='undefined'&&_batchEditIndex!==null){batchCancelItemEdit();return;}
   releaseAwake(); // v02.90：若在批次Step5解析期間取消，確保釋放整段流程持有的螢幕喚醒鎖
   stopScanner();if(typeof stopComboScanner==='function')stopComboScanner();
-  entry={};edited.clear();
+  entry={};edited.clear();_editingRowKey=null;
   _scanBC=''; // 清除上一筆條碼暫存，避免帶入下一筆（無條碼裸卡誤判重複的根因）
   $('method-sel').style.display='block';
   var _mbb=$('mode-back-bar');if(_mbb)_mbb.style.display='none';
@@ -18495,7 +18524,7 @@ function resetAll(){
   setMbActive('');
   var tw=$('thumb-wrap');if(tw)tw.innerHTML='';
   if(typeof resetEntryStep1==='function')resetEntryStep1(); // #4：預設回到乾淨 Step 1
-  var btn=$('save-btn');if(btn){btn.textContent='儲存至收藏';btn.onclick=doSave;}
+  var btn=$('save-btn');if(btn){btn.textContent='儲存至收藏';btn.onclick=handleSaveBtnClick;}
   // v02.107：取消鈕在編輯模式下會被改綁成「返回收藏頁」，這裡跟 save-btn 一樣還原成
   // 建檔模式的預設行為，避免下一次一般建檔按取消時被誤導到收藏頁。
   var cbtn=$('form-cancel-btn');if(cbtn)cbtn.onclick=resetAll;
