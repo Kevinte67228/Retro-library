@@ -2131,9 +2131,11 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// PWA Service Worker 註冊 (對齊主程式 v11.28，移除暴力 reload 迴圈)
+// PWA Service Worker 註冊 (對齊主程式，主動檢查更新，移除暴力 reload 迴圈)
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('sw.js?v=v11.28').catch(function(e) {
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    try { reg.update(); } catch(e){}
+  }).catch(function(e) {
     console.warn('[SW] Registration failed:', e);
   });
 }

@@ -18519,7 +18519,8 @@ function registerServiceWorker(){
     _showUpdateBanner();
   }
 
-  navigator.serviceWorker.register('sw.js?v='+encodeURIComponent(APP_VERSION)).then(function(reg){
+  navigator.serviceWorker.register('sw.js').then(function(reg){
+    try { reg.update(); } catch(e){}
     if(reg.waiting && navigator.serviceWorker.controller){
       showBannerFor(reg.waiting);
     }

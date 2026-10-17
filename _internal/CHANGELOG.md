@@ -30,7 +30,11 @@
 7. **行動端視窗尺寸自適應優化 (Responsive Layout Shifting Fix)**：
    - 電視機外殼改採 `width: min(100%, calc((100dvh - 150px) * 4 / 3)); aspect-ratio: 4 / 3` 動態自適應計算，徹底消除行動裝置網址列縮放時引發的寬高衝突與跳動。
 
-8. **版本升級與發布**：
+8. **Service Worker 快取穿透與即時更新升級 (SW Cache-Busting & Immediate Sync)**：
+   - 修正先前 `sw.js` 在 `install` 與 `navigate` 時受限於 GitHub Pages CDN 10 分鐘（`max-age=600`）磁碟快取，導致新版本發布後客戶端仍被重複灌入舊版 HTML 快取的問題。
+   - 為所有 HTML 與靜態安裝請求掛載 `{ cache: 'no-cache' }` 強制穿透驗證；移除 SW 網址之靜態版號字串鎖定，改採標準路徑註冊並於進入頁面時調用 `reg.update()` 主動檢查更新，確保客戶端能即時感知並載入最新版本。
+
+9. **版本升級與發布**：
    - 應用版本號遞增至 `v11.28` / `retrovault-v11-28`，備份並生成 `docs/RetroVault_v11_28_index.html`。
 
 ---

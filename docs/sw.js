@@ -62,7 +62,7 @@ self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
       return Promise.all(STATIC_ASSETS.map(function(asset) {
-        return cache.add(asset).catch(function() {});
+        return cache.add(new Request(asset, { cache: 'no-cache' })).catch(function() {});
       }));
     })
   );
@@ -123,16 +123,18 @@ self.addEventListener('fetch', function(event) {
 
   if (url.origin !== location.origin) return;
 
-  // v40.28：HTML 導航請求 → 網路優先（Network First）。
-  // 確保每次進入都先抓最新 HTML，部署新版後第一次進入即更新，不必關閉重開。
+  // v40.28：HTML 導航請求 → 網路優先（Network First，附帶 no-cache 繞過 CDN 10 分鐘磁碟快取）。
+  // 確保每次進入都直接向伺服器驗證最新 HTML，部署新版後第一次進入即更新，不必手動清除瀏覽器快取。
   // 離線時 fallback 回快取（含 ./index.html），維持 PWA 離線能力。
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request).then(function(response) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, copy).catch(function() {});
-        });
+      fetch(new Request(event.request.url, { cache: 'no-cache' })).then(function(response) {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, copy).catch(function() {});
+          });
+        }
         return response;
       }).catch(function() {
         return caches.match(event.request).then(function(cached) {
