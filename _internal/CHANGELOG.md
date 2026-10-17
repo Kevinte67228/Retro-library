@@ -1,3 +1,36 @@
+## v11.23 (2026-10-17)
+
+### 變更內容
+依據使用者回饋回報「SFC還是有遺漏封面的遊戲，另外這個重複了（如遥かなるオーガスタ 1 與 2 封面重複，以及部分遊戲封面破圖遺漏）」，進行 SFC 全庫深度審計、去重校準與雲端同步：
+
+1. **遙遠的奧古斯塔高爾夫系列（Augusta）精確去重**：
+   - 解決《遥かなるオーガスタ》（SHVC-GA）因模糊包含匹配誤配到二代封面的問題。
+   - 經對齊官方 Libretro 正確檔案名，1 代精準指向 `New 3D Golf Simulation - Harukanaru Augusta (Japan).png`，2 代精準指向 `Masters - Harukanaru Augusta 2 (Japan).png`，兩款封面完全獨立精美。
+
+2. **徹底根除 10 款破圖/遺漏封面（404 缺陷修復）**：
+   - 根因分析：原本部分遊戲比對到帶有 `(Rev 1)`、`(Sample)` 或 `(Beta)` 的 URL，在 Libretro GitHub Raw 上屬於不存在檔案（返回 31 位元組之 `404: Not Found` 純文字），導致 App 畫面顯示為破圖或載入遺漏。
+   - 全面替換並校準為官方存在之完整正版日版掃描圖（`*(Japan).png`），覆蓋率 100%，包括：
+     - `SHVC-IZ`《SUPER 信長の野望 武将風雲録》
+     - `SHVC-NK`《信長の野望 覇王伝》
+     - `SHVC-A98J`《ときめきメモリアル 伝説の樹の下で》
+     - `SHVC-AH3J-JPN`《信長の野望・天翔記》
+     - `SHVC-2Z`《DRAGON BALL Z 超武闘伝》
+     - `SHVC-DB`《DRAGON BALL Z 超サイヤ伝説》
+     - `SHVC-JE`《Jリーグサッカー プライムゴール》
+     - `SHVC-OJ`《餓狼伝説2 新たなる闘い》
+     - `SHVC-N3`《FEDA: The Emblem of Justice》
+     - `SHVC-A4GJ-JPN`《がんばれゴエモン きらきら道中 僕がダンサーになった理由》
+
+3. **續作子字串碰撞全面消除（消除所有系列作誤對齊重複）**：
+   - 移除過於寬鬆的子字串包含規則（`c_en in b_clean`），改為嚴格 clean 相等與完整明確映射字典（`EXPLICIT_MAPPING`）。
+   - 修正《三國志III》（SHVC-S3，原手民誤鍵入聖劍傳說3，已正確校正為 Sangokushi III）、《七龍珠Z 超武闘伝 2/3》（不再被 1 代覆蓋）、《超大金剛 2/3》（不再被 1 代覆蓋）、《J聯盟足球 Prime Goal 2/3》、《幽遊白書 特別篇/2/FINAL》、《F-1 GP 2》、《劍之世界 2》、《四狂神戰記 2》、《雷霆任務 槍之危機》等共 12 組續作封面完全獨立。
+
+4. **雲端 Google Sheet 同步與本機資料庫全量覆寫**：
+   - 透過多執行緒自動化腳本，針對 54 款修正遊戲將最新圖資與完整 57 欄位秒級寫入 Google 試算表 `Games` 工作表，Drive ID 建立完備。
+   - 同步更新並產出 `data/RetroVault_遊戲_SFC.csv`、`data/RetroVault_GS_Games_全量匯入檔.csv` 與 `data/RetroVault_GS_Games_全量匯入檔.xlsx`。
+
+---
+
 ## v11.22 (2026-10-17)
 
 ### 變更內容
