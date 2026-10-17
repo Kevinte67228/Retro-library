@@ -1,5 +1,5 @@
 // ╔══════════════════════════════════════════════════════╗
-// ║  RetroVault — Google Apps Script 後端  v10            ║
+// ║  RetroVault — Google Apps Script 後端  v11            ║
 // ║  部署設定：執行身分 = 我，存取權 = 所有人             ║
 // ╚══════════════════════════════════════════════════════╝
 //
@@ -74,7 +74,7 @@ const GAME_HEADERS = [
   'collect_status','completeness','loan_to','loan_due','bundle',
   'buy_date','buy_price','buy_source',
   'play_status','rating',
-  'summary','ref_link','cover_img','back_img','spine_img','extra_images','related_code','notes','uuid','created_at',
+  'summary','ref_link','cover_img','back_img','spine_img','gameplay_img','extra_images','related_code','notes','uuid','created_at',
   'storage_location','market_value','resale_price','resale_date','dlc_status','bonus_code_status',
   'voice_language','subtitle_language',
   'market_value_updated_at','market_value_source','market_value_confidence','market_value_notes',
@@ -456,7 +456,7 @@ function resolveType(category, subtype) {
 // ── Drive 圖片存放 ────────────────────────────────
 // 圖片改存 Google Drive，工作表格子只存 file ID（避免 base64 撐爆儲存與傳輸）
 const IMG_FOLDER_NAME = 'GameVault_Images';
-const IMG_COLS = ['cover_img', 'back_img', 'spine_img'];
+const IMG_COLS = ['cover_img', 'back_img', 'spine_img', 'gameplay_img'];
 // v47.04：5 張自訂圖片欄位，存成 JSON 陣列 [{label,img}]，img 可能是 base64(新上傳)或 Drive ID(已存在)，
 // 跟 IMG_COLS 的單一 base64 欄位不同格式，需要另外處理，不能塞進 IMG_COLS 迴圈
 const EXTRA_IMG_COL = 'extra_images';
@@ -829,7 +829,7 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
-    if (action === 'add' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers' || action === 'force_realign' || action === 'repair_pre_loan_field') {
+    if (action === 'add' || action === 'batchAdd' || action === 'update' || action === 'delete' || action === 'deleteMany' || action === 'fix_headers' || action === 'force_realign' || action === 'repair_pre_loan_field') {
       // 寫入類 action（含維護性質的 fix_headers／force_realign／repair_pre_loan_field）
       // → 驗證 app_token。
       // v53.01：改為 fail-closed —— 後端未設定 APP_TOKEN 時一律拒絕寫入，不再「未設定就放行」。
@@ -851,6 +851,9 @@ function doPost(e) {
         switch (action) {
           case 'add':
             result = addRow(data.row, type, data.fields);
+            break;
+          case 'batchAdd':
+            result = batchAddRows(data.rows, type, data.fieldsList, data.options);
             break;
           case 'update': {
             const updKey = (data.uuid && data.uuid.length >= 30) ? data.uuid : data.rowNum;
@@ -1053,6 +1056,58 @@ function addRow(row, type, fields) {
   const uuidIdx = headers.indexOf('uuid');
   const uuid = uuidIdx >= 0 ? padded[uuidIdx] : (type + ':' + newRow);
   return { ok: true, rowNum: newRow, uuid: uuid, sheetType: type, imgs: imgs };
+}
+
+// v11：秒級批次寫入（setValues），支援整批一次灌入多筆資料，大幅提升匯入效率（1秒寫入上百筆）
+function batchAddRows(rows, type, fieldsList, options) {
+  const { sheet, headers } = getSheet(type);
+  const tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  const today = Utilities.formatDate(new Date(), tz, 'yyyy/MM/dd');
+  const items = (fieldsList && Array.isArray(fieldsList) && fieldsList.length) ? fieldsList : (rows || []);
+  if (!items || !items.length) return { ok: true, count: 0, msg: '無待寫入資料' };
+
+  const autoUploadImgs = options && options.uploadImages === true;
+  const paddedRows = [];
+  const uuids = [];
+
+  for (let idx = 0; idx < items.length; idx++) {
+    const item = items[idx];
+    const byName = item && typeof item === 'object' && !Array.isArray(item);
+    const padded = headers.map((h, i) => {
+      let v = byName ? item[h] : item[i];
+      if (h === 'uuid' && !v) v = Utilities.getUuid();
+      if (h === 'created_at' && !v) v = today;
+      return (v !== undefined && v !== null) ? v : '';
+    });
+
+    if (autoUploadImgs) {
+      IMG_COLS.forEach(function(col) {
+        const cIdx = headers.indexOf(col);
+        if (cIdx >= 0) padded[cIdx] = saveImgToDrive(padded[cIdx]);
+      });
+      const eiIdx = headers.indexOf(EXTRA_IMG_COL);
+      if (eiIdx >= 0) padded[eiIdx] = processExtraImages(padded[eiIdx]).json;
+    }
+
+    const uIdx = headers.indexOf('uuid');
+    uuids.push(uIdx >= 0 ? padded[uIdx] : '');
+    paddedRows.push(padded);
+  }
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  let startRow;
+  try {
+    startRow = sheet.getLastRow() + 1;
+    sheet.getRange(startRow, 1, paddedRows.length, headers.length).setValues(paddedRows);
+    for (let r = 0; r < paddedRows.length; r++) {
+      _forceTextDateCols(sheet, startRow + r, headers, paddedRows[r]);
+    }
+  } finally {
+    lock.releaseLock();
+  }
+
+  return { ok: true, count: paddedRows.length, startRow: startRow, uuids: uuids, sheetType: type };
 }
  
 function updateRow(rowNum, row, type, fields) {

@@ -605,8 +605,6 @@ body{
 .dpos{align-self:flex-start;font-size:11px;color:#7986cb;background:#0f1525;padding:3px 8px;border-radius:8px;border:1px solid #1e2a45}
 .dact{display:flex;gap:8px;align-items:stretch}
 .dact .btn{flex:1;min-height:38px;padding:8px 4px;font-size:13px}
-.dnav-float{position:fixed;top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:none;z-index:230;width:38px;height:48px;border-radius:12px;border:1px solid #2a3a5a;background:rgba(15,21,37,.72);color:#e8eaf6;font-size:26px;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
-#dsheet.on .dnav-float{display:flex}
 /* 收藏詳情頁編輯表單 FAB（v02.50 新增；v02.56 從詳情頁搬到編輯表單頁；v02.57 修正主觸發鈕
    跟 save-bar 的浮動定位跑位問題——主觸發鈕改成跟「取消」同樣大小的晶片，直接排進 save-bar
    那一排（走一般 flex 排版，不用猜固定像素間距），只有展開後的3個子按鈕維持浮動於上方） */
@@ -627,14 +625,17 @@ body{
 #det-cd-fab img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 #det-barcode-fab svg{width:24px;height:24px}
 #det-fab-wrap.open #det-barcode-fab,#det-fab-wrap.open #det-cd-fab{opacity:1;transform:scale(1);pointer-events:auto}
-#dprev-float{left:8px}
-#dnext-float{right:8px}
-.dnav-float.off{opacity:.2;pointer-events:none}
 .dgrid{padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .df .dfl{font-size:10px;color:#7986cb;margin-bottom:2px}
 .df .dfv{font-size:13px;word-break:break-all}
-.df.full{grid-column:1/-1}
-.vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
+.vault-hero{grid-column:1/-1;background:linear-gradient(180deg,#141b30,#0f1525);border:1px solid #1e2a45;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.vault-hero-body{display:flex;gap:12px;align-items:flex-start;width:100%}
+.vault-hero-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin-top:2px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
+.vault-chip-btn{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 4px;border-radius:14px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .15s}
+.vault-chip-btn:hover{transform:translateY(-1px);filter:brightness(1.15)}
+.vault-chip-btn.chip-3d{background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.45);color:#00e5ff;box-shadow:0 0 10px rgba(0,229,255,.15)}
+.vault-chip-btn.chip-crt{background:rgba(105,240,174,.15);border:1px solid rgba(105,240,174,.5);color:#69f0ae;box-shadow:0 0 10px rgba(105,240,174,.15)}
+.vault-chip-btn.chip-slab{background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.5);color:#ffd700;box-shadow:0 0 10px rgba(212,175,55,.15)}
 .vault-cover{width:172px;flex-shrink:0;display:flex;flex-direction:column;gap:5px}
 /* v02.127：使用者實測回報長條形封面（例如橫向裁切的書背貼紙照）在固定方框顯示很怪——
    原本object-fit:cover會把超出方框的部分直接裁掉，長條圖左右兩側（甚至角色主體）會被
@@ -1085,7 +1086,7 @@ body{
       <div class="hd">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="ht">RetroVault</div>
-          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v51.02</span></div>
+          <div style="font-size:11px;color:#7986cb;font-family:'Share Tech Mono',monospace"><span id="app-ver">v11.18</span></div>
         </div>
         <div class="hs" id="scan-hs">AI 高品質辨識 · UUID · 分類 / 地區 / 條碼</div>
         <div class="dv2-hd-bar"></div>
@@ -1801,6 +1802,10 @@ body{
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
                 系列
               </button>
+              <a id="vbtn-museum" href="./cyber-museum.html" target="_blank" style="background:transparent;color:#00e5ff;text-decoration:none;display:inline-flex;align-items:center;gap:4px;padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap" title="賽博防潮展廳 (CRT+書背牆)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                展廳
+              </a>
             </div>
             <!-- v02.115：這顆原本只做刪除，v02.100加了批次編輯後入口沒變、title卻還停在
                  「大量刪除」，容易讓人誤以為多選只能刪除，不知道還能批次編輯。 -->
@@ -1818,6 +1823,22 @@ body{
                 <span class="offline-queue-dot" style="display:none;position:absolute;top:2px;right:2px;width:9px;height:9px;border-radius:50%;background:#ff6e9c;border:1.5px solid #0f1525"></span>
               </button>
               <div id="col-menu-panel" style="display:none;position:absolute;top:48px;right:0;z-index:200;background:#141b30;border:1px solid #1e2a45;border-radius:14px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+                <a class="col-menu-item" href="./cyber-museum.html" target="_blank" style="color:#00e5ff;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                  賽博防潮展廳 (CRT+書背)
+                </a>
+                <a class="col-menu-item" href="./search-bench.html" target="_blank" style="color:#69f0ae;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  ⚡ 極速檢索基準台 (0.5ms)
+                </a>
+                <a class="col-menu-item" href="./slab-studio.html" target="_blank" style="color:#ffd700;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  💎 數位鑑定卡工坊 (Slab)
+                </a>
+                <a class="col-menu-item" href="./market-radar.html" target="_blank" style="color:#ffb74d;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:8px">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                  📈 行情雷達與 AR 尋寶 (Radar)
+                </a>
                 <button class="col-menu-item" id="offline-queue-menu-item" style="display:none;justify-content:space-between" onclick="syncOfflineQueue();closeColMenu()" type="button">
                   <span style="display:flex;align-items:center;gap:8px">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.4-6.4-2.8 2.8M9.4 14.6l-2.8 2.8m0-10.8 2.8 2.8m5.2 5.2 2.8 2.8"/></svg>
@@ -2564,7 +2585,7 @@ body{
         <div style="font-size:11px;color:#7a8499;margin-bottom:16px">下載完整部署與使用說明（需連線）</div>
         <div class="stitle">關於</div>
         <div class="srow" style="font-size:12px;color:#7986cb;line-height:1.8">
-          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v51.02</span></strong><br>
+          <strong style="color:#e8eaf6">RetroVault <span id="app-ver2">v11.18</span></strong><br>
           這是一個給復古遊戲收藏玩家使用的 PWA 工具，目的在於把遊戲、書籍、主機與週邊做成可持續整理的私人收藏庫。<br>
           透過手機掃條碼、拍封面或拍編碼，結合 AI 與資料庫比對，自動補齊名稱、平台、區域、版本等資訊，並把品相、完整度、缺件與價格一併記錄下來。<br>
           資料主要儲存在你自己的 Google 試算表，方便私有管理與長期保存。<br>
@@ -2732,6 +2753,7 @@ const FIELDS=[
   ['cover_img','封面圖檔','imgupload','圖片紀錄'],
   ['back_img','封底圖檔','imgupload','圖片紀錄'],
   ['spine_img','側邊圖檔','imgupload','圖片紀錄'],
+  ['gameplay_img','遊戲畫面','imgupload','圖片紀錄'],
   ['extra_images','自訂圖片','multiimg','圖片紀錄'],
   ['related_code','關聯商品','txt','關聯商品'],
   ['notes','備註','area','補充資訊'],
@@ -2885,7 +2907,7 @@ const DEFAULTS={
   market_value:'0',market_value_updated_at:'',market_value_source:'',market_value_confidence:'N/A',market_value_notes:'',
   market_value_currency:'',market_value_foreign_amount:'',
   resale_price:'0',resale_date:'2099/01/01',bonus_code_status:'N/A',
-  cover_img:'',back_img:'',spine_img:'',ref_link:'',developer:'',series:'',
+  cover_img:'',back_img:'',spine_img:'',gameplay_img:'',ref_link:'',developer:'',series:'',
 };
 // ── 書籍專屬欄位 ──
 const BOOK_FIELDS=[
@@ -2983,7 +3005,7 @@ const BOOK_PLAT_OPTS=[
 
 // 版本號：vAA.BB — AA = Apps Script(.gs) 變更時 +1（並將 BB 歸為 01），BB = index.html 更新時 +1；
 // BB 最小為 01（不使用 00）；各碼到 99 才進位。index.html 與 .gs 共用同一版本號（須對齊）。集中於此，兩處顯示共用。
-const APP_VERSION='v10.01';
+const APP_VERSION='v11.18';
 const GROUPS=['圖片紀錄','識別資訊','版本規格','遊戲規格','編碼條碼','發行廠商','收藏狀態','估值資訊','品相完整度','個人記錄','關聯商品','補充資訊'];
 const GCOL={'識別資訊':'#00e5ff','版本規格':'#69f0ae','編碼條碼':'#ffab40','發行廠商':'#ce93d8','遊戲規格':'#80deea','收藏狀態':'#ffcc02','估值資訊':'#ffd54f','品相完整度':'#26c6da','個人記錄':'#f48fb1','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
 const MONO_F=new Set(['code','barcode','serial_no']);
@@ -3183,6 +3205,7 @@ function _digiTail(){
     ['summary','簡介','area','補充資訊'],
     ['ref_link','商店頁連結','autolink','補充資訊'],
     ['cover_img','封面圖檔','imgupload','圖片紀錄'],
+    ['gameplay_img','遊戲畫面','imgupload','圖片紀錄'],
     ['extra_images','自訂圖片','multiimg','圖片紀錄'],
     ['related_code','關聯商品','txt','關聯商品'],
     ['notes','備註','area','補充資訊'],
@@ -3200,7 +3223,7 @@ const DIGI_SHARED_SELECTS={
   purchase_method:['直接購買','隨主機/服務捆綁','訂閱服務贈送','活動兌換','其他'],
 };
 const DIGI_SHARED_GCOL={'識別資訊':'#00e5ff','商店資訊':'#40c4ff','檔案資訊':'#4dd0e1','發行廠商':'#ce93d8','收藏狀態':'#ffcc02','圖片紀錄':'#64b5f6','關聯商品':'#b388ff','補充資訊':'#90a4ae'};
-const DIGI_SHARED_DEFAULTS={collect_status:'收藏中',drm_status:'',file_storage_location:'',buy_date:'2099/01/01',buy_price:'0',store:'',purchase_method:'直接購買',release_date:'',cover_img:'',ref_link:''};
+const DIGI_SHARED_DEFAULTS={collect_status:'收藏中',drm_status:'',file_storage_location:'',buy_date:'2099/01/01',buy_price:'0',store:'',purchase_method:'直接購買',release_date:'',cover_img:'',gameplay_img:'',ref_link:''};
 
 // ── 1. 下載版遊戲 ──
 const DIGIGAME_FIELDS=_digiHead().concat([
@@ -4529,14 +4552,163 @@ function toast(m,t,d,pos){
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
 
-// 圖片來源轉換：data: 直接用（剛拍的預覽）；http 原樣；其餘視為 Drive 檔案 ID → 組縮圖網址
+// 圖片來源轉換：data: 直接用（剛拍的預覽）；http 原樣（自動將不穩定 jsDelivr 轉換為高穩之 GitHub Raw）；其餘視為 Drive 檔案 ID → 組縮圖網址
 function imgUrl(v,sz){
   if(!v||typeof v!=='string')return '';
+  if(v.indexOf('cdn.jsdelivr.net/gh/libretro-thumbnails/')>=0){
+    v=v.replace('cdn.jsdelivr.net/gh/libretro-thumbnails/','raw.githubusercontent.com/libretro-thumbnails/').replace('@master/','/master/');
+  }
   if(v.indexOf('data:')===0||v.indexOf('http')===0)return v;
   return 'https://drive.google.com/thumbnail?id='+v+'&sz=w'+(sz||400);
 }
 // 是否有圖（data: 或 Drive ID 皆算）
-function hasImgVal(v){return !!(v&&typeof v==='string'&&v.length>0);}
+function hasImgVal(v){return !!(v&&typeof v==='string'&&v.trim().length>0);}
+
+// 經典復古遊戲封面自動補齊映射表（當收藏記錄未上傳封面時的自動高品質備援）
+var RETRO_ART_MAP = {
+  // ── FC 紅白機 ──
+  'キャプテン翼': { plat: 'nes', file: 'Captain Tsubasa (Japan)', lb: 'ccf0c30e-1f5e-46fe-afee-42bd7e651796.jpg' },
+  '十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
+  'ポケットザウルス 十王剣の謎': { plat: 'nes', file: 'Pocket Zaurus - Juu Ouken no Nazo (Japan)', lb: '22c14050-3eef-4932-943b-afdda005a3e4.jpg' },
+  '三国志': { plat: 'nes', file: 'Sangokushi (Japan)', lb: 'ab003ef9-e5c0-4eea-940c-d8c6f20b218f.jpg' },
+  '三国志II': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
+  '三国志II 覇王の大陸': { plat: 'nes', file: 'Sangokushi II - Haou no Tairiku (Japan)', lb: 'f56b562d-b5ff-4bc7-917d-e46eb7677ed9.jpg' },
+  '三国志 中原の覇者': { plat: 'nes', file: 'Sangokushi - Chuugen no Hasha (Japan)' },
+  'ナムクラシック': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
+  'Namco Classic': { plat: 'nes', file: 'Namco Classic (Japan)', lb: '045b85dd-e230-4809-80de-9145858621ec.png' },
+  'スーパーマリオブラザーズ': { plat: 'nes', file: 'Super Mario Bros. (Japan, USA)' },
+  'スーパーマリオブラザーズ3': { plat: 'nes', file: 'Super Mario Bros. 3 (Japan)', lb: '045b85dd-e230-4809-80de-914fb0f98e7d.jpg' },
+  '熱血高校ドッジボール部': { plat: 'nes', file: 'Nekketsu Koukou Dodgeball-bu (Japan)' },
+  'ナムコット麻雀III': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
+  'ナムコット麻雀III マージャン天国': { plat: 'nes', file: 'Namcot Mahjong III - Mahjong Tengoku (Japan)', lb: '9501cf61-17bf-41fb-a840-9ad7d8ad6963.png' },
+  'パーフェクトボウリング': { plat: 'nes', file: 'Perfect Bowling (Japan)' },
+  'パーフェクトボーリング': { plat: 'nes', file: 'Perfect Bowling (Japan)' },
+  '影の伝説': { plat: 'nes', file: 'Kage no Densetsu (Japan)' },
+  'クインティ': { plat: 'nes', file: 'Quinty (Japan)', lb: '5ed1e558-92d2-4baa-8946-28ea843da344.png' },
+  'Quinty': { plat: 'nes', file: 'Quinty (Japan)', lb: '5ed1e558-92d2-4baa-8946-28ea843da344.png' },
+  'さんまの名探偵': { plat: 'nes', file: 'Sanma no Meitantei (Japan)', lb: '9d83bee8-4ba8-4bb8-be82-3115eebfe2fd.jpg' },
+  'ファミリースタジアム 開幕版': { plat: 'nes', file: 'Pro Yakyuu - Family Stadium (Japan)', lb: '93d0753b-cf8c-4c5e-9996-7c9b1020bb22.jpg' },
+  'ファミリースタジアム\'88年度版': { plat: 'nes', file: 'Pro Yakyuu - Family Stadium \'88 (Japan)', lb: 'f2bd9be0-5908-4ddc-810b-3d995f018fec.jpg' },
+  'ファミスタ\'89 開幕版': { plat: 'nes', file: 'Famista \'89 - Kaimaku Ban!! (Japan)', lb: '8fb46976-74f0-4d66-bcfe-d8ec79631729.jpg' },
+  'ファミスタ\'90': { plat: 'nes', file: 'Famista \'90 (Japan)', lb: '93240dc8-6979-432c-ab21-ed2bb3280412.jpg' },
+  'ファミスタ\'91': { plat: 'nes', file: 'Famista \'91 (Japan)', lb: 'a3c1d6b7-ebd5-49da-8802-695130dccdfc.png' },
+  'ファミスタ\'92': { plat: 'nes', file: 'Famista \'92 (Japan)', lb: '7140acbc-d4c1-448f-979e-31a945d6bd26.png' },
+  'ファミスタ\'93': { plat: 'nes', file: 'Famista \'93 (Japan)', lb: 'ad489cf3-805b-4951-aa3d-6a32327d9bbb.jpg' },
+  'ファミリーマージャンII 上海への道': { plat: 'nes', file: 'Family Mahjong II - Shanghai e no Michi (Japan)', lb: 'adc2bf8e-b37f-4173-9122-4d60a7267536.jpg' },
+  'ファミリーサーキット': { plat: 'nes', file: 'Family Circuit (Japan)', lb: '0efd3afd-d7c6-462e-9c39-7b3a003a9174.jpg' },
+  'ファミリーサーキット\'91': { plat: 'nes', file: 'Family Circuit \'91 (Japan) (En)', lb: '1bb937b7-6502-4205-8c30-5ac4b4432f76.png' },
+  'ファミリージョッキー': { plat: 'nes', file: 'Family Jockey (Japan)', lb: 'e8ed2803-8d68-4314-8427-b4072ca1dc2f.jpg' },
+  'サイドポケット': { plat: 'nes', file: 'Side Pocket (Japan)', lb: 'b3f5d510-586a-47c7-8d66-ac25cd3a2d1e.jpg' },
+  'ドラゴンクエスト': { plat: 'nes', file: 'Dragon Quest (Japan)' },
+  'ドラゴンクエストII': { plat: 'nes', file: 'Dragon Quest II - Akuryou no Kamigami (Japan)' },
+  'ドラゴンクエストIII': { plat: 'nes', file: 'Dragon Quest III - Soshite Densetsu e... (Japan)' },
+  'ドラゴンクエストIV': { plat: 'nes', file: 'Dragon Quest IV - Michibikareshi Monotachi (Japan)' },
+  'ファイナルファンタジー': { plat: 'nes', file: 'Final Fantasy (Japan)' },
+  'ファイナルファンタジーII': { plat: 'nes', file: 'Final Fantasy II (Japan)' },
+  'ファイナルファンタジーIII': { plat: 'nes', file: 'Final Fantasy III (Japan)' },
+  'エキサイトバイク': { plat: 'nes', file: 'Excitebike (Japan)' },
+  'ドクターマリオ': { plat: 'nes', file: 'Dr. Mario (Japan, USA)' },
+  'スターソルジャー': { plat: 'nes', file: 'Star Soldier (Japan)' },
+  'パックランド': { plat: 'nes', file: 'Pac-Land (Japan)' },
+  'バーガータイム': { plat: 'nes', file: 'BurgerTime (Japan)' },
+  'ロードファイター': { plat: 'nes', file: 'Road Fighter (Japan)' },
+  '燃えろ!!プロ野球': { plat: 'nes', file: 'Moero!! Pro Yakyuu (Japan)' },
+  '4人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  '４人打ち麻雀': { plat: 'nes', file: '4 Nin Uchi Mahjong (Japan)' },
+  'ぎゅわんぶらあ自己中心派': { plat: 'nes', file: 'Gambler Jiko Chuushinha (Japan)' },
+  'ぎゅわんぶらあ自己中心派2': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'ぎゅわんぶらあ自己中心派2 激闘！東京マージャンランド編': { plat: 'nes', file: 'Gambler Jiko Chuushinha 2 (Japan)' },
+  'タイトドライバー': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトドライバー 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'タイトグランプリ 栄光へのライセンス': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'Taito Grand Prix': { plat: 'nes', file: 'Taito Grand Prix - Eikou e no License (Japan)' },
+  'ガチャポン戦士2': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'SDガンダムワールド ガチャポン戦士2 カプセル戦記': { plat: 'nes', file: 'SD Gundam - Gachapon Senshi 2 - Capsule Senki (Japan)' },
+  'キングコング2': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトンパンチ': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+  'キングコング2 怒りのメガトン': { plat: 'nes', file: 'King Kong 2 - Ikari no Megaton Punch (Japan)' },
+
+  // ── MD 世嘉五代 ──
+  'アドバンスド大戦略': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)', lb: '1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg' },
+  'アドバンスド大戦略 ～ドイツ電撃作戦～': { plat: 'md', file: 'Advanced Daisenryaku - Deutsch Dengeki Sakusen (Japan) (Rev A)', lb: '1ba5ca41-245a-41cf-b706-a89a1ce8d63f.jpg' },
+  'SUPER大戦略': { plat: 'md', file: 'Super Daisenryaku (Japan)', lb: 'df447208-c066-4795-b328-e1a2d1672ddf.jpg' },
+  'SUPER 大戦略': { plat: 'md', file: 'Super Daisenryaku (Japan)', lb: 'df447208-c066-4795-b328-e1a2d1672ddf.jpg' },
+  '餓狼伝説': { plat: 'md', file: 'Garou Densetsu - Shukumei no Tatakai (Japan)', lb: '0e22f16d-cf0f-46d4-963f-354f0b251d5d.jpg' },
+  '餓狼伝説 (THE BATTLE OF DESTINY)': { plat: 'md', file: 'Garou Densetsu - Shukumei no Tatakai (Japan)', lb: '0e22f16d-cf0f-46d4-963f-354f0b251d5d.jpg' },
+  'ポピュラス': { plat: 'md', file: 'Populous (Japan)', lb: '135f9c65-c4ca-40ce-8977-1c71b8d3dbda.jpg' },
+  'Populous': { plat: 'md', file: 'Populous (Japan)', lb: '135f9c65-c4ca-40ce-8977-1c71b8d3dbda.jpg' },
+  'ソニック': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  'ソニック・ザ・ヘッジホッグ': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  'Sonic The Hedgehog': { plat: 'md', file: 'Sonic The Hedgehog (Japan, Europe, Korea) (En)' },
+  '斬・夜叉円舞曲': { plat: 'md', file: 'Zan Yasha Enbukyoku (Japan)', lb: 'a14f85ff-8469-4d54-a687-e5de8eac08fc.jpg' },
+  '三國志列伝 乱世の英雄たち': { plat: 'md', file: 'Sangokushi Retsuden - Ransei no Eiyuutachi (Japan)', lb: 'f4c1b249-8f77-4816-9cf4-c2d98ec8b422.jpg' },
+  'NHK 太平記': { plat: 'md', file: 'NHK Taiga Drama - Taiheiki (Japan)', lb: '8e8ffa12-06ac-465f-9e01-8c03d76e7e3c.jpg' },
+  'NHK大河ドラマ 太平記': { plat: 'md', file: 'NHK Taiga Drama - Taiheiki (Japan)', lb: '8e8ffa12-06ac-465f-9e01-8c03d76e7e3c.jpg' },
+  'アイルトン・セナ スーパーモナコGP II': { plat: 'md', file: 'Ayrton Senna\'s Super Monaco GP II (Japan)', lb: '83ee826e-1b58-4f00-bc40-de2996623b88.jpg' },
+  'VERMILION (ヴァーミリオン)': { plat: 'md', file: 'Vermilion (Japan)', lb: '81fc5962-ce73-41aa-b194-7f8205f3fd5b.jpg' },
+  'スーパーリーグ': { plat: 'md', file: 'Super League (Japan)', lb: 'a94bdd9b-644f-4e53-8695-48be8ef5498d.jpg' },
+  'スペースハリアーII': { plat: 'md', file: 'Space Harrier II (Japan, USA) (En,Ja)', lb: 'a159692a-373d-4f50-84c3-9392cd2745f4.jpg' },
+  'バハムート戦記': { plat: 'md', file: 'Bahamut Senki (Japan)', lb: '2d00bcf3-f3d7-46f3-8a6c-c94f0d804f3c.jpg' },
+  'サンダープロレスリング列伝': { plat: 'md', file: 'Thunder Pro Wrestling Retsuden (Japan)', lb: '95339a61-19ae-4ca6-aa8e-d26e945a5274.jpg' },
+  'SORCERIAN (ソーサリアン)': { plat: 'md', file: 'Sorcerian (Japan)', lb: 'cffe7614-fdba-4d79-8782-f0fa79a998b9.jpg' },
+  'NEW 3D GOLF SIMULATION 遥かなるオーガスタ': { plat: 'md', file: 'New 3D Golf Simulation - Harukanaru Augusta (Japan)', lb: '77109dd0-7bda-4665-ac48-95fbfca9eaed.jpg' },
+  'ファイナル・ブロー': { plat: 'md', file: 'Final Blow (Japan) (En)', lb: 'ae5c73b6-87d4-4917-9815-976df7556c55.jpg' },
+  'コラムス': { plat: 'md', file: 'Columns (Japan) (En)', lb: '329264aa-6487-4b1a-ac61-c8a8ec4bb512.jpg' },
+  'ぷよぷよ': { plat: 'md', file: 'Puyo Puyo (Japan)', lb: '3b0fc2f7-42fc-4a4e-8498-99893577233e.jpg' },
+  'ジョー モンタナ フットボール': { plat: 'md', file: 'Joe Montana Football (Japan)', lb: '8aa5f09c-84c2-463b-9489-43e707619e9d.jpg' },
+  'プロストライカー': { plat: 'md', file: 'J. League Pro Striker (Japan)', lb: 'f9b8b096-53c5-4b29-a6aa-8e019adc5bf0.jpg' },
+  'キューティー鈴木の リングサイドエンジェル': { plat: 'md', file: 'Cutie Suzuki no Ringside Angel (Japan)', lb: 'b84c7752-25d2-4f0c-8a12-e4a66a4a3c2c.jpg' },
+  '修羅の門': { plat: 'md', file: 'Shura no Mon (Japan)', lb: '59b92211-e167-4332-bb2b-af73deffa91e.jpg' },
+  'シャイニング・フォースII 古えの封印': { plat: 'md', file: 'Shining Force II - Inishie no Fuuin (Japan)', lb: '8edb1afd-228a-40b9-b582-c196037a9c85.jpg' },
+  'シャイニング・フォース ～神々の遺産～': { plat: 'md', file: 'Shining Force - Kamigami no Isan (Japan)', lb: 'be157676-8227-4455-81d4-f6e023992c8b.jpg' },
+  'シャイニング＆ザ・ダクネス': { plat: 'md', file: 'Shining in the Darkness (Japan)', lb: '09be0ea7-c232-4391-b48c-4653b633b427.jpg' },
+  'ランドストーカー ～皇帝の財宝～': { plat: 'md', file: 'Landstalker - Koutei no Zaihou (Japan)', lb: 'ab1a4c23-df55-47d5-9a09-3af22835683a.jpg' },
+  'ランドストーカー': { plat: 'md', file: 'Landstalker - Koutei no Zaihou (Japan)', lb: 'ab1a4c23-df55-47d5-9a09-3af22835683a.jpg' },
+  '時の継承者 ファンタシースターIII': { plat: 'md', file: 'Phantasy Star III - Toki no Keishousha (Japan)', lb: 'b17eefce-1f26-46c0-8f1d-25e974bfc5a6.jpg' },
+  'ファンタシースターII 還らざる時の終わりに': { plat: 'md', file: 'Phantasy Star II - Kaerazaru Toki no Owari ni (Japan)', lb: 'fbad7ca7-277b-4d36-992f-7b7e30e6a403.jpg' },
+  'ファンタシースターII': { plat: 'md', file: 'Phantasy Star II - Kaerazaru Toki no Owari ni (Japan)', lb: 'fbad7ca7-277b-4d36-992f-7b7e30e6a403.jpg' },
+  'ファンタシースター ～千年紀の終りに～': { plat: 'md', file: 'Phantasy Star - Sennenki no Owari ni (Japan)', lb: '71343a42-76e3-4fa3-aa10-68f3664ca3ec.jpg' },
+  '忍者武雷伝説': { plat: 'md', file: 'Ninja Burai Densetsu (Japan)', lb: '4001be79-73b1-492e-ac12-d048cf2e2479.jpg' },
+  '乱世の覇者': { plat: 'md', file: 'Ransei no Hasha (Japan)', lb: '6758ce4f-4237-4cd0-8d8c-1d2692abe90d.jpg' },
+  'ドラゴンボールZ 武勇烈伝': { plat: 'md', file: 'Dragon Ball Z - Buyuu Retsuden (Japan)', lb: '13e8968e-2ade-48db-84eb-75aabfb0b401.jpg' },
+  'スーパーハングオン': { plat: 'md', file: 'Super Hang-On (Japan, USA) (En,Ja)', lb: '44d711df-cb04-465d-ad74-95d54afdf269.jpg' }
+};
+
+function getRetroArt(name, plat) {
+  var clean = String(name || '').trim();
+  if (!clean) return null;
+  var match = RETRO_ART_MAP[clean];
+  if (!match) {
+    var keys = Object.keys(RETRO_ART_MAP);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (clean.indexOf(k) >= 0 || k.indexOf(clean) >= 0) {
+        match = RETRO_ART_MAP[k];
+        break;
+      }
+    }
+  }
+  if (!match) return null;
+  var repo = match.plat === 'nes' ? 'Nintendo_-_Nintendo_Entertainment_System' : 'Sega_-_Mega_Drive_-_Genesis';
+  var encFile = encodeURIComponent(match.file) + '.png';
+  return {
+    cover: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Boxarts/' + encFile,
+    lb: match.lb ? ('https://images.launchbox-app.com/' + match.lb) : '',
+    snap: 'https://raw.githubusercontent.com/libretro-thumbnails/' + repo + '/master/Named_Snaps/' + encFile
+  };
+}
+
+// 自動回傳有效封面縮圖（用戶自訂優先，未填時自動透過開源復古圖庫補全）
+function resolveItemCover(d, sz) {
+  if (!d) return '';
+  if (hasImgVal(d.cover_img)) return imgUrl(d.cover_img, sz || 320);
+  var rawName = d.primary_name || d.zh_name || d.jp_name || d.en_name || '';
+  var art = getRetroArt(rawName, d.platform || '');
+  if (art && art.cover) return art.cover;
+  return '';
+}
 
 // ── Config ──
 // ═══ API 申請指南資料 ═══
@@ -5539,7 +5711,7 @@ function saveFxFromInputs(){
 function updateFxLive(){
   if(!_btnGuard('fxLive',null,'更新中...'))return;
   toast('更新匯率中…','',1500);
-  fetch('https://open.er-api.com/v6/latest/TWD').then(function(r){return r.json();}).then(function(d){
+  fetch('https://open.er-api.com/v6/latest/TWD',{signal:(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)?AbortSignal.timeout(6000):undefined}).then(function(r){return r.json();}).then(function(d){
     if(!d||d.result!=='success'||!d.rates)throw new Error('bad');
     var jpy=d.rates.JPY,usd=d.rates.USD; // 每 1 TWD 兌外幣 → 取倒數得「1 外幣=?TWD」
     if(jpy&&$('c-fx-jpy'))$('c-fx-jpy').value=(1/jpy).toFixed(4);
@@ -5669,7 +5841,7 @@ function syncOfflineQueue(silent){
               var savedEntry=Object.assign({},item.entrySnapshot);
               if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
               if(res.imgs){
-                ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+                ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
                 if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
               }
               col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
@@ -5726,7 +5898,7 @@ function _capExtraImagesSize(){
   if(kept.length!==arr.length)entry.extra_images=JSON.stringify(kept);
 }
 function _compressAndSave(afterFn){
-  var imgKeys=['cover_img','back_img','spine_img'];
+  var imgKeys=['cover_img','back_img','spine_img','gameplay_img'];
   var LIMIT=49000; // Sheets 單格上限約 50000，留緩衝
   var pending=0;
   // 漸進式壓縮：畫質優先，從高到低嘗試直到符合上限
@@ -5906,7 +6078,7 @@ function shPost(d){
   // v02.172：使用者實測回報「強制重新比對資料欄位」失敗，錯誤是unauthorized——追查後
   // 發現這條白名單漏掉了force_realign這個動作，導致這個新增的寫入類action送出時完全
   // 沒帶app_token，後端當然會擋下來。這是新增這個action時的疏漏，補上。
-  if(d&&/^(add|update|delete|deleteMany|fix_headers|force_realign|repair_pre_loan_field)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
+  if(d&&/^(add|batchAdd|update|delete|deleteMany|fix_headers|force_realign|repair_pre_loan_field)$/.test(d.action)&&cfg.app_token)d.app_token=cfg.app_token;
   var url=fixUrl(cfg.url);
   return fetchWithRetry(url,{
     method:'POST',
@@ -6113,7 +6285,7 @@ function doSave(){
   // 先壓縮，壓縮完才檢查是否仍超過上限（順序很重要：先壓縮再檢查）
   _compressAndSave(function(){
   // 壓縮後若仍超過 Sheets 單格上限才清空（避免整筆寫入失敗）
-  ['cover_img','back_img','spine_img'].forEach(function(k){
+  ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){
     if(entry[k]&&entry[k].length>8000000){
       toast('⚠️ '+fldName(k)+' 過大（>8MB），此圖未存','',4000);
       entry[k]='';
@@ -6133,7 +6305,7 @@ function doSave(){
     var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
     if(res.uuid&&!entry.uuid)entry.uuid=res.uuid; // 確保 entry 有 uuid
     if(res.imgs){
-      ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+      ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
       if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images; // 自訂圖片陣列同步改存 Drive ID
     }
     col.push({rowNum:res.rowNum,uid:_uid,data:Object.assign({},entry)});localforage.setItem('gv_col',col).catch(function(){});updateStats();
@@ -6185,7 +6357,7 @@ function doUpdate(rowNum){
   if(_ub){_ub.disabled=true;_ub.textContent='更新中...';}
   // 先壓縮，壓縮完才檢查（順序很重要：先壓縮再檢查，避免圖片被提前清空）
   _compressAndSave(function(){
-  ['cover_img','back_img','spine_img'].forEach(function(k){
+  ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){
     if(entry[k]&&entry[k].length>8000000){
       toast('⚠️ '+fldName(k)+' 過大（>8MB），此圖未存','er',4000);
       entry[k]='';
@@ -6212,7 +6384,7 @@ function doUpdate(rowNum){
     if(res.ok){
       var i=col.findIndex(function(c){return (c.uid&&c.uid===rowNum)||c.rowNum===rowNum;});
       if(res.imgs){
-        ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
+        ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)entry[k]=res.imgs[k];}); // 圖片改存 Drive ID
         if(res.imgs.extra_images!==undefined)entry.extra_images=res.imgs.extra_images; // 自訂圖片陣列同步改存 Drive ID
       }
       if(i>=0)col[i].data=Object.assign({},entry);
@@ -6663,8 +6835,9 @@ function renderSeriesBrowse(){
       var cat=catInternal(d.category)||'遊戲';
       var _icon=_catMeta(cat,d.subtype).icon;
       var uid=c.uid||c.rowNum;
-      var thumb=hasImgVal(d.cover_img)?
-        '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+      var _cov=resolveItemCover(d,320);
+      var thumb=_cov?
+        '<img src="'+_cov+'" alt="" loading="lazy">':
         '<div>'+_icon+'</div>';
       var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
       return '<div class="gv-card" onclick="closeSeriesBrowse();filterCol();showDetail(\''+_escAttr(uid)+'\')">'+
@@ -10577,49 +10750,8 @@ var _scanBC='';      // 步驟一鎖定的條碼
 var _scanImg=null;   // 步驟二拍的封面圖
 var _scanImgBack=null; // v02.33（C）：選拍的封底圖（事實密集面：條碼/編號/日期/語言）
 
-// 更新步驟指示器樣式
-function scanSetStep(n){
-  [1,2,3].forEach(function(i){
-    var el=document.getElementById('step'+i+'-ind');if(!el)return;
-    var active=i===n, done=i<n;
-    el.style.background=active?'rgba(0,229,255,.15)':(done?'rgba(0,229,255,.07)':'#0f1525');
-    el.style.borderColor=active?'#00e5ff':(done?'rgba(0,229,255,.4)':'#1e2a45');
-    el.querySelector('div:last-child').style.color=active?'#00e5ff':(done?'rgba(0,229,255,.6)':'#7a8499');
-  });
-}
-
-// 條碼掃到 → 進入步驟二
-function scanGoStep2(bc){
-  function _proceed(){
-    _scanBC=bc;
-    var s1=$('scan-step1');if(s1)s1.style.display='none';
-    var s2=$('scan-step2');if(s2)s2.style.display='block';
-    // v26.01：拍照提示依建檔分類動態切換（沿用 _gcodeLabels 單一事實來源）
-    var _h2=$('scan-step2-hint');
-    if(_h2){var _lb=_gcodeLabels(_selectedType);_h2.textContent=(_lb&&_lb.step2)?_lb.step2.replace(/^②\s*/,'請'):'請拍攝封面';}
-    var badge=$('scan-bc-badge');
-    if(bc){
-      if(badge)badge.style.display='flex';
-      var num=$('scan-bc-num');if(num)num.textContent=bc;
-    }else{
-      if(badge)badge.style.display='none';
-    }
-    var prev=$('scan-step2-preview');if(prev)prev.style.display='none';
-    var prevB=$('scan-step2b-preview');if(prevB)prevB.style.display='none'; // v02.33（C）
-    var aiBtn=$('scan-ai-btn');if(aiBtn)aiBtn.style.display='none';
-    _scanImg=null;
-    _scanImgBack=null; // v02.33（C）
-    scanSetStep(2);
-  }
-  if(bc){
-    confirmBarcodeDup(bc).then(function(proceed){
-      if(!proceed){comboRestartScanner();return;} // Req4a：取消時重啟掃描器避免黑屏
-      _proceed();
-    });
-  }else{
-    _proceed();
-  }
-}
+// 步驟指示器（單頁版已整合，保留空函式防呆）
+function scanSetStep(n){}
 
 // 步驟二：拍照 / 相簿選圖
 function scanStep2Photo(input){
@@ -11007,6 +11139,17 @@ function barScanFromBtn(){
     subtitle:'對準包裝上的 EAN / JAN / ISBN',
     openingText:'正在開啟相機...',
     detectText:'正在偵測商品條碼',
+    secondary:[
+      {label:'✏️ 手動輸入',fn:function(){
+        fscanClose();
+        var bi=$('bar-inp');
+        if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('請直接在此手動輸入條碼','ok',2500);}
+      }}
+    ],
+    fallback:function(){
+      var bi=$('bar-inp');
+      if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('無法開啟相機，請在此手動輸入條碼','er',3500);}
+    },
     resultToast:function(v){return '已帶入商品條碼：'+v;}}); // 僅回填欄位，由使用者按「查詢資料庫」
 }
 function barSearchFromInput(){
@@ -11021,6 +11164,17 @@ function comboScanFromBtn(){
     subtitle:'先掃條碼，稍後再拍封面',
     openingText:'正在開啟相機...',
     detectText:'正在偵測條碼',
+    secondary:[
+      {label:'✏️ 手動輸入',fn:function(){
+        fscanClose();
+        var bi=$('combo-bar-inp');
+        if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('請直接在此手動輸入條碼','ok',2500);}
+      }}
+    ],
+    fallback:function(){
+      var bi=$('combo-bar-inp');
+      if(bi){bi.focus();bi.scrollIntoView({behavior:'smooth',block:'center'});toast('無法開啟相機，請在此手動輸入條碼','er',3500);}
+    },
     resultToast:function(v){return '已帶入條碼：'+v;}}); // 僅回填欄位
 }
 // 🤖 [AI辨識進入點] 條碼＋照片 combo 模式：條碼查資料庫 + 封面照片AI辨識並行，交叉比對
@@ -11039,54 +11193,7 @@ function comboSearchFromInput(){
   }
 }
 
-// ponytail: combo barcode scanning now uses the shared field scanner; keep old cleanup calls harmless.
 function stopComboScanner(){}
-// #1：條碼+照片的條碼步驟改用統一全螢幕取景框 overlay（含「跳過」「手動」次要鈕）
-function _comboScanLaunch(){
-  openFieldScanner({mode:'barcode',inputId:'combo-bar-inp',
-    title:'掃描條碼＋照片',
-    subtitle:'先掃條碼，稍後再拍封面',
-    openingText:'正在開啟相機...',
-    detectText:'正在偵測條碼',
-    resultToast:function(v){return '已掃到條碼：'+v;},
-    onResult:function(bc){onComboBarcode(bc);},
-    secondary:[
-      {label:'⏭ 跳過，直接拍封面',fn:function(){scanGoStep2('');}},
-      {label:'✏️ 手動輸入',fn:comboShowManual}
-    ],
-    fallback:comboShowManual});
-}
-// combo 掃到條碼後 → 進入步驟二拍封面
-function onComboBarcode(bc){
-  bc=(bc||'').trim();if(!bc)return;
-  toast('📷 條碼 '+bc,'ok',2000);
-  try{if(typeof navigator.vibrate==='function')navigator.vibrate([80,40,80]);}catch(e){}
-  stopComboScanner();
-  scanGoStep2(bc); // 進入三步驟的步驟二
-}
-// ── 手動輸入條碼備援畫面（bar / combo 共用）──
-// 兩模式「切回相機」的手動輸入畫面結構相同，只差容器 / input id / 回呼。
-// o: { inputId, onConfirm, onBack }（皆為函式名字串，供 inline onclick / onkeydown 用）
-function buildManualBarcodeUI(o){
-  return '<div style="padding:20px;text-align:center;color:#7986cb">'+
-    '<div style="font-size:32px;margin-bottom:8px">📱</div>'+
-    '<div style="font-size:13px;margin-bottom:10px">手動輸入條碼</div>'+
-    '<input class="fi mono" id="'+o.inputId+'" type="text" inputmode="numeric" maxlength="13" placeholder="EAN-13（13碼）"'+
-    ' style="text-align:center;font-size:18px;letter-spacing:3px;margin-bottom:10px"'+
-    ' onkeydown="if(this.value&&event.key===\'Enter\'){'+o.onConfirm+'(this.value.trim())}">'+
-    '<div style="display:flex;gap:8px">'+
-    '<button class="btn bo" style="flex:1;font-size:13px" onclick="'+o.onBack+'()" type="button">📷 切回相機</button>'+
-    '<button class="btn bp" style="flex:1;font-size:13px" onclick="'+o.onConfirm+'(document.getElementById(\''+o.inputId+'\').value.trim())" type="button">確認</button>'+
-    '</div></div>';
-}
-function comboShowManual(){
-  var sw=$('scan-wrap');if(!sw)return;
-  sw.innerHTML=buildManualBarcodeUI({inputId:'mbar2',onConfirm:'onComboBarcode',onBack:'comboRestartScanner'});
-}
-function comboRestartScanner(){
-  stopComboScanner();
-  _comboScanLaunch(); // #1：改用統一全螢幕取景框
-}
 function restartScanner(){
   stopScanner();
   _barScanLaunch(); // #1：改用統一全螢幕取景框
@@ -12800,7 +12907,7 @@ function batchSaveAll(){
         var _uid=res.uuid||res._rowKey||(res.sheetType?res.sheetType+':'+res.rowNum:String(res.rowNum));
         if(res.uuid&&!savedEntry.uuid)savedEntry.uuid=res.uuid;
         if(res.imgs){
-          ['cover_img','back_img','spine_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
+          ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){if(res.imgs[k]!==undefined)savedEntry[k]=res.imgs[k];});
           if(res.imgs.extra_images!==undefined)savedEntry.extra_images=res.imgs.extra_images;
         }
         col.push({rowNum:res.rowNum,uid:_uid,data:savedEntry});
@@ -12823,7 +12930,7 @@ function batchSaveAll(){
     if(!entry.created_at)entry.created_at=tpeDateTime();
     _normalizeEntryEnums();
     _compressAndSave(function(){
-      ['cover_img','back_img','spine_img'].forEach(function(k){
+      ['cover_img','back_img','spine_img','gameplay_img'].forEach(function(k){
         if(entry[k]&&entry[k].length>8000000)entry[k]='';
       });
       _capExtraImagesSize();
@@ -13059,7 +13166,7 @@ function _friendlyError(msg){
 }
 function fldName(k){
   var map={
-    cover_img:'封面圖',back_img:'封底圖',spine_img:'側邊圖',
+    cover_img:'封面圖',back_img:'封底圖',spine_img:'側邊圖',gameplay_img:'遊戲畫面',
     developer:'開發商 / 作者編者',publisher:'發行商 / 出版社',model_no:'型號',
     code:'商品編碼',barcode:'條碼',serial_no:'序號'
   };
@@ -13855,9 +13962,9 @@ function renderFld(f){
   if(type==='hidden')return ''; // UUID 等隱藏欄位不渲染
   var v=(entry[k]!==undefined&&entry[k]!==null)?entry[k]:((window._CUR_DEFAULTS||DEFAULTS)[k]||'');
   // 防護：非圖片欄位若含 base64 資料，強制清空
-  if(v&&typeof v==='string'&&v.startsWith('data:image')&&k!=='cover_img'&&k!=='back_img'&&k!=='spine_img')v='';
+  if(v&&typeof v==='string'&&v.startsWith('data:image')&&k!=='cover_img'&&k!=='back_img'&&k!=='spine_img'&&k!=='gameplay_img')v='';
   // 防護：price/date 欄位若含 URL，清空（圖片欄位與參考連結不受影響，URL 是合法內容）
-  var _urlOkKeys={ref_link:1,cover_img:1,back_img:1,spine_img:1};
+  var _urlOkKeys={ref_link:1,cover_img:1,back_img:1,spine_img:1,gameplay_img:1};
   if(v&&typeof v==='string'&&v.startsWith('http')&&!_urlOkKeys[k])v='';
   // 防護：所有價格欄位只允許數字、分隔符與幣別
   if(type==='price'&&v&&!/^[\d.,\s]*(JPY|TWD|USD)?$/i.test(v))v='';
@@ -14945,7 +15052,8 @@ function renderDash(){
     var subParts=_catMeta(cc,d.subtype).sub(d).filter(Boolean);
     var sub=subParts.length?subParts.join(' \u00b7 '):(platShort(d.platform||'')||d.book_type||d.peripheral_type||d.brand||'');
     // v02.92\uff1a\u4f7f\u7528\u8005\u5be6\u6e2c\u56de\u5831\u5e0c\u671b\u300c\u6700\u8fd1\u5165\u624b\u300d\u4e5f\u80fd\u770b\u5230\u5c01\u9762\u7e2e\u5716\uff0c\u4e0d\u53ea\u662f\u5206\u985e emoji\u3002\u6cbf\u7528\u8207\u6536\u85cf\u5217\u8868\uff08renderColList\uff09\u76f8\u540c\u7684 hasImgVal/imgUrl \u5224\u65b7\uff0c有封面照就顯示縮圖，沒有才退回原本的分類 icon。
-    var thumb=hasImgVal(d.cover_img)?'<img src="'+imgUrl(d.cover_img,80)+'" alt="" loading="lazy">':ico;
+    var _cov=resolveItemCover(d,80);
+    var thumb=_cov?'<img src="'+_cov+'" alt="" loading="lazy">':ico;
     return '<div class="dv2-ri" onclick="filterCol();showDetail(\''+(c.uid||c.rowNum)+'\')">'+
       '<div class="dv2-ri-ic">'+thumb+'</div>'+
       '<div style="flex:1;min-width:0">'+
@@ -15366,8 +15474,9 @@ function renderGalleryView(){
     var cat=catInternal(d.category)||'遊戲';
     var _icon=_catMeta(cat,d.subtype).icon;
     var uid=item.uid||item.rowNum;
-    var thumb=hasImgVal(d.cover_img)?
-      '<img src="'+imgUrl(d.cover_img,320)+'" alt="" loading="lazy">':
+    var _cov=resolveItemCover(d,320);
+    var thumb=_cov?
+      '<img src="'+_cov+'" alt="" loading="lazy" onerror="this.onerror=null;this.parentElement.innerHTML=\'<div>'+_icon+'</div>\';">':
       '<div>'+_icon+'</div>';
     var name=d.primary_name||d.zh_name||d.jp_name||d.en_name||'（無名稱）';
     var _isSel=_colSel&&_colSelSet.has(String(uid));
@@ -15846,6 +15955,9 @@ function closeColMenu(){
   var p=document.getElementById('col-menu-panel');
   if(p)p.style.display='none';
 }
+// CSV 儲存格逸出處理（全域共用）
+function csvCell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+
 // ── 匯出 CSV（按「分類＋子類型」分檔，避免不同子類型的欄位混在同一檔案錯位）──
 function exportCsvByType(){
   var rows=filtered;
@@ -15861,7 +15973,7 @@ function exportCsvByType(){
   });
   var date=(new Date()).toISOString().slice(0,10);
   var totalFiles=0;
-  function cell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+  var cell=csvCell;
   function downloadOne(g){
     var typeRows=g.rows;
     var lbl=g.isHunt?'尋寶':catLabel(g.cat);
@@ -16008,37 +16120,79 @@ function importCsv(input){
 // 根因：原本匯入只把資料存進本機 localforage 快取，從未呼叫後端 API 新增資料列，
 // 導致重新整理（重新從後端同步）後，這些從未真正寫入試算表的項目就會消失，看起來像整筆不見了。
 function _syncImportedRecords(list,idx,skip,total){
-  if(idx>=list.length){
+  if(!list||!list.length){
     localforage.setItem('gv_col',col).catch(function(){});
     localforage.setItem('gv_hunt',hunt).catch(function(){});
     updateStats();renderColList();
-    if(typeof renderHuntList==='function')renderHuntList(); // v54.90：尋寶頁匯入後也要重新渲染尋寶清單
+    if(typeof renderHuntList==='function')renderHuntList();
     toast('匯入完成：'+total+' 筆已同步雲端（跳過重複 '+skip+' 筆）✓','ok',4500);
     return;
   }
-  var item=list[idx],d=item.rec.data;
-  function next(){_syncImportedRecords(list,idx+1,skip,total);}
-  if(item.isHunt){
-    if(!d.hunt_status)d.hunt_status='追蹤中';
-    if(!d.sightings)d.sightings='[]';
-    var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
-    shPost({action:'add',row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
+  
+  // v11.01：優先嘗試按分類分組走 batchAdd 批次寫入（1秒內全量同步），後端若為舊版則自動優雅降級為單筆循序新增
+  var groups={};
+  list.forEach(function(item){
+    var d=item.rec.data;
+    var cat=item.isHunt?'狩獵':(catInternal(d.category)||'遊戲');
+    var sub=d.subtype||'';
+    var key=cat+'__'+sub;
+    if(!groups[key])groups[key]={cat:cat,sub:sub,isHunt:item.isHunt,items:[]};
+    groups[key].items.push(item);
+  });
+  
+  var groupKeys=Object.keys(groups);
+  function processGroup(gIdx){
+    if(gIdx>=groupKeys.length){
+      localforage.setItem('gv_col',col).catch(function(){});
+      localforage.setItem('gv_hunt',hunt).catch(function(){});
+      updateStats();renderColList();
+      if(typeof renderHuntList==='function')renderHuntList();
+      toast('匯入完成：'+total+' 筆已極速同步雲端（跳過重複 '+skip+' 筆）✓','ok',4500);
+      return;
+    }
+    var g=groups[groupKeys[gIdx]];
+    var fieldsList=g.items.map(function(it){
+      var d=it.rec.data;
+      return g.isHunt?_huntEntryFields(d):_entryFields(d);
+    });
+    shPost({action:'batchAdd',category:g.cat,fieldsList:fieldsList}).then(function(res){
       if(res&&res.ok){
-        item.rec.rowNum=res.rowNum;
-        if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}
+        if(res.uuids&&Array.isArray(res.uuids)){
+          res.uuids.forEach(function(u,ui){
+            if(u&&g.items[ui]){g.items[ui].rec.uid=u;g.items[ui].rec.data.uuid=u;}
+          });
+        }
+        processGroup(gIdx+1);
+      } else {
+        fallbackSync(g.items,0,function(){processGroup(gIdx+1);});
       }
-    }).catch(function(){}).finally(next);
-  } else {
-    var cat=catInternal(d.category)||'遊戲';
-    var fields=fieldsFor(cat,d.subtype);
-    var row=_rowFromFields(d,fields);
-    shPost({action:'add',row:row,fields:_entryFields(d),category:cat}).then(function(res){
-      if(res&&res.ok){
-        item.rec.rowNum=res.rowNum;
-        if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}
-      }
-    }).catch(function(){}).finally(next);
+    }).catch(function(){
+      fallbackSync(g.items,0,function(){processGroup(gIdx+1);});
+    });
   }
+
+  function fallbackSync(subList,sIdx,cb){
+    if(sIdx>=subList.length){if(cb)cb();return;}
+    var item=subList[sIdx],d=item.rec.data;
+    function fnNext(){fallbackSync(subList,sIdx+1,cb);}
+    if(item.isHunt){
+      if(!d.hunt_status)d.hunt_status='追蹤中';
+      if(!d.sightings)d.sightings='[]';
+      var row=HUNT_HDR.map(function(k){return d[k]!==undefined?d[k]:'';});
+      shPost({action:'add',row:row,fields:_huntEntryFields(d),category:'狩獵'}).then(function(res){
+        if(res&&res.ok){item.rec.rowNum=res.rowNum;if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}}
+      }).catch(function(){}).finally(fnNext);
+    } else {
+      var cat=catInternal(d.category)||'遊戲';
+      var fields=fieldsFor(cat,d.subtype);
+      var row=_rowFromFields(d,fields);
+      shPost({action:'add',row:row,fields:_entryFields(d),category:cat}).then(function(res){
+        if(res&&res.ok){item.rec.rowNum=res.rowNum;if(res.uuid){item.rec.uid=res.uuid;d.uuid=res.uuid;}}
+      }).catch(function(){}).finally(fnNext);
+    }
+  }
+
+  processGroup(0);
 }
 // 解析日期為可比較的時間戳；未填、2099 佔位、無法解析 → NaN（視為空值）
 // v02.167：借出到期提醒——掃描收藏狀態為「借出中」且有填預計歸還日的項目，區分「已逾期」
@@ -16345,9 +16499,10 @@ function renderGlist(){
     var cat=catInternal(d.category)||'遊戲';
     var shortPlat=platShort(d.platform||'');
     var _icon=_catMeta(cat,d.subtype).icon;
-    // 縮圖：優先 cover_img，否則 emoji
-    var thumb=hasImgVal(d.cover_img)?
-      '<div class="gc-thumb"><img class="cover-bg" src="'+imgUrl(d.cover_img,150)+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+imgUrl(d.cover_img,150)+'" alt="" loading="lazy"></div>':
+    // 縮圖：優先 cover_img，否則開源圖庫自動備援，最後退回 emoji
+    var _cov=resolveItemCover(d,150);
+    var thumb=_cov?
+      '<div class="gc-thumb"><img class="cover-bg" src="'+_cov+'" alt="" aria-hidden="true" loading="lazy"><img class="cover-fg" src="'+_cov+'" alt="" loading="lazy"></div>':
       '<div class="gi">'+_icon+'</div>';
     // 中間說明行
     var midParts;
@@ -16474,7 +16629,7 @@ function lbRotate(){
         if(typeof detailRow!=='undefined'&&detailRow!==null&&typeof col!=='undefined'){
           var item=col.find(function(c){return (c.uid&&c.uid===detailRow)||c.rowNum===detailRow;});
           if(item&&item.data){
-            if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'){
+            if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'||cur.key==='gameplay_img'){
               item.data[cur.key]=compressed;
             }else if(cur.key==='extra_images'&&typeof cur.extraIdx==='number'){
               var ex=[];try{ex=JSON.parse(item.data.extra_images||'[]');}catch(_e){ex=[];}
@@ -16537,7 +16692,7 @@ function lbRotate(){
         }
 
         if(typeof entry!=='undefined'&&entry&&cur.key){
-          if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'){
+          if(cur.key==='cover_img'||cur.key==='back_img'||cur.key==='spine_img'||cur.key==='gameplay_img'){
             onFld(cur.key,compressed);
             var prev=document.getElementById('prev-'+cur.key);
             if(prev){prev.src=compressed;prev.style.display='block';}
@@ -17005,10 +17160,8 @@ function marketValueDisplay(d){
   return '未填';
 }
 function marketEstimateExplain(){
-  alert([
-    '目前估值邏輯說明',
-    '',
-    '1. 依商品「區域屬性」決定幣別優先順序：日本/亞洲品 → 優先採用 JPY 樣本；美國品 → 優先採用 USD 樣本，不再單純從筆數決定，減少跺幣別樣本干擾中位數。',
+  _customAlert('目前估值邏輯說明', [
+    '1. 依商品「區域屬性」決定幣別優先順序：日本/亞洲品 → 優先採用 JPY 樣本；美國品 → 優先採用 USD 樣本，不再單純從筆數決定，減少多幣別樣本干擾中位數。',
     '2. 依語言對市場分流：日本站（樂天/Yahoo JP）只用日文名查詢；eBay 只用英文名查詢；缺對應語言名稱的市場直接略過，減少跨語言噪音。',
     '3. 標題比對包含羅馬數字⇔阿拉伯數字正規化（XVI=16）、末尾年份/版本號嚴格比對，防止前後作、不同年份版本混入樣本。',
     '4. 優先採二手/中古/used 樣本；二手樣本不足 3 筆時，回退併入全新刊登價並標註。',
@@ -17546,11 +17699,14 @@ function detailHeroHtml(d,rowNum){
   var sub=_cm.sub(d).filter(Boolean).join(' · ');
   // v47.04：hero 封面區不再提供快速拍照/相簿按鈕，所有圖片修改一律從「編輯」進入；
   // 點主圖／縮圖改為彈出燈箱瀏覽（含自訂圖片），燈箱有打叉關閉與左右箭頭換圖
-  var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img);
+  var hasC=hasImgVal(d.cover_img),hasB=hasImgVal(d.back_img),hasS=hasImgVal(d.spine_img),hasG=hasImgVal(d.gameplay_img);
+  var _autoCov=!hasC?resolveItemCover(d,300):'';
   var _imgDefs=[];
   if(hasC)_imgDefs.push({key:'cover_img',lbl:'封面',raw:d.cover_img,url:imgUrl(d.cover_img,300),full:imgUrl(d.cover_img,1000),thumb:imgUrl(d.cover_img,80)});
+  else if(_autoCov)_imgDefs.push({key:'cover_img',lbl:'官方封面（自動補齊）',raw:_autoCov,url:_autoCov,full:_autoCov,thumb:_autoCov});
   if(hasB)_imgDefs.push({key:'back_img',lbl:'封底',raw:d.back_img,url:imgUrl(d.back_img,300),full:imgUrl(d.back_img,1000),thumb:imgUrl(d.back_img,80)});
   if(hasS)_imgDefs.push({key:'spine_img',lbl:'側邊',raw:d.spine_img,url:imgUrl(d.spine_img,300),full:imgUrl(d.spine_img,1000),thumb:imgUrl(d.spine_img,80)});
+  if(hasG)_imgDefs.push({key:'gameplay_img',lbl:'遊戲畫面',raw:d.gameplay_img,url:imgUrl(d.gameplay_img,300),full:imgUrl(d.gameplay_img,1000),thumb:imgUrl(d.gameplay_img,80)});
   var _extraArr=[];try{_extraArr=JSON.parse(d.extra_images||'[]');}catch(e){_extraArr=[];}
   if(Array.isArray(_extraArr)){
     _extraArr.forEach(function(item,eidx){
@@ -17570,6 +17726,20 @@ function detailHeroHtml(d,rowNum){
     }).join('')+'</div>';
   }
   coverHtml+='</div>';
+  var actionsHtml='';
+  var effectiveCover=hasC?imgUrl(d.cover_img,1000):_autoCov;
+  if(effectiveCover){
+    var _3dUrl='./3d-viewer.html?name='+encodeURIComponent(title)+
+      '&platform='+encodeURIComponent(d.platform||cat)+
+      '&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+
+      (hasB?'&back='+encodeURIComponent(imgUrl(d.back_img,1000)):'')+
+      (hasS?'&spine='+encodeURIComponent(imgUrl(d.spine_img,1000)):'');
+    actionsHtml='<div class="vault-hero-actions">'+
+      '<a href="'+_3dUrl+'" target="_blank" class="vault-chip-btn chip-3d"><span>🎮 3D 把玩</span></a>'+
+      '<a href="./cyber-museum.html" target="_blank" class="vault-chip-btn chip-crt"><span>📺 CRT 展廳</span></a>'+
+      '<a href="./slab-studio.html?name='+encodeURIComponent(title)+'&platform='+encodeURIComponent(d.platform||cat)+'&cover='+encodeURIComponent(imgUrl(d.cover_img,1000))+'&comp='+encodeURIComponent(d.completeness||'')+'&date='+encodeURIComponent(d.release_date||'')+'" target="_blank" class="vault-chip-btn chip-slab"><span>💎 鑑定卡</span></a>'+
+    '</div>';
+  }
   var tags='';
   tags+=_detailTag(catLabel(cat),catColor);
   var collectStatus=d.collect_status||'收藏中';
@@ -17600,13 +17770,16 @@ function detailHeroHtml(d,rowNum){
       _detailKpi('估值',value,'#ffcc02',marketConfidenceText(d));
   }
   return '<div class="vault-hero">'+
-    coverHtml+
-    '<div class="vault-main">'+
-      '<div class="vault-name">'+esc(title)+'</div>'+
-      '<div class="vault-sub">'+esc(sub||'—')+'</div>'+
-      '<div class="vault-tags">'+tags+'</div>'+
-      '<div class="vault-kpis">'+kpisHtml+'</div>'+
+    '<div class="vault-hero-body">'+
+      coverHtml+
+      '<div class="vault-main">'+
+        '<div class="vault-name">'+esc(title)+'</div>'+
+        '<div class="vault-sub">'+esc(sub||'—')+'</div>'+
+        '<div class="vault-tags">'+tags+'</div>'+
+        '<div class="vault-kpis">'+kpisHtml+'</div>'+
+      '</div>'+
     '</div>'+
+    actionsHtml+
   '</div>';
 }
 // v54.21：外層加 try-catch 包裝，詳情頁若在渲染過程中拋出例外，明確用 toast 顯示錯誤訊息
@@ -17685,14 +17858,11 @@ $('dact').innerHTML=
     '<button class="btn bo bs" style="color:#ff5252;border-color:#ff5252" onclick="doDelete(\''+ rowNum +'\')"  type="button">刪除</button>'+
     '<button class="btn bo bs" onclick="closeDetail()" type="button">✕</button>';
   
-var _dh=$('dtitle')&&$('dtitle').parentElement;
+  var _dh=$('dtitle')&&$('dtitle').parentElement;
   if(_dh){
     var oldPos=_dh.querySelector('.dpos');if(oldPos)oldPos.remove();
     if(posStr)$('dplat').insertAdjacentHTML('afterend',posStr);
   }
-  var prevBtn=$('dprev-float'),nextBtn=$('dnext-float');
-  if(prevBtn){prevBtn.classList.toggle('off',!_hasPrev);prevBtn.onclick=function(){if(_hasPrev)detailPrev();};}
-  if(nextBtn){nextBtn.classList.toggle('off',!_hasNext);nextBtn.onclick=function(){if(_hasNext)detailNext();};}
   var skip={category:1,uuid:1,_src:1,market_value_currency:1,market_value_foreign_amount:1,extra_images:1};  // 隱藏欄位不顯示（extra_images 是JSON陣列，有專屬圖片管理UI，不該原始顯示）
   var skipDef={collect_status:'收藏中',buy_source:'全新購入',buy_date:'2099/01/01',buy_price:'0',market_value:'0',market_value_confidence:'N/A',resale_price:'0',resale_date:'2099/01/01',rating:'N/A',play_status:'未遊玩',bonus_code_status:'N/A',warranty_status:'N/A'};
   var html=detailHeroHtml(d,rowNum);
@@ -17715,7 +17885,7 @@ var _dh=$('dtitle')&&$('dtitle').parentElement;
       try{var dt=new Date(v);v=dt.getFullYear()+'/'+(dt.getMonth()+1).toString().padStart(2,'0')+'/'+dt.getDate().toString().padStart(2,'0');}catch(e){}
     }
     // 圖片欄位已在上方顯示，跳過
-    if(k==='cover_img'||k==='back_img'||k==='spine_img')return;
+    if(k==='cover_img'||k==='back_img'||k==='spine_img'||k==='gameplay_img')return;
     // ⚠️ 防護：任何欄位若含 base64 圖片資料，跳過
     if(typeof v==='string'&&v.startsWith('data:image'))return;
     // 防護：價格欄位含 URL 跳過
@@ -18036,6 +18206,27 @@ function _customConfirm(title,message){
     document.getElementById('custom-confirm-ok').onclick=function(){cleanup(true);};
   });
 }
+function _customAlert(title,message){
+  return new Promise(function(resolve){
+    var ov=document.getElementById('custom-confirm-ov');
+    if(!ov){
+      ov=document.createElement('div');
+      ov.id='custom-confirm-ov';
+      ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:24px';
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML='<div style="background:#141b30;border:1px solid #2a3a5a;border-radius:16px;padding:20px;max-width:380px;width:100%;max-height:85vh;display:flex;flex-direction:column">'+
+      '<div style="font-size:16px;font-weight:700;color:#e8eaf6;margin-bottom:12px;white-space:pre-line;line-height:1.4">'+esc(title)+'</div>'+
+      (message?'<div style="font-size:13px;color:#9fa8c8;margin-bottom:16px;white-space:pre-line;line-height:1.65;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch">'+esc(message)+'</div>':'')+
+      '<div style="display:flex;justify-content:flex-end">'+
+        '<button id="custom-alert-ok" class="btn bp bw" style="min-height:38px" type="button">我知道了</button>'+
+      '</div>'+
+    '</div>';
+    ov.style.display='flex';
+    var okBtn=document.getElementById('custom-alert-ok');
+    if(okBtn)okBtn.onclick=function(){ov.style.display='none';resolve(true);};
+  });
+}
 function confirmBarcodeDup(bc){
   var dups=checkBarcodeDup(bc);
   if(!dups.length)return Promise.resolve(true);
@@ -18244,9 +18435,6 @@ window.onload=function(){
   // 版本號集中顯示
   var _v1=document.getElementById('app-ver');if(_v1)_v1.textContent=APP_VERSION;
   var _v2=document.getElementById('app-ver2');if(_v2)_v2.textContent=APP_VERSION;
-  // 關於頁欄位/組數連動（隨 FIELDS/GROUPS 變動自動更新）
-  var _ac=document.getElementById('about-cols');if(_ac)_ac.textContent=FIELDS.length;
-  var _ag=document.getElementById('about-grps');if(_ag)_ag.textContent=GROUPS.length;
   // 返回鍵守門（瀏覽器模式有效；PWA standalone 視系統而定）
   try{history.pushState({gvGuard:true},'','');}catch(e){}
   localforage.getItem('gv_col').then(function(cached){
@@ -18476,7 +18664,7 @@ function huntFiltered(){return hunt.filter(_huntQuickPass);}
 function exportHuntCsv(){
   var rows=huntFiltered();
   if(!rows||!rows.length){toast('目前沒有可匯出的尋寶資料','er');return;}
-  function cell(v){v=(v==null?'':''+v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+  var cell=csvCell;
   var cols=HUNT_HDR.map(function(k){return [k,k];});
   // 雙標題列：第一列內部鍵值（匯入辨識用）、第二列顯示名稱（此處尋寶欄位鍵值即為顯示，兩列相同不影響匯入）
   var lines=[

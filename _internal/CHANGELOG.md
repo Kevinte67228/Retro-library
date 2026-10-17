@@ -1,3 +1,30 @@
+## v11.19 (2026-10-17)
+
+### 變更內容
+依據使用者要求全面補齊 FC / MD 實體資料檔案與全量匯入檔中之圖片欄位，並校準全庫對齊：
+
+1. **FC / MD 封底與側邊書脊圖庫批量深度搜尋與補齊**：
+   - **《ファイナルラップ》（Final Lap）**：補齊封底圖檔（`back_img`）與側邊書脊圖檔（`spine_img`）。
+   - **《聖闘士星矢 黄金伝説 完結篇》**：補齊封底圖檔（`back_img`）與側邊書脊圖檔（`spine_img`）。
+   - **《キャプテン翼》（足球小將翼）**：補齊側邊書脊圖檔（`spine_img`）。
+   - **《アイルトン・セナ スーパーモナコGP II》（Ayrton Senna's Super Monaco GP II）**：補齊側邊書脊圖檔（`spine_img`）。
+   - **《スペースハリアーII》（Space Harrier II）**：補齊側邊書脊圖檔（`spine_img`）。
+   - **《SORCERIAN》（ソーサリアン）**：補齊側邊書脊圖檔（`spine_img`）。
+   - 經 LaunchBox 官方高解析度 CDN 驗證，所有補齊之 URL 均通過 HTTP 200 有效性測試。
+
+2. **Google 試算表全量匯入檔全量同步再生（`RetroVault_GS_Games_全量匯入檔.xlsx`）**：
+   - 解決舊版 Excel 匯入檔遺漏 `gameplay_img` 欄位及尚存有過期 jsDelivr 連結問題。
+   - 依據 `RetroVault_GS_Games_全量匯入檔.csv` 完整 57 欄位格式，全量重新生成最新 `.xlsx` 與 `.csv`，140 款遊戲 100% 採用 GitHub Raw 官方穩定源與 LaunchBox 最新 CDN。
+
+3. **賽博防潮展廳（`docs/cyber-museum.html`）`imgUrl` 轉址強化**：
+   - 同步加入 Libretro 連結智慧自動轉址邏輯，與主程式 `docs/index.html` 一致，杜絕跨網域連線阻擋問題。
+
+4. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.19` / `retrovault-v11-19`。
+   - 部署保護清單更新保留 `v11.17` 與 `v11.18`。
+
+---
+
 ## v11.18 (2026-10-17)
 
 ### 變更內容

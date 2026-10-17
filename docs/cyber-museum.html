@@ -1506,6 +1506,9 @@ function fmtValuation(val) {
 
 function imgUrl(v, sz) {
   if (!v || typeof v !== 'string') return '';
+  if (v.indexOf('cdn.jsdelivr.net/gh/libretro-thumbnails/') >= 0) {
+    v = v.replace('cdn.jsdelivr.net/gh/libretro-thumbnails/', 'raw.githubusercontent.com/libretro-thumbnails/').replace('@master/', '/master/');
+  }
   if (v.indexOf('data:') === 0 || v.indexOf('http') === 0) return v;
   return 'https://drive.google.com/thumbnail?id=' + v + '&sz=w' + (sz || 600);
 }
@@ -1825,9 +1828,9 @@ window.addEventListener('DOMContentLoaded', function() {
   loadAllData();
 });
 
-// PWA Service Worker 註冊與快取自動更新機制 (v11.18)
+// PWA Service Worker 註冊與快取自動更新機制 (v11.19)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js?v=v11.18').then(function(reg) {
+  navigator.serviceWorker.register('sw.js?v=v11.19').then(function(reg) {
     reg.update();
     if (reg.waiting) {
       reg.waiting.postMessage('SKIP_WAITING');

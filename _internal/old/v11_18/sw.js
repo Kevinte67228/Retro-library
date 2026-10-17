@@ -1,10 +1,24 @@
-const CACHE_NAME = 'retrovault-v10-01';
+const CACHE_NAME = 'retrovault-v11-18';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './RetroVault_v10_01_index.html',
+  './RetroVault_v11_18_index.html',
+  './RetroVault_v11_17_index.html',
+  './RetroVault_v11_16_index.html',
+  './RetroVault_v11_02_index.html',
+  './RetroVault_v11_01_index.html',
   './manifest.json',
   './manual.html',
+  './3d-viewer.html',
+  './cyber-museum.html',
+  './search-bench.html',
+  './slab-studio.html',
+  './market-radar.html',
+  './js/vault-sync-engine.js',
+  './js/vault-db.js',
+  './js/vault-worker.js',
+  './js/slab-generator.js',
+  './js/valuation-radar.js',
   './bg.webp'
 ];
 // 註：v54.71 起 bg.webp 改回本地相對路徑，納入預先快取——原本從 GitHub(raw) 跨網域載入，
@@ -46,11 +60,7 @@ self.addEventListener('install', function(event) {
       }));
     })
   );
-  // 註：這裡故意「不」呼叫 self.skipWaiting()。
-  // 讓新版本先進入 waiting 狀態，由頁面偵測到後顯示「發現新版本」提示，
-  // 使用者主動點下去才透過 postMessage 通知這裡 skipWaiting，
-  // 避免新版本背景默默接管、跟頁面當下記憶體裡的舊版邏輯不同步。
-  // （與 Taxi-Meter 專案採用同一套做法，2026-07 對齊）
+  self.skipWaiting();
 });
 
 self.addEventListener('message', function(event) {
