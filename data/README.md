@@ -12,7 +12,10 @@
 | `RetroVault_遊戲_FC.csv` | 前端雙標題 CSV | Famicom（FC）共 107 款完整版遊戲資料，包含最新爬取之外盒背面圖（`back_img`）與書脊圖（`spine_img`）。 |
 | `RetroVault_遊戲_MD.csv` | 前端雙標題 CSV | Sega Mega Drive（MD）共 33 款完整版遊戲資料，外盒背面圖 100% 齊全。 |
 | `RetroVault_遊戲_SFC.csv` | 前端雙標題 CSV | Super Famicom（SFC）共 177 款完整版遊戲資料，封面與實機截圖 100% 齊全，包含最新爬取之背盒圖（`back_img`）與書脊圖（`spine_img`）。 |
-| `RetroVault_GS_Games_全量匯入檔.xlsx` | Google 試算表對齊 Excel | 將 FC+MD+SFC 共 317 款遊戲嚴格按照 Google Apps Script 後端 `GAME_HEADERS` 57 欄對齊之檔案，供人工核對或直接匯入。 |
+| `RetroVault_遊戲_GB.csv` | 前端雙標題 CSV | Game Boy（GB）共 20 款完整版遊戲資料，封面與實機截圖 100% 齊全，帶標準 UTF-8 BOM。 |
+| `RetroVault_遊戲_GG.csv` | 前端雙標題 CSV | Sega Game Gear（GG）共 10 款完整版遊戲資料，封面與實機截圖 100% 齊全，世嘉官方標題校準，帶標準 UTF-8 BOM。 |
+| `RetroVault_遊戲_GBA.csv` | 前端雙標題 CSV | Game Boy Advance（GBA）共 19 款完整版遊戲資料，封面與實機截圖 100% 齊全，帶標準 UTF-8 BOM。 |
+| `RetroVault_GS_Games_全量匯入檔.xlsx` | Google 試算表對齊 Excel | 將 FC+MD+SFC+GB+GG+GBA 六大平台共 366 款遊戲嚴格按照 Google Apps Script 後端 `GAME_HEADERS` 57 欄對齊之檔案，供人工核對或直接匯入。 |
 | `RetroVault_GS_Games_全量匯入檔.csv` | Google 試算表對齊 CSV | 與上述 Excel 相同內容之 UTF-8 BOM CSV 格式。 |
 
 ---
