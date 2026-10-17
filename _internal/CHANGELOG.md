@@ -1,7 +1,38 @@
-## v11.24 (2026-10-17)
+## v11.25 (2026-10-17)
 
 ### 變更內容
-依據使用者指示，正式完成 Game Boy (GB)、Sega Game Gear (GG) 與 Game Boy Advance (GBA) 三大掌機平台共 49 款遊戲之全量圖資建檔、編碼校準、雲端資料庫秒級同步與匯入檔全量大合流：
+依據使用者回報「重新檢查一下，有幾筆還是沒有封面，另外有機筆區域是日本，但是用到美規的圖片」，完成全量圖資深度審計、美版圖資徹底清除、正統日版彩盒補齊、CDN 破圖修復與雲端資料庫同步：
+
+1. **破圖與缺漏封面根絕 (HTTP 404 & Empty Cover Fix)**：
+   - 解決本地 `docs/cdn/` 缺少推送到 GitHub 遠端導致線上 PWA 請求返回 404 破圖之問題：
+     - `[GB] DMG-APUJ`《ポケットG1ステイブル》
+     - `[GB] DMG-MLA`《スーパーマリオランド》
+     - `[GG] G-3248`《ソニックドリフト2》
+     - `[GG] G-3213`《ウィンブルドン》
+   - 為硬體周邊卡匣 `[GBA] USB-CARD-256M`《UP USB CARD 256M》生成並補齊高解析度正版風格包裝與卡匣實體封面，全庫 366 款遊戲空封面歸零（0 空值、0 破圖，HTTP 200 率 100%）。
+
+2. **日版遊戲美規圖片（USA/World）徹底清除並替換為純正日版彩盒**：
+   - 審查並替換 Libretro 誤標收錄之美版外盒（帶有左側銀色 GAME BOY 粗條、ACTIVISION 發行標記、美版英文標題與 ESRB 分級標籤之項目）：
+     - `[GBA] AGB-P-APUJ`《ピノビィーの大冒険》：移除美版 Pinobee Wings of Adventure (Activision/ESRB E)，替換為正統日版 Hudson 橫版彩盒《ピノビィーの大冒険 (PINOBEE QUEST OF HEART)》。
+     - `[GB] DMG-REA`《R-TYPE》：移除美版 Irem America 外盒，替換為日版 Irem 原裝紙盒。
+     - `[GB] DMG-BXA`《ボクシング》：移除美版 Heavyweight Championship Boxing / Activision 外盒，替換為日版 Tonkin House 原裝正版彩盒。
+     - `[GB] DMG-QRJ`《クォース》：移除美版 Quarth / Konami America 外盒，替換為日版 Konami 原裝彩盒（含正面、封底、書脊）。
+     - `[GB] DMG-HKJ`《北斗の拳 凄絶神闘勝負》：移除美版 Fist of the North Star / Electro Brain 外盒，替換為日版東映動畫原裝彩盒（含正面、封底、書脊）。
+     - `[GB] DMG-NCJ`《熱血高校サッカー部 ワールドカップ編》：移除美版 Nintendo World Cup 人像外盒，替換為日版 Technos Japan 國夫君熱血高校原裝紙盒。
+     - `[GB] DMG-NYJ`《信長の野望 ゲームボーイ版》：移除美版 Nobunaga's Ambition 外盒，替換為日版光榮 KOEI 原裝正版彩盒（含正面、封底、書脊）。
+     - `[GG] G-3232`《ソニック＆テイルス》：修正誤配成 2 代封面與截圖之錯誤，精準替換為 1 代正統日版封面與實機標題截圖。
+
+3. **CDN 鏡像與本地資料庫全量同步 (31 個圖檔上傳入庫)**：
+   - 批次推送 31 個圖檔至 GitHub `docs/cdn/`，確保原生 CORS 支援與 3D/旋轉功能。
+   - 同步更新各平台 CSV（`RetroVault_遊戲_GB/GG/GBA.csv`）與全量 `RetroVault_GS_Games_全量匯入檔.csv`、`RetroVault_GS_Games_全量匯入檔.xlsx`。
+
+4. **版本發佈與相容性維護**：
+   - 主程式與 Service Worker 升級為 `v11.25` / `retrovault-v11-25`。
+   - 前端核心 `RETRO_ART_MAP` 字典全面注入最新日版 CDN 封面 mapping。
+
+---
+
+## v11.24 (2026-10-17)
 
 1. **GB / GG / GBA 49 款掌機名作全量建檔與圖資管線執行 (Asset Pipeline)**：
    - **49 款遊戲與收藏總表 100% 逐筆精準對齊**：
