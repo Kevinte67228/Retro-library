@@ -249,6 +249,15 @@ main {
   border-right: 1px solid rgba(0,0,0,0.5);
   border-radius: 2px 2px 0 0;
 }
+/* PCE PC-Engine Jewel Case 規格 (透明CD盒直立規格，寬度約 24px，高度約 160px) */
+.spine-item.pce {
+  width: 24px;
+  height: 160px;
+  border-left: 1px solid rgba(255,255,255,0.25);
+  border-right: 1px solid rgba(0,0,0,0.65);
+  border-radius: 2px 2px 0 0;
+  background: #1a1a24;
+}
 
 .spine-item img {
   width: 100%; height: 100%;
@@ -289,6 +298,10 @@ main {
 .spine-item.book .spine-fallback {
   background: linear-gradient(180deg, #bf360c 0%, #7f0000 100%);
   border-top: 2px solid #ffb300;
+}
+.spine-item.pce .spine-fallback {
+  background: linear-gradient(180deg, #d4a017 0%, #4a3800 100%);
+  border-top: 2px solid #ffd54f;
 }
 
 /* 滑動與點選抽出動效：滑鼠 hover 僅在支援 hover 裝置生效，觸控設備避免假 hover 殘留 */
@@ -897,6 +910,21 @@ main {
         </div>
       </section>
 
+      <!-- PCE PC-Engine 層 -->
+      <section class="shelf-section" id="sec-pce" style="display:none">
+        <div class="shelf-header">
+          <div class="shelf-title">
+            <span class="dot" style="background:#ffd54f;box-shadow:0 0 8px #ffd54f"></span>
+            <span>PC ENGINE (PCE / CD-ROM²)</span>
+          </div>
+          <span class="shelf-count" id="count-pce">0 件</span>
+        </div>
+        <div class="shelf-bay">
+          <div class="spine-track" id="track-pce"></div>
+          <div class="shelf-plank"></div>
+        </div>
+      </section>
+
       <!-- 攻略書籍層 -->
       <section class="shelf-section" id="sec-book" style="display:none">
         <div class="shelf-header">
@@ -1185,7 +1213,9 @@ function getRetroArt(name, plat) {
     'md': 'Sega_-_Mega_Drive_-_Genesis',
     'gb': 'Nintendo_-_Game_Boy',
     'gg': 'Sega_-_Game_Gear',
-    'gba': 'Nintendo_-_Game_Boy_Advance'
+    'gba': 'Nintendo_-_Game_Boy_Advance',
+    'pce': 'NEC_-_PC_Engine_-_TurboGrafx_16',
+    'pcecd': 'NEC_-_PC_Engine_CD_-_TurboGrafx-CD'
   };
   var repo = repoMap[match.plat] || 'Nintendo_-_Nintendo_Entertainment_System';
   var encFile = encodeURIComponent(match.file) + '.png';
@@ -1585,6 +1615,7 @@ var shelfData = {
   sfc: [],
   fc: [],
   md: [],
+  pce: [],
   book: [],
   other: []
 };
@@ -1629,6 +1660,11 @@ function isPlatformFC(plat) {
 function isPlatformMD(plat) {
   var p = (plat || '').toUpperCase().trim();
   return p === 'MD' || p.indexOf('MEGA DRIVE') >= 0 || p.indexOf('MEGADRIVE') >= 0 || p.indexOf('GENESIS') >= 0 || (/\bMD\b/).test(p) || (p.indexOf('SEGA') >= 0 && p.indexOf('SATURN') < 0 && p.indexOf('DREAMCAST') < 0) || p.indexOf('世嘉五代') >= 0;
+}
+
+function isPlatformPCE(plat) {
+  var p = (plat || '').toUpperCase().trim();
+  return p === 'PCE' || p.indexOf('PC ENGINE') >= 0 || p.indexOf('PC-ENGINE') >= 0 || p.indexOf('TURBOGRAFX') >= 0 || (/\bPCE\b/).test(p) || (/\bPCECD\b/).test(p);
 }
 
 function fmtDateDisplay(d) {
@@ -1685,6 +1721,8 @@ function loadAllData() {
           platDisplay = 'FC';
         } else if (isPlatformMD(rawPlat)) {
           platDisplay = 'MD';
+        } else if (isPlatformPCE(rawPlat)) {
+          platDisplay = 'PCE';
         } else {
           platDisplay = rawPlat || '經典收藏';
         }
@@ -1789,14 +1827,17 @@ function renderShelves() {
   shelfData.sfc = allItems.filter(function(it) { return !it.is_book && isPlatformSFC(it.platform || it.raw_platform); });
   shelfData.fc = allItems.filter(function(it) { return !it.is_book && isPlatformFC(it.platform || it.raw_platform); });
   shelfData.md = allItems.filter(function(it) { return !it.is_book && isPlatformMD(it.platform || it.raw_platform); });
+  shelfData.pce = allItems.filter(function(it) { return !it.is_book && isPlatformPCE(it.platform || it.raw_platform); });
   shelfData.other = allItems.filter(function(it) {
-    return shelfData.book.indexOf(it) < 0 && shelfData.sfc.indexOf(it) < 0 && shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0;
+    return shelfData.book.indexOf(it) < 0 && shelfData.sfc.indexOf(it) < 0 && shelfData.fc.indexOf(it) < 0 && shelfData.md.indexOf(it) < 0 && shelfData.pce.indexOf(it) < 0;
   });
 
   var cntSfc = document.getElementById('count-sfc');
   if (cntSfc) cntSfc.textContent = shelfData.sfc.length + ' 件';
   document.getElementById('count-fc').textContent = shelfData.fc.length + ' 件';
   document.getElementById('count-md').textContent = shelfData.md.length + ' 件';
+  var cntPce = document.getElementById('count-pce');
+  if (cntPce) cntPce.textContent = shelfData.pce.length + ' 件';
   var cntBook = document.getElementById('count-book');
   if (cntBook) cntBook.textContent = shelfData.book.length + ' 件';
   document.getElementById('count-other').textContent = shelfData.other.length + ' 件';
@@ -1804,6 +1845,10 @@ function renderShelves() {
   var secSfc = document.getElementById('sec-sfc');
   if (secSfc) {
     secSfc.style.display = shelfData.sfc.length > 0 ? 'flex' : 'none';
+  }
+  var secPce = document.getElementById('sec-pce');
+  if (secPce) {
+    secPce.style.display = shelfData.pce.length > 0 ? 'flex' : 'none';
   }
   var secBook = document.getElementById('sec-book');
   if (secBook) {
@@ -1817,6 +1862,7 @@ function renderShelves() {
   if (secSfc) renderTrack('track-sfc', shelfData.sfc, 'sfc', 'sfc');
   renderTrack('track-fc', shelfData.fc, 'fc', 'fc');
   renderTrack('track-md', shelfData.md, 'md', 'md');
+  if (secPce) renderTrack('track-pce', shelfData.pce, 'pce', 'pce');
   if (secBook) renderTrack('track-book', shelfData.book, 'book', 'book');
   renderTrack('track-other', shelfData.other, 'md', 'other');
 
@@ -1841,6 +1887,8 @@ function renderShelves() {
     selectGame(shelfData.book[0], false);
   } else if (shelfData.md.length) {
     selectGame(shelfData.md[0], false);
+  } else if (shelfData.pce.length) {
+    selectGame(shelfData.pce[0], false);
   } else if (allItems.length) {
     selectGame(allItems[0], false);
   }

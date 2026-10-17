@@ -1,3 +1,28 @@
+## v11.29 (2026-10-17)
+
+### 變更內容
+依據使用者要求「把收藏的所有平台一個一個按目前的流程鍵入pwa... 日版用日版，美版用美版，不要交互使用。必要的時候圖資除了爬蟲網站外，到網路上搜尋補齊」，正式完成第一個目標平台 **PC-Engine (PCE)** 完整建檔管線：
+
+1. **PC-Engine (PCE / PCECD) 143 款藏品全量入庫建檔**：
+   - 完整載入 `data/收藏.xlsx` 中 `PCE` 分頁之全數 143 款遊戲與週邊藏品（含 55 款 HuCARD、88 款 CD-ROM²/Super CD-ROM²、25 款裸卡與 4 款擴充/記憶體硬體卡）。
+   - 產生獨立標準檔案 `data/RetroVault_遊戲_PCE.csv`（54 欄位，UTF-8 BOM）。
+   - 全量合併更新 `data/RetroVault_GS_Games_全量匯入檔.csv` 與 `data/RetroVault_GS_Games_全量匯入檔.xlsx`（57 欄位，累計 FC:107、MD:33、SFC:177、GB:20、GG:10、GBA:19、PCE:143，全庫正式邁入 509 款）。
+
+2. **圖資地區嚴格一致性與純度審計 (Strict Japanese Region Integrity)**：
+   - 嚴格落實「日版用日版，美版用美版，絕不交互混用」最高準則。過濾並排除所有美版 TurboGrafx-16 (TG-16) / USA 塑膠大盒、卡匣及英文截圖，100% 確保日版 HuCARD、Jewel Case CD 盒裝與日版型號（HC、SS、JC、NC、NX、HCD、TJCD 等）純度。
+   - 全面調用 Libretro 日版原裝庫、LaunchBox GamesDB Japan 認證圖庫及維基媒體檔案庫，透過多執行緒自動檢索並鏡像 481 張高解析度日版圖資至 `docs/cdn/`，發布為 GitHub Raw 永續 CORS 圖床。
+   - 達成封面覆蓋率 100%（143/143）、實機截圖覆蓋率 100%（142/139 遊戲款）、盒裝封底 80.7%（92/114）、實物側標 41.2%（47/114），無官方原裝圖檔之項目恪守「寧缺毋濫」維持留空。
+
+3. **賽博防潮展廳 PCE 專屬陳列架與書背樣式 (PCE Dedicated Shelf & Jewel Case Spines)**：
+   - 於 `docs/cyber-museum.html` 新增 `PC ENGINE (PCE / CD-ROM²)` 獨立陳列層架（`sec-pce`），配置金琥珀色霓虹光暈（`#ffd54f`）。
+   - 導入 PC-Engine 經典 Jewel Case（142×125×10mm）直立書背規格（`.spine-item.pce`），並具備金黑雙色高質感模擬備援書背（`.spine-fallback`）。
+   - 擴充平台識別 `isPlatformPCE`，支援 HuCARD 與 CD-ROM² 雙載體自動分類，並於 `3d-viewer.html` 註冊 PCE 方形透明膠盒立體尺寸參數（`w: 3.1, h: 3.1, d: 0.35`）。
+
+4. **版本發布與快取推進**：
+   - 應用版本號遞增至 `v11.29` / `retrovault-v11-29`，同步生成 `docs/RetroVault_v11_29_index.html` 備份檔。
+
+---
+
 ## v11.28 (2026-10-17)
 
 ### 變更內容
