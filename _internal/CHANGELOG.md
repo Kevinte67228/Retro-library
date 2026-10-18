@@ -1,7 +1,33 @@
-## v11.31 (2026-10-18) - GameCube (NGC) 全量藏品建檔入庫
+## v11.32 (2026-10-18) - GameCube (NGC) 全面替換純日版圖資（0美規、0 ESRB、封底提升至60.3%）
 
 ### 變更內容
-依據使用者指示「先在開始NGC」，完整執行 `retrovault-asset-pipeline` 標準管線，完成 73 款 Nintendo GameCube (NGC) 日版官方藏品的高清圖資抓取、本地雙向資料庫同步、GitHub Blobs 批次上傳與 Google 雲端試算表自動直寫：
+依據使用者指示「NGC全都是日版，把圖片都換成日區的」，徹底排查並重構 Nintendo GameCube (NGC) 73 款遊戲之圖資來源，全面根除先前由 Libretro 社群命名誤植混入之美版黑頂條、ESRB 分級與英美盒裝圖樣，改採 GameTDB 官方日版全彩盒裝（`coverfullHQ/JA`）與 LaunchBox 日本原裝認證（Region 18）高解析掃描圖，逐款置換為 100% 正統日版盒繪：
+
+1. **圖資來源與純正日版管線重構**：
+   - 排查發現：Libretro 的 GameCube `Named_Boxarts` 存在大量美版掃描卻被社群命名為 `(Japan).png` 之圖檔（例如《Beach Spikers》、《NBA Street V3》、《Biohazard》、《Wave Race》、《Chibi-Robo 巧比機器人》等帶有美版黑色上橫條與 ESRB 標章）。
+   - 建立純日版萃取管線 `_internal/build_pure_japan_ngc.py`：
+     - **GameTDB 官方日版目錄 (`coverfullHQ/JA/`)**：透過各遊戲官方日版 6 碼 ID（如 `GSPJ8P`, `GN3J13`, `GQ4J08`, `GB4J08`, `GG9J01`...）抓取原裝展開盒圖，以精準幾何定位無損裁切右側 46% 作為正面封面、左側 46% 作為封底。
+     - **LaunchBox 官方原裝圖庫 (`RegionId=18`)**：鎖定日本專屬認證分類，解析超高解析原始掃描圖檔連結（1500px+），精準補全日版封面與日版外盒背面。
+     - **GameTDB 日版獨立封面 (`cover/JA/`)**：作為第三層正統日版防護備援。
+
+2. **圖資純度與達成率全量盤點**：
+   - **日版封面達成率**：**73 / 73 (100.0%)**（全數為日本原裝正版零售盒繪，徹底消除美規黑色頂條與 ESRB 標記，純度 100%）。
+   - **日版封底達成率**：**44 / 73 (60.3%)**（自原先 30 款大幅提升至 44 款；其餘 29 款無日版原裝外盒掃描者嚴格依循「寧缺毋濫」標準留空，杜絕跨區臆造）。
+   - **日版截圖達成率**：**61 / 73 (83.6%)**（皆為日版實機遊戲畫面）。
+   - 生成 117 張全新高解析日版 CDN 圖檔於 `docs/cdn/`，100% 自建鏡像防護，規避 CORS 旋轉限制（Tainted Canvas）。
+
+3. **本地實體資料庫更新**：
+   - 更新 `data/RetroVault_遊戲_NGC.csv`（73 筆全量日版圖資）。
+   - 更新 `data/RetroVault_GS_Games_全量匯入檔.csv`（624 筆）。
+   - 以 `openpyxl` 重新生成 `data/RetroVault_GS_Games_全量匯入檔.xlsx`（318,199 bytes）。
+
+4. **GitHub 部署與 Google 雲端試算表原地更新**：
+   - 批次上傳 120 個 Blobs（117 張日版圖片 + 3 份資料庫），原子 Commit `398cde28c7` 推送至 `main` 分支。
+   - 透過 Google Apps Script `action: update` 針對雲端試算表中 73 款 NGC 遊戲進行精確原地換圖更新，無縫保持其他平台資料完整。
+
+---
+
+## v11.31 (2026-10-18) - GameCube (NGC) 全量藏品建檔入庫
 
 1. **73 款日版 NGC 完整入庫（嚴格地區一致性）**：
    - 全數 73 款遊戲皆為正統日本原裝版本（JPN），補齊日版官方型號（`DOL-P-xxxx` / `DOL-R-xxxx`）、JAN 條碼（`49xxxxx`，100% 完整涵蓋）、日文原名、中文官方譯名、英文原名、開發商、發行商、發售日期、建議售價、類型、玩家人數（1-4人）與官方遊戲簡介。
