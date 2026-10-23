@@ -1,3 +1,26 @@
+## v11.44 (2026-10-23) - 專案全量目錄結構工程級深度瘦身、垃圾清理與資產模組化歸類
+
+### 變更內容
+依據使用者指示「整理資料夾中的檔案，把沒有用的檔案刪除，需要保留的檔案做一個整理歸類，不要搞亂上傳到 Github 必要內容」，全面執行工作區大掃除與檔案結構標準化整理，釋放超過 135 MB 磁碟空間，確立上傳與核心運行的最高安全性：
+
+1. **GitHub 與 PWA 必要上傳內容（100% 絕對完整保護）**：
+   - `docs/` 核心 PWA 生態完整無損（`index.html`、`sw.js`、`manifest.json`、所有自建前端模組與 3,825 張 `docs/cdn/` 鏡像圖檔完全保持原生路徑）。
+   - `data/` 主資料庫維持原封不動（`收藏.xlsx` 母表、全量 1,504 筆 `RetroVault_GS_Games_全量匯入檔.csv/.xlsx`、19 個平台的 `RetroVault_遊戲_*.csv` 與 `README.md`）。
+   - 根目錄維持乾淨標準結構（`.agents`、`.codegraph`、`.github`、`data`、`docs`、`_internal`、`README.md`）。
+
+2. **徹底刪除無用/過渡/龐大暫存檔案（共清理釋放 ~135 MB+）**：
+   - 刪除 `scratch/` 目錄（清理 ~81 MB 之歷史候選爬蟲快取碎圖與 pycache）。
+   - 刪除根目錄遺留之 `pce_raw_items.json`（47 KB）。
+   - 刪除 `data/` 下歷史研究遺留之巨型全量外部資料庫 Dump 檔（清理 ~53 MB：`wiitdb.xml` 39MB、`wiiutdb.xml` 8.6MB、`wiiu_wiki.html` 2.7MB、`wiitdb.txt`、`Nintendo_GameCube.rdb`、`Nintendo_N64.rdb`、`Nintendo_N64.dat`）。
+   - 刪除 `_internal/` 下 90 個一次性測試/除錯測試腳本（`test_*.py`、`inspect_*.py`、`probe_*.py`、`retry_*.py`、`necromancer_back.jpg` 與 `__pycache__`）。
+
+3. **保留檔案模組化歸類與建檔整理**：
+   - 建立 `data/build_definitions/`：將 `data/` 與 `_internal/` 下所有歷史爬蟲原始清單、補齊定義與修正 JSON（共 83 份）集中統一歸檔收納，使 `data/` 根目錄僅展現純淨的核心實體資料庫。
+   - 建立 `_internal/platform_pipelines/`：將各平台之標準管線腳本（共 157 個，包含 `build_pure_*.py`、`crawl_*_launchbox.py`、`generate_*_definitions.py`、`push_*_blobs.py`、`solve_*_snaps.py` 等）模組化移入專屬資料夾，作為未來維護各平台歷史邏輯的標準工具庫。
+   - `_internal/` 根目錄維持最高核心標準：僅保留交接手冊、CHANGELOG、規則規範、Skill 檔案、通用雲端同步器 `sync_to_cloud.py`、日誌推送器 `push_changelog.py`、通用部署工具 `gh_batch.py`、`github_deploy.py`、`uploaded_blobs_cache.json` 與歷史封裝 `old/`。
+
+---
+
 ## v11.43 (2026-10-18) - Sega Saturn (SS) 全量 129 款純日版官方藏品精準對齊建檔入庫與雲端同步（破千五大關）
 
 ### 變更內容
